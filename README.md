@@ -13,6 +13,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Multi-Agent Learning**: Collaborative learning capabilities across multiple agent instances
 - **Reinforcement Learning**: Continuous improvement through reward-based learning
 - **Distributed Memory**: Scalable memory persistence across Redis and MongoDB backends with caching
+- **Knowledge Graph Integration**: Enhanced context understanding through entity and relationship modeling
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
 ## Prerequisites
@@ -83,6 +84,15 @@ from src.core.distributed_memory_main import chat_with_distributed_memory_agent
 asyncio.run(chat_with_distributed_memory_agent())
 ```
 
+For knowledge graph integration:
+
+```python
+from src.core.knowledge_graph_main import chat_with_knowledge_graph_agent
+
+# Start the knowledge graph agent
+asyncio.run(chat_with_knowledge_graph_agent())
+```
+
 See the `examples/` directory for more usage examples.
 
 ## Documentation
@@ -93,6 +103,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Architecture Overview](docs/architecture.md)
 - [Memory Management](docs/memory.md)
 - [Distributed Memory](docs/distributed_memory.md)
+- [Knowledge Graph](docs/knowledge_graph.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
 - [Usage Guide](docs/usage.md)

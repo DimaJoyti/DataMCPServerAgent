@@ -35,6 +35,9 @@ setup(
             "datamcpserveragent-enhanced=src.core.enhanced_main:chat_with_enhanced_agent",
             "datamcpserveragent-advanced-enhanced=src.core.advanced_enhanced_main:chat_with_advanced_enhanced_agent",
             "datamcpserveragent-multi-agent=src.core.multi_agent_main:chat_with_multi_agent_learning_system",
+            "datamcpserveragent-rl=src.core.reinforcement_learning_main:chat_with_rl_agent",
+            "datamcpserveragent-distributed=src.core.distributed_memory_main:chat_with_distributed_memory_agent",
+            "datamcpserveragent-knowledge-graph=src.core.knowledge_graph_main:chat_with_knowledge_graph_agent",
         ],
     },
 )

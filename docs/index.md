@@ -13,6 +13,7 @@ DataMCPServerAgent is a sophisticated agent system built on top of Bright Data M
 - [Architecture](architecture.md): Overview of the DataMCPServerAgent architecture
 - [Memory Systems](memory.md): Detailed information about memory systems
 - [Distributed Memory](distributed_memory.md): Detailed information about the distributed memory capabilities
+- [Knowledge Graph](knowledge_graph.md): Detailed information about the knowledge graph integration for better context understanding
 - [Multi-Agent Learning](multi_agent_learning.md): Detailed information about the multi-agent learning system
 - [Reinforcement Learning](reinforcement_learning.md): Detailed information about the reinforcement learning capabilities
 
@@ -27,6 +28,7 @@ The project implements several agent architectures with increasing levels of sop
 5. **Multi-Agent Learning System**: System with collaborative learning, knowledge sharing, and performance optimization between multiple agents
 6. **Reinforcement Learning Agent**: Agent that learns from rewards and improves through experience
 7. **Distributed Memory Agent**: Agent with scalable distributed memory across Redis and MongoDB backends
+8. **Knowledge Graph Agent**: Agent with knowledge graph integration for better context understanding
 
 ## Quick Start
 
@@ -68,6 +70,9 @@ python main.py --mode reinforcement_learning
 
 # Run the distributed memory agent
 python main.py --mode distributed_memory
+
+# Run the knowledge graph agent
+python main.py --mode knowledge_graph
 ```
 
 ## Project Structure
