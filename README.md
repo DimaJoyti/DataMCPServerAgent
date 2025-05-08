@@ -14,6 +14,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Reinforcement Learning**: Continuous improvement through reward-based learning
 - **Distributed Memory**: Scalable memory persistence across Redis and MongoDB backends with caching
 - **Knowledge Graph Integration**: Enhanced context understanding through entity and relationship modeling
+- **Enhanced Error Recovery**: Sophisticated retry strategies, automatic fallback mechanisms, and self-healing capabilities
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
 ## Prerequisites
@@ -93,6 +94,15 @@ from src.core.knowledge_graph_main import chat_with_knowledge_graph_agent
 asyncio.run(chat_with_knowledge_graph_agent())
 ```
 
+For enhanced error recovery:
+
+```python
+from src.core.error_recovery_main import chat_with_error_recovery_agent
+
+# Start the error recovery agent
+asyncio.run(chat_with_error_recovery_agent())
+```
+
 See the `examples/` directory for more usage examples.
 
 ## Documentation
@@ -106,6 +116,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Knowledge Graph](docs/knowledge_graph.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
+- [Error Recovery](docs/error_recovery.md)
 - [Usage Guide](docs/usage.md)
 
 ## Contributing
