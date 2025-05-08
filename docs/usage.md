@@ -32,6 +32,12 @@ The package provides several command-line interfaces for different agent archite
   datamcpserveragent-advanced-enhanced
   ```
 
+- **Research Assistant**:
+
+  ```bash
+  datamcpserveragent-research
+  ```
+
 - **Multi-Agent Learning System**:
 
   ```bash
@@ -208,18 +214,25 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `memory`: View the current memory state
+
   ```
   memory
   ```
+
 - `memory search <query>`: Search the memory for specific information
+
   ```
   memory search python examples
   ```
+
 - `agents`: View the available specialized agents
+
   ```
   agents
   ```
+
 - `switch <agent>`: Switch to a specific specialized agent
+
   ```
   switch research
   ```
@@ -232,18 +245,25 @@ The agent supports several special commands that can be used during a chat sessi
 - `memory`: View the current memory state
 - `memory search <query>`: Search the memory for specific information
 - `learn`: Trigger learning from feedback
+
   ```
   learn
   ```
+
 - `insights`: View learning insights
+
   ```
   insights
   ```
+
 - `feedback <your feedback>`: Provide feedback on the last response
+
   ```
   feedback This response was very helpful, but could include more examples
   ```
+
 - `preferences`: View and set user preferences
+
   ```
   preferences
   preferences set response_style detailed
@@ -256,38 +276,53 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `context`: View the current context
+
   ```
   context
   ```
+
 - `preferences`: View the current user preferences
+
   ```
   preferences
   ```
+
 - `preferences set <key> <value>`: Set a user preference
+
   ```
   preferences set response_style concise
   preferences set code_examples true
   preferences set verbosity high
   ```
+
 - `learn`: Trigger learning from feedback
+
   ```
   learn
   ```
+
 - `metrics`: View performance metrics
+
   ```
   metrics
   metrics tools
   metrics memory
   ```
+
 - `feedback <your feedback>`: Provide feedback on the last response
+
   ```
   feedback The explanation was clear but the code example didn't work
   ```
+
 - `tools`: List available tools
+
   ```
   tools
   ```
+
 - `tool info <tool_name>`: Get detailed information about a specific tool
+
   ```
   tool info enhanced_web_search
   ```
@@ -298,36 +333,51 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `knowledge`: View the collaborative knowledge base
+
   ```
   knowledge
   knowledge search python async
   ```
+
 - `metrics`: View agent performance metrics
+
   ```
   metrics
   metrics agent research
   ```
+
 - `synergy`: View agent synergy analysis
+
   ```
   synergy
   ```
+
 - `learn`: Trigger a learning cycle
+
   ```
   learn
   ```
+
 - `feedback <your feedback>`: Provide feedback on the last response
+
   ```
   feedback The collaboration between agents produced a comprehensive answer
   ```
+
 - `agents`: List all agents in the system
+
   ```
   agents
   ```
+
 - `agent <name>`: Get information about a specific agent
+
   ```
   agent research
   ```
+
 - `collaborate <task>`: Explicitly request collaboration on a task
+
   ```
   collaborate Find information about Python async programming and provide code examples
   ```
@@ -338,22 +388,31 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `feedback <your feedback>`: Provide feedback on the last response
+
   ```
   feedback This response was very helpful and accurate
   ```
+
 - `learn`: Perform batch learning from past interactions
+
   ```
   learn
   ```
+
 - `policy`: View the current policy
+
   ```
   policy
   ```
+
 - `rewards`: View the reward history
+
   ```
   rewards
   ```
+
 - `explore`: Increase exploration rate temporarily
+
   ```
   explore
   ```
@@ -364,26 +423,37 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `feedback <your feedback>`: Provide feedback on the last response
+
   ```
   feedback The agent remembered our previous conversation accurately
   ```
+
 - `learn`: Perform batch learning from past interactions
+
   ```
   learn
   ```
+
 - `memory`: View memory summary and statistics
+
   ```
   memory
   ```
+
 - `memory search <query>`: Search the distributed memory
+
   ```
   memory search python examples
   ```
+
 - `memory stats`: View memory usage statistics
+
   ```
   memory stats
   ```
+
 - `cache`: View cache statistics
+
   ```
   cache
   cache clear
@@ -395,21 +465,53 @@ The agent supports several special commands that can be used during a chat sessi
 - `help`: Display available commands
 - `clear`: Clear the chat history
 - `graph`: View the knowledge graph structure
+
   ```
   graph
   ```
+
 - `entity <name>`: View information about a specific entity
+
   ```
   entity Python
   ```
+
 - `relation <type>`: View information about a specific relation type
+
   ```
   relation depends_on
   ```
+
 - `query <cypher>`: Run a custom Cypher query on the knowledge graph
+
   ```
   query MATCH (n:Technology)-[:DEPENDS_ON]->(m) RETURN n.name, m.name
   ```
+
+### Research Assistant
+
+- `exit` or `quit`: End the research session
+- Any research query: Enter any topic to research
+
+  ```bash
+  What is machine learning?
+  ```
+
+- `save`: Save the last research results to a file
+
+  ```bash
+  save
+  Enter filename to save results (default: research_output.txt): my_research.txt
+  ```
+
+The Research Assistant provides structured research results with:
+
+- Topic
+- Summary
+- Sources
+- Tools used
+
+For more detailed information, see the [Research Assistant documentation](research_assistant.md).
 
 ## Tool Usage
 
@@ -417,19 +519,19 @@ DataMCPServerAgent includes several custom tools that can be used during a chat 
 
 ### Enhanced Web Search
 
-```
+```bash
 Search for information about Python async programming
 ```
 
 ### Enhanced Web Scraper
 
-```
+```bash
 Scrape the content from https://example.com and extract the main content
 ```
 
 ### Product Comparison
 
-```
+```bash
 Compare these products:
 - https://www.amazon.com/dp/B08N5KWB9H
 - https://www.amazon.com/dp/B08N5M7S6K
@@ -437,7 +539,7 @@ Compare these products:
 
 ### Social Media Analyzer
 
-```
+```bash
 Analyze this Instagram post: https://www.instagram.com/p/ABC123/
 ```
 
@@ -486,14 +588,14 @@ from src.core.advanced_main import chat_with_advanced_agent
 async def run_example():
     """Run the advanced agent example."""
     print("Running advanced agent example...")
-    
+
     # Configure the agent
     config = {
         "specialized_agents": ["research", "coding", "creative"],
         "context_window_size": 10,
         "verbose": True
     }
-    
+
     await chat_with_advanced_agent(config=config)
 
 
@@ -518,7 +620,7 @@ from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 async def run_example():
     """Run the product comparison example."""
     print("Running product comparison example...")
-    
+
     # Configure the agent with product comparison focus
     config = {
         "initial_prompt": """
@@ -528,7 +630,7 @@ async def run_example():
         """,
         "verbose": True
     }
-    
+
     await chat_with_advanced_enhanced_agent(config=config)
 
 
@@ -553,7 +655,7 @@ from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 async def run_example():
     """Run the social media analysis example."""
     print("Running social media analysis example...")
-    
+
     # Configure the agent with social media analysis focus
     config = {
         "initial_prompt": """
@@ -564,12 +666,37 @@ async def run_example():
         """,
         "verbose": True
     }
-    
+
     await chat_with_advanced_enhanced_agent(config=config)
 
 
 if __name__ == "__main__":
     asyncio.run(run_example())
+```
+
+### Research Assistant Example
+
+```python
+# examples/research_assistant_example.py
+import os
+import sys
+
+# Add the project root to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.agents.research_assistant import run_research_assistant
+
+
+def run_example():
+    """Run the research assistant example."""
+    print("Running research assistant example...")
+
+    # Run the research assistant
+    run_research_assistant()
+
+
+if __name__ == "__main__":
+    run_example()
 ```
 
 ## Troubleshooting
@@ -580,7 +707,7 @@ if __name__ == "__main__":
 
 If you encounter API key errors:
 
-```
+```bash
 Error: Invalid API key or API key not found
 ```
 
@@ -595,7 +722,7 @@ BRIGHT_DATA_MCP_KEY=your_bright_data_mcp_key
 
 If you encounter memory backend errors:
 
-```
+```bash
 Error: Failed to connect to memory backend
 ```
 
@@ -613,7 +740,7 @@ mongosh --eval "db.adminCommand('ping')"
 
 If you encounter tool execution errors:
 
-```
+```bash
 Error: Failed to execute tool
 ```
 
