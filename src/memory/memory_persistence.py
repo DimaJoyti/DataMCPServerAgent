@@ -95,6 +95,29 @@ class MemoryDatabase:
         )
         """)
 
+        # Deep RL weights
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS drl_weights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            weights TEXT NOT NULL,
+            last_updated REAL NOT NULL,
+            UNIQUE(agent_name)
+        )
+        """)
+
+        # Multi-objective Q-tables
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mo_q_tables (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            objective TEXT NOT NULL,
+            q_table TEXT NOT NULL,
+            last_updated REAL NOT NULL,
+            UNIQUE(agent_name, objective)
+        )
+        """)
+
         # Agent rewards
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS agent_rewards (
@@ -102,6 +125,30 @@ class MemoryDatabase:
             agent_name TEXT NOT NULL,
             reward REAL NOT NULL,
             reward_components TEXT NOT NULL,
+            timestamp REAL NOT NULL
+        )
+        """)
+
+        # Multi-objective agent rewards
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_mo_rewards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            total_reward REAL NOT NULL,
+            objective_rewards TEXT NOT NULL,
+            timestamp REAL NOT NULL
+        )
+        """)
+
+        # Agent decisions
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            state TEXT NOT NULL,
+            selected_action TEXT NOT NULL,
+            q_values TEXT NOT NULL,
+            reward TEXT NOT NULL,
             timestamp REAL NOT NULL
         )
         """)
