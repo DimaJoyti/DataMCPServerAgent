@@ -15,6 +15,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Distributed Memory**: Scalable memory persistence across Redis and MongoDB backends with caching
 - **Knowledge Graph Integration**: Enhanced context understanding through entity and relationship modeling
 - **Enhanced Error Recovery**: Sophisticated retry strategies, automatic fallback mechanisms, and self-healing capabilities
+- **Advanced Error Analysis**: Error clustering, root cause analysis, correlation analysis, and predictive error detection
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
 ## Prerequisites
@@ -118,6 +119,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
 - [Error Recovery](docs/error_recovery.md)
+- [Advanced Error Analysis](docs/advanced_error_analysis.md)
 - [Custom Tools](docs/custom_tools.md)
 - [Tool Development Guide](docs/tool_development.md)
 - [Contributing Guide](docs/contributing.md)
