@@ -12,7 +12,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Enhanced Tool Selection**: Sophisticated tool selection and performance tracking
 - **Multi-Agent Learning**: Collaborative learning capabilities across multiple agent instances
 - **Reinforcement Learning**: Continuous improvement through reward-based learning
-- **Distributed Memory**: Scalable memory persistence across multiple storage backends
+- **Distributed Memory**: Scalable memory persistence across Redis and MongoDB backends with caching
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
 ## Prerequisites
@@ -74,6 +74,15 @@ from src.core.reinforcement_learning_main import chat_with_rl_agent
 asyncio.run(chat_with_rl_agent())
 ```
 
+For distributed memory:
+
+```python
+from src.core.distributed_memory_main import chat_with_distributed_memory_agent
+
+# Start the distributed memory agent
+asyncio.run(chat_with_distributed_memory_agent())
+```
+
 See the `examples/` directory for more usage examples.
 
 ## Documentation
@@ -83,6 +92,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Installation Guide](docs/installation.md)
 - [Architecture Overview](docs/architecture.md)
 - [Memory Management](docs/memory.md)
+- [Distributed Memory](docs/distributed_memory.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
 - [Usage Guide](docs/usage.md)

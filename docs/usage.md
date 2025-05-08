@@ -44,12 +44,18 @@ The package provides several command-line interfaces for different agent archite
   datamcpserveragent-rl
   ```
 
+- **Distributed Memory Agent**:
+
+  ```bash
+  datamcpserveragent-distributed
+  ```
+
 ### Using the Main Script
 
 You can also use the main script to run the agent:
 
 ```bash
-python main.py --mode [basic|advanced|enhanced|advanced_enhanced|multi_agent|reinforcement_learning]
+python main.py --mode [basic|advanced|enhanced|advanced_enhanced|multi_agent|reinforcement_learning|distributed_memory]
 ```
 
 For example, to run the advanced enhanced agent:
@@ -76,6 +82,7 @@ from src.core.enhanced_main import chat_with_enhanced_agent
 from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 from src.core.multi_agent_main import chat_with_multi_agent_learning_system
 from src.core.reinforcement_learning_main import chat_with_rl_agent
+from src.core.distributed_memory_main import chat_with_distributed_memory_agent
 
 # Run the basic agent
 asyncio.run(chat_with_agent())
@@ -94,6 +101,9 @@ asyncio.run(chat_with_multi_agent_learning_system())
 
 # Run the reinforcement learning agent
 asyncio.run(chat_with_rl_agent())
+
+# Run the distributed memory agent
+asyncio.run(chat_with_distributed_memory_agent())
 ```
 
 ## Special Commands
@@ -142,6 +152,13 @@ The agent supports several special commands:
 - `feedback: <your feedback>`: Provide feedback on the last response
 - `learn`: Perform batch learning from past interactions
 
+### Distributed Memory Agent
+
+- `exit` or `quit`: End the chat
+- `feedback: <your feedback>`: Provide feedback on the last response
+- `learn`: Perform batch learning from past interactions
+- `memory`: View memory summary and statistics
+
 ## Examples
 
 See the `examples/` directory for example scripts demonstrating different agent architectures:
@@ -152,5 +169,6 @@ See the `examples/` directory for example scripts demonstrating different agent 
 - `examples/advanced_enhanced_example.py`: Advanced enhanced agent example
 - `examples/multi_agent_learning_example.py`: Multi-agent learning system example
 - `examples/reinforcement_learning_example.py`: Reinforcement learning agent example
+- `examples/enhanced_distributed_memory_example.py`: Distributed memory example
 - `examples/product_comparison_example.py`: Product comparison example
 - `examples/social_media_analysis_example.py`: Social media analysis example

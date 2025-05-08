@@ -63,6 +63,68 @@ class DistributedMemoryBackend(ABC):
         pass
 
     @abstractmethod
+    async def delete_entity(self, entity_type: str, entity_id: str) -> bool:
+        """Delete an entity from the distributed memory.
+
+        Args:
+            entity_type: Type of entity
+            entity_id: ID of entity
+
+        Returns:
+            True if the entity was deleted, False otherwise
+        """
+        pass
+
+    @abstractmethod
+    async def save_conversation_history(self, messages: List[Dict[str, str]]) -> None:
+        """Save conversation history to the distributed memory.
+
+        Args:
+            messages: List of messages to save
+        """
+        pass
+
+    @abstractmethod
+    async def load_conversation_history(self) -> List[Dict[str, str]]:
+        """Load conversation history from the distributed memory.
+
+        Returns:
+            List of messages
+        """
+        pass
+
+    @abstractmethod
+    async def save_tool_usage(
+        self, tool_name: str, args: Dict[str, Any], result: Any
+    ) -> None:
+        """Save tool usage to the distributed memory.
+
+        Args:
+            tool_name: Name of the tool
+            args: Tool arguments
+            result: Tool result
+        """
+        pass
+
+    @abstractmethod
+    async def get_memory_summary(self) -> str:
+        """Generate a summary of the memory contents.
+
+        Returns:
+            Summary string
+        """
+        pass
+
+    @abstractmethod
+    async def ping(self) -> bool:
+        """Check if the memory backend is accessible.
+
+        Returns:
+            True if the backend is accessible, False otherwise
+        """
+        pass
+
+    @abstractmethod
     async def load_entities_by_type(
         self, entity_type: str
     ) -> Dict[str, Dict[str, Any]]:
@@ -239,6 +301,36 @@ class RedisMemoryBackend(DistributedMemoryBackend):
 
         # Add entity type to the set of all entity types
         await self.redis.sadd(f"{self.prefix}entity_types", entity_type)
+
+    async def delete_entity(self, entity_type: str, entity_id: str) -> bool:
+        """Delete an entity from Redis.
+
+        Args:
+            entity_type: Type of entity
+            entity_id: ID of entity
+
+        Returns:
+            True if the entity was deleted, False otherwise
+        """
+        # Create the entity key
+        entity_key = f"{self.prefix}entity:{entity_type}:{entity_id}"
+
+        # Delete the entity
+        result = await self.redis.delete(entity_key)
+
+        # Remove entity from the set of entities of this type
+        await self.redis.srem(f"{self.prefix}entity_types:{entity_type}", entity_id)
+
+        # Check if there are any entities of this type left
+        entity_count = await self.redis.scard(
+            f"{self.prefix}entity_types:{entity_type}"
+        )
+
+        # If no entities of this type left, remove the entity type
+        if entity_count == 0:
+            await self.redis.srem(f"{self.prefix}entity_types", entity_type)
+
+        return result > 0
 
     async def load_entity(
         self, entity_type: str, entity_id: str
@@ -545,6 +637,17 @@ class RedisMemoryBackend(DistributedMemoryBackend):
             summary += f"- {agent_name}: {len(feedback)} feedback entries\n"
 
         return summary
+
+    async def ping(self) -> bool:
+        """Check if Redis is accessible.
+
+        Returns:
+            True if Redis is accessible, False otherwise
+        """
+        try:
+            return await self.redis.ping()
+        except Exception:
+            return False
 
 
 class MongoDBMemoryBackend(DistributedMemoryBackend):
@@ -944,6 +1047,18 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
             summary += f"- {agent_name}: {count} feedback entries\n"
 
         return summary
+
+    async def ping(self) -> bool:
+        """Check if MongoDB is accessible.
+
+        Returns:
+            True if MongoDB is accessible, False otherwise
+        """
+        try:
+            await self.client.admin.command("ping")
+            return True
+        except Exception:
+            return False
 
 
 class DistributedMemoryFactory:

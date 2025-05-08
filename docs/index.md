@@ -12,6 +12,7 @@ DataMCPServerAgent is a sophisticated agent system built on top of Bright Data M
 - [Usage Guide](usage.md): Instructions for using the DataMCPServerAgent
 - [Architecture](architecture.md): Overview of the DataMCPServerAgent architecture
 - [Memory Systems](memory.md): Detailed information about memory systems
+- [Distributed Memory](distributed_memory.md): Detailed information about the distributed memory capabilities
 - [Multi-Agent Learning](multi_agent_learning.md): Detailed information about the multi-agent learning system
 - [Reinforcement Learning](reinforcement_learning.md): Detailed information about the reinforcement learning capabilities
 
@@ -25,6 +26,7 @@ The project implements several agent architectures with increasing levels of sop
 4. **Advanced Enhanced Agent**: Agent with context-aware memory, adaptive learning, and sophisticated tool selection
 5. **Multi-Agent Learning System**: System with collaborative learning, knowledge sharing, and performance optimization between multiple agents
 6. **Reinforcement Learning Agent**: Agent that learns from rewards and improves through experience
+7. **Distributed Memory Agent**: Agent with scalable distributed memory across Redis and MongoDB backends
 
 ## Quick Start
 
@@ -63,6 +65,9 @@ python main.py --mode multi_agent
 
 # Run the reinforcement learning agent
 python main.py --mode reinforcement_learning
+
+# Run the distributed memory agent
+python main.py --mode distributed_memory
 ```
 
 ## Project Structure
