@@ -31,6 +31,7 @@
 ### Testing
 
 The advanced enhanced agent has been tested with the example script and works as expected. It successfully:
+
 - Retrieves relevant information based on context
 - Adapts to user preferences
 - Learns from feedback

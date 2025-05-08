@@ -71,6 +71,53 @@ class MemoryDatabase:
         )
         """)
 
+        # Create reinforcement learning tables
+
+        # Q-table for Q-learning
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS q_tables (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            q_table TEXT NOT NULL,
+            last_updated REAL NOT NULL,
+            UNIQUE(agent_name)
+        )
+        """)
+
+        # Policy parameters for policy gradient
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS policy_params (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            policy_params TEXT NOT NULL,
+            last_updated REAL NOT NULL,
+            UNIQUE(agent_name)
+        )
+        """)
+
+        # Agent rewards
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_rewards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            reward REAL NOT NULL,
+            reward_components TEXT NOT NULL,
+            timestamp REAL NOT NULL
+        )
+        """)
+
+        # Agent interactions for batch learning
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_interactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            request TEXT NOT NULL,
+            response TEXT NOT NULL,
+            feedback TEXT,
+            timestamp REAL NOT NULL
+        )
+        """)
+
         # Create tool performance table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS tool_performance (
@@ -444,6 +491,214 @@ class MemoryDatabase:
 
         return [row[0] for row in rows]
 
+    def save_q_table(
+        self, agent_name: str, q_table: Dict[str, Dict[str, float]]
+    ) -> None:
+        """Save Q-table to the database.
+
+        Args:
+            agent_name: Name of the agent
+            q_table: Q-table to save
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO q_tables
+            (agent_name, q_table, last_updated)
+            VALUES (?, ?, ?)
+            """,
+            (agent_name, json.dumps(q_table), time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_q_table(self, agent_name: str) -> Optional[Dict[str, Dict[str, float]]]:
+        """Get Q-table from the database.
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Q-table or None if not found
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT q_table FROM q_tables WHERE agent_name = ?",
+            (agent_name,),
+        )
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return json.loads(row[0])
+        return None
+
+    def save_policy_params(
+        self, agent_name: str, policy_params: Dict[str, List[float]]
+    ) -> None:
+        """Save policy parameters to the database.
+
+        Args:
+            agent_name: Name of the agent
+            policy_params: Policy parameters to save
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO policy_params
+            (agent_name, policy_params, last_updated)
+            VALUES (?, ?, ?)
+            """,
+            (agent_name, json.dumps(policy_params), time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_policy_params(self, agent_name: str) -> Optional[Dict[str, List[float]]]:
+        """Get policy parameters from the database.
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Policy parameters or None if not found
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT policy_params FROM policy_params WHERE agent_name = ?",
+            (agent_name,),
+        )
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return json.loads(row[0])
+        return None
+
+    def save_agent_reward(
+        self, agent_name: str, reward: float, reward_components: Dict[str, float]
+    ) -> None:
+        """Save agent reward to the database.
+
+        Args:
+            agent_name: Name of the agent
+            reward: Reward value
+            reward_components: Reward components
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO agent_rewards (agent_name, reward, reward_components, timestamp) VALUES (?, ?, ?, ?)",
+            (agent_name, reward, json.dumps(reward_components), time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_agent_rewards(
+        self, agent_name: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get agent rewards from the database.
+
+        Args:
+            agent_name: Name of the agent
+            limit: Maximum number of rewards to return
+
+        Returns:
+            List of rewards
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT reward, reward_components, timestamp FROM agent_rewards WHERE agent_name = ? ORDER BY timestamp DESC LIMIT ?",
+            (agent_name, limit),
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                "reward": reward,
+                "components": json.loads(components),
+                "timestamp": timestamp,
+            }
+            for reward, components, timestamp in rows
+        ]
+
+    def save_agent_interaction(
+        self,
+        agent_name: str,
+        request: str,
+        response: str,
+        feedback: Optional[str] = None,
+    ) -> None:
+        """Save agent interaction to the database.
+
+        Args:
+            agent_name: Name of the agent
+            request: User request
+            response: Agent response
+            feedback: User feedback (optional)
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO agent_interactions (agent_name, request, response, feedback, timestamp) VALUES (?, ?, ?, ?, ?)",
+            (agent_name, request, response, feedback, time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_agent_interactions(
+        self, agent_name: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get agent interactions from the database.
+
+        Args:
+            agent_name: Name of the agent
+            limit: Maximum number of interactions to return
+
+        Returns:
+            List of interactions
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT request, response, feedback, timestamp FROM agent_interactions WHERE agent_name = ? ORDER BY timestamp DESC LIMIT ?",
+            (agent_name, limit),
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                "request": request,
+                "response": response,
+                "feedback": feedback,
+                "timestamp": timestamp,
+            }
+            for request, response, feedback, timestamp in rows
+        ]
+
     def get_memory_summary(self) -> str:
         """Generate a summary of the memory contents.
 
@@ -475,6 +730,19 @@ class MemoryDatabase:
         )
         feedback_counts = cursor.fetchall()
 
+        # Get RL agent counts
+        cursor.execute("SELECT COUNT(*) FROM q_tables")
+        q_table_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM policy_params")
+        policy_params_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM agent_rewards")
+        rewards_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM agent_interactions")
+        interactions_count = cursor.fetchone()[0]
+
         conn.close()
 
         # Format the summary
@@ -500,6 +768,14 @@ class MemoryDatabase:
         summary += "### Learning Feedback\n"
         for feedback_type, count in feedback_counts:
             summary += f"- {feedback_type}: {count} entries\n"
+        summary += "\n"
+
+        # RL summary
+        summary += "### Reinforcement Learning\n"
+        summary += f"- Q-tables: {q_table_count}\n"
+        summary += f"- Policy parameters: {policy_params_count}\n"
+        summary += f"- Rewards: {rewards_count}\n"
+        summary += f"- Interactions: {interactions_count}\n"
 
         return summary
 

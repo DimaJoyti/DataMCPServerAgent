@@ -11,6 +11,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Adaptive Learning**: Learns from user interactions and feedback to improve responses
 - **Enhanced Tool Selection**: Sophisticated tool selection and performance tracking
 - **Multi-Agent Learning**: Collaborative learning capabilities across multiple agent instances
+- **Reinforcement Learning**: Continuous improvement through reward-based learning
 - **Distributed Memory**: Scalable memory persistence across multiple storage backends
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
@@ -64,6 +65,15 @@ from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 asyncio.run(chat_with_advanced_enhanced_agent())
 ```
 
+For reinforcement learning:
+
+```python
+from src.core.reinforcement_learning_main import chat_with_rl_agent
+
+# Start the reinforcement learning agent
+asyncio.run(chat_with_rl_agent())
+```
+
 See the `examples/` directory for more usage examples.
 
 ## Documentation
@@ -74,6 +84,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Architecture Overview](docs/architecture.md)
 - [Memory Management](docs/memory.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
+- [Reinforcement Learning](docs/reinforcement_learning.md)
 - [Usage Guide](docs/usage.md)
 
 ## Contributing
