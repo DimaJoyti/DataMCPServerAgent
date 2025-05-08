@@ -20,6 +20,10 @@ from src.agents.advanced_rl_decision_making import (
     create_advanced_rl_agent_architecture,
 )
 from src.agents.agent_architecture import create_specialized_sub_agents
+from src.agents.hierarchical_rl import (
+    HierarchicalRLCoordinatorAgent,
+    create_hierarchical_rl_agent_architecture,
+)
 from src.agents.multi_objective_rl import (
     MultiObjectiveRLCoordinatorAgent,
     create_multi_objective_rl_agent_architecture,
@@ -31,6 +35,7 @@ from src.agents.reinforcement_learning import (
 from src.memory.advanced_memory_persistence import (
     AdvancedMemoryDatabase as MemoryDatabase,
 )
+from src.memory.hierarchical_memory_persistence import HierarchicalMemoryDatabase
 from src.tools.bright_data_tools import BrightDataToolkit
 from src.utils.decision_explanation import DecisionExplainer, PolicyExplainer
 from src.utils.error_handlers import format_error_for_user
@@ -57,7 +62,10 @@ policy_explainer = PolicyExplainer(model=model, db=db)
 async def setup_rl_agent(
     mcp_tools: List[BaseTool], rl_mode: str = "auto"
 ) -> Union[
-    RLCoordinatorAgent, AdvancedRLCoordinatorAgent, MultiObjectiveRLCoordinatorAgent
+    RLCoordinatorAgent,
+    AdvancedRLCoordinatorAgent,
+    MultiObjectiveRLCoordinatorAgent,
+    HierarchicalRLCoordinatorAgent,
 ]:
     """Set up the reinforcement learning agent.
 
@@ -100,6 +108,16 @@ async def setup_rl_agent(
         ).split(",")
         rl_coordinator = await create_multi_objective_rl_agent_architecture(
             model=model, db=db, sub_agents=sub_agents, objectives=objectives
+        )
+    elif rl_mode == "hierarchical":
+        # Create hierarchical RL coordinator agent
+        # Convert the regular memory database to hierarchical memory database
+        hierarchical_db = HierarchicalMemoryDatabase(db_path)
+        rl_coordinator = await create_hierarchical_rl_agent_architecture(
+            model=model,
+            db=hierarchical_db,
+            sub_agents=sub_agents,
+            tools=mcp_tools,
         )
     else:
         raise ValueError(f"Unknown RL mode: {rl_mode}")
