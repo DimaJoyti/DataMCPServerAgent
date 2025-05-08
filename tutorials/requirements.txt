@@ -1,0 +1,15 @@
+# Core dependencies (already in main requirements.txt)
+# These are listed here for reference but should be installed with the main package
+
+# Additional dependencies for tutorials
+jupyter==1.0.0
+notebook==7.0.6
+ipywidgets==8.1.1
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.18.0
+ipython==8.18.1
+nbconvert==7.10.0
+nbformat==5.9.2
+voila==0.5.5
+ipykernel==6.26.0

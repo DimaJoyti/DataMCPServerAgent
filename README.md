@@ -111,13 +111,16 @@ Comprehensive documentation is available in the `docs/` directory:
 
 - [Installation Guide](docs/installation.md)
 - [Architecture Overview](docs/architecture.md)
+- [Usage Guide](docs/usage.md)
 - [Memory Management](docs/memory.md)
 - [Distributed Memory](docs/distributed_memory.md)
 - [Knowledge Graph](docs/knowledge_graph.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
 - [Error Recovery](docs/error_recovery.md)
-- [Usage Guide](docs/usage.md)
+- [Custom Tools](docs/custom_tools.md)
+- [Tool Development Guide](docs/tool_development.md)
+- [Contributing Guide](docs/contributing.md)
 
 ## Contributing
 
