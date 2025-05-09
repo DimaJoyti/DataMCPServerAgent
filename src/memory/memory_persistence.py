@@ -500,13 +500,139 @@ class MemoryDatabase:
 
         return [
             {
-                "agent_name": agent,
-                "feedback_type": f_type,
-                "feedback_data": json.loads(data),
-                "timestamp": ts,
+                "agent_name": agent_name,
+                "feedback_type": feedback_type,
+                "feedback_data": json.loads(feedback_data),
+                "timestamp": timestamp,
             }
-            for agent, f_type, data, ts in rows
+            for agent_name, feedback_type, feedback_data, timestamp in rows
         ]
+
+    def save_q_table(
+        self, agent_name: str, q_table: Dict[str, Dict[str, float]]
+    ) -> None:
+        """Save a Q-table to the database.
+
+        Args:
+            agent_name: Name of the agent
+            q_table: Q-table to save
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO q_tables
+            (agent_name, q_table, last_updated)
+            VALUES (?, ?, ?)
+            """,
+            (agent_name, json.dumps(q_table), time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_q_table(self, agent_name: str) -> Optional[Dict[str, Dict[str, float]]]:
+        """Get a Q-table from the database.
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Q-table or None if not found
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT q_table FROM q_tables WHERE agent_name = ?",
+            (agent_name,),
+        )
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return json.loads(row[0])
+        return None
+
+    def save_agent_reward(
+        self, agent_name: str, reward: float, reward_components: Dict[str, float]
+    ) -> None:
+        """Save agent reward to the database.
+
+        Args:
+            agent_name: Name of the agent
+            reward: Total reward
+            reward_components: Reward components
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO agent_rewards (agent_name, reward, reward_components, timestamp) VALUES (?, ?, ?, ?)",
+            (agent_name, reward, json.dumps(reward_components), time.time()),
+        )
+
+        conn.commit()
+        conn.close()
+
+    def get_agent_rewards(
+        self, agent_name: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get agent rewards from the database.
+
+        Args:
+            agent_name: Name of the agent
+            limit: Maximum number of rewards to retrieve
+
+        Returns:
+            List of reward entries
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT reward, reward_components, timestamp FROM agent_rewards WHERE agent_name = ? ORDER BY timestamp DESC LIMIT ?",
+            (agent_name, limit),
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                "reward": reward,
+                "components": json.loads(reward_components),
+                "timestamp": timestamp,
+            }
+            for reward, reward_components, timestamp in rows
+        ]
+
+    def save_tool_selection(
+        self, query: str, selected_tools: List[Dict[str, Any]]
+    ) -> None:
+        """Save tool selection to the database.
+
+        Args:
+            query: Research query
+            selected_tools: Selected tools with arguments and reasons
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO learning_feedback (agent_name, feedback_type, feedback_data, timestamp) VALUES (?, ?, ?, ?)",
+            (
+                "tool_selector",
+                "tool_selection",
+                json.dumps({"query": query, "selected_tools": selected_tools}),
+                time.time(),
+            ),
+        )
+
+        conn.commit()
+        conn.close()
 
     def get_entity_types(self) -> List[str]:
         """Get all entity types in the database.
