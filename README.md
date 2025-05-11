@@ -118,6 +118,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Knowledge Graph](docs/knowledge_graph.md)
 - [Multi-Agent Learning](docs/multi_agent_learning.md)
 - [Reinforcement Learning](docs/reinforcement_learning.md)
+- [Reinforcement Learning Memory Persistence](docs/reinforcement_learning_memory.md)
 - [Error Recovery](docs/error_recovery.md)
 - [Advanced Error Analysis](docs/advanced_error_analysis.md)
 - [Custom Tools](docs/custom_tools.md)

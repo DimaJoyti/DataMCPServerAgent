@@ -121,5 +121,5 @@ node_modules/
 *.swo
 
 # OS files
-.DS_Store
+.DS_Storen
 Thumbs.db
