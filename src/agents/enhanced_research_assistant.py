@@ -25,6 +25,8 @@ from src.tools.enhanced_tool_selection import (
     EnhancedToolSelector,
     ToolPerformanceTracker,
 )
+from src.memory.distributed_memory_manager import DistributedMemoryManager
+from src.memory.knowledge_graph_integration import KnowledgeGraphIntegration
 
 # Import real tools instead of mock tools
 from src.tools.research_assistant_tools import (
@@ -94,14 +96,11 @@ class EnhancedResearchAssistant:
         model: Optional[ChatAnthropic] = None,
         db_path: str = "research_memory.db",
         tools: Optional[List[BaseTool]] = None,
+        kg_memory_type: str = "redis",
+        kg_memory_config: Optional[Dict[str, Any]] = None,
+        kg_namespace: str = "datamcp_kg"
     ):
-        """Initialize the enhanced research assistant.
-
-        Args:
-            model: Language model to use
-            db_path: Path to the research memory database
-            tools: List of tools to use
-        """
+        """Initialize the enhanced research assistant with knowledge graph integration."""
         # Initialize model
         self.model = model or ChatAnthropic(model="claude-3-5-sonnet-20240620")
 
@@ -129,41 +128,31 @@ class EnhancedResearchAssistant:
         self.research_prompt = ChatPromptTemplate.from_messages(
             [
                 SystemMessage(
-                    content="""You are an advanced research assistant that helps users gather, organize, and visualize information on various topics.
-Your task is to research the given topic using the available tools and provide a comprehensive response.
-
-Follow these steps:
-1. Analyze the user's query to understand the research topic
-2. Select the most appropriate tools to gather information
-3. Use the selected tools to gather information
-4. Synthesize the information into a coherent summary
-5. Identify and cite sources properly
-6. Organize the information with appropriate tags
-7. Generate visualizations if helpful
-
-Your response should be structured as a JSON object with the following fields:
-- "topic": The research topic
-- "summary": A comprehensive summary of the research findings
-- "sources": An array of source objects with title, url, authors, source_type, etc.
-- "tools_used": An array of tool names used in the research
-- "citation_format": The citation format used (apa, mla, chicago, harvard, ieee)
-- "bibliography": A formatted bibliography of the sources
-- "tags": An array of relevant tags for the research
-- "visualizations": An array of visualization objects (if applicable)
-
-Be thorough, accurate, and provide well-organized information.
-"""
+                    content="""You are an advanced research assistant that helps users gather, organize, and visualize information on various topics.\nYour task is to research the given topic using the available tools and provide a comprehensive response.\n\nFollow these steps:\n1. Analyze the user's query to understand the research topic\n2. Select the most appropriate tools to gather information\n3. Use the selected tools to gather information\n4. Synthesize the information into a coherent summary\n5. Identify and cite sources properly\n6. Organize the information with appropriate tags\n7. Generate visualizations if helpful\n\nYour response should be structured as a JSON object with the following fields:\n- \"topic\": The research topic\n- \"summary\": A comprehensive summary of the research findings\n- \"sources\": An array of source objects with title, url, authors, source_type, etc.\n- \"tools_used\": An array of tool names used in the research\n- \"citation_format\": The citation format used (apa, mla, chicago, harvard, ieee)\n- \"bibliography\": A formatted bibliography of the sources\n- \"tags\": An array of relevant tags for the research\n- \"visualizations\": An array of visualization objects (if applicable)\n\nBe thorough, accurate, and provide well-organized information.\n"""
                 ),
                 HumanMessage(
                     content="""
 Research Query: {query}
 Project ID: {project_id}
 Citation Format: {citation_format}
-
-Please research this topic and provide a comprehensive response.
+Knowledge Graph Context: {kg_context}
+\nPlease research this topic and provide a comprehensive response.
 """
                 ),
             ]
+        )
+
+        # --- Knowledge Graph Integration ---
+        self.kg_memory_manager = DistributedMemoryManager(
+            memory_type=kg_memory_type,
+            config=kg_memory_config,
+            namespace=kg_namespace
+        )
+        self.kg_integration = KnowledgeGraphIntegration(
+            memory_manager=self.kg_memory_manager,
+            db=self.memory_db,
+            model=self.model,
+            namespace=kg_namespace
         )
 
     def _get_default_tools(self) -> List[BaseTool]:
@@ -276,65 +265,49 @@ Please research this topic and provide a comprehensive response.
         return result
 
     async def invoke(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        """Invoke the research assistant.
-
-        Args:
-            inputs: Input parameters including query, project_id, and citation_format
-
-        Returns:
-            Research results
-        """
+        """Invoke the research assistant with knowledge graph context."""
         query = inputs.get("query", "").lower()
         project_id = inputs.get("project_id", self.default_project.id)
         citation_format = inputs.get("citation_format", "apa")
-
+        # --- Knowledge Graph Context ---
+        kg_context = await self.kg_integration.get_context_for_request(query)
         # Get or create the project
         project = self.memory_db.get_project(project_id)
         if not project:
             project = self.default_project
             project_id = project.id
-
         # Add the query to the project
         research_query = self.memory_db.add_query(project_id, query)
         if not research_query:
             raise ValueError(f"Failed to add query to project {project_id}")
-
         query_id = research_query.id
-
         # Select tools for this query
         selected_tools = await self.tool_selector.select_tools(query)
-
         # Execute selected tools
         tool_results = {}
         tools_used = []
-
         for tool_info in selected_tools.get("selected_tools", []):
             tool_name = tool_info["name"]
             tool_args = tool_info.get("args", {"query": query})
-
             try:
                 result = self._execute_tool(tool_name, tool_args, project_id, query_id)
                 tool_results[tool_name] = result
                 tools_used.append(tool_name)
             except Exception as e:
                 print(f"Error executing tool {tool_name}: {e}")
-
         # Generate research response using the model
         input_values = {
             "query": query,
             "project_id": project_id,
             "citation_format": citation_format,
+            "kg_context": json.dumps(kg_context, ensure_ascii=False)
         }
-
         research_message = self.research_prompt.format_messages(**input_values)
-
         # Add tool results to the message
         tool_results_str = "Tool Results:\n"
         for tool_name, result in tool_results.items():
             tool_results_str += f"\n--- {tool_name} ---\n{result}\n"
-
         research_message.append(HumanMessage(content=tool_results_str))
-
         # Get response from model
         model_response = self.model.invoke(research_message)
 
