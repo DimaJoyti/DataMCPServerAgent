@@ -45,6 +45,7 @@ def main():
             "distributed_memory",
             "knowledge_graph",
             "error_recovery",
+            "research_reports",
         ],
         default="basic",
         help="Agent mode to run",
@@ -72,6 +73,8 @@ def main():
         asyncio.run(chat_with_knowledge_graph_agent())
     elif args.mode == "error_recovery":
         asyncio.run(chat_with_error_recovery_agent())
+    elif args.mode == "research_reports":
+        asyncio.run(chat_with_research_reports_agent())
 
 
 if __name__ == "__main__":
