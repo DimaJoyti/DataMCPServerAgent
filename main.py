@@ -20,6 +20,7 @@ from src.core.knowledge_graph_main import chat_with_knowledge_graph_agent
 from src.core.main import chat_with_agent
 from src.core.multi_agent_main import chat_with_multi_agent_learning_system
 from src.core.reinforcement_learning_main import chat_with_rl_agent
+from src.core.seo_main import chat_with_seo_agent
 from src.utils.env_config import load_dotenv
 
 # Load environment variables
@@ -46,6 +47,7 @@ def main():
             "knowledge_graph",
             "error_recovery",
             "research_reports",
+            "seo",
         ],
         default="basic",
         help="Agent mode to run",
@@ -74,7 +76,11 @@ def main():
     elif args.mode == "error_recovery":
         asyncio.run(chat_with_error_recovery_agent())
     elif args.mode == "research_reports":
-        asyncio.run(chat_with_research_reports_agent())
+        # Import here to avoid circular imports
+        from research_reports_runner import run_research_reports_agent
+        asyncio.run(run_research_reports_agent())
+    elif args.mode == "seo":
+        asyncio.run(chat_with_seo_agent())
 
 
 if __name__ == "__main__":

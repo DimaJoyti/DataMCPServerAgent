@@ -38,6 +38,7 @@ setup(
             "datamcpserveragent-rl=src.core.reinforcement_learning_main:chat_with_rl_agent",
             "datamcpserveragent-distributed=src.core.distributed_memory_main:chat_with_distributed_memory_agent",
             "datamcpserveragent-knowledge-graph=src.core.knowledge_graph_main:chat_with_knowledge_graph_agent",
+            "datamcpserveragent-seo=src.core.seo_main:chat_with_seo_agent",
         ],
     },
 )

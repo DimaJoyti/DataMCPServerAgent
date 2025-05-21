@@ -1,0 +1,48 @@
+{
+  "name": "seo-agent-web",
+  "version": "1.0.0",
+  "description": "Web interface for the SEO Agent using Cloudflare's Agent platform",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "webpack --mode=production",
+    "dev": "webpack --watch --mode=development"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@phosphor-icons/react": "^2.0.15",
+    "agents": "^1.0.0",
+    "agents/ai-chat-agent": "^1.0.0",
+    "agents/ai-react": "^1.0.0",
+    "agents/react": "^1.0.0",
+    "agents/schedule": "^1.0.0",
+    "ai": "^2.2.31",
+    "chart.js": "^4.4.1",
+    "d3": "^7.8.5",
+    "date-fns": "^3.0.6",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "recharts": "^2.10.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "autoprefixer": "^10.4.16",
+    "css-loader": "^6.8.1",
+    "html-webpack-plugin": "^5.5.4",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.3",
+    "style-loader": "^3.3.3",
+    "tailwindcss": "^3.4.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "wrangler": "^3.22.1"
+  }
+}
