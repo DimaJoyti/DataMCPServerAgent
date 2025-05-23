@@ -4,15 +4,17 @@ Main entry point for the API.
 
 import os
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Add the project root to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from src.api.config import config
 from src.api.middleware.logging import LoggingMiddleware
@@ -49,17 +51,34 @@ app.add_middleware(LoggingMiddleware)
 if config.enable_rate_limiting:
     app.add_middleware(RateLimitingMiddleware)
 
+# Initialize Redis connection if distributed mode is enabled
+if config.enable_distributed:
+    from src.api.services.redis_service import RedisService
+
+    @app.on_event("startup")
+    async def startup_redis_client():
+        redis_service = RedisService()
+        await redis_service.connect()
+        app.state.redis = redis_service
+
+    @app.on_event("shutdown")
+    async def shutdown_redis_client():
+        if hasattr(app.state, "redis"):
+            await app.state.redis.disconnect()
+
 
 # Add exception handlers
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
     """
     Handle HTTP exceptions.
-    
+
     Args:
         request (Request): Request object
         exc (StarletteHTTPException): Exception
-        
+
     Returns:
         JSONResponse: JSON response with error details
     """
@@ -78,11 +97,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handle general exceptions.
-    
+
     Args:
         request (Request): Request object
         exc (Exception): Exception
-        
+
     Returns:
         JSONResponse: JSON response with error details
     """
@@ -109,7 +128,7 @@ app.include_router(tools.router)
 async def root() -> Dict[str, Any]:
     """
     Root endpoint.
-    
+
     Returns:
         Dict[str, Any]: API information
     """
@@ -125,7 +144,7 @@ async def root() -> Dict[str, Any]:
 def start_api():
     """Start the API server."""
     import uvicorn
-    
+
     uvicorn.run(
         "src.api.main:app",
         host=config.host,

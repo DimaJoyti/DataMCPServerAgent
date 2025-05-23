@@ -157,11 +157,7 @@ X-API-Key: key1
   "agent_id": "unique-agent-id",
   "agent_mode": "basic",
   "status": "available",
-  "capabilities": [
-    "chat",
-    "web_search",
-    "web_browsing"
-  ],
+  "capabilities": ["chat", "web_search", "web_browsing"],
   "created_at": "2023-01-01T00:00:00Z",
   "metadata": {
     "description": "Basic Agent"
@@ -273,25 +269,67 @@ When rate limiting is enabled, the API will return a 429 Too Many Requests respo
 
 The API can be configured using environment variables:
 
+### API Settings
+
 - `API_TITLE`: API title
 - `API_DESCRIPTION`: API description
 - `API_VERSION`: API version
 - `API_OPENAPI_URL`: OpenAPI URL
 - `API_DOCS_URL`: Swagger UI URL
 - `API_REDOC_URL`: ReDoc URL
+
+### Server Settings
+
 - `API_HOST`: Host to bind the server to
 - `API_PORT`: Port to bind the server to
 - `API_DEBUG`: Enable debug mode
 - `API_RELOAD`: Enable auto-reload on code changes
+
+### Security Settings
+
 - `API_ENABLE_AUTH`: Enable authentication
 - `API_KEY_HEADER`: API key header
 - `API_KEYS`: Comma-separated list of API keys
+
+### CORS Settings
+
 - `API_ALLOW_ORIGINS`: Comma-separated list of allowed origins for CORS
 - `API_ALLOW_METHODS`: Comma-separated list of allowed methods for CORS
 - `API_ALLOW_HEADERS`: Comma-separated list of allowed headers for CORS
+
+### Rate Limiting
+
 - `API_ENABLE_RATE_LIMITING`: Enable rate limiting
 - `API_RATE_LIMIT_PER_MINUTE`: Rate limit per minute
+
+### Logging
+
 - `API_LOG_LEVEL`: Log level
+
+### Agent Settings
+
 - `API_DEFAULT_AGENT_MODE`: Default agent mode
-- `API_MEMORY_BACKEND`: Memory backend
 - `API_ENABLE_ALL_TOOLS`: Enable all tools
+
+### Memory Settings
+
+- `API_MEMORY_BACKEND`: Memory backend (sqlite, file, redis, mongodb)
+
+### Redis Settings
+
+- `API_REDIS_HOST`: Redis host
+- `API_REDIS_PORT`: Redis port
+- `API_REDIS_DB`: Redis database
+- `API_REDIS_PASSWORD`: Redis password
+- `API_REDIS_PREFIX`: Redis key prefix
+
+### MongoDB Settings
+
+- `API_MONGODB_URI`: MongoDB URI
+- `API_MONGODB_DB`: MongoDB database
+
+### Distributed Settings
+
+- `API_ENABLE_DISTRIBUTED`: Enable distributed mode
+- `API_DISTRIBUTED_BACKEND`: Distributed backend (redis, mongodb)
+- `API_SESSION_STORE`: Session store (redis, mongodb, memory)
