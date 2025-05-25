@@ -48,16 +48,56 @@ def main():
             "error_recovery",
             "research_reports",
             "seo",
+            "api",
         ],
         default="basic",
         help="Agent mode to run",
+    )
+
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=os.getenv("API_HOST", "0.0.0.0"),
+        help="Host to bind the API server to (only used with --mode=api)",
+    )
+
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("API_PORT", "8000")),
+        help="Port to bind the API server to (only used with --mode=api)",
+    )
+
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        default=os.getenv("API_RELOAD", "false").lower() == "true",
+        help="Enable auto-reload on code changes (only used with --mode=api)",
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        default=os.getenv("API_DEBUG", "false").lower() == "true",
+        help="Enable debug mode (only used with --mode=api)",
     )
 
     args = parser.parse_args()
 
     print(f"Starting DataMCPServerAgent in {args.mode} mode...")
 
-    if args.mode == "basic":
+    if args.mode == "api":
+        # Set environment variables for API
+        os.environ["API_HOST"] = args.host
+        os.environ["API_PORT"] = str(args.port)
+        os.environ["API_RELOAD"] = str(args.reload).lower()
+        os.environ["API_DEBUG"] = str(args.debug).lower()
+
+        # Import and start the API server
+        from src.api.main import start_api
+
+        start_api()
+    elif args.mode == "basic":
         asyncio.run(chat_with_agent())
     elif args.mode == "advanced":
         asyncio.run(chat_with_advanced_agent())
@@ -78,6 +118,7 @@ def main():
     elif args.mode == "research_reports":
         # Import here to avoid circular imports
         from research_reports_runner import run_research_reports_agent
+
         asyncio.run(run_research_reports_agent())
     elif args.mode == "seo":
         asyncio.run(chat_with_seo_agent())
