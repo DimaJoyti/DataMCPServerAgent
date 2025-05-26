@@ -125,14 +125,14 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install uv && uv pip install --no-cache-dir -r requirements.txt
 
 # Development stage
 FROM base as development
 
 # Install development dependencies
 COPY requirements-dev.txt .
-RUN pip install --no-cache-dir -r requirements-dev.txt
+RUN uv pip install --no-cache-dir -r requirements-dev.txt
 
 # Copy source code
 COPY . .
@@ -153,7 +153,7 @@ COPY config/ ./config/
 COPY requirements.txt .
 
 # Install production dependencies only
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt
 
 # Change ownership to appuser
 RUN chown -R appuser:appuser /app
@@ -721,14 +721,17 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install uv
+      run: pip install uv
+
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        uv pip install -r requirements.txt
+        uv pip install -r requirements-dev.txt
 
     - name: Run tests
       run: |
-        pytest tests/ --cov=src/ --cov-report=xml
+        uv run pytest tests/ --cov=src/ --cov-report=xml
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3

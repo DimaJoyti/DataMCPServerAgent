@@ -547,7 +547,7 @@ ws.onmessage = function(event) {
 
 ### Installation
 ```bash
-pip install datamcp-sdk
+uv pip install datamcp-sdk
 ```
 
 ### Basic Usage
@@ -689,7 +689,7 @@ def verify_webhook(payload, signature, secret):
         payload.encode(),
         hashlib.sha256
     ).hexdigest()
-    
+
     return hmac.compare_digest(f"sha256={expected}", signature)
 ```
 

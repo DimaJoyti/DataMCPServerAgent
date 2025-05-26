@@ -79,7 +79,7 @@ The Data Pipeline System is a comprehensive, enterprise-grade platform for build
 ### Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 ### Optional Dependencies
@@ -88,19 +88,19 @@ For specific features, install additional packages:
 
 ```bash
 # For PostgreSQL support
-pip install asyncpg psycopg2-binary
+uv pip install asyncpg psycopg2-binary
 
 # For Apache Kafka support
-pip install kafka-python confluent-kafka
+uv pip install kafka-python confluent-kafka
 
 # For MinIO/S3 support
-pip install minio
+uv pip install minio
 
 # For InfluxDB support
-pip install influxdb-client
+uv pip install influxdb-client
 
 # For monitoring
-pip install prometheus-client
+uv pip install prometheus-client
 ```
 
 ## 🚀 Quick Start
@@ -154,19 +154,19 @@ async def main():
             )
         ]
     )
-    
+
     # Initialize orchestrator
     orchestrator = PipelineOrchestrator()
-    
+
     # Start orchestrator
     await orchestrator.start()
-    
+
     # Register pipeline
     pipeline = await orchestrator.register_pipeline(pipeline_config)
-    
+
     # Trigger execution
     run_id = await orchestrator.trigger_pipeline(pipeline.pipeline_id)
-    
+
     # Monitor execution
     while True:
         status = await orchestrator.get_pipeline_status(run_id)
@@ -174,7 +174,7 @@ async def main():
             print(f"Pipeline completed with status: {status.status}")
             break
         await asyncio.sleep(1)
-    
+
     # Stop orchestrator
     await orchestrator.stop()
 
@@ -189,7 +189,7 @@ from src.data_pipeline.ingestion.batch.batch_ingestion import BatchIngestionEngi
 
 async def batch_ingestion_example():
     engine = BatchIngestionEngine()
-    
+
     # Configure source and destination
     source_config = {
         "type": "database",
@@ -199,13 +199,13 @@ async def batch_ingestion_example():
         "username": "user",
         "password": "password"
     }
-    
+
     destination_config = {
         "type": "file",
         "file_path": "output/data.parquet",
         "file_format": "parquet"
     }
-    
+
     # Run ingestion
     metrics = await engine.ingest_data(source_config, destination_config)
     print(f"Processed {metrics.processed_records} records")
@@ -218,24 +218,24 @@ from src.data_pipeline.ingestion.streaming.stream_ingestion import StreamIngesti
 
 async def stream_processing_example():
     engine = StreamIngestionEngine()
-    
+
     # Register message handler
     def handle_user_events(message):
         print(f"Processing: {message.payload}")
         return {"processed": True}
-    
+
     engine.register_message_handler("user_events", handle_user_events)
-    
+
     # Start engine
     await engine.start()
-    
+
     # Send test messages
     for i in range(10):
         await engine.send_message("user_events", {"user_id": i, "action": "login"})
-    
+
     # Let it process
     await asyncio.sleep(5)
-    
+
     # Stop engine
     await engine.stop()
 ```
@@ -503,20 +503,20 @@ ingestion_config = BatchIngestionConfig(
 
 ```bash
 # Run unit tests
-python -m pytest tests/unit/
+uv run pytest tests/unit/
 
 # Run with coverage
-python -m pytest tests/unit/ --cov=src/data_pipeline
+uv run pytest tests/unit/ --cov=src/data_pipeline
 ```
 
 ### Integration Tests
 
 ```bash
 # Run integration tests
-python -m pytest tests/integration/
+uv run pytest tests/integration/
 
 # Run specific test
-python -m pytest tests/integration/test_pipeline_orchestrator.py
+uv run pytest tests/integration/test_pipeline_orchestrator.py
 ```
 
 ### Example Test
@@ -529,15 +529,15 @@ from src.data_pipeline.core.orchestrator import PipelineOrchestrator
 async def test_pipeline_execution():
     orchestrator = PipelineOrchestrator()
     await orchestrator.start()
-    
+
     # Test pipeline registration and execution
     pipeline = await orchestrator.register_pipeline(test_config)
     run_id = await orchestrator.trigger_pipeline(pipeline.pipeline_id)
-    
+
     # Verify execution
     status = await orchestrator.get_pipeline_status(run_id)
     assert status.status == PipelineStatus.SUCCESS
-    
+
     await orchestrator.stop()
 ```
 
@@ -569,10 +569,10 @@ git clone https://github.com/your-org/data-pipeline-system.git
 cd data-pipeline-system
 
 # Install development dependencies
-pip install -r requirements-dev.txt
+uv pip install -r requirements-dev.txt
 
 # Install pre-commit hooks
-pre-commit install
+uv run pre-commit install
 ```
 
 ### Code Style

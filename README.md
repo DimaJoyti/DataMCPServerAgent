@@ -64,7 +64,7 @@ cd DataMCPServerAgent
 2. Install dependencies:
 
 ```bash
-python install_dependencies.py
+uv pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
