@@ -70,6 +70,12 @@ dependencies = [
     # Utilities
     "shortuuid>=1.0.11",
     "tenacity>=8.2.3",
+
+    # AI/ML dependencies for semantic agents
+    "langchain-anthropic>=0.1.0",
+    "langchain-core>=0.1.0",
+    "langchain-mcp-adapters>=0.1.0",
+    "psutil>=5.9.0",
 ]
 
 [project.optional-dependencies]
@@ -88,7 +94,9 @@ dev = [
     "isort>=5.12.0",
     "ruff>=0.1.6",
     "mypy>=1.7.1",
+    "pylint>=3.0.0",
     "pre-commit>=3.6.0",
+    "bandit>=1.7.5",
 
     # Documentation
     "mkdocs>=1.5.3",
@@ -282,3 +290,74 @@ exclude_lines = [
 ]
 show_missing = true
 precision = 2
+
+# Pylint configuration
+[tool.pylint.main]
+load-plugins = [
+    "pylint.extensions.check_elif",
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.docparams",
+    "pylint.extensions.for_any_all",
+    "pylint.extensions.set_membership",
+    "pylint.extensions.code_style",
+    "pylint.extensions.overlapping_exceptions",
+    "pylint.extensions.typing",
+    "pylint.extensions.redefined_variable_type",
+    "pylint.extensions.comparison_placement",
+]
+
+[tool.pylint.messages_control]
+max-line-length = 100
+disable = [
+    "missing-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
+    "duplicate-code",
+    "import-error",
+    "no-name-in-module",
+]
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 20
+max-returns = 8
+max-branches = 15
+max-statements = 60
+max-parents = 10
+max-attributes = 15
+min-public-methods = 1
+max-public-methods = 25
+max-bool-expr = 8
+
+[tool.pylint.similarities]
+min-similarity-lines = 6
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true
+
+[tool.pylint.typecheck]
+ignored-modules = [
+    "alembic",
+    "uvicorn",
+    "prometheus_client",
+    "structlog",
+    "rich",
+    "typer",
+    "langchain_anthropic",
+    "langchain_core",
+    "langchain_mcp_adapters",
+    "mcp",
+    "langgraph",
+]
+
+# Bandit security configuration
+[tool.bandit]
+exclude_dirs = ["tests", "migrations", "alembic"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection_process_args

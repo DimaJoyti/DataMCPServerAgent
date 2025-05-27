@@ -25,6 +25,13 @@ from app.core.config import Environment, Settings
 from app.core.logging import get_logger, setup_logging
 from app.workers.background import create_background_worker
 
+# Import semantic agents
+try:
+    from src.agents.semantic.main import SemanticAgentsSystem
+    SEMANTIC_AGENTS_AVAILABLE = True
+except ImportError:
+    SEMANTIC_AGENTS_AVAILABLE = False
+
 # Initialize console and logger
 console = Console()
 logger = get_logger(__name__)
@@ -266,6 +273,60 @@ def test(
         console.print("✅ All tests passed!", style="green")
     except subprocess.CalledProcessError:
         console.print("❌ Some tests failed", style="red")
+        raise typer.Exit(1)
+
+
+@app.command()
+def semantic_agents(
+    env: Environment = typer.Option(Environment.DEVELOPMENT, help="Environment"),
+    log_level: str = typer.Option("INFO", help="Log level"),
+    api_port: int = typer.Option(8003, help="API port for semantic agents"),
+):
+    """Start the semantic agents system."""
+    if not SEMANTIC_AGENTS_AVAILABLE:
+        console.print("❌ Semantic agents not available. Please install dependencies.", style="red")
+        raise typer.Exit(1)
+
+    display_banner()
+
+    # Create settings
+    settings = Settings(environment=env, log_level=log_level)
+
+    # Setup logging
+    setup_logging(settings)
+
+    logger.info("🧠 Starting Semantic Agents System")
+    logger.info(f"📍 Environment: {env.value}")
+    logger.info(f"🌐 API: http://localhost:{api_port}")
+
+    try:
+        # Create and run semantic agents system
+        system = SemanticAgentsSystem()
+
+        # Create FastAPI app with semantic agents
+        from fastapi import FastAPI
+        app = FastAPI(
+            title="DataMCPServerAgent with Semantic Agents",
+            description="Advanced AI Agent System with Semantic Agents",
+            version="2.0.0",
+        )
+
+        # Include semantic agents router
+        semantic_app = system.get_fastapi_app()
+        app.mount("/semantic", semantic_app)
+
+        # Run with uvicorn
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=api_port,
+            log_level=log_level.lower(),
+        )
+
+    except KeyboardInterrupt:
+        logger.info("👋 Semantic agents system stopped by user")
+    except Exception as e:
+        logger.error(f"💥 Semantic agents system failed: {e}", exc_info=True)
         raise typer.Exit(1)
 
 
