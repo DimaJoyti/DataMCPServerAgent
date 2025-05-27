@@ -1,279 +1,289 @@
 """
-Centralized logging configuration for DataMCPServerAgent.
-Provides structured logging with correlation IDs, metrics, and different output formats.
+Consolidated Logging System for DataMCPServerAgent.
+
+This module provides a comprehensive, structured logging system with:
+- JSON and text formatting
+- Context-aware logging
+- Performance tracking
+- Error tracking
+- Correlation IDs
+- Structured metadata
+- Semantic agents logging
+- LLM pipeline logging
 """
 
-import json
 import logging
-import logging.config
 import sys
-import traceback
+import time
+import uuid
 from contextvars import ContextVar
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
-from app.core.config import settings
+import structlog
+from rich.console import Console
+from rich.logging import RichHandler
 
-# Context variables for request correlation
-correlation_id: ContextVar[Optional[str]] = ContextVar("correlation_id", default=None)
-user_id: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
-agent_id: ContextVar[Optional[str]] = ContextVar("agent_id", default=None)
+from app.core.config import Settings
+
+# Context variables for request tracking
+correlation_id_var: ContextVar[Optional[str]] = ContextVar("correlation_id", default=None)
+user_id_var: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
+agent_id_var: ContextVar[Optional[str]] = ContextVar("agent_id", default=None)
+request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+
+# Global console for rich output
+console = Console()
 
 
-class CorrelationFilter(logging.Filter):
-    """Add correlation ID and context to log records."""
+class ContextFilter(logging.Filter):
+    """Add context variables to log records."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        """Add context variables to log record."""
-        record.correlation_id = correlation_id.get()
-        record.user_id = user_id.get()
-        record.agent_id = agent_id.get()
-        record.timestamp = datetime.now(timezone.utc).isoformat()
+        """Add context variables to the log record."""
+        record.correlation_id = correlation_id_var.get()
+        record.user_id = user_id_var.get()
+        record.agent_id = agent_id_var.get()
+        record.request_id = request_id_var.get()
         return True
 
 
-class JSONFormatter(logging.Formatter):
-    """JSON formatter for structured logging."""
+class PerformanceFilter(logging.Filter):
+    """Add performance metrics to log records."""
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON."""
-        log_entry = {
-            "timestamp": getattr(record, "timestamp", datetime.now(timezone.utc).isoformat()),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        }
+    def __init__(self):
+        super().__init__()
+        self.start_time = time.time()
 
-        # Add context if available
-        if hasattr(record, "correlation_id") and record.correlation_id:
-            log_entry["correlation_id"] = record.correlation_id
-
-        if hasattr(record, "user_id") and record.user_id:
-            log_entry["user_id"] = record.user_id
-
-        if hasattr(record, "agent_id") and record.agent_id:
-            log_entry["agent_id"] = record.agent_id
-
-        # Add exception info if present
-        if record.exc_info:
-            log_entry["exception"] = {
-                "type": record.exc_info[0].__name__,
-                "message": str(record.exc_info[1]),
-                "traceback": traceback.format_exception(*record.exc_info),
-            }
-
-        # Add extra fields
-        for key, value in record.__dict__.items():
-            if key not in {
-                "name",
-                "msg",
-                "args",
-                "levelname",
-                "levelno",
-                "pathname",
-                "filename",
-                "module",
-                "lineno",
-                "funcName",
-                "created",
-                "msecs",
-                "relativeCreated",
-                "thread",
-                "threadName",
-                "processName",
-                "process",
-                "getMessage",
-                "exc_info",
-                "exc_text",
-                "stack_info",
-                "timestamp",
-                "correlation_id",
-                "user_id",
-                "agent_id",
-            }:
-                log_entry[key] = value
-
-        return json.dumps(log_entry, default=str)
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Add performance metrics to the log record."""
+        record.uptime = time.time() - self.start_time
+        record.timestamp = time.time()
+        return True
 
 
-class ColoredFormatter(logging.Formatter):
-    """Colored formatter for console output."""
-
-    # Color codes
-    COLORS = {
-        "DEBUG": "\033[36m",  # Cyan
-        "INFO": "\033[32m",  # Green
-        "WARNING": "\033[33m",  # Yellow
-        "ERROR": "\033[31m",  # Red
-        "CRITICAL": "\033[35m",  # Magenta
-        "RESET": "\033[0m",  # Reset
-    }
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record with colors."""
-        # Add color to level name
-        level_color = self.COLORS.get(record.levelname, "")
-        reset_color = self.COLORS["RESET"]
-
-        # Create colored level name
-        colored_level = f"{level_color}{record.levelname}{reset_color}"
-
-        # Format timestamp
-        timestamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S")
-
-        # Build log message
-        parts = [f"[{timestamp}]", f"[{colored_level}]", f"[{record.name}]"]
-
-        # Add context if available
-        if hasattr(record, "correlation_id") and record.correlation_id:
-            parts.append(f"[{record.correlation_id[:8]}]")
-
-        if hasattr(record, "agent_id") and record.agent_id:
-            parts.append(f"[{record.agent_id}]")
-
-        # Add message
-        parts.append(record.getMessage())
-
-        log_line = " ".join(parts)
-
-        # Add exception info if present
-        if record.exc_info:
-            log_line += "\n" + self.formatException(record.exc_info)
-
-        return log_line
+def add_correlation_id(_logger, _method_name, event_dict):
+    """Add correlation ID to log events."""
+    correlation_id = correlation_id_var.get()
+    if correlation_id:
+        event_dict["correlation_id"] = correlation_id
+    return event_dict
 
 
-def setup_logging() -> None:
-    """Setup logging configuration."""
+def add_user_context(_logger, _method_name, event_dict):
+    """Add user context to log events."""
+    user_id = user_id_var.get()
+    agent_id = agent_id_var.get()
+    request_id = request_id_var.get()
 
-    # Create directories if they don't exist
-    if settings.logs_dir:
-        Path(settings.logs_dir).mkdir(parents=True, exist_ok=True)
+    if user_id:
+        event_dict["user_id"] = user_id
+    if agent_id:
+        event_dict["agent_id"] = agent_id
+    if request_id:
+        event_dict["request_id"] = request_id
 
-    # Base logging config
-    config = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "json": {
-                "()": JSONFormatter,
-            },
-            "colored": {
-                "()": ColoredFormatter,
-            },
-            "standard": {
-                "format": settings.log_format,
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            },
-        },
-        "filters": {
-            "correlation": {
-                "()": CorrelationFilter,
-            },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": settings.log_level.value,
-                "formatter": "colored" if sys.stdout.isatty() else "json",
-                "filters": ["correlation"],
-                "stream": sys.stdout,
-            },
-        },
-        "loggers": {
-            "app": {
-                "level": settings.log_level.value,
-                "handlers": ["console"],
-                "propagate": False,
-            },
-            "uvicorn": {
-                "level": "INFO",
-                "handlers": ["console"],
-                "propagate": False,
-            },
-            "uvicorn.access": {
-                "level": "INFO",
-                "handlers": ["console"],
-                "propagate": False,
-            },
-        },
-        "root": {
-            "level": settings.log_level.value,
-            "handlers": ["console"],
-        },
-    }
+    return event_dict
 
-    # Add file handler if log file is specified
+
+def add_performance_metrics(_logger, _method_name, event_dict):
+    """Add performance metrics to log events."""
+    event_dict["timestamp"] = time.time()
+    return event_dict
+
+
+def setup_logging(settings: Settings) -> None:
+    """Setup comprehensive logging system."""
+
+    # Create logs directory
+    settings.logs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Configure structlog
+    processors = [
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        add_correlation_id,
+        add_user_context,
+        add_performance_metrics,
+    ]
+
+    if settings.log_format == "json":
+        processors.append(structlog.processors.JSONRenderer())
+    else:
+        processors.extend(
+            [
+                structlog.processors.ExceptionPrettyPrinter(),
+                structlog.dev.ConsoleRenderer(colors=True),
+            ]
+        )
+
+    structlog.configure(
+        processors=processors,
+        wrapper_class=structlog.stdlib.BoundLogger,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
+    # Configure standard logging
+    handlers = []
+
+    # Console handler
+    if settings.is_development:
+        console_handler = RichHandler(
+            console=console, show_time=True, show_path=True, markup=True, rich_tracebacks=True
+        )
+        console_handler.setLevel(settings.log_level.value)
+        handlers.append(console_handler)
+    else:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(settings.log_level.value)
+
+        if settings.log_format == "json":
+            formatter = logging.Formatter(
+                '{"timestamp": "%(asctime)s", "level": "%(levelname)s", '
+                '"logger": "%(name)s", "message": "%(message)s", '
+                '"correlation_id": "%(correlation_id)s", "user_id": "%(user_id)s", '
+                '"agent_id": "%(agent_id)s", "request_id": "%(request_id)s"}'
+            )
+        else:
+            formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s")
+
+        console_handler.setFormatter(formatter)
+        handlers.append(console_handler)
+
+    # File handler
     if settings.log_file:
-        log_file_path = Path(settings.log_file)
-        log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(settings.log_file)
+        file_handler.setLevel(logging.DEBUG)
 
-        config["handlers"]["file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": settings.log_level.value,
-            "formatter": "json",
-            "filters": ["correlation"],
-            "filename": str(log_file_path),
-            "maxBytes": 10 * 1024 * 1024,  # 10MB
-            "backupCount": 5,
-            "encoding": "utf-8",
-        }
+        if settings.log_format == "json":
+            formatter = logging.Formatter(
+                '{"timestamp": "%(asctime)s", "level": "%(levelname)s", '
+                '"logger": "%(name)s", "message": "%(message)s", '
+                '"correlation_id": "%(correlation_id)s", "user_id": "%(user_id)s", '
+                '"agent_id": "%(agent_id)s", "request_id": "%(request_id)s", '
+                '"uptime": %(uptime)f}'
+            )
+        else:
+            formatter = logging.Formatter(
+                "[%(asctime)s] [%(levelname)s] [%(name)s] [%(correlation_id)s] %(message)s"
+            )
 
-        # Add file handler to loggers
-        for logger_config in config["loggers"].values():
-            logger_config["handlers"].append("file")
-        config["root"]["handlers"].append("file")
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
 
-    # Apply configuration
-    logging.config.dictConfig(config)
+    # Add filters
+    context_filter = ContextFilter()
+    performance_filter = PerformanceFilter()
+
+    for handler in handlers:
+        handler.addFilter(context_filter)
+        handler.addFilter(performance_filter)
+
+    # Configure root logger
+    logging.basicConfig(level=settings.log_level.value, handlers=handlers, force=True)
+
+    # Set specific logger levels
+    logging.getLogger("uvicorn").setLevel(logging.INFO)
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    logging.getLogger("fastapi").setLevel(logging.INFO)
+    logging.getLogger("sqlalchemy.engine").setLevel(
+        logging.INFO if settings.database.echo_sql else logging.WARNING
+    )
+
+    # Suppress noisy loggers in production
+    if settings.is_production:
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 
-def get_logger(name: str) -> logging.Logger:
-    """Get a logger instance."""
-    return logging.getLogger(f"app.{name}")
+def get_logger(name: str) -> structlog.stdlib.BoundLogger:
+    """Get a structured logger instance."""
+    return structlog.get_logger(name)
 
 
-def set_correlation_id(cid: str) -> None:
-    """Set correlation ID for current context."""
-    correlation_id.set(cid)
-
-
-def set_user_id(uid: str) -> None:
-    """Set user ID for current context."""
-    user_id.set(uid)
-
-
-def set_agent_id(aid: str) -> None:
-    """Set agent ID for current context."""
-    agent_id.set(aid)
+def set_correlation_id(correlation_id: str) -> None:
+    """Set correlation ID for the current context."""
+    correlation_id_var.set(correlation_id)
 
 
 def get_correlation_id() -> Optional[str]:
-    """Get current correlation ID."""
-    return correlation_id.get()
+    """Get correlation ID from the current context."""
+    return correlation_id_var.get()
+
+
+def set_user_id(user_id: str) -> None:
+    """Set user ID for the current context."""
+    user_id_var.set(user_id)
 
 
 def get_user_id() -> Optional[str]:
-    """Get current user ID."""
-    return user_id.get()
+    """Get user ID from the current context."""
+    return user_id_var.get()
+
+
+def set_agent_id(agent_id: str) -> None:
+    """Set agent ID for the current context."""
+    agent_id_var.set(agent_id)
 
 
 def get_agent_id() -> Optional[str]:
-    """Get current agent ID."""
-    return agent_id.get()
+    """Get agent ID from the current context."""
+    return agent_id_var.get()
+
+
+def set_request_id(request_id: str) -> None:
+    """Set request ID for the current context."""
+    request_id_var.set(request_id)
+
+
+def get_request_id() -> Optional[str]:
+    """Get request ID from the current context."""
+    return request_id_var.get()
+
+
+def generate_correlation_id() -> str:
+    """Generate a new correlation ID."""
+    return str(uuid.uuid4())
 
 
 class LoggerMixin:
-    """Mixin class to add logging capabilities to any class."""
+    """Mixin to add logging capabilities to classes."""
 
     @property
-    def logger(self) -> logging.Logger:
+    def logger(self) -> structlog.stdlib.BoundLogger:
         """Get logger for this class."""
-        return get_logger(self.__class__.__module__ + "." + self.__class__.__name__)
+        return get_logger(self.__class__.__name__)
+
+
+class PerformanceLogger:
+    """Context manager for performance logging."""
+
+    def __init__(self, operation: str, logger: Optional[structlog.stdlib.BoundLogger] = None):
+        self.operation = operation
+        self.logger = logger or get_logger("performance")
+        self.start_time = None
+
+    def __enter__(self):
+        self.start_time = time.time()
+        self.logger.debug(f"Starting {self.operation}")
+        return self
+
+    def __exit__(self, exc_type, exc_val, _exc_tb):
+        duration = time.time() - self.start_time
+
+        if exc_type is None:
+            self.logger.info(f"Completed {self.operation}", duration_ms=round(duration * 1000, 2))
+        else:
+            self.logger.error(
+                f"Failed {self.operation}",
+                duration_ms=round(duration * 1000, 2),
+                error=str(exc_val),
+            )
 
 
 def log_function_call(func):
@@ -281,36 +291,20 @@ def log_function_call(func):
 
     def wrapper(*args, **kwargs):
         logger = get_logger(func.__module__)
-        logger.debug(f"Calling {func.__name__} with args={args}, kwargs={kwargs}")
 
-        try:
-            result = func(*args, **kwargs)
-            logger.debug(f"Function {func.__name__} completed successfully")
-            return result
-        except Exception as e:
-            logger.error(f"Function {func.__name__} failed with error: {e}")
-            raise
+        with PerformanceLogger(f"{func.__name__}", logger):
+            return func(*args, **kwargs)
 
     return wrapper
 
 
-def log_async_function_call(func):
+async def log_async_function_call(func):
     """Decorator to log async function calls."""
 
     async def wrapper(*args, **kwargs):
         logger = get_logger(func.__module__)
-        logger.debug(f"Calling async {func.__name__} with args={args}, kwargs={kwargs}")
 
-        try:
-            result = await func(*args, **kwargs)
-            logger.debug(f"Async function {func.__name__} completed successfully")
-            return result
-        except Exception as e:
-            logger.error(f"Async function {func.__name__} failed with error: {e}")
-            raise
+        with PerformanceLogger(f"{func.__name__}", logger):
+            return await func(*args, **kwargs)
 
     return wrapper
-
-
-# Initialize logging on module import
-setup_logging()

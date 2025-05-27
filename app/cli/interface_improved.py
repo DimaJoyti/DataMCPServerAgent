@@ -21,11 +21,25 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 from rich.tree import Tree
 
-from app.agents.manager import AgentManager
-from app.core.config_improved import Settings
-from app.core.logging_improved import get_logger
-from app.tasks.manager import TaskManager
-from app.tools.manager import ToolManager
+from app.core.config import Settings
+from app.core.logging import get_logger
+
+
+# Temporary mock managers until they are implemented
+class MockAgentManager:
+    def __init__(self, settings): pass
+    async def list_agents(self): return []
+    async def create_agent(self, **kwargs): return type('Agent', (), {'name': kwargs['name'], 'id': 'mock-id'})()
+    async def delete_agent(self, agent_id): pass
+    async def get_agent(self, agent_id): return None
+
+class MockTaskManager:
+    def __init__(self, settings): pass
+    async def list_tasks(self): return []
+
+class MockToolManager:
+    def __init__(self, settings): pass
+    async def list_tools(self): return []
 
 logger = get_logger(__name__)
 console = Console()
@@ -36,9 +50,9 @@ class CLIInterface:
 
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.agent_manager = AgentManager(settings)
-        self.task_manager = TaskManager(settings)
-        self.tool_manager = ToolManager(settings)
+        self.agent_manager = MockAgentManager(settings)
+        self.task_manager = MockTaskManager(settings)
+        self.tool_manager = MockToolManager(settings)
         self.session_history: List[Dict[str, Any]] = []
 
     async def run_interactive(self) -> None:
