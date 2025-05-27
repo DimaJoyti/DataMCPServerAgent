@@ -1,0 +1,46 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Backend",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/backend && go run main.go",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Backend with Hot Reload",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/backend && air",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Frontend",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/frontend && flutter run",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Both: Frontend & Backend",
+            "dependsOn": [
+                "Start Backend",
+                "Start Frontend"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

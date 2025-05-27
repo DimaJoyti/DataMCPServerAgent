@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datamcp
+  labels:
+    name: datamcp
+    app: datamcp-server-agent
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datamcp-config
+  namespace: datamcp
+data:
+  ENVIRONMENT: "production"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8002"
+  ENABLE_METRICS: "true"
+  ENABLE_TRACING: "true"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datamcp-secrets
+  namespace: datamcp
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql+asyncpg://datamcp:datamcp123@postgres:5432/datamcp"
+  REDIS_URL: "redis://redis:6379"
+  SECRET_KEY: "your_super_secret_key_here_change_in_production"
+  JWT_SECRET_KEY: "your_jwt_secret_key_here"
