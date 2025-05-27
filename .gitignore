@@ -129,3 +129,4 @@ Thumbs.db
 /.env.example
 /.env.template
 /agent-ui/package-lock.json
+/.ruff_cache

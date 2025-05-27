@@ -45,6 +45,37 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Error Handling**: Retry mechanisms and error recovery
 - **Scheduling**: Cron-based pipeline scheduling
 
+## 📄 Document Processing Pipeline
+
+### Advanced Document Processing System
+
+- **Multi-format Support**: PDF, DOCX, HTML, Markdown, TXT, Excel, PowerPoint, CSV
+- **Intelligent Chunking**: Text, semantic, and adaptive chunking strategies
+- **AI Vectorization**: OpenAI, HuggingFace, Cloudflare AI embeddings
+- **Vector Stores**: Memory, ChromaDB, FAISS, Pinecone, Weaviate support
+- **Hybrid Search**: Vector + keyword search with filtering
+- **Web Interface**: FastAPI REST API with interactive UI
+- **Async Processing**: Parallel processing with task queues
+- **Real-time Monitoring**: Progress tracking and performance metrics
+
+### Quick Start - Document Pipeline
+
+```bash
+# Install pipeline dependencies
+python install_pipeline_deps.py
+
+# Start web interface
+python start_web_interface.py
+
+# Test the pipeline
+python test_pipeline.py
+```
+
+### Web Interface Access
+- **API Documentation**: http://localhost:8000/docs
+- **Interactive UI**: http://localhost:8000/ui
+- **Health Check**: http://localhost:8000/health
+
 ## Prerequisites
 
 - Python 3.8 or higher
