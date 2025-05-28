@@ -3,7 +3,6 @@
 import { FC, useState } from 'react'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 import type {
@@ -182,17 +181,18 @@ const Img = ({ src, alt }: ImgProps) => {
       {error ? (
         <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md bg-secondary/50 text-muted">
           <Paragraph className="text-primary">Image unavailable</Paragraph>
-          <Link
-            href={src}
+          <a
+            href={typeof src === 'string' ? src : URL.createObjectURL(src)}
             target="_blank"
+            rel="noopener noreferrer"
             className="max-w-md truncate underline"
           >
-            {src}
-          </Link>
+            {typeof src === 'string' ? src : 'Blob URL'}
+          </a>
         </div>
       ) : (
         <Image
-          src={src}
+          src={typeof src === 'string' ? src : URL.createObjectURL(src)}
           width={1280}
           height={720}
           alt={alt ?? 'Rendered image'}

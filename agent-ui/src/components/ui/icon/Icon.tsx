@@ -2,7 +2,7 @@ import { type FC } from 'react'
 
 import { cn } from '@/lib/utils'
 
-import { ICONS } from './constants'
+import { ICONS } from './constants.tsx'
 import { type IconProps } from './types'
 
 const Icon: FC<IconProps> = ({

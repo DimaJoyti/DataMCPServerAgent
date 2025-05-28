@@ -1,4 +1,5 @@
 'use client'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { AgentSelector } from '@/components/playground/Sidebar/AgentSelector'
 import useChatActions from '@/hooks/useChatActions'
@@ -14,12 +15,31 @@ import { useQueryState } from 'nuqs'
 import { truncateText } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 const ENDPOINT_PLACEHOLDER = 'NO ENDPOINT ADDED'
-const SidebarHeader = () => (
-  <div className="flex items-center gap-2">
-    <Icon type="agno" size="xs" />
-    <span className="text-xs font-medium uppercase text-white">Agent UI</span>
-  </div>
-)
+const SidebarHeader = () => {
+  const { theme, setTheme } = useTheme()
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Icon type="agno" size="xs" />
+        <span className="text-xs font-medium uppercase text-foreground">
+          Agent UI
+        </span>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="hover:cursor-pointer hover:bg-transparent"
+      >
+        <Icon
+          type={theme === 'dark' ? 'moon' : 'sun'}
+          size="xs"
+          className="text-foreground"
+        />
+      </Button>
+    </div>
+  )
+}
 
 const NewChatButton = ({
   disabled,
@@ -32,15 +52,15 @@ const NewChatButton = ({
     onClick={onClick}
     disabled={disabled}
     size="lg"
-    className="h-9 w-full rounded-xl bg-primary text-xs font-medium text-background hover:bg-primary/80"
+    className="h-9 w-full rounded-xl bg-primary text-xs font-medium text-primary-foreground hover:bg-primary/80"
   >
-    <Icon type="plus-icon" size="xs" className="text-background" />
+    <Icon type="plus-icon" size="xs" className="text-primary-foreground" />
     <span className="uppercase">New Chat</span>
   </Button>
 )
 
 const ModelDisplay = ({ model }: { model: string }) => (
-  <div className="flex h-9 w-full items-center gap-3 rounded-xl border border-primary/15 bg-accent p-3 text-xs font-medium uppercase text-muted">
+  <div className="flex h-9 w-full items-center gap-3 rounded-xl border border-border bg-accent p-3 text-xs font-medium uppercase text-muted-foreground">
     {(() => {
       const icon = getProviderIcon(model)
       return icon ? <Icon type={icon} className="shrink-0" size="xs" /> : null
@@ -113,7 +133,9 @@ const Endpoint = () => {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <div className="text-xs font-medium uppercase text-primary">Endpoint</div>
+      <div className="text-xs font-medium uppercase text-foreground">
+        Endpoint
+      </div>
       {isEditing ? (
         <div className="flex w-full items-center gap-1">
           <input
@@ -121,7 +143,7 @@ const Endpoint = () => {
             value={endpointValue}
             onChange={(e) => setEndpointValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex h-9 w-full items-center text-ellipsis rounded-xl border border-primary/15 bg-accent p-3 text-xs font-medium text-muted"
+            className="flex h-9 w-full items-center text-ellipsis rounded-xl border border-border bg-accent p-3 text-xs font-medium text-muted-foreground"
             autoFocus
           />
           <Button
@@ -130,13 +152,13 @@ const Endpoint = () => {
             onClick={handleSave}
             className="hover:cursor-pointer hover:bg-transparent"
           >
-            <Icon type="save" size="xs" />
+            <Icon type="save" size="xs" className="text-foreground" />
           </Button>
         </div>
       ) : (
         <div className="flex w-full items-center gap-1">
           <motion.div
-            className="relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-primary/15 bg-accent p-3 uppercase"
+            className="relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-accent p-3 uppercase"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onClick={() => setIsEditing(true)}
@@ -152,7 +174,7 @@ const Endpoint = () => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <p className="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-primary">
+                  <p className="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-foreground">
                     <Icon type="edit" size="xxs" /> EDIT ENDPOINT
                   </p>
                 </motion.div>
@@ -165,7 +187,7 @@ const Endpoint = () => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <p className="text-xs font-medium text-muted">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {isMounted
                       ? truncateText(selectedEndpoint, 21) ||
                         ENDPOINT_PLACEHOLDER
@@ -189,7 +211,7 @@ const Endpoint = () => {
               animate={{ rotate: isRotating ? 360 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
             >
-              <Icon type="refresh" size="xs" />
+              <Icon type="refresh" size="xs" className="text-foreground" />
             </motion.div>
           </Button>
         </div>
@@ -221,7 +243,7 @@ const Sidebar = () => {
   }
   return (
     <motion.aside
-      className="relative flex h-screen shrink-0 grow-0 flex-col overflow-hidden px-2 py-3 font-dmmono"
+      className="relative flex h-screen shrink-0 grow-0 flex-col overflow-hidden border-r border-border bg-background px-2 py-3 font-dmmono"
       initial={{ width: '16rem' }}
       animate={{ width: isCollapsed ? '2.5rem' : '16rem' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -236,7 +258,7 @@ const Sidebar = () => {
         <Icon
           type="sheet"
           size="xs"
-          className={`transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`}
+          className={`transform text-foreground ${isCollapsed ? 'rotate-180' : 'rotate-0'}`}
         />
       </motion.button>
       <motion.div
@@ -264,7 +286,7 @@ const Sidebar = () => {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 >
-                  <div className="text-xs font-medium uppercase text-primary">
+                  <div className="text-xs font-medium uppercase text-foreground">
                     Agent
                   </div>
                   {isEndpointLoading ? (

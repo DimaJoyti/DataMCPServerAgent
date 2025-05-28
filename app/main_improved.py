@@ -288,8 +288,9 @@ def semantic_agents(
     env: Environment = typer.Option(Environment.DEVELOPMENT, help="Environment"),
     log_level: str = typer.Option("INFO", help="Log level"),
     api_port: int = typer.Option(8003, help="API port for semantic agents"),
+    enable_phase3: bool = typer.Option(True, help="Enable Phase 3 integrated agents"),
 ):
-    """Start the semantic agents system."""
+    """Start the semantic agents system with Phase 3 integration."""
     if not SEMANTIC_AGENTS_AVAILABLE:
         console.print("❌ Semantic agents not available. Please install dependencies.", style="red")
         raise typer.Exit(1)
@@ -302,7 +303,14 @@ def semantic_agents(
     # Setup logging
     setup_logging(settings)
 
-    logger.info("🧠 Starting Semantic Agents System")
+    if enable_phase3:
+        logger.info("🚀 Starting Phase 3 Integrated Semantic Agents System")
+        logger.info("🎭 Multimodal processing enabled")
+        logger.info("🔍 RAG architecture enabled")
+        logger.info("⚡ Streaming pipelines enabled")
+    else:
+        logger.info("🧠 Starting Standard Semantic Agents System")
+
     logger.info(f"📍 Environment: {env.value}")
     logger.info(f"🌐 API: http://localhost:{api_port}")
 
@@ -313,14 +321,31 @@ def semantic_agents(
         # Create FastAPI app with semantic agents
         from fastapi import FastAPI
         app = FastAPI(
-            title="DataMCPServerAgent with Semantic Agents",
-            description="Advanced AI Agent System with Semantic Agents",
-            version="2.0.0",
+            title="DataMCPServerAgent with Phase 3 Semantic Agents",
+            description="Advanced AI Agent System with LLM Pipeline Integration",
+            version="3.0.0",
         )
 
         # Include semantic agents router
         semantic_app = system.get_fastapi_app()
         app.mount("/semantic", semantic_app)
+
+        # Add Phase 3 info endpoint
+        @app.get("/phase3/info")
+        async def phase3_info():
+            return {
+                "phase": 3,
+                "title": "Integrated Semantic Agents",
+                "features": [
+                    "Multimodal processing (text, image, audio)",
+                    "RAG architecture with hybrid search",
+                    "Real-time streaming pipelines",
+                    "Intelligent task coordination",
+                    "LLM pipeline integration"
+                ],
+                "enabled": enable_phase3,
+                "version": "3.0.0"
+            }
 
         # Run with uvicorn
         uvicorn.run(
@@ -409,6 +434,63 @@ def _benchmark_pipeline(pipeline_type: str, settings) -> None:
     """Benchmark a specific pipeline type."""
     console.print(f"📊 Benchmark for {pipeline_type} pipeline would run here", style="blue")
     console.print("This would measure performance metrics and throughput", style="dim")
+
+
+@app.command()
+def phase3(
+    action: str = typer.Argument(..., help="Action: test, demo, info"),
+    verbose: bool = typer.Option(False, help="Verbose output"),
+):
+    """Manage Phase 3 integrated semantic agents."""
+    display_banner()
+
+    if action == "test":
+        console.print("🧪 Running Phase 3 Integration Tests", style="bold blue")
+
+        import subprocess
+
+        try:
+            cmd = ["python", "scripts/test_phase3_integration.py"]
+            if verbose:
+                cmd.append("--verbose")
+
+            result = subprocess.run(cmd, check=True)
+            console.print("✅ Phase 3 tests completed successfully!", style="green")
+        except subprocess.CalledProcessError:
+            console.print("❌ Phase 3 tests failed", style="red")
+            raise typer.Exit(1)
+
+    elif action == "demo":
+        console.print("🎭 Running Phase 3 Demo", style="bold blue")
+
+        import subprocess
+
+        try:
+            cmd = ["python", "scripts/demo_phase3.py"]
+            result = subprocess.run(cmd, check=True)
+            console.print("✅ Phase 3 demo completed successfully!", style="green")
+        except subprocess.CalledProcessError:
+            console.print("❌ Phase 3 demo failed", style="red")
+            raise typer.Exit(1)
+
+    elif action == "info":
+        console.print("📋 Phase 3: Integrated Semantic Agents", style="bold blue")
+        console.print("=" * 50)
+        console.print("🎯 Features:")
+        console.print("  • Multimodal processing (text, image, audio)")
+        console.print("  • RAG architecture with hybrid search")
+        console.print("  • Real-time streaming pipelines")
+        console.print("  • Intelligent task coordination")
+        console.print("  • LLM pipeline integration")
+        console.print("\n🚀 Usage:")
+        console.print("  python app/main_improved.py semantic-agents --enable-phase3")
+        console.print("  python app/main_improved.py phase3 test")
+        console.print("  python app/main_improved.py phase3 demo")
+
+    else:
+        console.print(f"❌ Unknown action: {action}", style="red")
+        console.print("Available actions: test, demo, info", style="yellow")
+        raise typer.Exit(1)
 
 
 @app.command()
