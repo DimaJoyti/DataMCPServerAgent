@@ -192,10 +192,39 @@ export const AgentPlayground: React.FC<AgentPlaygroundProps> = ({ className }) =
             Test and experiment with integrated agents
           </p>
         </div>
-        <Button variant="outline">
-          <Settings className="mr-2 h-4 w-4" />
-          Configure
-        </Button>
+:start_line:195
+-------
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => { /* TODO: Implement configuration modal */ }}>
+            <Settings className="mr-2 h-4 w-4" />
+            Configure
+          </Button>
+          <Button variant="destructive" onClick={async () => {
+            if (confirm("Are you sure you want to clear all sessions? This action cannot be undone.")) {
+              try {
+                const response = await fetch('/v1/playground/clear_sessions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': 'YOUR_API_KEY' // Replace with actual API key handling
+                  },
+                });
+                if (response.ok) {
+                  setRequests([]); // Clear local requests on successful API call
+                  alert("All sessions cleared successfully!");
+                } else {
+                  const errorData = await response.json();
+                  alert(`Failed to clear sessions: ${errorData.detail || response.statusText}`);
+                }
+              } catch (error: any) {
+                alert(`Error clearing sessions: ${error.message}`);
+              }
+            }
+          }}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Clear All Sessions
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

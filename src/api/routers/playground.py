@@ -24,6 +24,15 @@ router = APIRouter(prefix="/v1/playground", tags=["playground"])
 sessions_storage = {}
 
 
+@router.post("/clear_sessions")
+async def clear_all_sessions(api_key: Optional[str] = Depends(get_api_key)):
+    """
+    Clear all stored sessions.
+    """
+    sessions_storage.clear()
+    return {"message": "All sessions cleared successfully"}
+
+
 @router.get("/status")
 async def get_playground_status():
     """
