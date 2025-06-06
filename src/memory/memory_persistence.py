@@ -187,6 +187,76 @@ class MemoryDatabase:
         )
         """)
 
+        # Create advanced reasoning tables
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reasoning_chains (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chain_id TEXT NOT NULL UNIQUE,
+            goal TEXT NOT NULL,
+            initial_context TEXT NOT NULL,
+            start_time REAL NOT NULL
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reasoning_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chain_id TEXT NOT NULL,
+            step_id TEXT NOT NULL,
+            step_type TEXT NOT NULL,
+            content TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            dependencies TEXT NOT NULL,
+            timestamp REAL NOT NULL,
+            evidence TEXT NOT NULL,
+            alternatives TEXT NOT NULL,
+            FOREIGN KEY (chain_id) REFERENCES reasoning_chains (chain_id)
+        )
+        """)
+
+        # Create planning tables
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plan_id TEXT NOT NULL UNIQUE,
+            goal TEXT NOT NULL,
+            actions TEXT NOT NULL,
+            initial_state TEXT NOT NULL,
+            goal_state TEXT NOT NULL,
+            metadata TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )
+        """)
+
+        # Create meta-reasoning tables
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS meta_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            decision_id TEXT NOT NULL UNIQUE,
+            strategy TEXT NOT NULL,
+            decision TEXT NOT NULL,
+            rationale TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            expected_impact TEXT NOT NULL,
+            timestamp REAL NOT NULL
+        )
+        """)
+
+        # Create reflection tables
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reflection_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL UNIQUE,
+            trigger_event TEXT NOT NULL,
+            focus_areas TEXT NOT NULL,
+            insights TEXT NOT NULL,
+            conclusions TEXT NOT NULL,
+            improvement_plan TEXT NOT NULL,
+            metadata TEXT NOT NULL,
+            timestamp REAL NOT NULL
+        )
+        """)
+
         conn.commit()
         conn.close()
 
@@ -1188,3 +1258,223 @@ class FileBackedMemoryDatabase:
             summary += "- No feedback recorded\n"
 
         return summary
+
+    # Advanced reasoning methods
+    async def save_reasoning_chain(self, chain_id: str, chain_data: Dict[str, Any]) -> None:
+        """Save a reasoning chain to the database.
+
+        Args:
+            chain_id: Unique identifier for the reasoning chain
+            chain_data: Chain data including goal and initial context
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO reasoning_chains
+            (chain_id, goal, initial_context, start_time)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                chain_id,
+                chain_data["goal"],
+                json.dumps(chain_data["initial_context"]),
+                chain_data["start_time"]
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+    async def save_reasoning_step(self, chain_id: str, step_data: Dict[str, Any]) -> None:
+        """Save a reasoning step to the database.
+
+        Args:
+            chain_id: ID of the reasoning chain
+            step_data: Step data
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO reasoning_steps
+            (chain_id, step_id, step_type, content, confidence, dependencies, timestamp, evidence, alternatives)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                chain_id,
+                step_data["step_id"],
+                step_data["step_type"],
+                step_data["content"],
+                step_data["confidence"],
+                json.dumps(step_data["dependencies"]),
+                step_data["timestamp"],
+                json.dumps(step_data["evidence"]),
+                json.dumps(step_data["alternatives"])
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+    # Planning methods
+    async def save_plan(self, plan_id: str, plan_data: Dict[str, Any]) -> None:
+        """Save a plan to the database.
+
+        Args:
+            plan_id: Unique identifier for the plan
+            plan_data: Plan data
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO plans
+            (plan_id, goal, actions, initial_state, goal_state, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                plan_id,
+                plan_data["goal"],
+                json.dumps(plan_data["actions"]),
+                json.dumps(plan_data["initial_state"]),
+                json.dumps(plan_data["goal_state"]),
+                json.dumps(plan_data["metadata"]),
+                time.time()
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+    # Meta-reasoning methods
+    async def save_meta_decision(self, decision_data: Dict[str, Any]) -> None:
+        """Save a meta-reasoning decision to the database.
+
+        Args:
+            decision_data: Decision data
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO meta_decisions
+            (decision_id, strategy, decision, rationale, confidence, expected_impact, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                decision_data["decision_id"],
+                decision_data["strategy"],
+                decision_data["decision"],
+                decision_data["rationale"],
+                decision_data["confidence"],
+                json.dumps(decision_data["expected_impact"]),
+                decision_data["timestamp"]
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+    # Reflection methods
+    async def save_reflection_session(self, session_id: str, session_data: Dict[str, Any]) -> None:
+        """Save a reflection session to the database.
+
+        Args:
+            session_id: Unique identifier for the reflection session
+            session_data: Session data
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO reflection_sessions
+            (session_id, trigger_event, focus_areas, insights, conclusions, improvement_plan, metadata, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session_id,
+                session_data["trigger_event"],
+                json.dumps(session_data["focus_areas"]),
+                json.dumps(session_data["insights"]),
+                json.dumps(session_data["conclusions"]),
+                json.dumps(session_data["improvement_plan"]),
+                json.dumps(session_data["metadata"]),
+                time.time()
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+    # Additional helper methods for the new systems
+    async def get_entity_types(self) -> List[str]:
+        """Get all entity types in the database.
+
+        Returns:
+            List of entity types
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT DISTINCT entity_type FROM entity_memory")
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [row[0] for row in rows]
+
+    async def get_tool_names(self) -> List[str]:
+        """Get all tool names in the database.
+
+        Returns:
+            List of tool names
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT DISTINCT tool_name FROM tool_usage_history")
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [row[0] for row in rows]
+
+    def get_agent_rewards(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent rewards for an agent.
+
+        Args:
+            agent_name: Name of the agent
+            limit: Maximum number of rewards to return
+
+        Returns:
+            List of recent rewards
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT reward, reward_components, timestamp
+            FROM agent_rewards
+            WHERE agent_name = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+            """,
+            (agent_name, limit)
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                "reward": reward,
+                "reward_components": json.loads(components),
+                "timestamp": timestamp
+            }
+            for reward, components, timestamp in rows
+        ]
