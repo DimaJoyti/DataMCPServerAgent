@@ -1,0 +1,125 @@
+{
+    "mcp": {
+        "brave": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-brave-search"
+            ],
+            "env": {
+                "BRAVE_API_KEY": "$BSAJuPah0gzC7mCh62saJiUxINoWn90"
+            },
+            "disabled": false,
+            "alwaysAllow": []
+        },
+        "redis": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-redis",
+                "redis://localhost:6379"
+            ]
+        },
+        "desktop-commander": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@wonderwhy-er/desktop-commander"
+            ]
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/home/"
+            ]
+        },
+        "fetch": {
+            "command": "uv",
+            "args": [
+                "mcp-server-fetch"
+            ]
+        },
+        "everything": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-everything"
+            ],
+            "disabled": false,
+            "alwaysAllow": []
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ]
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
+        "puppeteer": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-puppeteer"
+            ]
+        },
+        "github.com/modelcontextprotocol/servers/tree/main/src/sentry": {
+            "disabled": false,
+            "timeout": 60,
+            "command": "uvx",
+            "args": [
+                "mcp-server-sentry",
+                "--auth-token",
+                "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"
+            ],
+            "env": {
+                "SENTRY_AUTH_TOKEN": "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"
+            },
+            "transportType": "stdio",
+            "autoApprove": []
+        },
+        "Context7": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp@latest"
+            ]
+        },
+        "playwright": {
+            "command": "npx",
+            "args": [
+                "@playwright/mcp@latest"
+            ]
+        },
+        "postgres": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://localhost/mydb"
+            ]
+        },
+        "Comfy MCP Server": {
+            "command": "/path/to/uvx",
+            "args": [
+                "comfy-mcp-server"
+            ],
+            "env": {
+                "COMFY_URL": "http://your-comfy-server-url:port",
+                "COMFY_WORKFLOW_JSON_FILE": "/path/to/the/comfyui_workflow_export.json",
+                "PROMPT_NODE_ID": "6",
+                "OUTPUT_NODE_ID": "9",
+                "OUTPUT_MODE": "file"
+            }
+        }
+    }
+}

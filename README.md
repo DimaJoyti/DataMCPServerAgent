@@ -19,6 +19,64 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 - **Advanced Agent Orchestration**: Sophisticated multi-step reasoning, planning, meta-reasoning, and reflection systems
 - **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
 
+## 🏗️ Data Pipeline System
+
+### Enterprise Data Processing Infrastructure
+
+- **Pipeline Orchestration**: Advanced workflow management with dependency resolution
+- **Data Ingestion**: Batch and streaming data ingestion from multiple sources
+- **Data Transformation**: ETL/ELT pipelines with validation and quality checks
+- **Processing Engines**: Parallel batch processing and real-time stream processing
+- **Monitoring & Observability**: Comprehensive metrics and monitoring
+- **Storage Integration**: Unified access to databases, object storage, and file systems
+
+### Supported Data Sources
+
+- **Databases**: PostgreSQL, MySQL, SQLite, MongoDB
+- **Files**: CSV, JSON, Parquet, Excel
+- **APIs**: REST APIs with authentication and pagination
+- **Object Storage**: S3-compatible storage (AWS S3, MinIO)
+- **Streaming**: Apache Kafka, Redis Streams
+
+### Processing Capabilities
+
+- **Batch Processing**: Large-scale data processing with parallel execution
+- **Stream Processing**: Real-time data processing with windowing
+- **Data Validation**: Schema validation and quality checks
+- **Error Handling**: Retry mechanisms and error recovery
+- **Scheduling**: Cron-based pipeline scheduling
+
+## 📄 Document Processing Pipeline
+
+### Advanced Document Processing System
+
+- **Multi-format Support**: PDF, DOCX, HTML, Markdown, TXT, Excel, PowerPoint, CSV
+- **Intelligent Chunking**: Text, semantic, and adaptive chunking strategies
+- **AI Vectorization**: OpenAI, HuggingFace, Cloudflare AI embeddings
+- **Vector Stores**: Memory, ChromaDB, FAISS, Pinecone, Weaviate support
+- **Hybrid Search**: Vector + keyword search with filtering
+- **Web Interface**: FastAPI REST API with interactive UI
+- **Async Processing**: Parallel processing with task queues
+- **Real-time Monitoring**: Progress tracking and performance metrics
+
+### Quick Start - Document Pipeline
+
+```bash
+# Install pipeline dependencies
+python install_pipeline_deps.py
+
+# Start web interface
+python start_web_interface.py
+
+# Test the pipeline
+python test_pipeline.py
+```
+
+### Web Interface Access
+- **API Documentation**: http://localhost:8000/docs
+- **Interactive UI**: http://localhost:8000/ui
+- **Health Check**: http://localhost:8000/health
+
 ## Prerequisites
 
 - Python 3.8 or higher
@@ -38,7 +96,7 @@ cd DataMCPServerAgent
 2. Install dependencies:
 
 ```bash
-python install_dependencies.py
+uv pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
@@ -112,11 +170,25 @@ from src.core.orchestration_main import chat_with_orchestrated_agent
 
 # Start the advanced orchestrated agent system
 asyncio.run(chat_with_orchestrated_agent())
+For data pipeline processing:
+
+```python
+from src.core.data_pipeline_main import chat_with_data_pipeline_system
+
+# Start the data pipeline system
+asyncio.run(chat_with_data_pipeline_system())
+```
+
+Or run the data pipeline example:
+
+```python
+# Run the comprehensive data pipeline example
+python examples/data_pipeline_example.py
 ```
 
 See the `examples/` directory for more usage examples.
 
-## Documentation
+## 📚 Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
@@ -135,6 +207,33 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Custom Tools](docs/custom_tools.md)
 - [Tool Development Guide](docs/tool_development.md)
 - [Contributing Guide](docs/contributing.md)
+### 🏗️ Architecture & Design
+- [System Architecture Blueprint](docs/system_architecture_blueprint.md) - Comprehensive system architecture overview
+- [Component Specifications](docs/component_specifications.md) - Detailed component interfaces and specifications
+- [Data Flow & Integration](docs/data_flow_integration.md) - Data flow patterns and integration architecture
+- [Architecture Overview](docs/architecture.md) - High-level system architecture
+
+### 🚀 Deployment & Operations
+- [Deployment & Operations Guide](docs/deployment_operations.md) - Complete deployment and operational procedures
+- [API Reference](docs/api_reference.md) - Comprehensive REST API and SDK documentation
+- [Installation Guide](docs/installation.md) - Setup and installation instructions
+
+### 🔧 Feature Guides
+- [Data Pipeline Guide](docs/data_pipeline_guide.md) - Enterprise data processing capabilities
+- [Memory Management](docs/memory.md) - Memory system overview
+- [Distributed Memory](docs/distributed_memory.md) - Distributed memory architecture
+- [Knowledge Graph](docs/knowledge_graph.md) - Knowledge graph integration
+- [Multi-Agent Learning](docs/multi_agent_learning.md) - Multi-agent coordination
+- [Reinforcement Learning](docs/reinforcement_learning.md) - RL capabilities
+- [Reinforcement Learning Memory Persistence](docs/reinforcement_learning_memory.md) - RL memory systems
+- [Error Recovery](docs/error_recovery.md) - Error handling systems
+- [Advanced Error Analysis](docs/advanced_error_analysis.md) - Advanced error analysis
+
+### 💻 Development & Usage
+- [Usage Guide](docs/usage.md) - Getting started guide
+- [Custom Tools](docs/custom_tools.md) - Building custom tools and integrations
+- [Tool Development Guide](docs/tool_development.md) - Development best practices
+- [Contributing Guide](docs/contributing.md) - How to contribute to the project
 
 ## Contributing
 

@@ -9,9 +9,22 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-import networkx as nx
-from rdflib import RDF, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import FOAF
+# Try to import networkx, make it optional
+try:
+    import networkx as nx
+    NETWORKX_AVAILABLE = True
+except ImportError:
+    NETWORKX_AVAILABLE = False
+    nx = None
+
+# Try to import rdflib, make it optional
+try:
+    from rdflib import RDF, Graph, Literal, Namespace, URIRef
+    from rdflib.namespace import FOAF
+    RDFLIB_AVAILABLE = True
+except ImportError:
+    RDFLIB_AVAILABLE = False
+    RDF = Graph = Literal = Namespace = URIRef = FOAF = None
 
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
@@ -33,16 +46,24 @@ class KnowledgeGraph:
         self.db = db
         self.namespace = namespace
 
-        # Initialize RDF graph
-        self.rdf_graph = Graph()
+        # Initialize RDF graph (if available)
+        if RDFLIB_AVAILABLE:
+            self.rdf_graph = Graph()
+            # Define namespaces
+            self.ns = Namespace(f"http://{namespace}.org/")
+            self.rdf_graph.bind("datamcp", self.ns)
+            self.rdf_graph.bind("foaf", FOAF)
+        else:
+            self.rdf_graph = None
+            self.ns = None
+            logger.warning("RDFLib not available. RDF operations will be disabled.")
 
-        # Define namespaces
-        self.ns = Namespace(f"http://{namespace}.org/")
-        self.rdf_graph.bind("datamcp", self.ns)
-        self.rdf_graph.bind("foaf", FOAF)
-
-        # Initialize NetworkX graph for in-memory operations
-        self.nx_graph = nx.MultiDiGraph()
+        # Initialize NetworkX graph for in-memory operations (if available)
+        if NETWORKX_AVAILABLE:
+            self.nx_graph = nx.MultiDiGraph()
+        else:
+            self.nx_graph = None
+            logger.warning("NetworkX not available. Some graph operations will be limited.")
 
         # Load existing graph from database
         self._load_graph()
@@ -55,18 +76,20 @@ class KnowledgeGraph:
 
             for node_id, node_type, properties, timestamp in nodes:
                 properties_dict = json.loads(properties)
-                self.nx_graph.add_node(
-                    node_id,
-                    node_type=node_type,
-                    properties=properties_dict,
-                    timestamp=timestamp,
-                )
+                if self.nx_graph is not None:
+                    self.nx_graph.add_node(
+                        node_id,
+                        node_type=node_type,
+                        properties=properties_dict,
+                        timestamp=timestamp,
+                    )
 
-                # Add to RDF graph
-                node_uri = URIRef(f"{self.ns}{node_id}")
-                self.rdf_graph.add(
-                    (node_uri, RDF.type, URIRef(f"{self.ns}{node_type}"))
-                )
+                # Add to RDF graph (if available)
+                if self.rdf_graph is not None and self.ns is not None:
+                    node_uri = URIRef(f"{self.ns}{node_id}")
+                    self.rdf_graph.add(
+                        (node_uri, RDF.type, URIRef(f"{self.ns}{node_type}"))
+                    )
 
                 for prop, value in properties_dict.items():
                     if isinstance(value, str):
@@ -195,39 +218,41 @@ class KnowledgeGraph:
             if node_id is None:
                 node_id = str(uuid.uuid4())
 
-            # Add node to NetworkX graph
-            self.nx_graph.add_node(
-                node_id,
-                node_type=node_type,
-                properties=properties,
-                timestamp=time.time(),
-            )
+            # Add node to NetworkX graph (if available)
+            if self.nx_graph is not None:
+                self.nx_graph.add_node(
+                    node_id,
+                    node_type=node_type,
+                    properties=properties,
+                    timestamp=time.time(),
+                )
 
-            # Add node to RDF graph
-            node_uri = URIRef(f"{self.ns}{node_id}")
-            self.rdf_graph.add((node_uri, RDF.type, URIRef(f"{self.ns}{node_type}")))
+            # Add node to RDF graph (if available)
+            if self.rdf_graph is not None and self.ns is not None:
+                node_uri = URIRef(f"{self.ns}{node_id}")
+                self.rdf_graph.add((node_uri, RDF.type, URIRef(f"{self.ns}{node_type}")))
 
-            for prop, value in properties.items():
-                if isinstance(value, str):
-                    self.rdf_graph.add(
-                        (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                    )
-                elif isinstance(value, (int, float)):
-                    self.rdf_graph.add(
-                        (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                    )
-                elif isinstance(value, bool):
-                    self.rdf_graph.add(
-                        (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                    )
-                elif isinstance(value, dict):
-                    self.rdf_graph.add(
-                        (
-                            node_uri,
-                            URIRef(f"{self.ns}{prop}"),
-                            Literal(json.dumps(value)),
+                for prop, value in properties.items():
+                    if isinstance(value, str):
+                        self.rdf_graph.add(
+                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
                         )
-                    )
+                    elif isinstance(value, (int, float)):
+                        self.rdf_graph.add(
+                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
+                        )
+                    elif isinstance(value, bool):
+                        self.rdf_graph.add(
+                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
+                        )
+                    elif isinstance(value, dict):
+                        self.rdf_graph.add(
+                            (
+                                node_uri,
+                                URIRef(f"{self.ns}{prop}"),
+                                Literal(json.dumps(value)),
+                            )
+                        )
 
             # Save node to database
             self.db.execute(
@@ -262,31 +287,33 @@ class KnowledgeGraph:
             properties: Edge properties
         """
         try:
-            # Add edge to NetworkX graph
-            self.nx_graph.add_edge(
-                source_id,
-                target_id,
-                edge_type=edge_type,
-                properties=properties,
-                timestamp=time.time(),
-            )
+            # Add edge to NetworkX graph (if available)
+            if self.nx_graph is not None:
+                self.nx_graph.add_edge(
+                    source_id,
+                    target_id,
+                    edge_type=edge_type,
+                    properties=properties,
+                    timestamp=time.time(),
+                )
 
-            # Add edge to RDF graph
-            source_uri = URIRef(f"{self.ns}{source_id}")
-            target_uri = URIRef(f"{self.ns}{target_id}")
-            edge_uri = URIRef(f"{self.ns}{edge_type}")
+            # Add edge to RDF graph (if available)
+            if self.rdf_graph is not None and self.ns is not None:
+                source_uri = URIRef(f"{self.ns}{source_id}")
+                target_uri = URIRef(f"{self.ns}{target_id}")
+                edge_uri = URIRef(f"{self.ns}{edge_type}")
 
-            self.rdf_graph.add((source_uri, edge_uri, target_uri))
+                self.rdf_graph.add((source_uri, edge_uri, target_uri))
 
-            # Add edge properties
-            for prop, value in properties.items():
-                edge_prop_uri = URIRef(f"{self.ns}edge_{edge_type}_{prop}")
-                if isinstance(value, str):
-                    self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
-                elif isinstance(value, (int, float)):
-                    self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
-                elif isinstance(value, bool):
-                    self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
+                # Add edge properties
+                for prop, value in properties.items():
+                    edge_prop_uri = URIRef(f"{self.ns}edge_{edge_type}_{prop}")
+                    if isinstance(value, str):
+                        self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
+                    elif isinstance(value, (int, float)):
+                        self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
+                    elif isinstance(value, bool):
+                        self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
 
             # Save edge to database
             self.db.execute(
@@ -316,7 +343,7 @@ class KnowledgeGraph:
             Node data or None if not found
         """
         try:
-            if node_id in self.nx_graph:
+            if self.nx_graph is not None and node_id in self.nx_graph:
                 node_data = self.nx_graph.nodes[node_id]
                 return {
                     "id": node_id,
@@ -324,6 +351,22 @@ class KnowledgeGraph:
                     "properties": node_data["properties"],
                     "timestamp": node_data["timestamp"],
                 }
+
+            # Fallback to database query if NetworkX not available
+            result = self.db.execute(
+                "SELECT node_type, properties, timestamp FROM knowledge_graph_nodes WHERE node_id = ?",
+                (node_id,)
+            ).fetchone()
+
+            if result:
+                node_type, properties_json, timestamp = result
+                return {
+                    "id": node_id,
+                    "type": node_type,
+                    "properties": json.loads(properties_json),
+                    "timestamp": timestamp,
+                }
+
             return None
         except Exception as e:
             error_message = format_error_for_user(e)
@@ -341,16 +384,36 @@ class KnowledgeGraph:
         """
         try:
             nodes = []
-            for node_id, node_data in self.nx_graph.nodes(data=True):
-                if node_data.get("node_type") == node_type:
+
+            if self.nx_graph is not None:
+                # Use NetworkX if available
+                for node_id, node_data in self.nx_graph.nodes(data=True):
+                    if node_data.get("node_type") == node_type:
+                        nodes.append(
+                            {
+                                "id": node_id,
+                                "type": node_data["node_type"],
+                                "properties": node_data["properties"],
+                                "timestamp": node_data["timestamp"],
+                            }
+                        )
+            else:
+                # Fallback to database query
+                results = self.db.execute(
+                    "SELECT node_id, properties, timestamp FROM knowledge_graph_nodes WHERE node_type = ?",
+                    (node_type,)
+                ).fetchall()
+
+                for node_id, properties_json, timestamp in results:
                     nodes.append(
                         {
                             "id": node_id,
-                            "type": node_data["node_type"],
-                            "properties": node_data["properties"],
-                            "timestamp": node_data["timestamp"],
+                            "type": node_type,
+                            "properties": json.loads(properties_json),
+                            "timestamp": timestamp,
                         }
                     )
+
             return nodes
         except Exception as e:
             error_message = format_error_for_user(e)
@@ -374,6 +437,11 @@ class KnowledgeGraph:
             List of edges
         """
         try:
+            if self.nx_graph is None:
+                # Fallback to database query if NetworkX not available
+                logger.warning("NetworkX not available, using database fallback for get_edges")
+                return []
+
             edges = []
 
             # Get all edges
@@ -416,6 +484,10 @@ class KnowledgeGraph:
             List of neighbor nodes
         """
         try:
+            if self.nx_graph is None:
+                logger.warning("NetworkX not available, cannot get neighbors")
+                return []
+
             neighbors = []
 
             if direction == "outgoing" or direction == "both":
@@ -483,6 +555,10 @@ class KnowledgeGraph:
             List of matching nodes
         """
         try:
+            if self.nx_graph is None:
+                logger.warning("NetworkX not available, cannot search nodes")
+                return []
+
             matching_nodes = []
 
             for node_id, node_data in self.nx_graph.nodes(data=True):
@@ -528,6 +604,10 @@ class KnowledgeGraph:
             Query results
         """
         try:
+            if self.rdf_graph is None:
+                logger.warning("RDFLib not available, cannot execute SPARQL query")
+                return []
+
             results = []
 
             # Execute query
@@ -570,6 +650,10 @@ class KnowledgeGraph:
             Path as a list of edges, or None if no path exists
         """
         try:
+            if self.nx_graph is None or not NETWORKX_AVAILABLE:
+                logger.warning("NetworkX not available, cannot find path")
+                return None
+
             # Check if nodes exist
             if source_id not in self.nx_graph or target_id not in self.nx_graph:
                 return None
@@ -620,6 +704,10 @@ class KnowledgeGraph:
             Subgraph as a dictionary of nodes and edges
         """
         try:
+            if self.nx_graph is None:
+                logger.warning("NetworkX not available, cannot get subgraph")
+                return {"nodes": [], "edges": []}
+
             # Get nodes
             nodes = []
             node_set = set(node_ids)

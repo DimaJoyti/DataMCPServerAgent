@@ -116,7 +116,6 @@ node_modules/
 
 # IDE files
 .idea/
-.vscode/
 *.swp
 *.swo
 
@@ -124,3 +123,10 @@ node_modules/
 .DS_Storen
 Thumbs.db
 .augment-guidelines
+/.augment-guidelines
+/.env.production
+/.env.development
+/.env.example
+/.env.template
+/agent-ui/package-lock.json
+/.ruff_cache
