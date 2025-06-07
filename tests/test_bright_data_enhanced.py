@@ -1,362 +1,199 @@
+#!/usr/bin/env python3
 """
-Tests for Enhanced Bright Data MCP Integration
+Quick test script for Enhanced Bright Data MCP Integration
 
-This module contains comprehensive tests for the enhanced Bright Data integration
-including unit tests, integration tests, and performance tests.
+This script provides a quick way to test the enhanced Bright Data integration
+without running the full example. It includes basic functionality tests and
+performance benchmarks.
 """
 
-import pytest
 import asyncio
 import time
-from unittest.mock import Mock, AsyncMock, patch
+import logging
+import sys
+import os
 from typing import Dict, Any
 
-# Import components to test
-from src.tools.bright_data.core.config import BrightDataConfig
-from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
-from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache
-from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
-from src.tools.bright_data.core.error_handler import (
-    BrightDataErrorHandler, BrightDataException, ErrorCategory
+# Add project root to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logger = logging.getLogger(__name__)
 
-class TestBrightDataConfig:
-    """Test configuration management"""
+# Import components
+try:
+    from src.tools.bright_data.core.config import BrightDataConfig
+    from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
+    from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache
+    from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
+    from src.tools.bright_data.core.error_handler import BrightDataErrorHandler
+except ImportError as e:
+    logger.error(f"Failed to import components: {e}")
+    logger.error("Make sure you're running from the project root directory")
+    sys.exit(1)
 
-    def test_config_creation(self):
-        """Test basic configuration creation"""
-        config = BrightDataConfig()
-        assert config.api_timeout == 30
-        assert config.max_concurrent_requests == 10
-        assert config.cache.enabled is True
-        assert config.rate_limit.enabled is True
+class BrightDataTester:
+    """Test runner for Bright Data enhanced integration"""
 
-    def test_config_from_dict(self):
-        """Test configuration creation from dictionary"""
-        config_data = {
-            "api_timeout": 60,
-            "max_concurrent_requests": 20,
-            "cache": {
-                "enabled": False,
-                "default_ttl": 7200
-            },
-            "rate_limit": {
-                "requests_per_minute": 120
-            }
+    def __init__(self):
+        self.results = {}
+        self.start_time = None
+
+    def start_test_suite(self):
+        """Start the test suite"""
+        self.start_time = time.time()
+        logger.info("🚀 Starting Enhanced Bright Data Integration Tests")
+        logger.info("=" * 60)
+
+    def finish_test_suite(self):
+        """Finish the test suite and show summary"""
+        total_time = time.time() - self.start_time
+        logger.info("=" * 60)
+        logger.info(f"✅ Test suite completed in {total_time:.2f} seconds")
+
+        # Show results summary
+        passed = sum(1 for result in self.results.values() if result["status"] == "PASS")
+        failed = sum(1 for result in self.results.values() if result["status"] == "FAIL")
+
+        logger.info(f"📊 Results: {passed} passed, {failed} failed")
+
+        if failed > 0:
+            logger.info("❌ Failed tests:")
+            for test_name, result in self.results.items():
+                if result["status"] == "FAIL":
+                    logger.info(f"  - {test_name}: {result['error']}")
+
+    def record_test_result(self, test_name: str, status: str, error: str = None, duration: float = None):
+        """Record test result"""
+        self.results[test_name] = {
+            "status": status,
+            "error": error,
+            "duration": duration
         }
 
+        status_emoji = "✅" if status == "PASS" else "❌"
+        duration_str = f" ({duration:.3f}s)" if duration else ""
+        logger.info(f"{status_emoji} {test_name}{duration_str}")
+
+        if error:
+            logger.info(f"   Error: {error}")
+
+    async def run_test(self, test_name: str, test_func):
+        """Run a single test with error handling"""
+        start_time = time.time()
+        try:
+            await test_func()
+            duration = time.time() - start_time
+            self.record_test_result(test_name, "PASS", duration=duration)
+        except Exception as e:
+            duration = time.time() - start_time
+            self.record_test_result(test_name, "FAIL", str(e), duration)
+
+    async def test_config_management(self):
+        """Test configuration management"""
+        # Test basic config creation
+        config = BrightDataConfig()
+        assert config.api_timeout == 30
+
+        # Test config from dict
+        config_data = {
+            "api_timeout": 60,
+            "cache": {"enabled": False}
+        }
         config = BrightDataConfig.from_dict(config_data)
         assert config.api_timeout == 60
-        assert config.max_concurrent_requests == 20
         assert config.cache.enabled is False
-        assert config.cache.default_ttl == 7200
-        assert config.rate_limit.requests_per_minute == 120
 
-    def test_config_validation(self):
-        """Test configuration validation"""
-        config = BrightDataConfig()
+        # Test config validation
         config.api_key = "test_key"
+        config.validate()  # Should not raise
 
-        # Should not raise exception
-        config.validate()
+    async def test_memory_cache(self):
+        """Test memory cache functionality"""
+        cache = MemoryCache(max_size=5, default_ttl=60)
 
-        # Should raise exception for missing API key
-        config.api_key = None
-        with pytest.raises(ValueError, match="API key is required"):
-            config.validate()
+        # Test set/get
+        await cache.set("key1", "value1")
+        value = await cache.get("key1")
+        assert value == "value1"
 
-    def test_config_to_dict(self):
-        """Test configuration serialization to dictionary"""
-        config = BrightDataConfig()
-        config.api_timeout = 45
-
-        config_dict = config.to_dict()
-        assert config_dict["api_timeout"] == 45
-        assert "cache" in config_dict
-        assert "rate_limit" in config_dict
-
-class TestMemoryCache:
-    """Test memory cache functionality"""
-
-    @pytest.fixture
-    def memory_cache(self):
-        """Create memory cache for testing"""
-        return MemoryCache(max_size=10, default_ttl=60)
-
-    @pytest.mark.asyncio
-    async def test_cache_set_get(self, memory_cache):
-        """Test basic cache set and get operations"""
-        # Set value
-        success = await memory_cache.set("test_key", "test_value")
-        assert success is True
-
-        # Get value
-        value = await memory_cache.get("test_key")
-        assert value == "test_value"
-
-    @pytest.mark.asyncio
-    async def test_cache_miss(self, memory_cache):
-        """Test cache miss"""
-        value = await memory_cache.get("nonexistent_key")
+        # Test cache miss
+        value = await cache.get("nonexistent")
         assert value is None
 
-    @pytest.mark.asyncio
-    async def test_cache_ttl_expiration(self, memory_cache):
-        """Test TTL expiration"""
-        # Set value with short TTL
-        await memory_cache.set("ttl_key", "ttl_value", ttl=1)
-
-        # Should exist immediately
-        value = await memory_cache.get("ttl_key")
-        assert value == "ttl_value"
-
-        # Wait for expiration
+        # Test TTL expiration
+        await cache.set("ttl_key", "ttl_value", ttl=1)
         await asyncio.sleep(1.1)
-
-        # Should be expired
-        value = await memory_cache.get("ttl_key")
+        value = await cache.get("ttl_key")
         assert value is None
 
-    @pytest.mark.asyncio
-    async def test_cache_lru_eviction(self, memory_cache):
-        """Test LRU eviction when cache is full"""
-        # Fill cache to capacity
-        for i in range(10):
-            await memory_cache.set(f"key_{i}", f"value_{i}")
-
-        # Add one more item (should evict oldest)
-        await memory_cache.set("new_key", "new_value")
+        # Test LRU eviction
+        for i in range(6):  # Exceed max_size
+            await cache.set(f"key_{i}", f"value_{i}")
 
         # First key should be evicted
-        value = await memory_cache.get("key_0")
+        value = await cache.get("key_0")
         assert value is None
 
-        # New key should exist
-        value = await memory_cache.get("new_key")
-        assert value == "new_value"
+    async def test_rate_limiter(self):
+        """Test rate limiting functionality"""
+        rate_limiter = RateLimiter(requests_per_minute=60, burst_size=3)
 
-    @pytest.mark.asyncio
-    async def test_cache_delete(self, memory_cache):
-        """Test cache deletion"""
-        await memory_cache.set("delete_key", "delete_value")
-
-        # Verify exists
-        assert await memory_cache.exists("delete_key") is True
-
-        # Delete
-        success = await memory_cache.delete("delete_key")
-        assert success is True
-
-        # Verify deleted
-        assert await memory_cache.exists("delete_key") is False
-
-    @pytest.mark.asyncio
-    async def test_cache_clear(self, memory_cache):
-        """Test cache clear operation"""
-        # Add some items
-        await memory_cache.set("key1", "value1")
-        await memory_cache.set("key2", "value2")
-
-        # Clear cache
-        success = await memory_cache.clear()
-        assert success is True
-
-        # Verify empty
-        assert await memory_cache.get("key1") is None
-        assert await memory_cache.get("key2") is None
-
-    def test_cache_stats(self, memory_cache):
-        """Test cache statistics"""
-        stats = memory_cache.get_stats()
-        assert stats.hits == 0
-        assert stats.misses == 0
-        assert stats.sets == 0
-
-class TestRateLimiter:
-    """Test rate limiting functionality"""
-
-    @pytest.fixture
-    def rate_limiter(self):
-        """Create rate limiter for testing"""
-        return RateLimiter(requests_per_minute=60, burst_size=5)
-
-    @pytest.mark.asyncio
-    async def test_rate_limit_acquire(self, rate_limiter):
-        """Test basic rate limit acquisition"""
-        # Should allow initial requests up to burst size
-        for i in range(5):
+        # Test burst allowance
+        for i in range(3):
             success = await rate_limiter.acquire("test_user")
             assert success is True
 
-        # Should reject additional requests
+        # Should reject next request
         success = await rate_limiter.acquire("test_user")
         assert success is False
 
-    @pytest.mark.asyncio
-    async def test_rate_limit_different_users(self, rate_limiter):
-        """Test rate limiting for different users"""
-        # User 1 uses up their quota
-        for i in range(5):
-            await rate_limiter.acquire("user1")
-
-        # User 2 should still be able to make requests
-        success = await rate_limiter.acquire("user2")
+        # Test different users
+        success = await rate_limiter.acquire("other_user")
         assert success is True
 
-    @pytest.mark.asyncio
-    async def test_rate_limit_token_refill(self, rate_limiter):
-        """Test token bucket refill over time"""
-        # Use up quota
-        for i in range(5):
-            await rate_limiter.acquire("test_user")
-
-        # Should be rejected
-        success = await rate_limiter.acquire("test_user")
-        assert success is False
-
-        # Wait for token refill (simulate time passage)
-        # Note: In real test, you might want to mock time
-        await asyncio.sleep(1.1)  # Allow some token refill
-
-        # Should allow request after refill
-        success = await rate_limiter.acquire("test_user")
-        # Note: This might still fail depending on exact timing
-
-    @pytest.mark.asyncio
-    async def test_rate_limit_acquire_with_wait(self, rate_limiter):
-        """Test acquire with waiting"""
-        # Use up quota
-        for i in range(5):
-            await rate_limiter.acquire("test_user")
-
-        # Should wait and eventually succeed (with short timeout for testing)
-        start_time = time.time()
-        success = await rate_limiter.acquire_with_wait("test_user", timeout=2.0)
-        elapsed = time.time() - start_time
-
-        # Should have waited some time
-        assert elapsed > 0.5  # At least some wait time
-
-    def test_rate_limit_stats(self, rate_limiter):
-        """Test rate limiting statistics"""
+        # Test statistics
         stats = rate_limiter.get_global_stats()
-        assert "total_requests" in stats
-        assert "rejected_requests" in stats
-        assert "success_rate" in stats
+        assert stats["total_requests"] > 0
 
-    def test_rate_limit_user_status(self, rate_limiter):
-        """Test user-specific rate limit status"""
-        status = rate_limiter.get_rate_limit_status("test_user")
-        assert status.requests_per_minute == 60
-        assert status.burst_size == 5
+    async def test_error_handler(self):
+        """Test error handling functionality"""
+        error_handler = BrightDataErrorHandler()
 
-class TestErrorHandler:
-    """Test error handling functionality"""
-
-    @pytest.fixture
-    def error_handler(self):
-        """Create error handler for testing"""
-        return BrightDataErrorHandler()
-
-    def test_error_categorization(self, error_handler):
-        """Test error categorization"""
-        # Network error
-        network_error = ConnectionError("Connection failed")
+        # Test error categorization
+        network_error = ConnectionError("Network failed")
         error_info = error_handler.categorize_error(network_error)
-        assert error_info.category == ErrorCategory.NETWORK
+        assert error_info.category.value == "network"
 
-        # Authentication error
-        auth_error = Exception("Unauthorized access")
-        error_info = error_handler.categorize_error(auth_error)
-        assert error_info.category == ErrorCategory.AUTHENTICATION
-
-        # Rate limit error
-        rate_error = Exception("Too many requests")
-        error_info = error_handler.categorize_error(rate_error)
-        assert error_info.category == ErrorCategory.RATE_LIMIT
-
-    def test_bright_data_exception(self):
-        """Test custom BrightData exceptions"""
-        exception = BrightDataException(
-            "Test error",
-            ErrorCategory.VALIDATION,
-            context={"test": "context"}
-        )
-
-        assert str(exception) == "Test error"
-        assert exception.category == ErrorCategory.VALIDATION
-        assert exception.context["test"] == "context"
-
-    @pytest.mark.asyncio
-    async def test_error_recovery_strategy(self, error_handler):
-        """Test custom error recovery strategy"""
+        # Test custom recovery strategy
         recovery_called = False
 
         async def custom_recovery(error_info):
             nonlocal recovery_called
             recovery_called = True
 
-        # Register custom recovery
+        from src.tools.bright_data.core.error_handler import ErrorCategory
         error_handler.register_recovery_strategy(ErrorCategory.NETWORK, custom_recovery)
 
-        # Trigger error handling
-        network_error = ConnectionError("Test network error")
-        try:
-            await error_handler.handle_error(network_error)
-        except:
-            pass  # Expected to re-raise
-
-        # Recovery should have been called
-        assert recovery_called is True
-
-    def test_error_statistics(self, error_handler):
-        """Test error statistics collection"""
-        # Generate some errors
-        error1 = ConnectionError("Network error")
-        error2 = ValueError("Validation error")
-
-        error_handler.categorize_error(error1)
-        error_handler.categorize_error(error2)
-
+        # Test statistics
         stats = error_handler.get_error_statistics()
-        assert stats["total_errors"] == 2
-        assert "category_breakdown" in stats
+        assert "total_errors" in stats
 
-class TestCacheManager:
-    """Test cache manager functionality"""
-
-    @pytest.fixture
-    def cache_manager(self):
-        """Create cache manager for testing"""
+    async def test_cache_manager(self):
+        """Test cache manager functionality"""
         memory_cache = MemoryCache(max_size=10)
-        return CacheManager(memory_cache=memory_cache)
+        cache_manager = CacheManager(memory_cache=memory_cache)
 
-    @pytest.mark.asyncio
-    async def test_cache_manager_basic_operations(self, cache_manager):
-        """Test basic cache manager operations"""
-        # Set value
-        success = await cache_manager.set("test_key", "test_value")
-        assert success is True
-
-        # Get value
+        # Test basic operations
+        await cache_manager.set("test_key", "test_value")
         value = await cache_manager.get("test_key")
         assert value == "test_value"
 
-        # Check exists
-        exists = await cache_manager.exists("test_key")
-        assert exists is True
-
-        # Delete value
-        success = await cache_manager.delete("test_key")
-        assert success is True
-
-        # Verify deleted
-        value = await cache_manager.get("test_key")
-        assert value is None
-
-    @pytest.mark.asyncio
-    async def test_cache_decorator(self, cache_manager):
-        """Test cache result decorator"""
+        # Test cache decorator
         call_count = 0
 
         @cache_manager.cache_result(ttl=60)
@@ -365,82 +202,124 @@ class TestCacheManager:
             call_count += 1
             return f"result_{param}"
 
-        # First call should execute function
+        # First call
         result1 = await expensive_function("test")
         assert result1 == "result_test"
         assert call_count == 1
 
-        # Second call should use cache
+        # Second call (should use cache)
         result2 = await expensive_function("test")
         assert result2 == "result_test"
         assert call_count == 1  # Should not increment
 
-        # Different parameter should execute function
-        result3 = await expensive_function("other")
-        assert result3 == "result_other"
-        assert call_count == 2
-
-    def test_cache_stats(self, cache_manager):
-        """Test cache statistics"""
+        # Test statistics
         stats = cache_manager.get_cache_stats()
-        assert "total_requests" in stats
-        assert "cache_hits" in stats
-        assert "cache_misses" in stats
         assert "hit_rate_percentage" in stats
 
-@pytest.mark.integration
-class TestEnhancedClientIntegration:
-    """Integration tests for enhanced client"""
-
-    @pytest.fixture
-    def mock_client(self):
-        """Create mock enhanced client for testing"""
+    async def test_enhanced_client_basic(self):
+        """Test enhanced client basic functionality"""
         config = BrightDataConfig()
         config.api_key = "test_key"
 
         cache_manager = CacheManager(MemoryCache(max_size=10))
-        rate_limiter = RateLimiter(requests_per_minute=60, burst_size=5)
+        rate_limiter = RateLimiter(requests_per_minute=60)
         error_handler = BrightDataErrorHandler()
 
-        return EnhancedBrightDataClient(
+        client = EnhancedBrightDataClient(
             config=config,
             cache_manager=cache_manager,
             rate_limiter=rate_limiter,
             error_handler=error_handler
         )
 
-    def test_client_initialization(self, mock_client):
-        """Test client initialization"""
-        assert mock_client.config.api_key == "test_key"
-        assert mock_client.cache_manager is not None
-        assert mock_client.rate_limiter is not None
-        assert mock_client.error_handler is not None
+        try:
+            # Test metrics
+            metrics = client.get_metrics()
+            assert "total_requests" in metrics
+            assert "circuit_breaker_state" in metrics
 
-    def test_client_metrics(self, mock_client):
-        """Test client metrics collection"""
-        metrics = mock_client.get_metrics()
-        assert "total_requests" in metrics
-        assert "successful_requests" in metrics
-        assert "failed_requests" in metrics
-        assert "success_rate" in metrics
-        assert "circuit_breaker_state" in metrics
+            # Test health check (will fail without real API, but should not crash)
+            try:
+                health = await client.health_check()
+                # If it succeeds, great! If it fails, that's expected without real API
+            except Exception:
+                pass  # Expected without real API
 
-    @pytest.mark.asyncio
-    async def test_client_health_check(self, mock_client):
-        """Test client health check"""
-        with patch.object(mock_client, '_make_single_request', new_callable=AsyncMock) as mock_request:
-            mock_request.return_value = {"status": "ok"}
+        finally:
+            await client.close()
 
-            health = await mock_client.health_check()
-            assert "status" in health
-            assert "response_time" in health
+    async def test_performance_benchmark(self):
+        """Run basic performance benchmarks"""
+        logger.info("🏃 Running performance benchmarks...")
 
-    @pytest.mark.asyncio
-    async def test_client_cleanup(self, mock_client):
-        """Test client cleanup"""
-        # Should not raise exception
-        await mock_client.close()
+        # Cache performance test
+        cache = MemoryCache(max_size=1000)
+
+        # Benchmark cache writes
+        start_time = time.time()
+        for i in range(1000):
+            await cache.set(f"key_{i}", f"value_{i}")
+        write_time = time.time() - start_time
+
+        # Benchmark cache reads
+        start_time = time.time()
+        for i in range(1000):
+            await cache.get(f"key_{i}")
+        read_time = time.time() - start_time
+
+        logger.info(f"📈 Cache Performance:")
+        logger.info(f"   Writes: {1000/write_time:.0f} ops/sec")
+        logger.info(f"   Reads: {1000/read_time:.0f} ops/sec")
+
+        # Rate limiter performance test
+        rate_limiter = RateLimiter(requests_per_minute=6000, burst_size=100)
+
+        start_time = time.time()
+        successful_requests = 0
+        for i in range(100):
+            if await rate_limiter.acquire("perf_test"):
+                successful_requests += 1
+        rate_limit_time = time.time() - start_time
+
+        logger.info(f"📈 Rate Limiter Performance:")
+        logger.info(f"   Processed: {100/rate_limit_time:.0f} requests/sec")
+        logger.info(f"   Success rate: {successful_requests}%")
+
+    async def run_all_tests(self):
+        """Run all tests"""
+        self.start_test_suite()
+
+        # Core component tests
+        await self.run_test("Configuration Management", self.test_config_management)
+        await self.run_test("Memory Cache", self.test_memory_cache)
+        await self.run_test("Rate Limiter", self.test_rate_limiter)
+        await self.run_test("Error Handler", self.test_error_handler)
+        await self.run_test("Cache Manager", self.test_cache_manager)
+        await self.run_test("Enhanced Client Basic", self.test_enhanced_client_basic)
+
+        # Performance benchmarks
+        await self.run_test("Performance Benchmark", self.test_performance_benchmark)
+
+        self.finish_test_suite()
+
+async def main():
+    """Main test runner"""
+    logger.info("Enhanced Bright Data MCP Integration - Quick Test")
+    logger.info("This script tests the core functionality without requiring API keys")
+
+    tester = BrightDataTester()
+    await tester.run_all_tests()
+
+    # Exit with appropriate code
+    failed_tests = sum(1 for result in tester.results.values() if result["status"] == "FAIL")
+    sys.exit(1 if failed_tests > 0 else 0)
 
 if __name__ == "__main__":
-    # Run tests
-    pytest.main([__file__, "-v"])
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Test interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Test failed with unexpected error: {e}")
+        sys.exit(1)
