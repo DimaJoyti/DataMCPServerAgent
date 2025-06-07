@@ -512,3 +512,407 @@ class BrightDataToolkit:
                 output += "\n**Assessment**: Low engagement rate (<2%)\n"
                 
         return output
+
+    async def create_osint_tools(self) -> List[BaseTool]:
+        """Create OSINT-specific tools using Bright Data capabilities"""
+        osint_tools = []
+
+        # Social media intelligence tool
+        osint_tools.append(self._create_social_media_intel_tool())
+
+        # Domain intelligence tool
+        osint_tools.append(self._create_domain_intel_tool())
+
+        # Dark web monitoring tool
+        osint_tools.append(self._create_dark_web_monitor_tool())
+
+        # Threat intelligence tool
+        osint_tools.append(self._create_threat_intel_tool())
+
+        # Company intelligence tool
+        osint_tools.append(self._create_company_intel_tool())
+
+        # Email intelligence tool
+        osint_tools.append(self._create_email_intel_tool())
+
+        return osint_tools
+
+    def _create_social_media_intel_tool(self) -> BaseTool:
+        """Create social media intelligence gathering tool"""
+        async def _run(target_name: str, platforms: str = "all") -> str:
+            """Gather social media intelligence about a target"""
+            try:
+                results = await self._gather_social_media_intelligence(target_name, platforms)
+                return self._format_social_media_intel_results(results)
+            except Exception as e:
+                return f"Social media intelligence gathering failed: {str(e)}"
+
+        return BaseTool(
+            name="social_media_intelligence",
+            description="Gather intelligence from social media platforms about a target",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "target_name": {"type": "string", "description": "Target name or company to investigate"},
+                    "platforms": {
+                        "type": "string",
+                        "description": "Social media platforms to search",
+                        "enum": ["all", "linkedin", "twitter", "facebook", "instagram"],
+                        "default": "all"
+                    }
+                },
+                "required": ["target_name"]
+            }
+        )
+
+    def _create_domain_intel_tool(self) -> BaseTool:
+        """Create domain intelligence tool"""
+        async def _run(domain: str, intel_type: str = "comprehensive") -> str:
+            """Gather comprehensive domain intelligence"""
+            try:
+                results = await self._gather_domain_intelligence(domain, intel_type)
+                return self._format_domain_intel_results(results)
+            except Exception as e:
+                return f"Domain intelligence gathering failed: {str(e)}"
+
+        return BaseTool(
+            name="domain_intelligence",
+            description="Gather comprehensive intelligence about a domain",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "domain": {"type": "string", "description": "Domain to investigate"},
+                    "intel_type": {
+                        "type": "string",
+                        "description": "Type of intelligence to gather",
+                        "enum": ["comprehensive", "subdomains", "certificates", "history"],
+                        "default": "comprehensive"
+                    }
+                },
+                "required": ["domain"]
+            }
+        )
+
+    def _create_dark_web_monitor_tool(self) -> BaseTool:
+        """Create dark web monitoring tool"""
+        async def _run(keywords: str, search_type: str = "mentions") -> str:
+            """Monitor dark web for specific keywords or indicators"""
+            try:
+                results = await self._monitor_dark_web(keywords, search_type)
+                return self._format_dark_web_results(results)
+            except Exception as e:
+                return f"Dark web monitoring failed: {str(e)}"
+
+        return BaseTool(
+            name="dark_web_monitor",
+            description="Monitor dark web for mentions of keywords, domains, or indicators",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "keywords": {"type": "string", "description": "Keywords, domains, or indicators to monitor"},
+                    "search_type": {
+                        "type": "string",
+                        "description": "Type of search to perform",
+                        "enum": ["mentions", "credentials", "data_breaches", "threats"],
+                        "default": "mentions"
+                    }
+                },
+                "required": ["keywords"]
+            }
+        )
+
+    def _create_threat_intel_tool(self) -> BaseTool:
+        """Create threat intelligence tool"""
+        async def _run(indicator: str, indicator_type: str = "auto") -> str:
+            """Gather threat intelligence about an indicator"""
+            try:
+                results = await self._gather_threat_intelligence(indicator, indicator_type)
+                return self._format_threat_intel_results(results)
+            except Exception as e:
+                return f"Threat intelligence gathering failed: {str(e)}"
+
+        return BaseTool(
+            name="threat_intelligence",
+            description="Gather threat intelligence about IPs, domains, or hashes",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "indicator": {"type": "string", "description": "Indicator to investigate (IP, domain, hash)"},
+                    "indicator_type": {
+                        "type": "string",
+                        "description": "Type of indicator",
+                        "enum": ["auto", "ip", "domain", "hash", "url"],
+                        "default": "auto"
+                    }
+                },
+                "required": ["indicator"]
+            }
+        )
+
+    def _create_company_intel_tool(self) -> BaseTool:
+        """Create company intelligence tool"""
+        async def _run(company_name: str, intel_type: str = "comprehensive") -> str:
+            """Gather comprehensive company intelligence"""
+            try:
+                results = await self._gather_company_intelligence(company_name, intel_type)
+                return self._format_company_intel_results(results)
+            except Exception as e:
+                return f"Company intelligence gathering failed: {str(e)}"
+
+        return BaseTool(
+            name="company_intelligence",
+            description="Gather comprehensive intelligence about a company",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "company_name": {"type": "string", "description": "Company name to investigate"},
+                    "intel_type": {
+                        "type": "string",
+                        "description": "Type of intelligence to gather",
+                        "enum": ["comprehensive", "employees", "technologies", "news", "financials"],
+                        "default": "comprehensive"
+                    }
+                },
+                "required": ["company_name"]
+            }
+        )
+
+    def _create_email_intel_tool(self) -> BaseTool:
+        """Create email intelligence tool"""
+        async def _run(email: str, intel_type: str = "comprehensive") -> str:
+            """Gather intelligence about an email address"""
+            try:
+                results = await self._gather_email_intelligence(email, intel_type)
+                return self._format_email_intel_results(results)
+            except Exception as e:
+                return f"Email intelligence gathering failed: {str(e)}"
+
+        return BaseTool(
+            name="email_intelligence",
+            description="Gather intelligence about an email address",
+            func=_run,
+            args_schema={
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Email address to investigate"},
+                    "intel_type": {
+                        "type": "string",
+                        "description": "Type of intelligence to gather",
+                        "enum": ["comprehensive", "breaches", "social_media", "professional"],
+                        "default": "comprehensive"
+                    }
+                },
+                "required": ["email"]
+            }
+        )
+
+    # OSINT Intelligence Gathering Methods
+
+    async def _gather_social_media_intelligence(self, target_name: str, platforms: str) -> Dict[str, Any]:
+        """Gather social media intelligence using Bright Data"""
+        from datetime import datetime
+
+        intelligence = {
+            "target": target_name,
+            "platforms": {},
+            "timestamp": datetime.now().isoformat(),
+            "summary": {}
+        }
+
+        # Use Bright Data's social media scraping capabilities
+        try:
+            if platforms == "all" or "linkedin" in platforms:
+                # LinkedIn intelligence
+                linkedin_data = await self._scrape_linkedin_intelligence(target_name)
+                intelligence["platforms"]["linkedin"] = linkedin_data
+
+            if platforms == "all" or "twitter" in platforms:
+                # Twitter/X intelligence
+                twitter_data = await self._scrape_twitter_intelligence(target_name)
+                intelligence["platforms"]["twitter"] = twitter_data
+
+            if platforms == "all" or "facebook" in platforms:
+                # Facebook intelligence
+                facebook_data = await self._scrape_facebook_intelligence(target_name)
+                intelligence["platforms"]["facebook"] = facebook_data
+
+            if platforms == "all" or "instagram" in platforms:
+                # Instagram intelligence
+                instagram_data = await self._scrape_instagram_intelligence(target_name)
+                intelligence["platforms"]["instagram"] = instagram_data
+
+            # Generate summary
+            intelligence["summary"] = self._generate_social_media_summary(intelligence["platforms"])
+
+        except Exception as e:
+            intelligence["error"] = str(e)
+
+        return intelligence
+
+    async def _gather_domain_intelligence(self, domain: str, intel_type: str) -> Dict[str, Any]:
+        """Gather domain intelligence using Bright Data"""
+        from datetime import datetime
+
+        intelligence = {
+            "domain": domain,
+            "intelligence_type": intel_type,
+            "data": {},
+            "timestamp": datetime.now().isoformat()
+        }
+
+        try:
+            if intel_type == "comprehensive" or intel_type == "subdomains":
+                # Subdomain discovery using various sources
+                subdomains = await self._discover_subdomains_via_bright_data(domain)
+                intelligence["data"]["subdomains"] = subdomains
+
+            if intel_type == "comprehensive" or intel_type == "certificates":
+                # Certificate transparency logs
+                certificates = await self._gather_certificate_intelligence(domain)
+                intelligence["data"]["certificates"] = certificates
+
+            if intel_type == "comprehensive" or intel_type == "history":
+                # Domain history and changes
+                history = await self._gather_domain_history(domain)
+                intelligence["data"]["history"] = history
+
+            if intel_type == "comprehensive":
+                # Additional comprehensive data
+                whois_data = await self._gather_whois_intelligence(domain)
+                intelligence["data"]["whois"] = whois_data
+
+                dns_data = await self._gather_dns_intelligence(domain)
+                intelligence["data"]["dns"] = dns_data
+
+        except Exception as e:
+            intelligence["error"] = str(e)
+
+        return intelligence
+
+    async def _monitor_dark_web(self, keywords: str, search_type: str) -> Dict[str, Any]:
+        """Monitor dark web using Bright Data's capabilities"""
+        from datetime import datetime
+
+        monitoring_result = {
+            "keywords": keywords,
+            "search_type": search_type,
+            "findings": [],
+            "timestamp": datetime.now().isoformat(),
+            "risk_level": "low"
+        }
+
+        try:
+            # Use Bright Data to access dark web sources (with proper authorization)
+            # This would require special Bright Data configurations for dark web access
+
+            if search_type == "mentions":
+                findings = await self._search_dark_web_mentions(keywords)
+                monitoring_result["findings"] = findings
+
+            elif search_type == "credentials":
+                findings = await self._search_credential_dumps(keywords)
+                monitoring_result["findings"] = findings
+                monitoring_result["risk_level"] = "high" if findings else "low"
+
+            elif search_type == "data_breaches":
+                findings = await self._search_data_breaches(keywords)
+                monitoring_result["findings"] = findings
+                monitoring_result["risk_level"] = "critical" if findings else "low"
+
+            elif search_type == "threats":
+                findings = await self._search_threat_mentions(keywords)
+                monitoring_result["findings"] = findings
+                monitoring_result["risk_level"] = "high" if findings else "medium"
+
+        except Exception as e:
+            monitoring_result["error"] = str(e)
+
+        return monitoring_result
+
+    async def _gather_threat_intelligence(self, indicator: str, indicator_type: str) -> Dict[str, Any]:
+        """Gather threat intelligence using Bright Data"""
+        from datetime import datetime
+
+        intelligence = {
+            "indicator": indicator,
+            "indicator_type": indicator_type,
+            "threat_data": {},
+            "risk_score": 0,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        try:
+            # Auto-detect indicator type if needed
+            if indicator_type == "auto":
+                indicator_type = self._detect_indicator_type(indicator)
+                intelligence["indicator_type"] = indicator_type
+
+            # Gather threat intelligence from various sources
+            if indicator_type == "ip":
+                threat_data = await self._gather_ip_threat_intelligence(indicator)
+            elif indicator_type == "domain":
+                threat_data = await self._gather_domain_threat_intelligence(indicator)
+            elif indicator_type == "hash":
+                threat_data = await self._gather_hash_threat_intelligence(indicator)
+            elif indicator_type == "url":
+                threat_data = await self._gather_url_threat_intelligence(indicator)
+            else:
+                threat_data = {"error": f"Unsupported indicator type: {indicator_type}"}
+
+            intelligence["threat_data"] = threat_data
+            intelligence["risk_score"] = self._calculate_risk_score(threat_data)
+
+        except Exception as e:
+            intelligence["error"] = str(e)
+
+        return intelligence
+
+    async def _gather_company_intelligence(self, company_name: str, intel_type: str) -> Dict[str, Any]:
+        """Gather company intelligence using Bright Data"""
+        from datetime import datetime
+
+        intelligence = {
+            "company_name": company_name,
+            "intelligence_type": intel_type,
+            "data": {},
+            "timestamp": datetime.now().isoformat()
+        }
+
+        try:
+            if intel_type == "comprehensive" or intel_type == "employees":
+                # Employee intelligence from LinkedIn and other sources
+                employees = await self._gather_employee_intelligence(company_name)
+                intelligence["data"]["employees"] = employees
+
+            if intel_type == "comprehensive" or intel_type == "technologies":
+                # Technology stack intelligence
+                technologies = await self._gather_technology_intelligence(company_name)
+                intelligence["data"]["technologies"] = technologies
+
+            if intel_type == "comprehensive" or intel_type == "news":
+                # News and media mentions
+                news = await self._gather_news_intelligence(company_name)
+                intelligence["data"]["news"] = news
+
+            if intel_type == "comprehensive" or intel_type == "financials":
+                # Financial intelligence
+                financials = await self._gather_financial_intelligence(company_name)
+                intelligence["data"]["financials"] = financials
+
+            if intel_type == "comprehensive":
+                # Additional comprehensive data
+                domains = await self._discover_company_domains(company_name)
+                intelligence["data"]["domains"] = domains
+
+                social_media = await self._gather_company_social_media(company_name)
+                intelligence["data"]["social_media"] = social_media
+
+        except Exception as e:
+            intelligence["error"] = str(e)
+
+        return intelligence

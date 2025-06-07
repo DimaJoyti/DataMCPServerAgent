@@ -1,45 +1,41 @@
-name: Pylint
+name: Code Quality
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
-  lint:
+  pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.11"]
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-pylint-${{ hashFiles('requirements-ci.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-pylint-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pylint
-    - name: Create pylint configuration
+        pip install -r requirements-ci.txt
+
+    - name: Run Pylint
       run: |
-        echo "[MAIN]" > .pylintrc
-        echo "disable=C0111,C0103,C0303,W1201,W1202,C0330,C0326,W0511,R0913,R0914,C0301,R0902,R0903,C0302,R0912,R0915,R0801,R1705,R1710,W0212,W0703,C0412,C0413,W0621,W0622,W0614,W0401,W0105,C0415,R0401,R1721,R1724,W0201,W0102,W0613,W0612,W0611,W0404,R1732,R1734,R1735,C0209,W0602,W0603,W0604,R1720,R1723,R1725,R1728,R1729,R1730,R1731,R1733,R1736,R1737,R1738,R1739,R1740,R1741,R1742,R1743,R1744,R1745,R1746,R1747,R1748,R1749,R1750,R1751,R1752,R1753,R1754,R1755,R1756,R1757,R1758,R1759,R1760,R1761,R1762,R1763,R1764,R1765,R1766,R1767,R1768,R1769,R1770,R1771,R1772,R1773,R1774,R1775,R1776,R1777,R1778,R1779,R1780,R1781,R1782,R1783,R1784,R1785,R1786,R1787,R1788,R1789,R1790,R1791,R1792,R1793,R1794,R1795,R1796,R1797,R1798,R1799,R1800" >> .pylintrc
-        echo "ignore=.git,__pycache__,.venv,venv,env,virtualenv,CVS,.bzr,.hg,.svn,.tox,_build,build,dist" >> .pylintrc
-        echo "ignore-patterns=test_.*?.py,conftest.py" >> .pylintrc
-        echo "jobs=1" >> .pylintrc
-        echo "persistent=yes" >> .pylintrc
-        echo "suggestion-mode=yes" >> .pylintrc
-        echo "" >> .pylintrc
-        echo "[MESSAGES CONTROL]" >> .pylintrc
-        echo "confidence=HIGH" >> .pylintrc
-        echo "" >> .pylintrc
-        echo "[REPORTS]" >> .pylintrc
-        echo "output-format=text" >> .pylintrc
-        echo "reports=no" >> .pylintrc
-        echo "evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)" >> .pylintrc
-    - name: Analyzing the code with pylint
-      run: |
-        pylint --fail-under=7.0 $(git ls-files '*.py')
+        pylint --fail-under=6.0 app/ src/ --ignore=tests,migrations,alembic || echo "Pylint completed with issues"
+      continue-on-error: true

@@ -130,3 +130,4 @@ Thumbs.db
 /.env.template
 /agent-ui/package-lock.json
 /.ruff_cache
+.cursor
