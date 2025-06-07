@@ -3,9 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
   workflow_dispatch:
 
 permissions:
@@ -43,48 +40,7 @@ jobs:
       run: |
         echo "Checking mkdocs.yml configuration..."
         mkdocs --version
-        echo "Checking if all referenced files exist..."
-        python -c "
-        import yaml
-        import os
-
-        with open('mkdocs.yml', 'r') as f:
-            config = yaml.safe_load(f)
-
-        missing_files = []
-        if 'nav' in config:
-            def check_nav_item(item, prefix='docs/'):
-                if isinstance(item, dict):
-                    for key, value in item.items():
-                        if isinstance(value, str) and value.endswith('.md'):
-                            file_path = os.path.join(prefix, value)
-                            if not os.path.exists(file_path):
-                                missing_files.append(file_path)
-                        elif isinstance(value, list):
-                            for sub_item in value:
-                                check_nav_item(sub_item, prefix)
-                elif isinstance(item, str) and item.endswith('.md'):
-                    file_path = os.path.join(prefix, item)
-                    if not os.path.exists(file_path):
-                        missing_files.append(file_path)
-
-            for nav_item in config['nav']:
-                check_nav_item(nav_item)
-
-        if missing_files:
-            print('Missing files:')
-            for file in missing_files:
-                print(f'  - {file}')
-            print('Creating placeholder files...')
-            for file in missing_files:
-                os.makedirs(os.path.dirname(file), exist_ok=True)
-                with open(file, 'w') as f:
-                    title = os.path.basename(file).replace('.md', '').replace('_', ' ').title()
-                    f.write(f'# {title}\n\nThis page is under construction.\n')
-                print(f'Created placeholder: {file}')
-        else:
-            print('All referenced files exist!')
-        "
+        echo "Testing MkDocs build..."
 
     - name: Build with MkDocs
       run: |
@@ -100,10 +56,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: success()
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - name: Deploy to GitHub Pages
