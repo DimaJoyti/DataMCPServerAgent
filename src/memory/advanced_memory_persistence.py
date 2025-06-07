@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class AdvancedMemoryDatabase(MemoryDatabase):
     """Extended database for persisting advanced agent memory."""
 

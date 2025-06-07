@@ -30,7 +30,6 @@ except ImportError:
 
     subprocess.check_call(["pip", "install", "pymongo", "motor"])
 
-
 class DistributedMemoryBackend(ABC):
     """Abstract base class for distributed memory backends."""
 
@@ -250,7 +249,6 @@ class DistributedMemoryBackend(ABC):
             Summary string
         """
         pass
-
 
 class RedisMemoryBackend(DistributedMemoryBackend):
     """Redis-based distributed memory backend."""
@@ -648,7 +646,6 @@ class RedisMemoryBackend(DistributedMemoryBackend):
             return await self.redis.ping()
         except Exception:
             return False
-
 
 class MongoDBMemoryBackend(DistributedMemoryBackend):
     """MongoDB-based distributed memory backend."""
@@ -1059,7 +1056,6 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
             return True
         except Exception:
             return False
-
 
 class DistributedMemoryFactory:
     """Factory for creating distributed memory backends."""

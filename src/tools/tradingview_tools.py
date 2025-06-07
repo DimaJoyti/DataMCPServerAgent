@@ -6,14 +6,13 @@ This module provides specialized tools for extracting cryptocurrency data from T
 import json
 import re
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from enum import Enum
 
 from langchain_core.tools import BaseTool
 from mcp import ClientSession
-
 
 class TimeFrame(Enum):
     """TradingView timeframe options."""
@@ -27,7 +26,6 @@ class TimeFrame(Enum):
     W1 = "1W"
     MN1 = "1M"
 
-
 class CryptoExchange(Enum):
     """Supported cryptocurrency exchanges."""
     BINANCE = "BINANCE"
@@ -37,24 +35,22 @@ class CryptoExchange(Enum):
     BYBIT = "BYBIT"
     OKX = "OKX"
 
-
 @dataclass
 class CryptoSymbol:
     """Cryptocurrency symbol representation."""
     base: str  # BTC, ETH, etc.
     quote: str  # USD, USDT, etc.
     exchange: CryptoExchange
-    
+
     @property
     def symbol(self) -> str:
         """Get the full symbol string."""
         return f"{self.base}{self.quote}"
-    
+
     @property
     def tradingview_symbol(self) -> str:
         """Get TradingView formatted symbol."""
         return f"{self.exchange.value}:{self.symbol}"
-
 
 @dataclass
 class PriceData:
@@ -67,7 +63,6 @@ class PriceData:
     volume: float
     symbol: str
 
-
 @dataclass
 class TechnicalIndicator:
     """Technical indicator data."""
@@ -75,7 +70,6 @@ class TechnicalIndicator:
     value: float
     signal: str  # BUY, SELL, NEUTRAL
     timestamp: datetime
-
 
 @dataclass
 class MarketSentiment:
@@ -87,33 +81,32 @@ class MarketSentiment:
     total_votes: int
     timestamp: datetime
 
-
 class TradingViewToolkit:
     """A toolkit for TradingView cryptocurrency data extraction."""
 
     def __init__(self, session: ClientSession):
         """Initialize the toolkit with an MCP client session.
-        
+
         Args:
             session: An initialized MCP ClientSession
         """
         self.session = session
         self.base_url = "https://www.tradingview.com"
-        
+
     async def create_crypto_tools(self) -> List[BaseTool]:
         """Create and return TradingView crypto tools.
-        
+
         Returns:
             A list of specialized crypto BaseTool instances
         """
         tools = []
-        
+
         # Get available tools from session
         available_tools = {}
         for plugin in await self.session.list_plugins():
             for tool in plugin.tools:
                 available_tools[tool.name] = tool
-        
+
         # Create specialized crypto tools
         if "scrape_as_markdown_Bright_Data" in available_tools:
             tools.extend([
@@ -123,20 +116,20 @@ class TradingViewToolkit:
                 self._create_crypto_news_tool(available_tools["scrape_as_markdown_Bright_Data"]),
                 self._create_crypto_screener_tool(available_tools["scrape_as_markdown_Bright_Data"]),
             ])
-        
+
         if "scraping_browser_navigate_Bright_Data" in available_tools:
             tools.append(
                 self._create_realtime_data_tool(available_tools)
             )
-            
+
         return tools
 
     def _create_crypto_price_tool(self, base_tool: BaseTool) -> BaseTool:
         """Create a tool for extracting cryptocurrency price data.
-        
+
         Args:
             base_tool: The base scraping tool
-            
+
         Returns:
             A crypto price extraction tool
         """
@@ -151,18 +144,18 @@ class TradingViewToolkit:
                 # Construct TradingView URL
                 tv_symbol = f"{exchange}:{symbol}"
                 url = f"{self.base_url}/symbols/{symbol}/"
-                
+
                 # Scrape the page
                 result = await base_tool.invoke({"url": url})
-                
+
                 # Parse price data
                 price_data = self._parse_price_data(result, symbol)
-                
+
                 return self._format_price_data(price_data)
-                
+
             except Exception as e:
                 return f"Error extracting price data for {symbol}: {str(e)}"
-        
+
         return BaseTool(
             name="tradingview_crypto_price",
             description="Extract cryptocurrency price data from TradingView including OHLCV, market cap, and volume",
@@ -181,10 +174,10 @@ class TradingViewToolkit:
 
     def _create_crypto_analysis_tool(self, base_tool: BaseTool) -> BaseTool:
         """Create a tool for extracting technical analysis data.
-        
+
         Args:
             base_tool: The base scraping tool
-            
+
         Returns:
             A crypto technical analysis tool
         """
@@ -193,15 +186,15 @@ class TradingViewToolkit:
             try:
                 url = f"{self.base_url}/symbols/{symbol}/technicals/"
                 result = await base_tool.invoke({"url": url})
-                
+
                 # Parse technical indicators
                 indicators = self._parse_technical_indicators(result, symbol)
-                
+
                 return self._format_technical_analysis(indicators)
-                
+
             except Exception as e:
                 return f"Error extracting technical analysis for {symbol}: {str(e)}"
-        
+
         return BaseTool(
             name="tradingview_crypto_analysis",
             description="Extract technical analysis and indicators from TradingView for cryptocurrencies",
@@ -218,10 +211,10 @@ class TradingViewToolkit:
 
     def _create_crypto_sentiment_tool(self, base_tool: BaseTool) -> BaseTool:
         """Create a tool for extracting market sentiment data.
-        
+
         Args:
             base_tool: The base scraping tool
-            
+
         Returns:
             A crypto sentiment analysis tool
         """
@@ -230,15 +223,15 @@ class TradingViewToolkit:
             try:
                 url = f"{self.base_url}/symbols/{symbol}/minds/"
                 result = await base_tool.invoke({"url": url})
-                
+
                 # Parse sentiment data
                 sentiment = self._parse_sentiment_data(result, symbol)
-                
+
                 return self._format_sentiment_data(sentiment)
-                
+
             except Exception as e:
                 return f"Error extracting sentiment for {symbol}: {str(e)}"
-        
+
         return BaseTool(
             name="tradingview_crypto_sentiment",
             description="Extract market sentiment and community opinions from TradingView",
@@ -254,10 +247,10 @@ class TradingViewToolkit:
 
     def _create_crypto_news_tool(self, base_tool: BaseTool) -> BaseTool:
         """Create a tool for extracting crypto news and events.
-        
+
         Args:
             base_tool: The base scraping tool
-            
+
         Returns:
             A crypto news extraction tool
         """
@@ -266,15 +259,15 @@ class TradingViewToolkit:
             try:
                 url = f"{self.base_url}/symbols/{symbol}/news/"
                 result = await base_tool.invoke({"url": url})
-                
+
                 # Parse news data
                 news_items = self._parse_news_data(result, symbol, limit)
-                
+
                 return self._format_news_data(news_items)
-                
+
             except Exception as e:
                 return f"Error extracting news for {symbol}: {str(e)}"
-        
+
         return BaseTool(
             name="tradingview_crypto_news",
             description="Extract cryptocurrency news and events from TradingView",
@@ -291,10 +284,10 @@ class TradingViewToolkit:
 
     def _create_crypto_screener_tool(self, base_tool: BaseTool) -> BaseTool:
         """Create a tool for crypto market screening.
-        
+
         Args:
             base_tool: The base scraping tool
-            
+
         Returns:
             A crypto market screener tool
         """
@@ -308,17 +301,17 @@ class TradingViewToolkit:
             try:
                 url = f"{self.base_url}/markets/cryptocurrencies/prices-all/"
                 result = await base_tool.invoke({"url": url})
-                
+
                 # Parse and filter crypto data
                 crypto_list = self._parse_crypto_screener(
                     result, market_cap_min, volume_min, change_min, limit
                 )
-                
+
                 return self._format_screener_data(crypto_list)
-                
+
             except Exception as e:
                 return f"Error screening crypto markets: {str(e)}"
-        
+
         return BaseTool(
             name="tradingview_crypto_screener",
             description="Screen cryptocurrency markets based on various criteria like market cap, volume, and price changes",
@@ -711,7 +704,6 @@ class TradingViewToolkit:
     def get_supported_timeframes() -> List[TimeFrame]:
         """Get list of supported timeframes."""
         return list(TimeFrame)
-
 
 # Factory function for easy tool creation
 async def create_tradingview_tools(session: ClientSession) -> List[BaseTool]:

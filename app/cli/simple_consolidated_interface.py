@@ -17,7 +17,6 @@ from app.core.simple_config import SimpleSettings
 
 console = Console()
 
-
 class SimpleConsolidatedCLI:
     """Simple consolidated CLI interface."""
 

@@ -14,7 +14,6 @@ from app.domain.services.state_service import StateService
 
 router = APIRouter()
 
-
 class SaveStateRequest(BaseModel):
     """Request model for saving state."""
 
@@ -22,7 +21,6 @@ class SaveStateRequest(BaseModel):
     entity_type: str = Field(description="Entity type")
     state_type: StateType = Field(description="State type")
     state_data: Dict[str, Any] = Field(description="State data")
-
 
 @router.post("/save", response_model=SuccessResponse)
 async def save_state(

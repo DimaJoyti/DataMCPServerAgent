@@ -17,7 +17,6 @@ from ..config import config
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
-
 @router.get("/", response_model=List[AgentResponse])
 async def list_agents(
     api_key: Optional[str] = Depends(get_api_key),
@@ -28,17 +27,16 @@ async def list_agents(
     try:
         # Create an agent service
         agent_service = AgentService()
-        
+
         # Get all available agent modes
         agents = await agent_service.list_agents()
-        
+
         return agents
     except Exception as e:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
 
 @router.get("/{agent_mode}", response_model=AgentResponse)
 async def get_agent(
@@ -47,7 +45,7 @@ async def get_agent(
 ) -> AgentResponse:
     """
     Get information about a specific agent mode.
-    
+
     - **agent_mode**: Agent mode to get information about
     """
     try:
@@ -57,19 +55,19 @@ async def get_agent(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"Agent mode {agent_mode} not found",
             )
-        
+
         # Create an agent service
         agent_service = AgentService()
-        
+
         # Get agent information
         agent = await agent_service.get_agent(agent_mode)
-        
+
         if not agent:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"Agent mode {agent_mode} not found",
             )
-        
+
         return agent
     except HTTPException:
         raise
@@ -79,7 +77,6 @@ async def get_agent(
             detail=str(e),
         )
 
-
 @router.post("/", response_model=AgentResponse)
 async def create_agent(
     request: AgentRequest,
@@ -87,7 +84,7 @@ async def create_agent(
 ) -> AgentResponse:
     """
     Create a new agent instance.
-    
+
     - **agent_mode**: Agent mode to use
     - **config**: (Optional) Agent configuration
     """
@@ -98,16 +95,16 @@ async def create_agent(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"Agent mode {request.agent_mode} not found",
             )
-        
+
         # Create an agent service
         agent_service = AgentService()
-        
+
         # Create a new agent instance
         agent = await agent_service.create_agent(
             agent_mode=request.agent_mode,
             agent_config=request.config,
         )
-        
+
         return agent
     except HTTPException:
         raise

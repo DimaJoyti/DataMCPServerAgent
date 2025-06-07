@@ -34,7 +34,6 @@ except ImportError:
         "Увага: Plotly не доступний. Встановіть його за допомогою 'pip install plotly'"
     )
 
-
 class DashboardConfig(BaseModel):
     """Конфігурація для дашбордів."""
 
@@ -52,7 +51,6 @@ class DashboardConfig(BaseModel):
         """Pydantic конфігурація."""
 
         arbitrary_types_allowed = True
-
 
 class DashboardPanel(BaseModel):
     """Панель для дашборду."""
@@ -73,7 +71,6 @@ class DashboardPanel(BaseModel):
 
         arbitrary_types_allowed = True
 
-
 class Dashboard(BaseModel):
     """Дашборд для візуалізації дослідницьких даних."""
 
@@ -86,7 +83,6 @@ class Dashboard(BaseModel):
         """Pydantic конфігурація."""
 
         arbitrary_types_allowed = True
-
 
 class DashboardGenerator:
     """Генератор для дашбордів."""
@@ -640,7 +636,6 @@ class DashboardGenerator:
                 # Тут можна додати логіку для оновлення даних
                 return self._create_dashboard_content(dashboard)
 
-
 def generate_dashboard_tool(data_str: str) -> str:
     """Генерація дашборду.
 
@@ -670,7 +665,6 @@ def generate_dashboard_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
-
 
 if __name__ == "__main__":
     # Приклад використання

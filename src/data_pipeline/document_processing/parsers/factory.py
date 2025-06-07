@@ -16,7 +16,6 @@ from .text_parser import TextParser
 
 logger = logging.getLogger(__name__)
 
-
 class ParserFactory:
     """Factory for creating document parsers."""
 
@@ -280,7 +279,6 @@ class ParserFactory:
             doc_type: parser_class.__name__
             for doc_type, parser_class in self._parsers.items()
         }
-
 
 # Global parser factory instance
 parser_factory = ParserFactory()

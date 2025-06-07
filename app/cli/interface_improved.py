@@ -24,7 +24,6 @@ from rich.tree import Tree
 from app.core.config import Settings
 from app.core.logging import get_logger
 
-
 # Temporary mock managers until they are implemented
 class MockAgentManager:
     def __init__(self, settings): pass
@@ -43,7 +42,6 @@ class MockToolManager:
 
 logger = get_logger(__name__)
 console = Console()
-
 
 class CLIInterface:
     """Interactive CLI interface for DataMCPServerAgent."""
@@ -512,7 +510,6 @@ class CLIInterface:
             history_table.add_row(str(i), entry["command"], f"{entry['timestamp']:.2f}s")
 
         console.print(history_table)
-
 
 def create_cli_interface(settings: Settings) -> CLIInterface:
     """Create CLI interface instance."""

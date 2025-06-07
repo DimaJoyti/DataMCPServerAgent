@@ -1,0 +1,47 @@
+{
+  "api_base_url": "https://api.brightdata.com",
+  "api_timeout": 30,
+  "max_concurrent_requests": 10,
+  "user_agent": "DataMCPServerAgent/2.0.0",
+  "enable_compression": true,
+  "enable_connection_pooling": true,
+  "enable_request_logging": true,
+  
+  "cache": {
+    "enabled": true,
+    "redis_url": "redis://localhost:6379/0",
+    "memory_cache_size": 1000,
+    "default_ttl": 3600,
+    "compression_enabled": true,
+    "compression_threshold": 1024
+  },
+  
+  "rate_limit": {
+    "enabled": true,
+    "requests_per_minute": 60,
+    "burst_size": 10,
+    "adaptive_throttling": true,
+    "backoff_factor": 1.5
+  },
+  
+  "retry": {
+    "max_retries": 3,
+    "base_delay": 1.0,
+    "max_delay": 60.0,
+    "exponential_base": 2.0,
+    "jitter": true
+  },
+  
+  "circuit_breaker": {
+    "enabled": true,
+    "failure_threshold": 5,
+    "recovery_timeout": 60
+  },
+  
+  "monitoring": {
+    "enabled": true,
+    "metrics_endpoint": "/metrics",
+    "health_check_endpoint": "/health",
+    "log_level": "INFO"
+  }
+}

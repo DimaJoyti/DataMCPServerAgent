@@ -39,22 +39,22 @@ __all__ = [
     # Hybrid Search
     "HybridSearchEngine",
     "SearchQuery",
-    "SearchResult", 
+    "SearchResult",
     "SearchFilters",
     "RankedResults",
-    
+
     # Adaptive Chunking
     "AdaptiveChunker",
     "ChunkingStrategy",
     "ChunkMetadata",
     "ChunkedDocument",
-    
+
     # Multi-Vector Store
     "MultiVectorStore",
     "VectorStoreConfig",
     "EmbeddingModel",
     "VectorIndex",
-    
+
     # Reranking
     "ReRanker",
     "RerankingStrategy",

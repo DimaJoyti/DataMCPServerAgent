@@ -14,7 +14,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class MemoryRetriever:
     """Advanced memory retrieval system with semantic search capabilities."""
 
@@ -380,7 +379,6 @@ Rank these memory items by relevance to the request.
             List of memory types
         """
         return ["conversation", "entities", "tool_usage"]
-
 
 class ContextManager:
     """Manager for maintaining and updating context during agent execution."""

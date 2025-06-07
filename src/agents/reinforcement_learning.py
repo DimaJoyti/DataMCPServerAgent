@@ -14,7 +14,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class RewardSystem:
     """System for calculating rewards based on agent performance and feedback."""
 
@@ -225,7 +224,6 @@ class RewardSystem:
 
         return []
 
-
 class QLearningAgent:
     """Agent that learns using Q-learning algorithm."""
 
@@ -335,7 +333,6 @@ class QLearningAgent:
 
         # Save Q-table to database
         self.db.save_q_table(self.name, self.q_table)
-
 
 class PolicyGradientAgent:
     """Agent that learns using policy gradient algorithm."""
@@ -508,7 +505,6 @@ class PolicyGradientAgent:
 
         # Clear episode history
         self.episode_history = []
-
 
 class RLCoordinatorAgent:
     """Coordinator agent that uses reinforcement learning for decision making."""
@@ -812,7 +808,6 @@ Extract a state identifier for this request.
             "status": "Learning completed",
             "interactions_processed": len(interactions),
         }
-
 
 # Factory function to create RL-based agent architecture
 async def create_rl_agent_architecture(

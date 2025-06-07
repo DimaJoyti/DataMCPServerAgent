@@ -31,7 +31,6 @@ from app.pipelines.streaming import StreamEvent, StreamEventType, StreamingConfi
 
 console = Console()
 
-
 async def demo_multimodal_processing():
     """Demonstration of multimodal processing."""
     console.print("\n🎭 Multimodal Processing", style="bold blue")
@@ -105,7 +104,6 @@ async def demo_multimodal_processing():
 
     console.print(table)
 
-
 async def demo_rag_search():
     """Demonstration of RAG search."""
     console.print("\n🔍 RAG Hybrid Search", style="bold blue")
@@ -166,7 +164,6 @@ async def demo_rag_search():
             )
 
     console.print(results_table)
-
 
 async def demo_streaming_pipeline():
     """Demonstration of streaming pipeline."""
@@ -235,7 +232,6 @@ async def demo_streaming_pipeline():
     finally:
         await pipeline.stop()
 
-
 async def demo_orchestration():
     """Demonstration of intelligent orchestration."""
     console.print("\n🧠 Intelligent Orchestration", style="bold blue")
@@ -297,7 +293,6 @@ async def demo_orchestration():
 
     console.print(routing_table)
 
-
 async def main():
     """Main demonstration function."""
     welcome_text = """
@@ -344,7 +339,6 @@ All components work together as a unified system!
     stats_table.add_row("Cloudflare integration", "✅ Ready", "100%")
 
     console.print(stats_table)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

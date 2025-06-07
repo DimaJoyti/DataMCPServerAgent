@@ -7,7 +7,7 @@ import asyncio
 import json
 import os
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -22,13 +22,12 @@ from src.utils.error_handlers import format_error_for_user
 from src.agents.learning_capabilities import FeedbackCollector, LearningAgent
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class EnhancedCoordinatorAgent:
     """Enhanced coordinator agent with learning capabilities."""
-    
+
     def __init__(
-        self, 
-        model: ChatAnthropic, 
+        self,
+        model: ChatAnthropic,
         sub_agents: Dict[str, SpecializedSubAgent],
         tool_selector: EnhancedToolSelector,
         memory_db: MemoryDatabase,
@@ -37,7 +36,7 @@ class EnhancedCoordinatorAgent:
         learning_agents: Dict[str, LearningAgent]
     ):
         """Initialize the enhanced coordinator agent.
-        
+
         Args:
             model: Language model to use
             sub_agents: Dictionary of sub-agents by name
@@ -54,10 +53,10 @@ class EnhancedCoordinatorAgent:
         self.performance_tracker = performance_tracker
         self.feedback_collector = feedback_collector
         self.learning_agents = learning_agents
-        
+
         # Load conversation history from the database
         self.conversation_history = self.memory_db.load_conversation_history()
-        
+
         # Create the coordinator prompt
         self.prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are an enhanced coordinator agent responsible for managing multiple specialized sub-agents to complete complex tasks.
@@ -77,70 +76,70 @@ When responding, first explain your plan for completing the task, then show the 
             MessagesPlaceholder(variable_name="history"),
             HumanMessage(content="{request}")
         ])
-    
+
     async def process_request(self, request: str) -> str:
         """Process a user request by coordinating sub-agents.
-        
+
         Args:
             request: User request
-            
+
         Returns:
             Response to the user
         """
         # Add the user request to conversation history
         self.conversation_history.append({"role": "user", "content": request})
-        
+
         # Get recent conversation history
         history = self.conversation_history[-5:] if len(self.conversation_history) > 5 else self.conversation_history
-        
+
         # Select tools for the request
         tool_selection = await self.tool_selector.select_tools(request, history)
-        
+
         # Determine which sub-agents to use based on selected tools
         selected_sub_agents = set()
         for tool_name in tool_selection["selected_tools"]:
             for agent_name, agent in self.sub_agents.items():
                 if any(tool.name == tool_name for tool in agent.tools):
                     selected_sub_agents.add(agent_name)
-        
+
         # If no sub-agents were selected, use the default agent
         if not selected_sub_agents and "default" in self.sub_agents:
             selected_sub_agents.add("default")
-        
+
         # Format sub-agent descriptions
         sub_agent_descriptions = "\n".join([
             f"- {name}: {agent.name}" for name, agent in self.sub_agents.items()
             if name in selected_sub_agents
         ])
-        
+
         # Prepare the input for the coordinator prompt
         input_values = {
             "request": request,
             "sub_agent_descriptions": sub_agent_descriptions,
             "history": history
         }
-        
+
         # Get the coordination plan
         messages = self.prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
         plan = response.content
-        
+
         # Execute the plan using selected sub-agents
         results = []
         for agent_name in selected_sub_agents:
             agent = self.sub_agents[agent_name]
-            
+
             # Track tool performance for each tool used by this agent
             for tool in agent.tools:
                 self.performance_tracker.start_execution(tool.name)
-            
+
             # Execute the agent
             result = await agent.execute(request, self.memory_db)
-            
+
             # Record tool performance
             for tool in agent.tools:
                 self.performance_tracker.end_execution(tool.name, result["success"])
-            
+
             # Collect self-evaluation feedback
             if agent_name in self.learning_agents:
                 await self.feedback_collector.perform_self_evaluation(
@@ -148,9 +147,9 @@ When responding, first explain your plan for completing the task, then show the 
                     result["response"] if result["success"] else result["error"],
                     agent_name
                 )
-            
+
             results.append(result)
-        
+
         # Synthesize the results
         synthesis_prompt = f"""
 You have received results from multiple sub-agents for the following request:
@@ -162,21 +161,21 @@ Sub-agent results:
 Based on these results, provide a comprehensive response to the user's request.
 Incorporate information from all sub-agents and resolve any conflicts or inconsistencies.
 """
-        
+
         synthesis_messages = [
             {"role": "system", "content": "You are a synthesis agent that combines results from multiple sub-agents into a coherent response."},
             {"role": "user", "content": synthesis_prompt}
         ]
-        
+
         synthesis_response = await self.model.ainvoke(synthesis_messages)
         final_response = synthesis_response.content
-        
+
         # Add the final response to conversation history
         self.conversation_history.append({"role": "assistant", "content": final_response})
-        
+
         # Save conversation history to the database
         self.memory_db.save_conversation_history(self.conversation_history)
-        
+
         # Provide tool execution feedback
         for tool_name in tool_selection["selected_tools"]:
             await self.tool_selector.provide_execution_feedback(
@@ -187,12 +186,12 @@ Incorporate information from all sub-agents and resolve any conflicts or inconsi
                 1.0,  # Simplified execution time
                 any(r["success"] for r in results)
             )
-        
+
         return final_response
-    
+
     async def collect_user_feedback(self, request: str, response: str, feedback: str) -> None:
         """Collect user feedback on a response.
-        
+
         Args:
             request: Original user request
             response: Agent response
@@ -206,37 +205,36 @@ Incorporate information from all sub-agents and resolve any conflicts or inconsi
                 feedback,
                 agent_name
             )
-    
+
     async def learn_from_feedback(self) -> Dict[str, str]:
         """Learn from collected feedback to improve future performance.
-        
+
         Returns:
             Dictionary of learning insights by agent name
         """
         insights = {}
-        
+
         # Learn from feedback for each learning agent
         for agent_name, learning_agent in self.learning_agents.items():
             agent_insights = await learning_agent.learn_from_feedback()
             insights[agent_name] = agent_insights
-        
+
         return insights
-    
+
     async def get_learning_insights(self) -> str:
         """Get a summary of learning insights from all agents.
-        
+
         Returns:
             Summary of learning insights
         """
         insights_summary = "# Learning Insights Summary\n\n"
-        
+
         # Get insights from each learning agent
         for agent_name, learning_agent in self.learning_agents.items():
             agent_insights = await learning_agent.get_learning_insights()
             insights_summary += f"## {agent_name}\n\n{agent_insights}\n\n"
-        
-        return insights_summary
 
+        return insights_summary
 
 # Factory function to create enhanced agent architecture
 async def create_enhanced_agent_architecture(
@@ -245,35 +243,35 @@ async def create_enhanced_agent_architecture(
     db_path: str = "agent_memory.db"
 ) -> EnhancedCoordinatorAgent:
     """Create an enhanced agent architecture with memory persistence, tool selection, and learning.
-    
+
     Args:
         model: Language model to use
         tools: List of available tools
         db_path: Path to the memory database
-        
+
     Returns:
         Enhanced coordinator agent
     """
     # Initialize memory database
     memory_db = MemoryDatabase(db_path)
-    
+
     # Initialize tool performance tracker
     performance_tracker = ToolPerformanceTracker(memory_db)
-    
+
     # Initialize enhanced tool selector
     tool_selector = EnhancedToolSelector(model, tools, memory_db, performance_tracker)
-    
+
     # Initialize feedback collector
     feedback_collector = FeedbackCollector(model, memory_db)
-    
+
     # Create specialized sub-agents
     sub_agents = create_specialized_sub_agents(model, tools)
-    
+
     # Create learning agents for each sub-agent
     learning_agents = {}
     for agent_name, agent in sub_agents.items():
         learning_agents[agent_name] = LearningAgent(agent.name, model, memory_db, feedback_collector)
-    
+
     # Create enhanced coordinator agent
     coordinator = EnhancedCoordinatorAgent(
         model,
@@ -284,5 +282,5 @@ async def create_enhanced_agent_architecture(
         feedback_collector,
         learning_agents
     )
-    
+
     return coordinator

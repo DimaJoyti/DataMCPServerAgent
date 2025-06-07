@@ -19,7 +19,6 @@ from ..middleware.auth import get_api_key
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-
 @router.post("/", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
@@ -28,7 +27,7 @@ async def chat(
 ) -> ChatResponse:
     """
     Send a message to the agent and get a response.
-    
+
     - **message**: The message to send to the agent
     - **session_id**: (Optional) Session ID for continuing a conversation
     - **agent_mode**: (Optional) Agent mode to use
@@ -43,13 +42,13 @@ async def chat(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail="For streaming responses, use the /chat/stream endpoint",
             )
-        
+
         # Create a chat service
         chat_service = ChatService()
-        
+
         # Generate a session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
-        
+
         # Process the chat request
         response = await chat_service.process_chat(
             message=request.message,
@@ -58,19 +57,18 @@ async def chat(
             user_id=request.user_id,
             context=request.context,
         )
-        
+
         # Add any background tasks if needed
         background_tasks.add_task(
             chat_service.log_interaction, session_id, request.message, response
         )
-        
+
         return response
     except Exception as e:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
 
 @router.post("/stream", response_model=None)
 async def chat_stream(
@@ -79,7 +77,7 @@ async def chat_stream(
 ) -> StreamingResponse:
     """
     Send a message to the agent and get a streaming response.
-    
+
     - **message**: The message to send to the agent
     - **session_id**: (Optional) Session ID for continuing a conversation
     - **agent_mode**: (Optional) Agent mode to use
@@ -90,13 +88,13 @@ async def chat_stream(
         # Ensure streaming is enabled
         if not request.stream:
             request.stream = True
-        
+
         # Create a chat service
         chat_service = ChatService()
-        
+
         # Generate a session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
-        
+
         # Create a streaming response
         return StreamingResponse(
             chat_service.stream_chat(
@@ -114,7 +112,6 @@ async def chat_stream(
             detail=str(e),
         )
 
-
 @router.get("/sessions/{session_id}", response_model=List[ChatResponse])
 async def get_chat_history(
     session_id: str = Path(..., description="Session ID"),
@@ -124,7 +121,7 @@ async def get_chat_history(
 ) -> List[ChatResponse]:
     """
     Get chat history for a session.
-    
+
     - **session_id**: Session ID
     - **limit**: (Optional) Maximum number of messages to return
     - **offset**: (Optional) Offset for pagination
@@ -132,20 +129,20 @@ async def get_chat_history(
     try:
         # Create a chat service
         chat_service = ChatService()
-        
+
         # Get chat history
         history = await chat_service.get_chat_history(
             session_id=session_id,
             limit=limit,
             offset=offset,
         )
-        
+
         if not history:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"No chat history found for session {session_id}",
             )
-        
+
         return history
     except HTTPException:
         raise

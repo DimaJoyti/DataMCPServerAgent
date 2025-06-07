@@ -35,7 +35,6 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
-
 def display_banner():
     """Display application banner."""
     banner = Text()
@@ -46,7 +45,6 @@ def display_banner():
 
     panel = Panel(banner, title="🤖 Consolidated System", border_style="blue", padding=(1, 2))
     console.print(panel)
-
 
 @app.command()
 def api(
@@ -85,7 +83,6 @@ def api(
         logger.error(f"💥 API server failed: {e}", exc_info=True)
         raise typer.Exit(1)
 
-
 @app.command()
 def cli(
     interactive: bool = typer.Option(True, help="Interactive mode"),
@@ -113,7 +110,6 @@ def cli(
     except Exception as e:
         logger.error(f"💥 CLI interface failed: {e}", exc_info=True)
         raise typer.Exit(1)
-
 
 @app.command()
 def status():
@@ -147,7 +143,6 @@ def status():
     except:
         console.print("API Server: ❌ NOT RUNNING")
 
-
 @app.command()
 def migrate():
     """Run database migrations."""
@@ -161,7 +156,6 @@ def migrate():
     except Exception as e:
         console.print(f"💥 Migration failed: {e}", style="red")
         raise typer.Exit(1)
-
 
 @app.command()
 def test(
@@ -190,7 +184,6 @@ def test(
         console.print("❌ Some tests failed", style="red")
         raise typer.Exit(1)
 
-
 @app.command()
 def agents():
     """Manage agents in the consolidated system."""
@@ -202,7 +195,6 @@ def agents():
     console.print("  • create  - Create new agent")
     console.print("  • delete  - Delete agent")
     console.print("  • status  - Show agent status")
-
 
 @app.command()
 def tools():
@@ -216,7 +208,6 @@ def tools():
     console.print("  • Analysis tools")
     console.print("  • Visualization tools")
 
-
 @app.command()
 def memory():
     """Manage memory systems."""
@@ -228,7 +219,6 @@ def memory():
     console.print("  • Knowledge graph")
     console.print("  • Distributed memory")
     console.print("  • Context-aware retrieval")
-
 
 @app.command()
 def docs(
@@ -248,7 +238,6 @@ def docs(
     else:
         console.print("📝 Generating consolidated documentation...", style="blue")
         console.print("✅ Documentation generated", style="green")
-
 
 @app.command()
 def info():
@@ -278,7 +267,6 @@ def info():
 
     panel = Panel(info_panel.strip(), title="📋 System Information", border_style="green")
     console.print(panel)
-
 
 if __name__ == "__main__":
     app()

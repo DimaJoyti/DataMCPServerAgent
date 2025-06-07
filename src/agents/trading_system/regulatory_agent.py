@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from uagents import Agent, Context, Model, Protocol
 
@@ -17,7 +17,7 @@ from .base_agent import BaseAgent, BaseAgentState
 
 class RegulationType(str, Enum):
     """Types of regulations."""
-    
+
     TAX = "tax"
     BANKING = "banking"
     AML = "anti_money_laundering"
@@ -26,7 +26,7 @@ class RegulationType(str, Enum):
 
 class ComplianceStatus(str, Enum):
     """Compliance status."""
-    
+
     COMPLIANT = "compliant"
     NON_COMPLIANT = "non_compliant"
     NEEDS_REVIEW = "needs_review"
@@ -34,7 +34,7 @@ class ComplianceStatus(str, Enum):
 
 class RegulatoryRequirement(Model):
     """Model for a regulatory requirement."""
-    
+
     name: str
     description: str
     type: RegulationType
@@ -45,7 +45,7 @@ class RegulatoryRequirement(Model):
 
 class Transaction(Model):
     """Model for a transaction."""
-    
+
     id: str
     symbol: str
     amount: float
@@ -56,7 +56,7 @@ class Transaction(Model):
 
 class ComplianceCheck(Model):
     """Model for a compliance check."""
-    
+
     transaction: Transaction
     requirements_checked: List[str]
     status: ComplianceStatus
@@ -65,7 +65,7 @@ class ComplianceCheck(Model):
 
 class TaxReport(Model):
     """Model for a tax report."""
-    
+
     user_id: str
     year: int
     total_trades: int
@@ -77,7 +77,7 @@ class TaxReport(Model):
 
 class RegulatoryAgentState(BaseAgentState):
     """State model for the Regulatory Compliance Agent."""
-    
+
     requirements: List[RegulatoryRequirement] = []
     recent_checks: List[ComplianceCheck] = []
     tax_reports: List[TaxReport] = []
@@ -85,7 +85,7 @@ class RegulatoryAgentState(BaseAgentState):
 
 class RegulatoryComplianceAgent(BaseAgent):
     """Agent for managing regulatory compliance."""
-    
+
     def __init__(
         self,
         name: str = "regulatory_agent",
@@ -95,7 +95,7 @@ class RegulatoryComplianceAgent(BaseAgent):
         logger: Optional[logging.Logger] = None
     ):
         """Initialize the Regulatory Compliance Agent.
-        
+
         Args:
             name: Name of the agent
             seed: Seed for deterministic address generation
@@ -104,16 +104,16 @@ class RegulatoryComplianceAgent(BaseAgent):
             logger: Logger instance
         """
         super().__init__(name, seed, port, endpoint, logger)
-        
+
         # Initialize agent state
         self.state = RegulatoryAgentState()
-        
+
         # Initialize regulatory requirements
         self._initialize_requirements()
-        
+
         # Register handlers
         self._register_handlers()
-    
+
     def _initialize_requirements(self):
         """Initialize regulatory requirements."""
         # Swiss tax reporting requirements
@@ -126,7 +126,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             last_checked=datetime.now().isoformat(),
             next_check_due=(datetime.now() + timedelta(days=365)).isoformat()
         ))
-        
+
         # Swiss banking regulations
         self.state.requirements.append(RegulatoryRequirement(
             name="FINMA Crypto Asset Guidelines",
@@ -137,7 +137,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             last_checked=datetime.now().isoformat(),
             next_check_due=(datetime.now() + timedelta(days=90)).isoformat()
         ))
-        
+
         # Anti-money laundering requirements
         self.state.requirements.append(RegulatoryRequirement(
             name="AML Transaction Monitoring",
@@ -148,7 +148,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             last_checked=datetime.now().isoformat(),
             next_check_due=(datetime.now() + timedelta(days=30)).isoformat()
         ))
-        
+
         # KYC requirements
         self.state.requirements.append(RegulatoryRequirement(
             name="KYC Verification",
@@ -159,7 +159,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             last_checked=datetime.now().isoformat(),
             next_check_due=(datetime.now() + timedelta(days=180)).isoformat()
         ))
-        
+
         # Trading regulations
         self.state.requirements.append(RegulatoryRequirement(
             name="Leverage Trading Limits",
@@ -170,15 +170,15 @@ class RegulatoryComplianceAgent(BaseAgent):
             last_checked=datetime.now().isoformat(),
             next_check_due=(datetime.now() + timedelta(days=90)).isoformat()
         ))
-    
+
     def _register_handlers(self):
         """Register handlers for the agent."""
-        
+
         @self.agent.on_interval(period=self.state.check_interval)
         async def check_compliance(ctx: Context):
             """Check compliance with regulatory requirements."""
             ctx.logger.info("Checking regulatory compliance")
-            
+
             # Check each requirement
             for i, requirement in enumerate(self.state.requirements):
                 # Check if due for review
@@ -191,40 +191,40 @@ class RegulatoryComplianceAgent(BaseAgent):
                         self.state.requirements[i].next_check_due = (
                             datetime.now() + timedelta(days=90)
                         ).isoformat()
-                        
+
                         ctx.logger.info(
                             f"Checked requirement: {requirement.name}, "
                             f"Status: {self.state.requirements[i].status}"
                         )
-        
+
         @self.agent.on_message(model=Transaction)
         async def check_transaction(ctx: Context, sender: str, transaction: Transaction):
             """Check a transaction for compliance."""
             ctx.logger.info(f"Checking transaction from {sender}: {transaction.id}")
-            
+
             # Perform compliance check
             check = await self._check_transaction_compliance(transaction)
-            
+
             # Update state
             self.state.recent_checks.append(check)
             if len(self.state.recent_checks) > 100:
                 self.state.recent_checks.pop(0)
-            
+
             # Send response
             await ctx.send(sender, check.dict())
-    
+
     async def _check_requirement(self, requirement: RegulatoryRequirement) -> ComplianceStatus:
         """Check compliance with a regulatory requirement.
-        
+
         Args:
             requirement: Regulatory requirement to check
-            
+
         Returns:
             Compliance status
         """
         # This is a mock implementation
         # In a real system, this would perform actual compliance checks
-        
+
         # Simulate compliance check
         # For demonstration, we'll randomly determine compliance
         import random
@@ -235,37 +235,37 @@ class RegulatoryComplianceAgent(BaseAgent):
             ComplianceStatus.COMPLIANT,
         ]
         return random.choice(statuses)
-    
+
     async def _check_transaction_compliance(self, transaction: Transaction) -> ComplianceCheck:
         """Check a transaction for compliance.
-        
+
         Args:
             transaction: Transaction to check
-            
+
         Returns:
             Compliance check result
         """
         # This is a mock implementation
         # In a real system, this would perform actual compliance checks
-        
+
         # Requirements to check
         requirements_checked = []
         issues = []
-        
+
         # Check AML compliance
         requirements_checked.append("AML Transaction Monitoring")
         if transaction.amount > 10000:
             issues.append("Large transaction requires additional AML verification")
-        
+
         # Check trading regulations
         requirements_checked.append("Leverage Trading Limits")
-        
+
         # Determine overall status
         if issues:
             status = ComplianceStatus.NEEDS_REVIEW
         else:
             status = ComplianceStatus.COMPLIANT
-        
+
         return ComplianceCheck(
             transaction=transaction,
             requirements_checked=requirements_checked,
@@ -273,26 +273,26 @@ class RegulatoryComplianceAgent(BaseAgent):
             issues=issues,
             timestamp=datetime.now().isoformat()
         )
-    
+
     async def generate_tax_report(self, user_id: str, year: int) -> TaxReport:
         """Generate a tax report for a user.
-        
+
         Args:
             user_id: User ID
             year: Tax year
-            
+
         Returns:
             Tax report
         """
         # This is a mock implementation
         # In a real system, this would generate an actual tax report
-        
+
         # Simulate tax report generation
         total_trades = 120
         total_volume = 500000.0
         realized_profit_loss = 15000.0
         tax_liability = realized_profit_loss * 0.2  # 20% tax rate
-        
+
         report = TaxReport(
             user_id=user_id,
             year=year,
@@ -303,8 +303,8 @@ class RegulatoryComplianceAgent(BaseAgent):
             status=ComplianceStatus.COMPLIANT,
             timestamp=datetime.now().isoformat()
         )
-        
+
         # Update state
         self.state.tax_reports.append(report)
-        
+
         return report

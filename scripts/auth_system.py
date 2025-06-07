@@ -1,154 +1,235 @@
 """
-Authentication and Authorization system for MCP Agents.
+Enhanced Authentication and Authorization system for MCP Agents.
+Features JWT tokens, bcrypt hashing, rate limiting, and comprehensive security.
 """
 
-import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Set
-from dataclasses import dataclass
+from typing import Dict, Any, List, Optional, Set, Union
 from enum import Enum
-import logging
+import structlog
+from dataclasses import dataclass, field
+
+# Security imports
+import jwt
+from passlib.context import CryptContext
+from passlib.hash import bcrypt
 from cryptography.fernet import Fernet
 import base64
 
+# Configuration
 from secure_config import config
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class Permission(Enum):
+    """Enhanced permission system with granular access control."""
+    # Worker permissions
     READ_WORKERS = "read:workers"
     WRITE_WORKERS = "write:workers"
+    DEPLOY_WORKERS = "deploy:workers"
+
+    # Storage permissions
     READ_KV = "read:kv"
     WRITE_KV = "write:kv"
     READ_R2 = "read:r2"
     WRITE_R2 = "write:r2"
     READ_D1 = "read:d1"
     WRITE_D1 = "write:d1"
+
+    # Analytics and monitoring
     READ_ANALYTICS = "read:analytics"
+    READ_LOGS = "read:logs"
+
+    # Administrative
     ADMIN_ACCESS = "admin:access"
+    USER_MANAGEMENT = "admin:users"
+    SYSTEM_CONFIG = "admin:config"
+
 
 class Role(Enum):
+    """User roles with hierarchical permissions."""
     GUEST = "guest"
     USER = "user"
     DEVELOPER = "developer"
     ADMIN = "admin"
+    SUPER_ADMIN = "super_admin"
+
 
 @dataclass
 class User:
+    """Enhanced user model with security features."""
     user_id: str
     username: str
     email: str
+    password_hash: str
     role: Role
     permissions: Set[Permission]
     api_key: str
     created_at: datetime
     last_login: Optional[datetime] = None
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
     is_active: bool = True
+    is_verified: bool = False
+    two_factor_enabled: bool = False
+
 
 @dataclass
 class Session:
+    """Enhanced session model with security tracking."""
     session_id: str
     user_id: str
+    access_token: str
+    refresh_token: str
     created_at: datetime
     expires_at: datetime
+    refresh_expires_at: datetime
     ip_address: str
     user_agent: str
     is_active: bool = True
+    last_activity: Optional[datetime] = None
+
+
+@dataclass
+class TokenPair:
+    """JWT token pair for authentication."""
+    access_token: str
+    refresh_token: str
+    expires_in: int
+    token_type: str = "Bearer"
 
 class AuthSystem:
-    """Authentication and Authorization system."""
+    """Enhanced Authentication and Authorization system with JWT and bcrypt."""
 
     def __init__(self):
-        self.secret_key = config.security.secret_key
-        self.jwt_secret = config.security.jwt_secret_key
-        self.encryption_key = config.security.encryption_key
+        # Configuration
+        self.secret_key = config.security.secret_key.get_secret_value()
+        self.jwt_secret = config.security.jwt_secret_key.get_secret_value()
+        self.encryption_key = config.security.encryption_key.get_secret_value()
+
+        # Storage
         self.users: Dict[str, User] = {}
         self.sessions: Dict[str, Session] = {}
         self.api_keys: Dict[str, str] = {}  # api_key -> user_id
+        self.rate_limits: Dict[str, List[datetime]] = {}  # user_id -> timestamps
 
-        # Initialize encryption
-        self.cipher = Fernet(base64.urlsafe_b64encode(self.encryption_key.encode()[:32].ljust(32, b'0')))
+        # Security setup
+        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        cipher_key = base64.urlsafe_b64encode(
+            self.encryption_key.encode()[:32].ljust(32, b'0')
+        )
+        self.cipher = Fernet(cipher_key)
 
-        logger.info("AuthSystem initialized with secure configuration")
+        # JWT settings
+        self.jwt_algorithm = "HS256"
+        self.access_token_expire = timedelta(
+            minutes=config.security.jwt_expiry_minutes
+        )
+        self.refresh_token_expire = timedelta(
+            days=config.security.refresh_token_expiry_days
+        )
 
         # Role-based permissions
         self.role_permissions = {
             Role.GUEST: {Permission.READ_ANALYTICS},
             Role.USER: {
                 Permission.READ_WORKERS, Permission.READ_KV,
-                Permission.READ_R2, Permission.READ_D1, Permission.READ_ANALYTICS
+                Permission.READ_R2, Permission.READ_D1,
+                Permission.READ_ANALYTICS, Permission.READ_LOGS
             },
             Role.DEVELOPER: {
                 Permission.READ_WORKERS, Permission.WRITE_WORKERS,
                 Permission.READ_KV, Permission.WRITE_KV,
                 Permission.READ_R2, Permission.WRITE_R2,
                 Permission.READ_D1, Permission.WRITE_D1,
-                Permission.READ_ANALYTICS
+                Permission.READ_ANALYTICS, Permission.READ_LOGS,
+                Permission.DEPLOY_WORKERS
             },
-            Role.ADMIN: set(Permission)  # All permissions
+            Role.ADMIN: {
+                Permission.READ_WORKERS, Permission.WRITE_WORKERS,
+                Permission.DEPLOY_WORKERS, Permission.READ_KV,
+                Permission.WRITE_KV, Permission.READ_R2, Permission.WRITE_R2,
+                Permission.READ_D1, Permission.WRITE_D1,
+                Permission.READ_ANALYTICS, Permission.READ_LOGS,
+                Permission.USER_MANAGEMENT, Permission.ADMIN_ACCESS
+            },
+            Role.SUPER_ADMIN: set(Permission)  # All permissions
         }
 
-        # Initialize default users
+        logger.info("Enhanced AuthSystem initialized with JWT and bcrypt")
         self._create_default_users()
 
     def _create_default_users(self):
         """Create default users for testing."""
-        # Admin user
-        admin_user = User(
-            user_id="admin_001",
-            username="admin",
-            email="admin@cloudflare.com",
-            role=Role.ADMIN,
-            permissions=self.role_permissions[Role.ADMIN],
-            api_key=self._generate_api_key(),
-            created_at=datetime.utcnow()
+        default_password = "admin123"  # Change in production
+
+        # Super Admin user
+        super_admin = self.create_user(
+            username="superadmin",
+            email="superadmin@datamcp.dev",
+            password=default_password,
+            role=Role.SUPER_ADMIN
         )
-        self.users[admin_user.user_id] = admin_user
-        self.api_keys[admin_user.api_key] = admin_user.user_id
+        super_admin.is_verified = True
+
+        # Admin user
+        admin = self.create_user(
+            username="admin",
+            email="admin@datamcp.dev",
+            password=default_password,
+            role=Role.ADMIN
+        )
+        admin.is_verified = True
 
         # Developer user
-        dev_user = User(
-            user_id="dev_001",
+        dev = self.create_user(
             username="developer",
-            email="dev@cloudflare.com",
-            role=Role.DEVELOPER,
-            permissions=self.role_permissions[Role.DEVELOPER],
-            api_key=self._generate_api_key(),
-            created_at=datetime.utcnow()
+            email="dev@datamcp.dev",
+            password=default_password,
+            role=Role.DEVELOPER
         )
-        self.users[dev_user.user_id] = dev_user
-        self.api_keys[dev_user.api_key] = dev_user.user_id
+        dev.is_verified = True
 
         # Regular user
-        user = User(
-            user_id="user_001",
+        user = self.create_user(
             username="user",
-            email="user@cloudflare.com",
-            role=Role.USER,
-            permissions=self.role_permissions[Role.USER],
-            api_key=self._generate_api_key(),
-            created_at=datetime.utcnow()
+            email="user@datamcp.dev",
+            password=default_password,
+            role=Role.USER
         )
-        self.users[user.user_id] = user
-        self.api_keys[user.api_key] = user.user_id
+        user.is_verified = True
+
+        logger.info("Default users created successfully")
 
     def _generate_api_key(self) -> str:
         """Generate a secure API key."""
-        return f"cf_agent_{secrets.token_urlsafe(32)}"
+        return f"mcp_agent_{secrets.token_urlsafe(32)}"
 
     def _hash_password(self, password: str) -> str:
-        """Hash a password."""
-        return hashlib.sha256(password.encode()).hexdigest()
+        """Hash a password using bcrypt."""
+        return self.pwd_context.hash(password)
 
-    def create_user(self, username: str, email: str, password: str, role: Role = Role.USER) -> User:
-        """Create a new user."""
+    def _verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against its hash."""
+        return self.pwd_context.verify(plain_password, hashed_password)
+
+    def create_user(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        role: Role = Role.USER
+    ) -> User:
+        """Create a new user with enhanced security."""
         user_id = f"user_{secrets.token_urlsafe(8)}"
+        password_hash = self._hash_password(password)
 
         user = User(
             user_id=user_id,
             username=username,
             email=email,
+            password_hash=password_hash,
             role=role,
             permissions=self.role_permissions[role],
             api_key=self._generate_api_key(),
@@ -158,6 +239,7 @@ class AuthSystem:
         self.users[user_id] = user
         self.api_keys[user.api_key] = user_id
 
+        logger.info(f"User created: {username} ({role.value})")
         return user
 
     def authenticate_api_key(self, api_key: str) -> Optional[User]:
@@ -165,28 +247,84 @@ class AuthSystem:
         user_id = self.api_keys.get(api_key)
         if user_id and user_id in self.users:
             user = self.users[user_id]
-            if user.is_active:
+            if user.is_active and not self._is_user_locked(user):
                 user.last_login = datetime.utcnow()
                 return user
         return None
 
-    def create_session(self, user_id: str, ip_address: str, user_agent: str) -> Optional[Session]:
-        """Create a new session."""
-        if user_id not in self.users:
+    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+        """Authenticate user with username/password."""
+        user = self._get_user_by_username(username)
+        if not user:
             return None
 
-        session_id = f"session_{secrets.token_urlsafe(16)}"
-        session = Session(
-            session_id=session_id,
-            user_id=user_id,
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=24),
-            ip_address=ip_address,
-            user_agent=user_agent
+        if self._is_user_locked(user):
+            logger.warning(f"Login attempt for locked user: {username}")
+            return None
+
+        if self._verify_password(password, user.password_hash):
+            # Reset failed attempts on successful login
+            user.failed_login_attempts = 0
+            user.locked_until = None
+            user.last_login = datetime.utcnow()
+            logger.info(f"Successful login: {username}")
+            return user
+        else:
+            # Increment failed attempts
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts >= 5:  # Lock after 5 failed attempts
+                user.locked_until = datetime.utcnow() + timedelta(minutes=30)
+                logger.warning(f"User locked due to failed attempts: {username}")
+            return None
+
+    def _get_user_by_username(self, username: str) -> Optional[User]:
+        """Get user by username."""
+        for user in self.users.values():
+            if user.username == username:
+                return user
+        return None
+
+    def _is_user_locked(self, user: User) -> bool:
+        """Check if user is locked."""
+        if user.locked_until and user.locked_until > datetime.utcnow():
+            return True
+        return False
+
+    def create_token_pair(self, user: User) -> TokenPair:
+        """Create JWT token pair for user."""
+        now = datetime.utcnow()
+
+        # Access token payload
+        access_payload = {
+            "sub": user.user_id,
+            "username": user.username,
+            "role": user.role.value,
+            "permissions": [p.value for p in user.permissions],
+            "iat": now,
+            "exp": now + self.access_token_expire,
+            "type": "access"
+        }
+
+        # Refresh token payload
+        refresh_payload = {
+            "sub": user.user_id,
+            "iat": now,
+            "exp": now + self.refresh_token_expire,
+            "type": "refresh"
+        }
+
+        access_token = jwt.encode(
+            access_payload, self.jwt_secret, algorithm=self.jwt_algorithm
+        )
+        refresh_token = jwt.encode(
+            refresh_payload, self.jwt_secret, algorithm=self.jwt_algorithm
         )
 
-        self.sessions[session_id] = session
-        return session
+        return TokenPair(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=int(self.access_token_expire.total_seconds())
+        )
 
     def get_session(self, session_id: str) -> Optional[Session]:
         """Get session by ID."""

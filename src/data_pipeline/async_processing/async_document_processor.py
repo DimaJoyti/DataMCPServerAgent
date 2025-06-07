@@ -13,7 +13,6 @@ from ..document_processing.document_processor import DocumentProcessingConfig, D
 from ..document_processing.metadata.models import DocumentMetadata
 from ..document_processing.parsers.base_parser import ParsedDocument
 
-
 class AsyncDocumentProcessor:
     """Asynchronous document processor with parallel processing capabilities."""
 
@@ -269,7 +268,6 @@ class AsyncDocumentProcessor:
         """Cleanup on deletion."""
         if hasattr(self, 'executor') and self.executor:
             self.executor.shutdown(wait=False)
-
 
 class AsyncDocumentProcessorManager:
     """Manager for multiple async document processors."""

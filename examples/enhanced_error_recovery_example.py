@@ -55,7 +55,6 @@ EXAMPLE_URLS = [
     "https://www.content-error-example.com",
 ]
 
-
 async def setup_error_recovery_system() -> tuple:
     """Set up the error recovery system with tools and model.
 
@@ -99,7 +98,6 @@ async def setup_error_recovery_system() -> tuple:
 
         return error_recovery, all_tools, model, session
 
-
 async def simulate_error_for_tool(tool: BaseTool, url: str) -> None:
     """Simulate an error for a specific tool and URL.
 
@@ -118,7 +116,6 @@ async def simulate_error_for_tool(tool: BaseTool, url: str) -> None:
     else:
         # No error for regular URLs
         return await tool.invoke({"url": url})
-
 
 async def demonstrate_retry_strategies(
     error_recovery: ErrorRecoverySystem, tools: List[BaseTool]
@@ -176,7 +173,6 @@ async def demonstrate_retry_strategies(
             # Restore original invoke method
             scrape_tool.invoke = original_invoke
 
-
 async def demonstrate_fallback_mechanisms(
     error_recovery: ErrorRecoverySystem, tools: List[BaseTool]
 ) -> None:
@@ -227,7 +223,6 @@ async def demonstrate_fallback_mechanisms(
             # Restore original invoke methods
             for tool in tools:
                 tool.invoke = original_invoke
-
 
 async def demonstrate_self_healing(
     error_recovery: ErrorRecoverySystem, tools: List[BaseTool]
@@ -295,7 +290,6 @@ async def demonstrate_self_healing(
         f"Self-healing improvements: {learning_results['self_healing_improvements']}"
     )
 
-
 async def main():
     """Main function to run the example."""
     logger.info("Starting Enhanced Error Recovery Example")
@@ -316,7 +310,6 @@ async def main():
         logger.info("Enhanced Error Recovery Example completed successfully")
     except Exception as e:
         logger.error(f"Error in example: {str(e)}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

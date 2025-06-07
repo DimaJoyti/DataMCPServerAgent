@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
-
 class ModalityType(str, Enum):
     """Types of modalities supported."""
     TEXT = "text"
@@ -23,7 +22,6 @@ class ModalityType(str, Enum):
     AUDIO = "audio"
     VIDEO = "video"
     DOCUMENT = "document"
-
 
 class MultiModalContent(BaseModel):
     """Container for multimodal content."""
@@ -47,7 +45,6 @@ class MultiModalContent(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
 class ProcessingMetrics(BaseModel):
     """Metrics for processing operations."""
 
@@ -63,7 +60,6 @@ class ProcessingMetrics(BaseModel):
     # Quality metrics
     accuracy: Optional[float] = Field(None, description="Accuracy score (0-1)")
     relevance: Optional[float] = Field(None, description="Relevance score (0-1)")
-
 
 class ProcessedResult(BaseModel):
     """Result of multimodal processing."""
@@ -91,7 +87,6 @@ class ProcessedResult(BaseModel):
     status: str = Field(..., description="Processing status")
     errors: List[str] = Field(default_factory=list, description="Processing errors")
     warnings: List[str] = Field(default_factory=list, description="Processing warnings")
-
 
 class MultiModalProcessor(ABC):
     """Abstract base class for multimodal processors."""
@@ -222,7 +217,6 @@ class MultiModalProcessor(ABC):
         """Update configuration."""
         self.config.update(updates)
         self.logger.info(f"Updated configuration: {list(updates.keys())}")
-
 
 class ProcessorFactory:
     """Factory for creating multimodal processors."""

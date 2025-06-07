@@ -23,7 +23,6 @@ from src.utils.env_config import get_mcp_server_params
 # Load environment variables
 load_dotenv()
 
-
 async def load_all_tools(session: ClientSession = None) -> List[BaseTool]:
     """Load both standard MCP tools and custom tools for research reports.
 
@@ -60,7 +59,6 @@ async def load_all_tools(session: ClientSession = None) -> List[BaseTool]:
 
     return list(tool_dict.values())
 
-
 def _load_research_tools() -> List[BaseTool]:
     """Load research-specific tools.
 
@@ -91,7 +89,6 @@ def _load_research_tools() -> List[BaseTool]:
         # Return empty list if tools are not available
         return []
 
-
 async def create_research_reports_agent(
     model: ChatAnthropic,
     tools: List[BaseTool],
@@ -116,7 +113,6 @@ async def create_research_reports_agent(
     agent = ResearchReportsAgent(model, tools, db, templates)
 
     return agent
-
 
 async def chat_loop(agent: ResearchReportsAgent, session: Optional[ClientSession] = None):
     """Run the chat loop for the research reports agent.
@@ -147,7 +143,6 @@ async def chat_loop(agent: ResearchReportsAgent, session: Optional[ClientSession
         except Exception as e:
             error_message = format_error_for_user(e)
             print(f"\nError: {error_message}\n")
-
 
 async def chat_with_research_reports_agent(config: Dict[str, Any] = None):
     """Chat with the research reports agent.
@@ -197,7 +192,6 @@ async def chat_with_research_reports_agent(config: Dict[str, Any] = None):
 
         # Start the chat loop without MCP session
         await chat_loop(agent, None)
-
 
 if __name__ == "__main__":
     asyncio.run(chat_with_research_reports_agent())

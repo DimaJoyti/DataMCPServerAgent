@@ -29,7 +29,6 @@ research_assistant = RLEnhancedResearchAssistant(
     exploration_rate=float(os.getenv("RL_EXPLORATION_RATE", "0.2")),
 )
 
-
 async def run_research_assistant():
     """
     Run the RL-enhanced research assistant with user input and handle the response.
@@ -481,7 +480,6 @@ async def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the RL-Enhanced Research Assistant!")
-
 
 if __name__ == "__main__":
     asyncio.run(run_research_assistant())

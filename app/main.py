@@ -21,7 +21,6 @@ from app.infrastructure.monitoring import setup_monitoring
 
 logger = get_logger(__name__)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -55,7 +54,6 @@ async def lifespan(app: FastAPI):
 
     logger.info("✅ DataMCPServerAgent shutdown complete!")
 
-
 async def _initialize_services(app: FastAPI) -> None:
     """Initialize domain services."""
     try:
@@ -74,7 +72,6 @@ async def _initialize_services(app: FastAPI) -> None:
     except Exception as e:
         logger.error(f"❌ Failed to initialize services: {e}")
         raise
-
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application."""
@@ -128,7 +125,6 @@ def create_app() -> FastAPI:
         }
 
     return app
-
 
 def _setup_middleware(app: FastAPI) -> None:
     """Setup application middleware."""
@@ -212,7 +208,6 @@ def _setup_middleware(app: FastAPI) -> None:
         )
 
         return response
-
 
 def _setup_exception_handlers(app: FastAPI) -> None:
     """Setup global exception handlers."""
@@ -299,10 +294,8 @@ def _setup_exception_handlers(app: FastAPI) -> None:
                 },
             )
 
-
 # Create app instance for direct import
 app = create_app()
-
 
 def run_server():
     """Run the application server."""
@@ -316,7 +309,6 @@ def run_server():
         log_level=settings.log_level.value.lower(),
         access_log=True,
     )
-
 
 if __name__ == "__main__":
     run_server()

@@ -28,7 +28,6 @@ research_assistant = EnhancedResearchAssistant(
     db_path=os.getenv("RESEARCH_DB_PATH", "research_memory.db"),
 )
 
-
 async def run_research_assistant():
     """
     Run the enhanced research assistant with user input and handle the response.
@@ -633,7 +632,6 @@ async def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the Enhanced Research Assistant!")
-
 
 if __name__ == "__main__":
     asyncio.run(run_research_assistant())

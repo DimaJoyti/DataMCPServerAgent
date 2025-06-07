@@ -7,7 +7,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-
 class APIConfig(BaseModel):
     """Configuration for the API."""
 
@@ -182,7 +181,6 @@ class APIConfig(BaseModel):
             )
 
         return cls(**config_dict)
-
 
 # Create a global config instance
 config = APIConfig.from_env()

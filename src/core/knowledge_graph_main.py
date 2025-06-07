@@ -7,7 +7,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -28,25 +28,24 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-
 async def setup_knowledge_graph_agent():
     """Set up the knowledge graph agent.
-    
+
     Returns:
         Tuple of (model, memory_manager, kg_integration)
     """
     try:
         # Initialize model
         model = ChatAnthropic(model=os.getenv("MODEL_NAME", "claude-3-5-sonnet-20240620"))
-        
+
         # Initialize memory database
         db_path = os.getenv("MEMORY_DB_PATH", "knowledge_graph_agent.db")
         db = MemoryDatabase(db_path)
-        
+
         # Initialize distributed memory manager
         memory_type = os.getenv("MEMORY_TYPE", "sqlite")
         memory_config = {}
-        
+
         if memory_type == "redis":
             memory_config = {
                 "host": os.getenv("REDIS_HOST", "localhost"),
@@ -60,13 +59,13 @@ async def setup_knowledge_graph_agent():
                 "connection_string": os.getenv("MONGODB_URI", "mongodb://localhost:27017/"),
                 "database_name": os.getenv("MONGODB_DB", "agent_memory")
             }
-        
+
         memory_manager = DistributedMemoryManager(
             memory_type=memory_type,
             config=memory_config,
             namespace="knowledge_graph"
         )
-        
+
         # Initialize knowledge graph integration
         kg_integration = KnowledgeGraphIntegration(
             memory_manager=memory_manager,
@@ -74,32 +73,31 @@ async def setup_knowledge_graph_agent():
             model=model,
             namespace="knowledge_graph"
         )
-        
+
         return model, memory_manager, kg_integration
     except Exception as e:
         error_message = format_error_for_user(e)
         logger.error(f"Failed to set up knowledge graph agent: {error_message}")
         raise
 
-
 async def chat_with_knowledge_graph_agent():
     """Chat with the knowledge graph agent.
-    
+
     This function provides an interactive chat interface with the knowledge graph agent.
     """
     try:
         # Set up agent
         model, memory_manager, kg_integration = await setup_knowledge_graph_agent()
-        
+
         # Initialize conversation
         conversation_id = f"knowledge_graph_{int(asyncio.get_event_loop().time())}"
         history = []
-        
+
         # System prompt
         system_prompt = """You are a helpful AI assistant with knowledge graph capabilities.
         You can extract entities and relationships from text, store them in a knowledge graph,
         and use the knowledge graph to provide more relevant and contextual responses.
-        
+
         Special commands:
         - !kg_summary: Get a summary of the knowledge graph
         - !kg_context <query>: Get context from the knowledge graph for a query
@@ -108,15 +106,15 @@ async def chat_with_knowledge_graph_agent():
         - !help: Show this help message
         - !exit: Exit the chat
         """
-        
+
         print("Welcome to the Knowledge Graph Agent!")
         print("Type '!help' for a list of commands or '!exit' to exit.")
         print("=" * 50)
-        
+
         while True:
             # Get user input
             user_input = input("\nYou: ")
-            
+
             # Check for special commands
             if user_input.lower() == "!exit":
                 print("Goodbye!")
@@ -188,7 +186,7 @@ async def chat_with_knowledge_graph_agent():
                     for key, value in result.items():
                         print(f"- {key}: {value}")
                 continue
-            
+
             # Save user message
             user_message = {
                 "role": "user",
@@ -196,10 +194,10 @@ async def chat_with_knowledge_graph_agent():
             }
             history.append(user_message)
             await memory_manager.save_conversation_message(user_message, conversation_id)
-            
+
             # Get context from knowledge graph
             context = await kg_integration.get_context_for_request(user_input)
-            
+
             # Generate response with context
             context_str = ""
             if context["entities"]:
@@ -209,20 +207,20 @@ async def chat_with_knowledge_graph_agent():
                     for key, value in entity['properties'].items():
                         if key not in ['name', 'timestamp', 'source_type']:
                             context_str += f"  - {key}: {value}\n"
-            
+
             # Create messages for model
             messages = [SystemMessage(content=system_prompt + "\n\n" + context_str if context_str else system_prompt)]
-            
+
             # Add conversation history
             for message in history:
                 if message["role"] == "user":
                     messages.append(HumanMessage(content=message["content"]))
                 else:
                     messages.append(AIMessage(content=message["content"]))
-            
+
             # Generate response
             response = await model.ainvoke(messages)
-            
+
             # Save assistant message
             assistant_message = {
                 "role": "assistant",
@@ -230,14 +228,13 @@ async def chat_with_knowledge_graph_agent():
             }
             history.append(assistant_message)
             await memory_manager.save_conversation_message(assistant_message, conversation_id)
-            
+
             # Print response
             print(f"\nAssistant: {response.content}")
     except Exception as e:
         error_message = format_error_for_user(e)
         logger.error(f"Error in chat with knowledge graph agent: {error_message}")
         print(f"\nError: {error_message}")
-
 
 if __name__ == "__main__":
     asyncio.run(chat_with_knowledge_graph_agent())

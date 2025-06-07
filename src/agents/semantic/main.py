@@ -47,7 +47,6 @@ from .specialized_agents import (
     SearchAgent,
 )
 
-
 class SemanticAgentsSystem:
     """
     Main system class for semantic agents.
@@ -380,7 +379,6 @@ class SemanticAgentsSystem:
 
         return app
 
-
 # Main entry point
 async def main():
     """Main entry point for the semantic agents system."""
@@ -398,7 +396,6 @@ async def main():
     except Exception as e:
         logging.error(f"Error running semantic agents system: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

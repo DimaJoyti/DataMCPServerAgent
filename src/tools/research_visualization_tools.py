@@ -44,7 +44,6 @@ except ImportError:
     WORDCLOUD_AVAILABLE = False
     print("Warning: WordCloud not available. Install with 'pip install wordcloud'")
 
-
 class VisualizationConfig(BaseModel):
     """Configuration for visualizations."""
 
@@ -67,7 +66,6 @@ class VisualizationConfig(BaseModel):
 
         arbitrary_types_allowed = True
 
-
 class ChartData(BaseModel):
     """Data for chart visualizations."""
 
@@ -85,7 +83,6 @@ class ChartData(BaseModel):
 
         arbitrary_types_allowed = True
 
-
 class NetworkData(BaseModel):
     """Data for network visualizations."""
 
@@ -102,7 +99,6 @@ class NetworkData(BaseModel):
 
         arbitrary_types_allowed = True
 
-
 class MapData(BaseModel):
     """Data for map visualizations."""
 
@@ -118,7 +114,6 @@ class MapData(BaseModel):
 
         arbitrary_types_allowed = True
 
-
 class WordCloudData(BaseModel):
     """Data for word cloud visualizations."""
 
@@ -130,7 +125,6 @@ class WordCloudData(BaseModel):
         """Pydantic config."""
 
         arbitrary_types_allowed = True
-
 
 class TimelineData(BaseModel):
     """Data for timeline visualizations."""
@@ -144,7 +138,6 @@ class TimelineData(BaseModel):
         """Pydantic config."""
 
         arbitrary_types_allowed = True
-
 
 class VisualizationGenerator:
     """Generator for advanced visualizations."""
@@ -1123,7 +1116,6 @@ class VisualizationGenerator:
         else:
             raise ValueError(f"Unsupported visualization type: {visualization_type}")
 
-
 def generate_chart_tool(data_str: str) -> str:
     """Generate a chart visualization.
 
@@ -1149,7 +1141,6 @@ def generate_chart_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
-
 
 def generate_network_diagram_tool(data_str: str) -> str:
     """Generate a network diagram visualization.
@@ -1177,7 +1168,6 @@ def generate_network_diagram_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-
 def generate_wordcloud_tool(data_str: str) -> str:
     """Generate a word cloud visualization.
 
@@ -1203,7 +1193,6 @@ def generate_wordcloud_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
-
 
 def generate_map_tool(data_str: str) -> str:
     """Generate a map visualization.
@@ -1231,7 +1220,6 @@ def generate_map_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
-
 def generate_timeline_tool(data_str: str) -> str:
     """Generate a timeline visualization.
 
@@ -1257,7 +1245,6 @@ def generate_timeline_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
-
 
 if __name__ == "__main__":
     # Example usage

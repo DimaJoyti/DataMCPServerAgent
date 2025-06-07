@@ -32,7 +32,6 @@ from src.utils.error_handlers import format_error_for_user
 # Configure logging
 logger = logging.getLogger(__name__)
 
-
 class KnowledgeGraph:
     """Knowledge graph for representing entities and their relationships."""
 

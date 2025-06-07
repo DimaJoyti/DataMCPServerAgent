@@ -52,38 +52,37 @@ structlog.configure(
 
 logger = structlog.get_logger("data_pipeline_main")
 
-
 class DataPipelineManager:
     """
     Main manager for the data pipeline system.
-    
+
     Provides a high-level interface for managing pipelines, ingestion,
     and monitoring data processing workflows.
     """
-    
+
     def __init__(self):
         """Initialize the data pipeline manager."""
         self.orchestrator: Optional[PipelineOrchestrator] = None
         self.batch_engine: Optional[BatchIngestionEngine] = None
         self.stream_engine: Optional[StreamIngestionEngine] = None
         self.is_running = False
-        
+
         logger.info("Data pipeline manager initialized")
-    
+
     async def start(self, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Start the data pipeline system.
-        
+
         Args:
             config: Optional configuration dictionary
         """
         if self.is_running:
             logger.warning("Data pipeline system is already running")
             return
-        
+
         try:
             logger.info("Starting data pipeline system")
-            
+
             # Initialize orchestrator
             orchestrator_config = OrchestratorConfig(
                 max_concurrent_pipelines=config.get("max_concurrent_pipelines", 10) if config else 10,
@@ -91,74 +90,74 @@ class DataPipelineManager:
                 enable_metrics=config.get("enable_metrics", True) if config else True,
                 enable_logging=config.get("enable_logging", True) if config else True
             )
-            
+
             self.orchestrator = PipelineOrchestrator(config=orchestrator_config)
-            
+
             # Initialize batch ingestion engine
             self.batch_engine = BatchIngestionEngine()
-            
+
             # Initialize streaming ingestion engine
             self.stream_engine = StreamIngestionEngine()
-            
+
             # Start orchestrator
             await self.orchestrator.start()
-            
+
             self.is_running = True
             logger.info("Data pipeline system started successfully")
-            
+
         except Exception as e:
             logger.error("Failed to start data pipeline system", error=str(e))
             raise e
-    
+
     async def stop(self) -> None:
         """Stop the data pipeline system."""
         if not self.is_running:
             return
-        
+
         try:
             logger.info("Stopping data pipeline system")
-            
+
             # Stop orchestrator
             if self.orchestrator:
                 await self.orchestrator.stop()
-            
+
             # Stop streaming engine
             if self.stream_engine:
                 await self.stream_engine.stop()
-            
+
             self.is_running = False
             logger.info("Data pipeline system stopped")
-            
+
         except Exception as e:
             logger.error("Error stopping data pipeline system", error=str(e))
-    
+
     async def create_pipeline(self, pipeline_config: Dict[str, Any]) -> str:
         """
         Create a new data pipeline.
-        
+
         Args:
             pipeline_config: Pipeline configuration
-            
+
         Returns:
             Pipeline ID
         """
         if not self.orchestrator:
             raise RuntimeError("Data pipeline system not started")
-        
+
         try:
             # Convert dict to PipelineConfig
             config = PipelineConfig(**pipeline_config)
-            
+
             # Register pipeline
             pipeline = await self.orchestrator.register_pipeline(config)
-            
+
             logger.info("Pipeline created", pipeline_id=pipeline.pipeline_id)
             return pipeline.pipeline_id
-            
+
         except Exception as e:
             logger.error("Failed to create pipeline", error=str(e))
             raise e
-    
+
     async def trigger_pipeline(
         self,
         pipeline_id: str,
@@ -166,47 +165,47 @@ class DataPipelineManager:
     ) -> str:
         """
         Trigger a pipeline execution.
-        
+
         Args:
             pipeline_id: Pipeline identifier
             parameters: Runtime parameters
-            
+
         Returns:
             Run ID
         """
         if not self.orchestrator:
             raise RuntimeError("Data pipeline system not started")
-        
+
         try:
             run_id = await self.orchestrator.trigger_pipeline(
                 pipeline_id=pipeline_id,
                 parameters=parameters,
                 triggered_by="user"
             )
-            
+
             logger.info("Pipeline triggered", pipeline_id=pipeline_id, run_id=run_id)
             return run_id
-            
+
         except Exception as e:
             logger.error("Failed to trigger pipeline", pipeline_id=pipeline_id, error=str(e))
             raise e
-    
+
     async def get_pipeline_status(self, run_id: str) -> Optional[Dict[str, Any]]:
         """
         Get pipeline execution status.
-        
+
         Args:
             run_id: Pipeline run identifier
-            
+
         Returns:
             Pipeline status information
         """
         if not self.orchestrator:
             raise RuntimeError("Data pipeline system not started")
-        
+
         try:
             pipeline_run = await self.orchestrator.get_pipeline_status(run_id)
-            
+
             if pipeline_run:
                 return {
                     "run_id": pipeline_run.run_id,
@@ -228,26 +227,26 @@ class DataPipelineManager:
                     ],
                     "error_message": pipeline_run.error_message
                 }
-            
+
             return None
-            
+
         except Exception as e:
             logger.error("Failed to get pipeline status", run_id=run_id, error=str(e))
             raise e
-    
+
     async def list_pipelines(self) -> List[Dict[str, Any]]:
         """
         List all registered pipelines.
-        
+
         Returns:
             List of pipeline information
         """
         if not self.orchestrator:
             raise RuntimeError("Data pipeline system not started")
-        
+
         try:
             pipelines = await self.orchestrator.list_registered_pipelines()
-            
+
             return [
                 {
                     "pipeline_id": pipeline.pipeline_id,
@@ -262,11 +261,11 @@ class DataPipelineManager:
                 }
                 for pipeline in pipelines
             ]
-            
+
         except Exception as e:
             logger.error("Failed to list pipelines", error=str(e))
             raise e
-    
+
     async def run_batch_ingestion(
         self,
         source_config: Dict[str, Any],
@@ -275,27 +274,27 @@ class DataPipelineManager:
     ) -> Dict[str, Any]:
         """
         Run batch data ingestion.
-        
+
         Args:
             source_config: Source configuration
             destination_config: Destination configuration
             transformation_config: Optional transformation configuration
-            
+
         Returns:
             Ingestion metrics
         """
         if not self.batch_engine:
             raise RuntimeError("Data pipeline system not started")
-        
+
         try:
             logger.info("Starting batch ingestion")
-            
+
             metrics = await self.batch_engine.ingest_data(
                 source_config=source_config,
                 destination_config=destination_config,
                 transformation_config=transformation_config
             )
-            
+
             result = {
                 "total_records": metrics.total_records,
                 "processed_records": metrics.processed_records,
@@ -306,18 +305,18 @@ class DataPipelineManager:
                 "throughput_bytes_per_second": metrics.throughput_bytes_per_second,
                 "error_rate": metrics.error_rate
             }
-            
+
             logger.info("Batch ingestion completed", **result)
             return result
-            
+
         except Exception as e:
             logger.error("Batch ingestion failed", error=str(e))
             raise e
-    
+
     async def get_system_status(self) -> Dict[str, Any]:
         """
         Get overall system status.
-        
+
         Returns:
             System status information
         """
@@ -331,31 +330,29 @@ class DataPipelineManager:
                     "stream_engine": self.stream_engine is not None
                 }
             }
-            
+
             if self.orchestrator:
                 active_pipelines = await self.orchestrator.list_active_pipelines()
                 registered_pipelines = await self.orchestrator.list_registered_pipelines()
-                
+
                 status["orchestrator_stats"] = {
                     "active_pipelines": len(active_pipelines),
                     "registered_pipelines": len(registered_pipelines)
                 }
-            
+
             return status
-            
+
         except Exception as e:
             logger.error("Failed to get system status", error=str(e))
             raise e
 
-
 # Global manager instance
 pipeline_manager = DataPipelineManager()
-
 
 async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None):
     """
     Interactive chat interface for the data pipeline system.
-    
+
     Args:
         config: Optional configuration
     """
@@ -371,15 +368,15 @@ async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None
     print("- 'help' - Show this help message")
     print("- 'exit' - Exit the system")
     print("=" * 50)
-    
+
     try:
         # Start the system
         await pipeline_manager.start(config)
-        
+
         while True:
             try:
                 user_input = input("\nData Pipeline> ").strip()
-                
+
                 if user_input.lower() in ['exit', 'quit']:
                     break
                 elif user_input.lower() == 'help':
@@ -401,18 +398,17 @@ async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None
                 else:
                     print(f"Unknown command: {user_input}")
                     print("Type 'help' for available commands")
-                    
+
             except KeyboardInterrupt:
                 break
             except Exception as e:
                 error_msg = format_error_for_user(e)
                 print(f"Error: {error_msg}")
-    
+
     finally:
         # Stop the system
         await pipeline_manager.stop()
         print("\nData pipeline system stopped. Goodbye!")
-
 
 if __name__ == "__main__":
     asyncio.run(chat_with_data_pipeline_system())

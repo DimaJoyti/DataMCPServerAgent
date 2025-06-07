@@ -19,7 +19,6 @@ router = APIRouter(prefix="/health", tags=["health"])
 # Store the start time for uptime calculation
 start_time = time.time()
 
-
 @router.get("/", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """
@@ -28,13 +27,13 @@ async def health_check() -> HealthResponse:
     try:
         # Create a health service
         health_service = HealthService()
-        
+
         # Check the health of components
         components = await health_service.check_components()
-        
+
         # Calculate uptime
         uptime = time.time() - start_time
-        
+
         return HealthResponse(
             status="ok",
             version=config.version,

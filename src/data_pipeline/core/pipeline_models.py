@@ -10,7 +10,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
-
 class PipelineStatus(str, Enum):
     """Pipeline execution status."""
     PENDING = "pending"
@@ -19,7 +18,6 @@ class PipelineStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     PAUSED = "paused"
-
 
 class TaskStatus(str, Enum):
     """Task execution status."""
@@ -30,7 +28,6 @@ class TaskStatus(str, Enum):
     SKIPPED = "skipped"
     RETRY = "retry"
 
-
 class TaskType(str, Enum):
     """Types of pipeline tasks."""
     INGESTION = "ingestion"
@@ -40,7 +37,6 @@ class TaskType(str, Enum):
     EXPORT = "export"
     CUSTOM = "custom"
 
-
 class DataSourceType(str, Enum):
     """Types of data sources."""
     DATABASE = "database"
@@ -49,7 +45,6 @@ class DataSourceType(str, Enum):
     STREAM = "stream"
     QUEUE = "queue"
     OBJECT_STORAGE = "object_storage"
-
 
 class TaskConfig(BaseModel):
     """Configuration for a pipeline task."""
@@ -80,7 +75,6 @@ class TaskConfig(BaseModel):
     input_sources: List[Dict[str, Any]] = Field(default_factory=list, description="Input data sources")
     output_destinations: List[Dict[str, Any]] = Field(default_factory=list, description="Output destinations")
 
-
 class PipelineConfig(BaseModel):
     """Configuration for a data pipeline."""
     pipeline_id: str = Field(..., description="Unique pipeline identifier")
@@ -110,7 +104,6 @@ class PipelineConfig(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Pipeline tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
-
 class PipelineTask(BaseModel):
     """Runtime representation of a pipeline task."""
     task_id: str = Field(..., description="Unique task identifier")
@@ -138,7 +131,6 @@ class PipelineTask(BaseModel):
 
     # Metrics
     metrics: Dict[str, Any] = Field(default_factory=dict, description="Task execution metrics")
-
 
 class PipelineRun(BaseModel):
     """Runtime representation of a pipeline execution."""
@@ -169,7 +161,6 @@ class PipelineRun(BaseModel):
     # Runtime parameters
     runtime_parameters: Dict[str, Any] = Field(default_factory=dict, description="Runtime parameters")
 
-
 class Pipeline(BaseModel):
     """Complete pipeline definition."""
     pipeline_id: str = Field(..., description="Unique pipeline identifier")
@@ -194,7 +185,6 @@ class Pipeline(BaseModel):
     # Next scheduled run
     next_run_time: Optional[datetime] = Field(None, description="Next scheduled run time")
 
-
 class DataSource(BaseModel):
     """Data source configuration."""
     source_id: str = Field(..., description="Unique source identifier")
@@ -215,7 +205,6 @@ class DataSource(BaseModel):
     description: Optional[str] = Field(None, description="Source description")
     tags: List[str] = Field(default_factory=list, description="Source tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-
 
 class DataDestination(BaseModel):
     """Data destination configuration."""
@@ -239,7 +228,6 @@ class DataDestination(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Destination tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
-
 class ValidationRule(BaseModel):
     """Data validation rule."""
     rule_id: str = Field(..., description="Unique rule identifier")
@@ -258,7 +246,6 @@ class ValidationRule(BaseModel):
     # Metadata
     description: Optional[str] = Field(None, description="Rule description")
     tags: List[str] = Field(default_factory=list, description="Rule tags")
-
 
 class QualityMetrics(BaseModel):
     """Data quality metrics."""

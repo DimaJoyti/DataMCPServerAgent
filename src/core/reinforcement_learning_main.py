@@ -58,7 +58,6 @@ decision_explainer = DecisionExplainer(
 # Initialize policy explainer
 policy_explainer = PolicyExplainer(model=model, db=db)
 
-
 async def setup_rl_agent(
     mcp_tools: List[BaseTool], rl_mode: str = "auto"
 ) -> Union[
@@ -123,7 +122,6 @@ async def setup_rl_agent(
         raise ValueError(f"Unknown RL mode: {rl_mode}")
 
     return rl_coordinator
-
 
 async def chat_with_rl_agent() -> None:
     """Chat with the reinforcement learning agent."""
@@ -457,7 +455,6 @@ async def chat_with_rl_agent() -> None:
                 except Exception as e:
                     error_message = format_error_for_user(e)
                     print(f"\nError: {error_message}")
-
 
 if __name__ == "__main__":
     asyncio.run(chat_with_rl_agent())

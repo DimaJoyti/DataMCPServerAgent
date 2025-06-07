@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 class Environment(str, Enum):
     """Application environment enumeration."""
 
@@ -29,7 +28,6 @@ class Environment(str, Enum):
     TESTING = "testing"
     STAGING = "staging"
     PRODUCTION = "production"
-
 
 class LogLevel(str, Enum):
     """Logging level enumeration."""
@@ -39,7 +37,6 @@ class LogLevel(str, Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
-
 
 class DatabaseConfig(BaseSettings):
     """Database configuration."""
@@ -59,7 +56,6 @@ class DatabaseConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="DATABASE_")
 
-
 class CacheConfig(BaseSettings):
     """Cache configuration."""
 
@@ -73,7 +69,6 @@ class CacheConfig(BaseSettings):
     max_connections: int = Field(default=10, description="Max Redis connections")
 
     model_config = SettingsConfigDict(env_prefix="CACHE_")
-
 
 class SecurityConfig(BaseSettings):
     """Security configuration."""
@@ -96,7 +91,6 @@ class SecurityConfig(BaseSettings):
     enable_security_headers: bool = Field(default=True, description="Enable security headers")
 
     model_config = SettingsConfigDict(env_prefix="SECURITY_")
-
 
 class CloudflareConfig(BaseSettings):
     """Cloudflare integration configuration."""
@@ -129,7 +123,6 @@ class CloudflareConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="CLOUDFLARE_")
 
-
 class EmailConfig(BaseSettings):
     """Email configuration."""
 
@@ -156,7 +149,6 @@ class EmailConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="EMAIL_")
 
-
 class WebRTCConfig(BaseSettings):
     """WebRTC configuration."""
 
@@ -178,7 +170,6 @@ class WebRTCConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="WEBRTC_")
 
-
 class MonitoringConfig(BaseSettings):
     """Monitoring and observability configuration."""
 
@@ -199,7 +190,6 @@ class MonitoringConfig(BaseSettings):
     webhook_url: str = Field(default="", description="Alert webhook URL")
 
     model_config = SettingsConfigDict(env_prefix="MONITORING_")
-
 
 class SemanticAgentsConfig(BaseSettings):
     """Semantic agents configuration."""
@@ -238,7 +228,6 @@ class SemanticAgentsConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="SEMANTIC_AGENTS_")
 
-
 class LLMPipelineConfig(BaseSettings):
     """LLM-driven pipeline configuration."""
 
@@ -275,7 +264,6 @@ class LLMPipelineConfig(BaseSettings):
     rerank_enabled: bool = Field(default=True, description="Enable result reranking")
 
     model_config = SettingsConfigDict(env_prefix="LLM_PIPELINE_")
-
 
 class Settings(BaseSettings):
     """Main application settings."""
@@ -371,7 +359,6 @@ class Settings(BaseSettings):
     def is_testing(self) -> bool:
         """Check if running in testing mode."""
         return self.environment == Environment.TESTING
-
 
 # Global settings instance - create when needed to avoid import-time issues
 def get_settings() -> Settings:

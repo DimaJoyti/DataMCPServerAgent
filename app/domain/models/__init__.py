@@ -10,25 +10,21 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 # Agent models
 class AgentType(str, Enum):
     WORKER = "worker"
     COORDINATOR = "coordinator"
     SPECIALIST = "specialist"
 
-
 class AgentStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     BUSY = "busy"
 
-
 class AgentCapability(str, Enum):
     DATA_ANALYSIS = "data_analysis"
     RESEARCH = "research"
     COMMUNICATION = "communication"
-
 
 class Agent(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -37,7 +33,6 @@ class Agent(BaseModel):
     status: AgentStatus = AgentStatus.ACTIVE
     created_at: datetime = Field(default_factory=datetime.now)
 
-
 # Task models
 class TaskStatus(str, Enum):
     PENDING = "pending"
@@ -45,17 +40,14 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
-
 class TaskPriority(str, Enum):
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
 
-
 class TaskType(str, Enum):
     DATA_ANALYSIS = "data_analysis"
     RESEARCH = "research"
-
 
 class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -64,7 +56,6 @@ class Task(BaseModel):
     status: TaskStatus = TaskStatus.PENDING
     priority: TaskPriority = TaskPriority.NORMAL
     created_at: datetime = Field(default_factory=datetime.now)
-
 
 __all__ = [
     "Agent",

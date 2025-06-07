@@ -20,7 +20,6 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
-
 class AlertLevel(str, Enum):
     """Alert severity levels."""
     INFO = "info"
@@ -28,14 +27,12 @@ class AlertLevel(str, Enum):
     ERROR = "error"
     CRITICAL = "critical"
 
-
 class MetricType(str, Enum):
     """Types of metrics."""
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
     TIMER = "timer"
-
 
 @dataclass
 class Alert:
@@ -59,7 +56,6 @@ class Alert:
     # Timing
     acknowledged_at: Optional[float] = None
     resolved_at: Optional[float] = None
-
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics snapshot."""
@@ -90,7 +86,6 @@ class PerformanceMetrics(BaseModel):
     p50_latency_ms: float = Field(default=0.0, description="50th percentile latency")
     p95_latency_ms: float = Field(default=0.0, description="95th percentile latency")
     p99_latency_ms: float = Field(default=0.0, description="99th percentile latency")
-
 
 class MetricsCollector:
     """Collects and aggregates performance metrics."""
@@ -245,7 +240,6 @@ class MetricsCollector:
         index = int((percentile / 100.0) * len(data))
         index = min(index, len(data) - 1)
         return data[index]
-
 
 class AlertManager:
     """Manages alerts and notifications."""
@@ -419,7 +413,6 @@ class AlertManager:
 
         cutoff_time = time.time() - duration_seconds
         return [a for a in self.alert_history if a.timestamp >= cutoff_time]
-
 
 class LiveMonitor:
     """Main live monitoring coordinator."""

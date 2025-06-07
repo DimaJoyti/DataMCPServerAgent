@@ -6,7 +6,7 @@ import asyncio
 import os
 import sys
 import time
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -65,18 +65,17 @@ SAMPLE_FEEDBACK = [
     "Excellent work, very comprehensive!"
 ]
 
-
 async def simulate_rl_agent_learning(rl_agent_type: str = "q_learning") -> None:
     """Simulate learning with a reinforcement learning agent.
-    
+
     Args:
         rl_agent_type: Type of RL agent to use ("q_learning" or "policy_gradient")
     """
     print(f"\n=== Simulating {rl_agent_type.upper()} Agent Learning ===\n")
-    
+
     # Create specialized sub-agents
     sub_agents = await create_specialized_sub_agents(model, [])
-    
+
     # Create RL coordinator agent
     rl_coordinator = await create_rl_agent_architecture(
         model=model,
@@ -84,43 +83,43 @@ async def simulate_rl_agent_learning(rl_agent_type: str = "q_learning") -> None:
         sub_agents=sub_agents,
         rl_agent_type=rl_agent_type
     )
-    
+
     # Simulate interactions
     history = []
-    
+
     for i, request in enumerate(SAMPLE_REQUESTS):
         print(f"\nRequest {i+1}: {request}")
-        
+
         # Process the request
         result = await rl_coordinator.process_request(request, history)
-        
+
         # Print the result
         if result["success"]:
             print(f"Response: {result['response'][:100]}...")
         else:
             print(f"Error: {result['error']}")
-        
+
         print(f"Selected agent: {result['selected_agent']}")
         print(f"Reward: {result['reward']:.4f}")
-        
+
         # Add to history
         history.append({"role": "user", "content": request})
         history.append({
-            "role": "assistant", 
+            "role": "assistant",
             "content": result["response"] if result["success"] else result["error"]
         })
-        
+
         # Provide feedback (simulated)
         feedback = SAMPLE_FEEDBACK[i]
         print(f"Feedback: {feedback}")
-        
+
         # Update from feedback
         await rl_coordinator.update_from_feedback(
-            request, 
+            request,
             result["response"] if result["success"] else result["error"],
             feedback
         )
-        
+
         # Save interaction for batch learning
         db.save_agent_interaction(
             "rl_coordinator",
@@ -128,41 +127,38 @@ async def simulate_rl_agent_learning(rl_agent_type: str = "q_learning") -> None:
             result["response"] if result["success"] else result["error"],
             feedback
         )
-        
+
         # Wait a bit
         await asyncio.sleep(1)
-    
+
     # Perform batch learning
     print("\n=== Performing Batch Learning ===\n")
     learning_result = await rl_coordinator.learn_from_batch()
     print(f"Learning result: {learning_result}")
-    
+
     # Print memory summary
     print("\n=== Memory Summary ===\n")
     print(db.get_memory_summary())
 
-
 async def compare_rl_approaches() -> None:
     """Compare different reinforcement learning approaches."""
     print("\n=== Comparing Reinforcement Learning Approaches ===\n")
-    
+
     # Simulate Q-learning
     await simulate_rl_agent_learning("q_learning")
-    
+
     # Simulate policy gradient
     await simulate_rl_agent_learning("policy_gradient")
-    
+
     print("\n=== Comparison Complete ===\n")
     print("Both approaches have been tested and their results are stored in the database.")
     print("Q-learning is better for discrete state spaces and simpler problems.")
     print("Policy gradient is better for continuous state spaces and more complex problems.")
 
-
 async def main() -> None:
     """Main function."""
     # Compare RL approaches
     await compare_rl_approaches()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

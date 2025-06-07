@@ -19,7 +19,6 @@ from src.utils.error_recovery import (
     RetryStrategy,
 )
 
-
 class TestCircuitBreaker(unittest.TestCase):
     """Tests for the CircuitBreaker class."""
 
@@ -118,7 +117,6 @@ class TestCircuitBreaker(unittest.TestCase):
         self.assertEqual(self.circuit_breaker.half_open_max_calls, 2)
         self.assertEqual(self.circuit_breaker.state, CircuitBreakerState.HALF_OPEN)
         self.assertFalse(self.circuit_breaker.allow_request())
-
 
 class TestErrorRecoverySystem(unittest.IsolatedAsyncioTestCase):
     """Tests for the ErrorRecoverySystem class."""
@@ -276,7 +274,6 @@ class TestErrorRecoverySystem(unittest.IsolatedAsyncioTestCase):
         # The primary tool may be called multiple times due to retries
         self.assertTrue(self.mock_tool1.invoke.call_count >= 1)
         self.mock_tool2.invoke.assert_called_once()
-
 
 if __name__ == "__main__":
     unittest.main()

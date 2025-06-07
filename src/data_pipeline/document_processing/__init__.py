@@ -39,23 +39,23 @@ __all__ = [
     # Main processor
     "DocumentProcessor",
     "DocumentProcessingConfig",
-    
+
     # Parsers
     "BaseParser",
-    "PDFParser", 
+    "PDFParser",
     "DOCXParser",
     "HTMLParser",
     "MarkdownParser",
     "TextParser",
     "ParserFactory",
-    
+
     # Chunking
     "BaseChunker",
     "TextChunker",
-    "SemanticChunker", 
+    "SemanticChunker",
     "AdaptiveChunker",
     "ChunkerFactory",
-    
+
     # Metadata
     "DocumentMetadata",
     "MetadataExtractor",

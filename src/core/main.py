@@ -60,7 +60,6 @@ For social media analysis:
 Always think step by step and provide clear, actionable insights from the data you collect.
 """
 
-
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load both standard MCP tools and custom Bright Data tools.
 
@@ -85,7 +84,6 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
         tool_dict[tool.name] = tool
 
     return list(tool_dict.values())
-
 
 async def chat_with_agent():
     async with stdio_client(server_params) as (read, write):
@@ -136,7 +134,6 @@ async def chat_with_agent():
                     print(f"Agent: {error_message}")
                     # Add error message to history
                     messages.append({"role": "assistant", "content": error_message})
-
 
 if __name__ == "__main__":
     asyncio.run(chat_with_agent())

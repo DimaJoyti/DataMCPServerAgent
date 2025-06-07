@@ -14,7 +14,6 @@ import uuid
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-
 class ErrorCategory(str, Enum):
     """Error category enumeration."""
 
@@ -30,7 +29,6 @@ class ErrorCategory(str, Enum):
     SYSTEM = "system"
     UNKNOWN = "unknown"
 
-
 class ErrorSeverity(str, Enum):
     """Error severity enumeration."""
 
@@ -38,7 +36,6 @@ class ErrorSeverity(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 class BaseError(Exception):
     """Base exception class for all application errors."""
@@ -93,7 +90,6 @@ class BaseError(Exception):
             f"{self.__class__.__name__}(error_code='{self.error_code}', message='{self.message}')"
         )
 
-
 class ValidationError(BaseError):
     """Raised when input validation fails."""
 
@@ -130,7 +126,6 @@ class ValidationError(BaseError):
             **kwargs,
         )
 
-
 class BusinessRuleError(BaseError):
     """Raised when business rules are violated."""
 
@@ -156,7 +151,6 @@ class BusinessRuleError(BaseError):
             **kwargs,
         )
 
-
 class AuthenticationError(BaseError):
     """Raised when authentication fails."""
 
@@ -177,7 +171,6 @@ class AuthenticationError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 class AuthorizationError(BaseError):
     """Raised when authorization fails."""
@@ -205,7 +198,6 @@ class AuthorizationError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 class EntityNotFoundError(BaseError):
     """Raised when a requested entity is not found."""
@@ -241,7 +233,6 @@ class EntityNotFoundError(BaseError):
             **kwargs,
         )
 
-
 class ConflictError(BaseError):
     """Raised when there's a conflict with the current state."""
 
@@ -267,7 +258,6 @@ class ConflictError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 class RateLimitError(BaseError):
     """Raised when rate limits are exceeded."""
@@ -300,7 +290,6 @@ class RateLimitError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 class ExternalServiceError(BaseError):
     """Raised when external service calls fail."""
@@ -336,7 +325,6 @@ class ExternalServiceError(BaseError):
             **kwargs,
         )
 
-
 class InfrastructureError(BaseError):
     """Raised when infrastructure components fail."""
 
@@ -363,7 +351,6 @@ class InfrastructureError(BaseError):
             **kwargs,
         )
 
-
 class ConcurrencyError(BaseError):
     """Raised when concurrency conflicts occur."""
 
@@ -384,7 +371,6 @@ class ConcurrencyError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 class ConfigurationError(BaseError):
     """Raised when configuration is invalid."""
@@ -411,7 +397,6 @@ class ConfigurationError(BaseError):
             suggestions=suggestions,
             **kwargs,
         )
-
 
 def handle_exception(exc: Exception) -> BaseError:
     """Convert any exception to a BaseError."""

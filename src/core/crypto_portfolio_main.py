@@ -25,7 +25,6 @@ from src.utils.env_config import load_dotenv
 # Load environment variables
 load_dotenv()
 
-
 class CryptoPortfolioSystem:
     """Main system for cryptocurrency portfolio management."""
 
@@ -40,11 +39,11 @@ class CryptoPortfolioSystem:
         """Initialize all system components."""
         try:
             print("🚀 Initializing Crypto Portfolio Management System...")
-            
+
             # Initialize database
             print("📊 Setting up memory database...")
             self.db = MemoryDatabase()
-            
+
             # Initialize language model
             print("🧠 Initializing AI model...")
             self.model = ChatAnthropic(
@@ -52,7 +51,7 @@ class CryptoPortfolioSystem:
                 temperature=0.1,
                 max_tokens=4000
             )
-            
+
             # Initialize MCP session for Bright Data tools
             print("🔗 Connecting to Bright Data MCP server...")
             server_params = StdioServerParameters(
@@ -60,14 +59,14 @@ class CryptoPortfolioSystem:
                 args=["-y", "@brightdata/mcp-server-bright-data"],
                 env=dict(os.environ)
             )
-            
+
             async with stdio_client(server_params) as (read, write):
                 async with ClientSession(read, write) as session:
                     self.session = session
-                    
+
                     # Initialize error recovery
                     error_recovery = ErrorRecoverySystem(self.db)
-                    
+
                     # Initialize crypto portfolio agent
                     print("💰 Setting up crypto portfolio agent...")
                     self.agent = CryptoPortfolioAgent(
@@ -76,14 +75,14 @@ class CryptoPortfolioSystem:
                         db=self.db,
                         error_recovery=error_recovery
                     )
-                    
+
                     await self.agent.initialize()
-                    
+
                     print("✅ System initialization completed!")
-                    
+
                     # Start interactive session
                     await self.run_interactive_session()
-                    
+
         except Exception as e:
             print(f"❌ System initialization failed: {e}")
             raise
@@ -109,14 +108,14 @@ class CryptoPortfolioSystem:
         while True:
             try:
                 user_input = input("\n💬 You: ").strip()
-                
+
                 if not user_input:
                     continue
-                
+
                 if user_input.lower() in ['quit', 'exit', 'bye']:
                     print("👋 Thank you for using Crypto Portfolio Management System!")
                     break
-                
+
                 # Handle special commands
                 if user_input.lower() == 'analyze':
                     await self.handle_analyze_command()
@@ -134,7 +133,7 @@ class CryptoPortfolioSystem:
                     # General chat with agent
                     response = await self.agent.chat_with_agent(user_input)
                     print(f"\n🤖 Assistant: {response}")
-                
+
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
                 break
@@ -144,14 +143,14 @@ class CryptoPortfolioSystem:
     async def handle_analyze_command(self):
         """Handle portfolio analysis command."""
         print("\n📊 Analyzing your cryptocurrency portfolio...")
-        
+
         try:
             analysis = await self.agent.analyze_portfolio()
-            
+
             if "error" in analysis:
                 print(f"❌ Analysis failed: {analysis['error']}")
                 return
-            
+
             # Display analysis results
             print("\n" + "=" * 50)
             print("📈 PORTFOLIO ANALYSIS RESULTS")
@@ -159,18 +158,18 @@ class CryptoPortfolioSystem:
             print(f"💰 Total Portfolio Value: ${analysis['portfolio_value']:,.2f}")
             print(f"📊 Total P&L: ${analysis['total_pnl']:+,.2f}")
             print(f"🏦 Number of Positions: {len(analysis['positions'])}")
-            
+
             if analysis['positions']:
                 print("\n📋 Position Details:")
                 for pos in analysis['positions']:
                     emoji = "📈" if pos.get('pnl', 0) >= 0 else "📉"
                     print(f"  {emoji} {pos['symbol']}: ${pos.get('current_value', 0):,.2f} (P&L: ${pos.get('pnl', 0):+,.2f})")
-            
+
             if analysis['recommendations']:
                 print("\n💡 Recommendations:")
                 for rec in analysis['recommendations']:
                     print(f"  • {rec}")
-            
+
         except Exception as e:
             print(f"❌ Error during analysis: {e}")
 
@@ -178,32 +177,32 @@ class CryptoPortfolioSystem:
         """Handle market monitoring command."""
         parts = user_input.split()
         symbols = parts[1:] if len(parts) > 1 else ['BTCUSD', 'ETHUSD', 'ADAUSD']
-        
+
         print(f"\n📈 Monitoring markets for: {', '.join(symbols)}")
-        
+
         try:
             market_data = await self.agent.monitor_markets(symbols)
-            
+
             if "error" in market_data:
                 print(f"❌ Monitoring failed: {market_data['error']}")
                 return
-            
+
             print("\n" + "=" * 50)
             print("🌍 MARKET MONITORING RESULTS")
             print("=" * 50)
-            
+
             for symbol in symbols:
                 print(f"\n💰 {symbol}:")
                 if symbol in market_data.get('price_data', {}):
                     print(f"  📊 Price Data: Available")
                 if symbol in market_data.get('technical_signals', {}):
                     print(f"  📈 Technical Analysis: Available")
-            
+
             if market_data.get('alerts'):
                 print("\n🚨 Active Alerts:")
                 for alert in market_data['alerts']:
                     print(f"  ⚠️ {alert}")
-            
+
         except Exception as e:
             print(f"❌ Error during monitoring: {e}")
 
@@ -211,19 +210,19 @@ class CryptoPortfolioSystem:
         """Handle crypto news command."""
         parts = user_input.split()
         symbol = parts[1] if len(parts) > 1 else 'BTCUSD'
-        
+
         print(f"\n📰 Fetching latest news for {symbol}...")
-        
+
         try:
             # Use TradingView news tool
             news_tool = next(tool for tool in self.agent.tools if tool.name == "tradingview_crypto_news")
             news_result = await news_tool.invoke({"symbol": symbol, "limit": 5})
-            
+
             print("\n" + "=" * 50)
             print(f"📰 LATEST NEWS FOR {symbol}")
             print("=" * 50)
             print(news_result)
-            
+
         except Exception as e:
             print(f"❌ Error fetching news: {e}")
 
@@ -231,21 +230,21 @@ class CryptoPortfolioSystem:
         """Handle report generation command."""
         parts = user_input.split()
         report_type = parts[1] if len(parts) > 1 else 'daily'
-        
+
         if report_type not in ['daily', 'weekly', 'monthly']:
             print("❌ Invalid report type. Use 'daily', 'weekly', or 'monthly'.")
             return
-        
+
         print(f"\n📋 Generating {report_type} portfolio report...")
-        
+
         try:
             report = await self.agent.generate_report(report_type)
-            
+
             print("\n" + "=" * 50)
             print(f"📊 {report_type.upper()} PORTFOLIO REPORT")
             print("=" * 50)
             print(report)
-            
+
         except Exception as e:
             print(f"❌ Error generating report: {e}")
 
@@ -272,7 +271,7 @@ class CryptoPortfolioSystem:
 📈 MARKET COMMANDS:
   • monitor [symbols]          - Monitor specific cryptocurrencies
   • news [symbol]              - Get latest crypto news
-  
+
 ⚙️ SYSTEM COMMANDS:
   • settings                   - View/modify system settings
   • help                       - Show this help message
@@ -297,12 +296,10 @@ For more detailed information, visit our documentation.
 """
         print(help_text)
 
-
 async def main():
     """Main entry point for the crypto portfolio system."""
     system = CryptoPortfolioSystem()
     await system.initialize()
-
 
 if __name__ == "__main__":
     try:

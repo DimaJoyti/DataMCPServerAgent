@@ -11,7 +11,6 @@ from typing import Dict
 
 from langchain.tools import Tool
 
-
 class MarkdownExporter:
     """Tool for exporting research results to Markdown."""
 
@@ -106,7 +105,6 @@ class MarkdownExporter:
             return self.save_markdown_to_file(markdown, filename)
         except Exception as e:
             return f"Error exporting to Markdown: {str(e)}"
-
 
 class HTMLExporter:
     """Tool for exporting research results to HTML."""
@@ -234,7 +232,6 @@ class HTMLExporter:
             return self.save_html_to_file(html, filename)
         except Exception as e:
             return f"Error exporting to HTML: {str(e)}"
-
 
 class PDFExporter:
     """Tool for exporting research results to PDF."""
@@ -373,7 +370,6 @@ class PDFExporter:
         except Exception as e:
             return f"Error exporting to PDF: {str(e)}"
 
-
 class DOCXExporter:
     """Tool for exporting research results to DOCX."""
 
@@ -491,7 +487,6 @@ class DOCXExporter:
             return self.export_to_docx(research_data, filename)
         except Exception as e:
             return f"Error exporting to DOCX: {str(e)}"
-
 
 class PresentationExporter:
     """Tool for exporting research results to a presentation format."""
@@ -641,7 +636,6 @@ class PresentationExporter:
             return self.export_to_presentation(research_data, filename)
         except Exception as e:
             return f"Error exporting to presentation: {str(e)}"
-
 
 # Create tool instances
 markdown_exporter = MarkdownExporter()

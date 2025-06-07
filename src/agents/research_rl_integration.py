@@ -16,7 +16,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.agents.enhanced_research_assistant import EnhancedResearchAssistant
 from src.memory.research_memory_persistence import ResearchMemoryDatabase
 
-
 class ResearchRewardSystem:
     """Reward system for the Research Assistant."""
 
@@ -112,7 +111,6 @@ class ResearchRewardSystem:
         )
 
         return total_reward, reward_components
-
 
 class ResearchRLAgent:
     """Reinforcement Learning agent for the Research Assistant."""
@@ -495,7 +493,6 @@ Please analyze this research and provide feedback for improvement.
             "reward_components": reward_components,
             "feedback": feedback,
         }
-
 
 class RLEnhancedResearchAssistant(EnhancedResearchAssistant):
     """Research Assistant with Reinforcement Learning capabilities."""

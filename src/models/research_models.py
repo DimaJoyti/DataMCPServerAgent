@@ -11,7 +11,6 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
-
 class CitationFormat(str, Enum):
     """Supported citation formats."""
     APA = "apa"
@@ -19,7 +18,6 @@ class CitationFormat(str, Enum):
     CHICAGO = "chicago"
     HARVARD = "harvard"
     IEEE = "ieee"
-
 
 class SourceType(str, Enum):
     """Types of research sources."""
@@ -32,7 +30,6 @@ class SourceType(str, Enum):
     PREPRINT = "preprint"
     NEWS = "news"
     OTHER = "other"
-
 
 class Source(BaseModel):
     """A research source with detailed information."""
@@ -48,7 +45,7 @@ class Source(BaseModel):
     pages: Optional[str] = None
     doi: Optional[str] = None
     isbn: Optional[str] = None
-    
+
     def format_citation(self, format: CitationFormat) -> str:
         """Format the source as a citation in the specified format."""
         if format == CitationFormat.APA:
@@ -63,7 +60,7 @@ class Source(BaseModel):
             return self._format_ieee()
         else:
             return f"{self.title} - {self.url}"
-    
+
     def _format_apa(self) -> str:
         """Format the source in APA style."""
         if not self.authors:
@@ -74,16 +71,16 @@ class Source(BaseModel):
             author_text = f"{self.authors[0]} & {self.authors[1]}"
         else:
             author_text = f"{self.authors[0]} et al."
-        
+
         year = self.publication_date.year if self.publication_date else "n.d."
-        
+
         if self.source_type == SourceType.WEB:
             return f"{author_text}. ({year}). {self.title}. {self.publisher or 'Retrieved from'} {self.url}"
         elif self.source_type == SourceType.JOURNAL:
             return f"{author_text}. ({year}). {self.title}. {self.journal}, {self.volume}({self.issue}), {self.pages}."
         else:
             return f"{author_text}. ({year}). {self.title}."
-    
+
     def _format_mla(self) -> str:
         """Format the source in MLA style."""
         if not self.authors:
@@ -94,7 +91,7 @@ class Source(BaseModel):
             author_text = f"{self.authors[0]} and {self.authors[1]}"
         else:
             author_text = f"{self.authors[0]} et al."
-        
+
         if self.source_type == SourceType.WEB:
             date = self.publication_date.strftime("%d %b. %Y") if self.publication_date else "n.d."
             return f"{author_text}. \"{self.title}.\" {self.publisher or ''}, {date}, {self.url}."
@@ -103,7 +100,7 @@ class Source(BaseModel):
             return f"{author_text}. \"{self.title}.\" {self.journal}, vol. {self.volume}, no. {self.issue}, {date}, pp. {self.pages}."
         else:
             return f"{author_text}. \"{self.title}.\""
-    
+
     def _format_chicago(self) -> str:
         """Format the source in Chicago style."""
         # Simplified implementation
@@ -113,11 +110,11 @@ class Source(BaseModel):
             author_text = f"{self.authors[0]}"
         else:
             author_text = f"{self.authors[0]} et al."
-        
+
         year = self.publication_date.year if self.publication_date else "n.d."
-        
+
         return f"{author_text}. {self.title}. {year}."
-    
+
     def _format_harvard(self) -> str:
         """Format the source in Harvard style."""
         # Simplified implementation
@@ -127,11 +124,11 @@ class Source(BaseModel):
             author_text = f"{self.authors[0]}"
         else:
             author_text = f"{self.authors[0]} et al."
-        
+
         year = self.publication_date.year if self.publication_date else "n.d."
-        
+
         return f"{author_text} ({year}) {self.title}."
-    
+
     def _format_ieee(self) -> str:
         """Format the source in IEEE style."""
         # Simplified implementation
@@ -141,11 +138,10 @@ class Source(BaseModel):
             author_text = f"{self.authors[0]}"
         else:
             author_text = f"{self.authors[0]} et al."
-        
-        year = self.publication_date.year if self.publication_date else "n.d."
-        
-        return f"{author_text}, \"{self.title},\" {year}."
 
+        year = self.publication_date.year if self.publication_date else "n.d."
+
+        return f"{author_text}, \"{self.title},\" {year}."
 
 class ResearchResult(BaseModel):
     """A research result with detailed information."""
@@ -156,12 +152,11 @@ class ResearchResult(BaseModel):
     tools_used: List[str]
     created_at: datetime = Field(default_factory=datetime.now)
     tags: List[str] = []
-    
+
     def format_bibliography(self, format: CitationFormat) -> str:
         """Format the sources as a bibliography in the specified format."""
         citations = [source.format_citation(format) for source in self.sources]
         return "\n\n".join(citations)
-
 
 class ResearchQuery(BaseModel):
     """A research query with its results."""
@@ -170,7 +165,6 @@ class ResearchQuery(BaseModel):
     results: List[ResearchResult] = []
     created_at: datetime = Field(default_factory=datetime.now)
     tags: List[str] = []
-
 
 class ResearchProject(BaseModel):
     """A research project containing multiple queries and results."""
@@ -181,14 +175,14 @@ class ResearchProject(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     tags: List[str] = []
-    
+
     def add_query(self, query: str) -> ResearchQuery:
         """Add a new query to the project."""
         research_query = ResearchQuery(query=query)
         self.queries.append(research_query)
         self.updated_at = datetime.now()
         return research_query
-    
+
     def add_result(self, query_id: str, result: ResearchResult) -> None:
         """Add a result to a query in the project."""
         for query in self.queries:
@@ -197,13 +191,11 @@ class ResearchProject(BaseModel):
                 self.updated_at = datetime.now()
                 break
 
-
 class User(BaseModel):
     """A user of the Research Assistant."""
     id: str
     name: str
     email: Optional[str] = None
-
 
 class Permission(str, Enum):
     """Permission levels for shared research."""
@@ -212,14 +204,12 @@ class Permission(str, Enum):
     EDIT = "edit"
     ADMIN = "admin"
 
-
 class SharedResearch(BaseModel):
     """A shared research project with permissions."""
     project_id: str
     user_id: str
     permission: Permission = Permission.READ
     shared_at: datetime = Field(default_factory=datetime.now)
-
 
 class Comment(BaseModel):
     """A comment on a research result."""
@@ -228,7 +218,6 @@ class Comment(BaseModel):
     content: str
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
-
 
 class Annotation(BaseModel):
     """An annotation on a specific part of a research result."""
@@ -239,12 +228,10 @@ class Annotation(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
-
 class ResearchResultWithComments(ResearchResult):
     """A research result with comments and annotations."""
     comments: List[Comment] = []
     annotations: List[Annotation] = []
-
 
 class ExportFormat(str, Enum):
     """Supported export formats."""
@@ -254,7 +241,6 @@ class ExportFormat(str, Enum):
     HTML = "html"
     PRESENTATION = "presentation"
 
-
 class VisualizationType(str, Enum):
     """Types of visualizations."""
     CHART = "chart"
@@ -262,14 +248,12 @@ class VisualizationType(str, Enum):
     TIMELINE = "timeline"
     NETWORK = "network"
 
-
 class ChartType(str, Enum):
     """Types of charts."""
     BAR = "bar"
     LINE = "line"
     PIE = "pie"
     SCATTER = "scatter"
-
 
 class Visualization(BaseModel):
     """A visualization of research data."""
@@ -279,12 +263,11 @@ class Visualization(BaseModel):
     type: VisualizationType
     data: Dict = {}
     created_at: datetime = Field(default_factory=datetime.now)
-    
+
     def render(self) -> str:
         """Render the visualization as a string."""
         # This would be implemented by subclasses
         return f"Visualization: {self.title}"
-
 
 class EnhancedResearchResponse(BaseModel):
     """Enhanced structured response format for research results."""

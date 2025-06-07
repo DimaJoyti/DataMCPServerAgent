@@ -10,7 +10,7 @@ import logging
 import random
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TupleVar
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 # Type variable for generic function return type
 T = TypeVar("T")
 
-
 class RetryStrategy(Enum):
     """Enum for different retry strategies."""
 
@@ -41,14 +40,12 @@ class RetryStrategy(Enum):
     CONSTANT = "constant"  # Constant delay
     ADAPTIVE = "adaptive"  # Adaptive based on error type
 
-
 class CircuitBreakerState(Enum):
     """Enum for circuit breaker states."""
 
     CLOSED = "closed"  # Normal operation, requests allowed
     OPEN = "open"  # Failing, requests blocked
     HALF_OPEN = "half_open"  # Testing if service is back
-
 
 class CircuitBreaker:
     """Circuit breaker pattern implementation to prevent cascading failures."""
@@ -131,7 +128,6 @@ class CircuitBreaker:
                 return False
 
         return False
-
 
 class ErrorRecoverySystem:
     """Advanced error recovery system with retry strategies, fallbacks, and learning."""

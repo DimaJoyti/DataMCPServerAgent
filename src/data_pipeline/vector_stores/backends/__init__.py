@@ -30,7 +30,7 @@ __all__ = [
     "BaseVectorStore",
     "VectorStoreStats",
     "ChromaVectorStore",
-    "FAISSVectorStore", 
+    "FAISSVectorStore",
     "MemoryVectorStore",
 ]
 

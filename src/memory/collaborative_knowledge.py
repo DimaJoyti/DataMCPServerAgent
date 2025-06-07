@@ -6,23 +6,22 @@ This module provides mechanisms for storing and retrieving shared knowledge betw
 import json
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class CollaborativeKnowledgeBase:
     """Knowledge base for collaborative learning between agents."""
-    
+
     def __init__(self, db: MemoryDatabase):
         """Initialize the collaborative knowledge base.
-        
+
         Args:
             db: Memory database for persistence
         """
         self.db = db
         self._initialize_tables()
-    
+
     def _initialize_tables(self) -> None:
         """Initialize the database tables for collaborative knowledge."""
         # Create knowledge items table
@@ -36,7 +35,7 @@ class CollaborativeKnowledgeBase:
             timestamp REAL NOT NULL
         )
         """)
-        
+
         # Create knowledge applicability table
         self.db.execute("""
         CREATE TABLE IF NOT EXISTS knowledge_applicability (
@@ -46,7 +45,7 @@ class CollaborativeKnowledgeBase:
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
         """)
-        
+
         # Create knowledge prerequisites table
         self.db.execute("""
         CREATE TABLE IF NOT EXISTS knowledge_prerequisites (
@@ -56,7 +55,7 @@ class CollaborativeKnowledgeBase:
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
         """)
-        
+
         # Create knowledge transfers table
         self.db.execute("""
         CREATE TABLE IF NOT EXISTS knowledge_transfers (
@@ -69,7 +68,7 @@ class CollaborativeKnowledgeBase:
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
         """)
-        
+
         # Create agent knowledge table
         self.db.execute("""
         CREATE TABLE IF NOT EXISTS agent_knowledge (
@@ -81,14 +80,14 @@ class CollaborativeKnowledgeBase:
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
         """)
-    
+
     def store_knowledge(self, knowledge: Dict[str, Any], source_agent: Optional[str] = None) -> int:
         """Store knowledge in the knowledge base.
-        
+
         Args:
             knowledge: Knowledge to store
             source_agent: Source agent name
-            
+
         Returns:
             ID of the stored knowledge
         """
@@ -96,21 +95,21 @@ class CollaborativeKnowledgeBase:
         knowledge_items = knowledge.get("knowledge_items", [])
         if not knowledge_items:
             knowledge_items = [knowledge.get("content", "")]
-        
+
         # Extract confidence
         confidence = knowledge.get("confidence", 50)
         if isinstance(confidence, dict):
             confidence = sum(confidence.values()) / len(confidence) if confidence else 50
-        
+
         # Extract domain
         domain = knowledge.get("domain", "general")
-        
+
         # Extract applicability
         applicability = knowledge.get("applicability", ["all"])
-        
+
         # Extract prerequisites
         prerequisites = knowledge.get("prerequisites", [])
-        
+
         # Store each knowledge item
         knowledge_ids = []
         for item in knowledge_items:
@@ -122,11 +121,11 @@ class CollaborativeKnowledgeBase:
                 """,
                 (item, confidence, domain, source_agent, time.time())
             )
-            
+
             # Get the ID of the inserted knowledge item
             knowledge_id = self.db.execute("SELECT last_insert_rowid()").fetchone()[0]
             knowledge_ids.append(knowledge_id)
-            
+
             # Insert applicability
             for agent_type in applicability:
                 self.db.execute(
@@ -136,7 +135,7 @@ class CollaborativeKnowledgeBase:
                     """,
                     (knowledge_id, agent_type)
                 )
-            
+
             # Insert prerequisites
             for prerequisite in prerequisites:
                 self.db.execute(
@@ -146,15 +145,15 @@ class CollaborativeKnowledgeBase:
                     """,
                     (knowledge_id, prerequisite)
                 )
-        
+
         return knowledge_ids[0] if knowledge_ids else -1
-    
+
     def get_knowledge(self, knowledge_id: int) -> Dict[str, Any]:
         """Get knowledge from the knowledge base.
-        
+
         Args:
             knowledge_id: ID of the knowledge to get
-            
+
         Returns:
             Knowledge
         """
@@ -167,12 +166,12 @@ class CollaborativeKnowledgeBase:
             """,
             (knowledge_id,)
         ).fetchone()
-        
+
         if not knowledge_item:
             return {}
-        
+
         content, confidence, domain, source_agent, timestamp = knowledge_item
-        
+
         # Get applicability
         applicability = self.db.execute(
             """
@@ -182,7 +181,7 @@ class CollaborativeKnowledgeBase:
             """,
             (knowledge_id,)
         ).fetchall()
-        
+
         # Get prerequisites
         prerequisites = self.db.execute(
             """
@@ -192,7 +191,7 @@ class CollaborativeKnowledgeBase:
             """,
             (knowledge_id,)
         ).fetchall()
-        
+
         return {
             "id": knowledge_id,
             "content": content,
@@ -203,14 +202,14 @@ class CollaborativeKnowledgeBase:
             "applicability": [a[0] for a in applicability],
             "prerequisites": [p[0] for p in prerequisites]
         }
-    
+
     def get_applicable_knowledge(self, agent_type: str, domain: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get knowledge applicable to a specific agent type.
-        
+
         Args:
             agent_type: Agent type
             domain: Optional domain filter
-            
+
         Returns:
             List of applicable knowledge items
         """
@@ -222,30 +221,30 @@ class CollaborativeKnowledgeBase:
         WHERE a.agent_type IN (?, 'all')
         """
         params = [agent_type]
-        
+
         if domain:
             query += " AND k.domain = ?"
             params.append(domain)
-        
+
         # Get knowledge IDs
         knowledge_ids = self.db.execute(query, params).fetchall()
-        
+
         # Get knowledge items
         knowledge_items = []
         for (knowledge_id,) in knowledge_ids:
             knowledge_items.append(self.get_knowledge(knowledge_id))
-        
+
         return knowledge_items
-    
+
     def record_knowledge_transfer(
-        self, 
-        source_agent: str, 
-        target_agent: str, 
-        knowledge_id: int, 
+        self,
+        source_agent: str,
+        target_agent: str,
+        knowledge_id: int,
         success: bool
     ) -> None:
         """Record a knowledge transfer between agents.
-        
+
         Args:
             source_agent: Source agent name
             target_agent: Target agent name
@@ -259,15 +258,15 @@ class CollaborativeKnowledgeBase:
             """,
             (source_agent, target_agent, knowledge_id, success, time.time())
         )
-    
+
     def assign_knowledge_to_agent(
-        self, 
-        agent_name: str, 
-        knowledge_id: int, 
+        self,
+        agent_name: str,
+        knowledge_id: int,
         proficiency: float = 0.5
     ) -> None:
         """Assign knowledge to an agent.
-        
+
         Args:
             agent_name: Agent name
             knowledge_id: ID of the knowledge
@@ -282,7 +281,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name, knowledge_id)
         ).fetchone()
-        
+
         if existing:
             # Update proficiency
             self.db.execute(
@@ -302,14 +301,14 @@ class CollaborativeKnowledgeBase:
                 """,
                 (agent_name, knowledge_id, proficiency, time.time())
             )
-    
+
     def get_agent_knowledge(self, agent_name: str, min_proficiency: float = 0.0) -> List[Dict[str, Any]]:
         """Get knowledge assigned to an agent.
-        
+
         Args:
             agent_name: Agent name
             min_proficiency: Minimum proficiency level
-            
+
         Returns:
             List of knowledge items
         """
@@ -322,24 +321,24 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name, min_proficiency)
         ).fetchall()
-        
+
         # Get knowledge items
         knowledge_items = []
         for knowledge_id, proficiency in knowledge_ids:
             knowledge = self.get_knowledge(knowledge_id)
             knowledge["proficiency"] = proficiency
             knowledge_items.append(knowledge)
-        
+
         return knowledge_items
-    
+
     def update_agent_proficiency(
-        self, 
-        agent_name: str, 
-        knowledge_id: int, 
+        self,
+        agent_name: str,
+        knowledge_id: int,
         proficiency_delta: float
     ) -> None:
         """Update an agent's proficiency with a knowledge item.
-        
+
         Args:
             agent_name: Agent name
             knowledge_id: ID of the knowledge
@@ -354,7 +353,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name, knowledge_id)
         ).fetchone()
-        
+
         if current:
             # Update proficiency
             new_proficiency = max(0.0, min(1.0, current[0] + proficiency_delta))
@@ -366,18 +365,18 @@ class CollaborativeKnowledgeBase:
                 """,
                 (new_proficiency, time.time(), agent_name, knowledge_id)
             )
-    
+
     def get_knowledge_transfer_history(
-        self, 
-        source_agent: Optional[str] = None, 
+        self,
+        source_agent: Optional[str] = None,
         target_agent: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get history of knowledge transfers.
-        
+
         Args:
             source_agent: Optional source agent filter
             target_agent: Optional target agent filter
-            
+
         Returns:
             List of knowledge transfers
         """
@@ -388,18 +387,18 @@ class CollaborativeKnowledgeBase:
         WHERE 1=1
         """
         params = []
-        
+
         if source_agent:
             query += " AND source_agent = ?"
             params.append(source_agent)
-        
+
         if target_agent:
             query += " AND target_agent = ?"
             params.append(target_agent)
-        
+
         # Get transfers
         transfers = self.db.execute(query, params).fetchall()
-        
+
         # Format transfers
         transfer_history = []
         for source, target, knowledge_id, success, timestamp in transfers:
@@ -411,15 +410,15 @@ class CollaborativeKnowledgeBase:
                 "success": bool(success),
                 "timestamp": timestamp
             })
-        
+
         return transfer_history
-    
+
     def get_agent_knowledge_stats(self, agent_name: str) -> Dict[str, Any]:
         """Get statistics about an agent's knowledge.
-        
+
         Args:
             agent_name: Agent name
-            
+
         Returns:
             Knowledge statistics
         """
@@ -432,7 +431,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name,)
         ).fetchone()[0]
-        
+
         # Get average proficiency
         avg_proficiency = self.db.execute(
             """
@@ -442,7 +441,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name,)
         ).fetchone()[0] or 0.0
-        
+
         # Get domain distribution
         domains = self.db.execute(
             """
@@ -454,7 +453,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name,)
         ).fetchall()
-        
+
         # Get source distribution
         sources = self.db.execute(
             """
@@ -466,7 +465,7 @@ class CollaborativeKnowledgeBase:
             """,
             (agent_name,)
         ).fetchall()
-        
+
         return {
             "total_knowledge": total_count,
             "average_proficiency": avg_proficiency,
@@ -474,14 +473,13 @@ class CollaborativeKnowledgeBase:
             "source_distribution": {s if s else "unknown": c for s, c in sources}
         }
 
-
 # Factory function to create collaborative knowledge base
 def create_collaborative_knowledge_base(db: MemoryDatabase) -> CollaborativeKnowledgeBase:
     """Create a collaborative knowledge base.
-    
+
     Args:
         db: Memory database for persistence
-        
+
     Returns:
         Collaborative knowledge base
     """

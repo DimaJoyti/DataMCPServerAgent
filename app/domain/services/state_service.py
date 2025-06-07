@@ -11,7 +11,6 @@ from app.domain.models.state import PersistentState, StateMetadata, StateType, S
 
 logger = get_logger(__name__)
 
-
 class StateService(DomainService, LoggerMixin):
     """Core state management service."""
 
@@ -68,7 +67,6 @@ class StateService(DomainService, LoggerMixin):
         )
 
         return states[0] if states else None
-
 
 class StateSynchronizationService(DomainService, LoggerMixin):
     """Service for state synchronization operations."""

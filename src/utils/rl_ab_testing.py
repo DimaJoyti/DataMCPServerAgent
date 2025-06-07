@@ -25,7 +25,6 @@ from src.agents.reinforcement_learning import (
 )
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class RLStrategyVariant:
     """Represents a variant of a reinforcement learning strategy for A/B testing."""
 
@@ -157,7 +156,6 @@ class RLStrategyVariant:
             "avg_tool_usage": self.performance_metrics["avg_tool_usage"],
             "total_requests": self.performance_metrics["total_requests"],
         }
-
 
 class RLABTestingFramework:
     """Framework for A/B testing different reinforcement learning strategies."""

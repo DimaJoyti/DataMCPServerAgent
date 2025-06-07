@@ -13,7 +13,7 @@ from .enricher import MetadataEnricher
 
 __all__ = [
     "DocumentType",
-    "ProcessingStatus", 
+    "ProcessingStatus",
     "DocumentMetadata",
     "ChunkMetadata",
     "MetadataExtractor",

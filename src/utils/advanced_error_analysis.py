@@ -34,7 +34,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class ErrorCluster:
     """Represents a cluster of similar errors."""
 
@@ -85,7 +84,6 @@ class ErrorCluster:
             "first_occurrence": min(self.timestamps) if self.timestamps else 0,
             "error_count": len(self.errors),
         }
-
 
 class AdvancedErrorAnalysis:
     """Advanced error analysis system."""

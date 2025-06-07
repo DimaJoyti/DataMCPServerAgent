@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from src.memory.advanced_memory_persistence import AdvancedMemoryDatabase
 
-
 class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
     """Extended database for persisting hierarchical agent memory."""
 

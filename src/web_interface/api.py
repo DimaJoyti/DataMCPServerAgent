@@ -56,7 +56,6 @@ from .models import (
     VectorSearchResponse,
 )
 
-
 class DocumentProcessingAPI:
     """Document processing API service."""
 
@@ -296,7 +295,6 @@ class DocumentProcessingAPI:
 
             self.logger.error(f"Document processing failed: {e}")
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
-
 
 def create_app() -> FastAPI:
     """Create FastAPI application."""

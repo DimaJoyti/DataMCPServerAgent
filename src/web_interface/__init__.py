@@ -24,7 +24,7 @@ __all__ = [
     "create_app",
     "DocumentProcessingAPI",
     "DocumentUploadRequest",
-    "DocumentProcessingResponse", 
+    "DocumentProcessingResponse",
     "VectorSearchRequest",
     "VectorSearchResponse",
     "PipelineStatus",
