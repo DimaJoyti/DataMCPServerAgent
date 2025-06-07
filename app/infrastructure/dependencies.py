@@ -8,7 +8,6 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 async def setup_dependencies(app: FastAPI) -> None:
     """Setup application dependencies."""
     logger.info("Setting up dependencies...")

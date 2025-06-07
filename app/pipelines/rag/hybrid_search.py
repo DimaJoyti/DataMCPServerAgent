@@ -18,7 +18,6 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
-
 class SearchType(str, Enum):
     """Types of search strategies."""
     VECTOR = "vector"
@@ -26,14 +25,12 @@ class SearchType(str, Enum):
     SEMANTIC = "semantic"
     HYBRID = "hybrid"
 
-
 class FusionStrategy(str, Enum):
     """Result fusion strategies."""
     RRF = "reciprocal_rank_fusion"  # Reciprocal Rank Fusion
     WEIGHTED = "weighted_average"
     BORDA = "borda_count"
     CONDORCET = "condorcet"
-
 
 @dataclass
 class SearchFilters:
@@ -43,7 +40,6 @@ class SearchFilters:
     metadata_filters: Optional[Dict[str, Any]] = None
     min_score: Optional[float] = None
     max_results: Optional[int] = None
-
 
 class SearchQuery(BaseModel):
     """Search query with multiple search strategies."""
@@ -69,7 +65,6 @@ class SearchQuery(BaseModel):
     enable_expansion: bool = Field(default=True, description="Enable query expansion")
     enable_reranking: bool = Field(default=True, description="Enable result reranking")
     context: Optional[str] = Field(None, description="Additional context for search")
-
 
 class SearchResult(BaseModel):
     """Individual search result."""
@@ -97,7 +92,6 @@ class SearchResult(BaseModel):
     created_at: Optional[str] = Field(None, description="Creation timestamp")
     updated_at: Optional[str] = Field(None, description="Update timestamp")
 
-
 class RankedResults(BaseModel):
     """Ranked search results with metadata."""
 
@@ -116,7 +110,6 @@ class RankedResults(BaseModel):
     # Quality metrics
     avg_score: float = Field(..., description="Average relevance score")
     score_distribution: Dict[str, float] = Field(default_factory=dict, description="Score distribution stats")
-
 
 class VectorSearchEngine:
     """Vector similarity search engine."""
@@ -147,7 +140,6 @@ class VectorSearchEngine:
 
         self.logger.debug(f"Vector search returned {len(results)} results")
         return results
-
 
 class KeywordSearchEngine:
     """Keyword-based search engine."""
@@ -183,7 +175,6 @@ class KeywordSearchEngine:
 
         self.logger.debug(f"Keyword search returned {len(results)} results")
         return results
-
 
 class SemanticSearchEngine:
     """Semantic search with contextual understanding."""
@@ -221,7 +212,6 @@ class SemanticSearchEngine:
 
         self.logger.debug(f"Semantic search returned {len(results)} results")
         return results
-
 
 class ResultFusion:
     """Handles fusion of results from multiple search strategies."""
@@ -365,7 +355,6 @@ class ResultFusion:
             fused_results.append(result)
 
         return fused_results
-
 
 class HybridSearchEngine:
     """Main hybrid search engine coordinating all search strategies."""

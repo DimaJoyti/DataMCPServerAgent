@@ -20,7 +20,6 @@ from app.core.simple_config import SimpleSettings
 
 logger = get_logger(__name__)
 
-
 # Pydantic models for consolidated API
 class HealthResponse(BaseModel):
     status: str
@@ -29,12 +28,10 @@ class HealthResponse(BaseModel):
     timestamp: str
     components: Dict[str, str]
 
-
 class AgentCreate(BaseModel):
     name: str
     description: str = ""
     agent_type: str = "worker"
-
 
 class AgentResponse(BaseModel):
     id: str
@@ -44,13 +41,11 @@ class AgentResponse(BaseModel):
     status: str
     created_at: str
 
-
 class TaskCreate(BaseModel):
     name: str
     agent_id: str
     description: str = ""
     priority: str = "normal"
-
 
 class TaskResponse(BaseModel):
     id: str
@@ -61,17 +56,14 @@ class TaskResponse(BaseModel):
     priority: str
     created_at: str
 
-
 class SystemStatus(BaseModel):
     system: Dict[str, Any]
     components: Dict[str, str]
     statistics: Dict[str, Any]
 
-
 # In-memory storage for demonstration
 agents_db: List[Dict[str, Any]] = []
 tasks_db: List[Dict[str, Any]] = []
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,7 +78,6 @@ async def lifespan(app: FastAPI):
     # Cleanup
     logger.info("🛑 Shutting down Consolidated DataMCPServerAgent")
     logger.info("👋 Consolidated system shutdown complete")
-
 
 def create_consolidated_app() -> FastAPI:
     """Create consolidated FastAPI application."""

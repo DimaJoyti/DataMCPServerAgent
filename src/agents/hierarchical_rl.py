@@ -6,7 +6,7 @@ This module implements hierarchical reinforcement learning for handling complex,
 import random
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from langchain_anthropic import ChatAnthropic
@@ -17,7 +17,6 @@ from langchain_core.tools import BaseTool
 from src.agents.advanced_rl_decision_making import AdvancedRLCoordinatorAgent
 from src.agents.reinforcement_learning import RewardSystem
 from src.memory.hierarchical_memory_persistence import HierarchicalMemoryDatabase
-
 
 class HierarchicalRewardSystem(RewardSystem):
     """System for calculating rewards in a hierarchical reinforcement learning setting."""
@@ -93,7 +92,6 @@ class HierarchicalRewardSystem(RewardSystem):
         )
 
         return adjusted_reward
-
 
 class Option:
     """Represents a temporally extended action (option) in hierarchical reinforcement learning."""
@@ -233,7 +231,6 @@ class Option:
         )
 
         return option
-
 
 class HierarchicalQLearningAgent:
     """Agent that learns using hierarchical Q-learning algorithm."""
@@ -533,7 +530,6 @@ class HierarchicalQLearningAgent:
             "self_evaluation": {"accuracy": 0.8},
         }
 
-
 class HierarchicalRLCoordinatorAgent:
     """Coordinator agent that uses hierarchical reinforcement learning for decision making."""
 
@@ -770,7 +766,6 @@ Extract a state identifier for this request.
             "task_id": task_id,
             "subtasks": task_decomposition["subtasks"],
         }
-
 
 # Factory function to create hierarchical RL-based agent architecture
 async def create_hierarchical_rl_agent_architecture(

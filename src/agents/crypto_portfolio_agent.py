@@ -20,7 +20,6 @@ from src.utils.env_config import load_dotenv
 # Load environment variables
 load_dotenv()
 
-
 class CryptoPortfolioAgent:
     """An intelligent agent for cryptocurrency portfolio management."""
 
@@ -32,7 +31,7 @@ class CryptoPortfolioAgent:
         error_recovery: Optional[ErrorRecoverySystem] = None
     ):
         """Initialize the crypto portfolio agent.
-        
+
         Args:
             model: The language model for decision making
             session: MCP client session for tools
@@ -45,7 +44,7 @@ class CryptoPortfolioAgent:
         self.error_recovery = error_recovery or ErrorRecoverySystem(db)
         self.tools = []
         self.toolkit = TradingViewToolkit(session)
-        
+
         # Portfolio state
         self.portfolio = {}
         self.watchlist = []
@@ -61,12 +60,12 @@ class CryptoPortfolioAgent:
         try:
             # Create TradingView tools
             self.tools = await create_tradingview_tools(self.session)
-            
+
             # Load portfolio state from memory
             await self._load_portfolio_state()
-            
+
             print("✅ Crypto Portfolio Agent initialized successfully")
-            
+
         except Exception as e:
             print(f"❌ Failed to initialize agent: {e}")
             raise
@@ -82,25 +81,25 @@ class CryptoPortfolioAgent:
                 "risk_metrics": {},
                 "recommendations": []
             }
-            
+
             # Analyze each position
             for symbol, position in self.portfolio.items():
                 position_analysis = await self._analyze_position(symbol, position)
                 analysis["positions"].append(position_analysis)
                 analysis["portfolio_value"] += position_analysis["current_value"]
                 analysis["total_pnl"] += position_analysis["pnl"]
-            
+
             # Calculate risk metrics
             analysis["risk_metrics"] = await self._calculate_risk_metrics(analysis)
-            
+
             # Generate recommendations
             analysis["recommendations"] = await self._generate_recommendations(analysis)
-            
+
             # Save analysis to memory
             await self._save_analysis(analysis)
-            
+
             return analysis
-            
+
         except Exception as e:
             await self.error_recovery.handle_error(e, "analyze_portfolio")
             return {"error": str(e)}
@@ -116,7 +115,7 @@ class CryptoPortfolioAgent:
                 "sentiment_data": {},
                 "alerts": []
             }
-            
+
             # Get price data for each symbol
             for symbol in symbols:
                 try:
@@ -124,22 +123,22 @@ class CryptoPortfolioAgent:
                     price_tool = next(tool for tool in self.tools if tool.name == "tradingview_crypto_price")
                     price_result = await price_tool.invoke({"symbol": symbol})
                     market_data["price_data"][symbol] = price_result
-                    
+
                     # Get technical analysis
                     analysis_tool = next(tool for tool in self.tools if tool.name == "tradingview_crypto_analysis")
                     analysis_result = await analysis_tool.invoke({"symbol": symbol})
                     market_data["technical_signals"][symbol] = analysis_result
-                    
+
                     # Check for alerts
                     alerts = await self._check_alerts(symbol, price_result)
                     market_data["alerts"].extend(alerts)
-                    
+
                 except Exception as e:
                     print(f"Error monitoring {symbol}: {e}")
                     continue
-            
+
             return market_data
-            
+
         except Exception as e:
             await self.error_recovery.handle_error(e, "monitor_markets")
             return {"error": str(e)}
@@ -150,16 +149,17 @@ class CryptoPortfolioAgent:
             # Validate signal
             if not self._validate_signal(signal):
                 return {"status": "rejected", "reason": "Invalid signal"}
-            
+
             # Check risk limits
             risk_check = await self._check_risk_limits(signal)
             if not risk_check["approved"]:
                 return {"status": "rejected", "reason": risk_check["reason"]}
-            
+
             # Calculate position size
             position_size = await self._calculate_position_size(signal)
-            
-            # Simulate trade execution (in real implementation, this would connect to exchange APIs)
+
+# Simulate trade execution (in real implementation, this would connect to
+# exchange APIs)
             trade_result = {
                 "status": "executed",
                 "symbol": signal["symbol"],
@@ -169,15 +169,15 @@ class CryptoPortfolioAgent:
                 "timestamp": datetime.now(),
                 "trade_id": f"trade_{datetime.now().timestamp()}"
             }
-            
+
             # Update portfolio
             await self._update_portfolio(trade_result)
-            
+
             # Log trade
             await self._log_trade(trade_result)
-            
+
             return trade_result
-            
+
         except Exception as e:
             await self.error_recovery.handle_error(e, "execute_trade_signal")
             return {"status": "error", "error": str(e)}
@@ -186,7 +186,7 @@ class CryptoPortfolioAgent:
         """Generate a portfolio performance report."""
         try:
             analysis = await self.analyze_portfolio()
-            
+
             if report_type == "daily":
                 return await self._generate_daily_report(analysis)
             elif report_type == "weekly":
@@ -195,7 +195,7 @@ class CryptoPortfolioAgent:
                 return await self._generate_monthly_report(analysis)
             else:
                 return "Invalid report type. Use 'daily', 'weekly', or 'monthly'."
-                
+
         except Exception as e:
             return f"Error generating report: {str(e)}"
 
@@ -225,21 +225,21 @@ Your capabilities include:
 Always provide actionable insights and consider risk management in your recommendations.
 Use the available tools to gather current market data when needed.
 """)
-            
+
             # Get current market context if needed
             context = await self._get_market_context(user_message)
-            
+
             # Prepare messages
             messages = [
                 system_message,
                 HumanMessage(content=f"{user_message}\n\nCurrent Market Context:\n{context}")
             ]
-            
+
             # Get response from model
             response = await self.model.ainvoke(messages)
-            
+
             return response.content
-            
+
         except Exception as e:
             return f"Error processing request: {str(e)}"
 
@@ -271,23 +271,23 @@ Use the available tools to gather current market data when needed.
     async def _generate_recommendations(self, analysis: Dict[str, Any]) -> List[str]:
         """Generate portfolio recommendations based on analysis."""
         recommendations = []
-        
+
         # Add sample recommendations
         if analysis["total_pnl"] < 0:
             recommendations.append("Consider reducing position sizes to limit losses")
-        
+
         if len(analysis["positions"]) > 10:
             recommendations.append("Portfolio may be over-diversified, consider consolidating positions")
-        
+
         return recommendations
 
     async def _check_alerts(self, symbol: str, price_data: str) -> List[Dict[str, Any]]:
         """Check for price alerts and notifications."""
         alerts = []
-        
+
         # This would parse price_data and check against user-defined alerts
         # For now, return empty list
-        
+
         return alerts
 
     def _validate_signal(self, signal: Dict[str, Any]) -> bool:
@@ -372,15 +372,15 @@ Use the available tools to gather current market data when needed.
         """Format top performing positions."""
         if not positions:
             return "No positions to display"
-        
+
         # Sort by P&L and take top 3
         sorted_positions = sorted(positions, key=lambda x: x.get('pnl', 0), reverse=True)[:3]
-        
+
         result = ""
         for pos in sorted_positions:
             emoji = "📈" if pos.get('pnl', 0) >= 0 else "📉"
             result += f"{emoji} {pos['symbol']}: ${pos.get('pnl', 0):+,.2f}\n"
-        
+
         return result
 
     def _format_risk_metrics(self, metrics: Dict[str, Any]) -> str:

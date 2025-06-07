@@ -15,10 +15,9 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field
 
-
 class MessageType(str, Enum):
     """Types of messages that can be sent between agents."""
-    
+
     TASK_REQUEST = "task_request"
     TASK_RESPONSE = "task_response"
     KNOWLEDGE_SHARE = "knowledge_share"
@@ -30,19 +29,17 @@ class MessageType(str, Enum):
     HEARTBEAT = "heartbeat"
     ERROR_REPORT = "error_report"
 
-
 class MessagePriority(str, Enum):
     """Message priority levels."""
-    
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
     URGENT = "urgent"
 
-
 class AgentMessage(BaseModel):
     """Message structure for inter-agent communication."""
-    
+
     message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     sender_id: str
     recipient_id: Optional[str] = None  # None for broadcast messages
@@ -55,28 +52,26 @@ class AgentMessage(BaseModel):
     requires_response: bool = False
     correlation_id: Optional[str] = None  # For request-response correlation
 
-
 @dataclass
 class MessageHandler:
     """Message handler configuration."""
-    
+
     handler_func: Callable[[AgentMessage], Any]
     message_types: Set[MessageType]
     priority_filter: Optional[MessagePriority] = None
     sender_filter: Optional[Set[str]] = None
 
-
 class MessageBus:
     """
     Central message bus for agent communication.
-    
+
     Provides:
     - Message routing and delivery
     - Topic-based subscriptions
     - Message persistence and replay
     - Load balancing and failover
     """
-    
+
     def __init__(self):
         """Initialize the message bus."""
         self.subscribers: Dict[str, List[MessageHandler]] = {}
@@ -84,7 +79,7 @@ class MessageBus:
         self.message_history: List[AgentMessage] = []
         self.pending_responses: Dict[str, asyncio.Future] = {}
         self.logger = logging.getLogger("message_bus")
-        
+
     async def publish(
         self,
         message: AgentMessage,
@@ -92,19 +87,19 @@ class MessageBus:
     ) -> Optional[Any]:
         """
         Publish a message to the bus.
-        
+
         Args:
             message: The message to publish
             topic: Optional topic for topic-based routing
-            
+
         Returns:
             Response if message requires one, None otherwise
         """
         self.logger.debug(f"Publishing message {message.message_id} from {message.sender_id}")
-        
+
         # Store message in history
         self.message_history.append(message)
-        
+
         # Handle direct messages
         if message.recipient_id:
             await self._deliver_direct_message(message)
@@ -114,13 +109,13 @@ class MessageBus:
                 await self._deliver_topic_message(message, topic)
             else:
                 await self._deliver_broadcast_message(message)
-                
+
         # Handle response requirement
         if message.requires_response:
             return await self._wait_for_response(message)
-            
+
         return None
-        
+
     async def subscribe(
         self,
         agent_id: str,
@@ -129,10 +124,10 @@ class MessageBus:
         """Subscribe an agent to receive messages."""
         if agent_id not in self.subscribers:
             self.subscribers[agent_id] = []
-            
+
         self.subscribers[agent_id].append(handler)
         self.logger.info(f"Agent {agent_id} subscribed to message types: {handler.message_types}")
-        
+
     async def subscribe_topic(
         self,
         agent_id: str,
@@ -141,10 +136,10 @@ class MessageBus:
         """Subscribe an agent to a topic."""
         if topic not in self.topic_subscribers:
             self.topic_subscribers[topic] = set()
-            
+
         self.topic_subscribers[topic].add(agent_id)
         self.logger.info(f"Agent {agent_id} subscribed to topic: {topic}")
-        
+
     async def unsubscribe(
         self,
         agent_id: str,
@@ -153,7 +148,7 @@ class MessageBus:
         """Unsubscribe an agent from messages."""
         if agent_id not in self.subscribers:
             return
-            
+
         if message_types:
             # Remove specific handlers
             self.subscribers[agent_id] = [
@@ -163,9 +158,9 @@ class MessageBus:
         else:
             # Remove all handlers
             del self.subscribers[agent_id]
-            
+
         self.logger.info(f"Agent {agent_id} unsubscribed")
-        
+
     async def send_response(
         self,
         original_message: AgentMessage,
@@ -180,36 +175,36 @@ class MessageBus:
             data=response_data,
             correlation_id=original_message.message_id,
         )
-        
+
         # Resolve pending response future
         if original_message.message_id in self.pending_responses:
             future = self.pending_responses.pop(original_message.message_id)
             if not future.done():
                 future.set_result(response_data)
-                
+
         await self.publish(response_message)
-        
+
     async def _deliver_direct_message(self, message: AgentMessage) -> None:
         """Deliver a message to a specific recipient."""
         recipient_id = message.recipient_id
-        
+
         if recipient_id not in self.subscribers:
             self.logger.warning(f"No subscribers found for agent {recipient_id}")
             return
-            
+
         for handler in self.subscribers[recipient_id]:
             if await self._should_handle_message(handler, message):
                 try:
                     await self._invoke_handler(handler, message)
                 except Exception as e:
                     self.logger.error(f"Error in message handler: {e}")
-                    
+
     async def _deliver_topic_message(self, message: AgentMessage, topic: str) -> None:
         """Deliver a message to topic subscribers."""
         if topic not in self.topic_subscribers:
             self.logger.warning(f"No subscribers found for topic {topic}")
             return
-            
+
         for agent_id in self.topic_subscribers[topic]:
             if agent_id in self.subscribers:
                 for handler in self.subscribers[agent_id]:
@@ -218,21 +213,21 @@ class MessageBus:
                             await self._invoke_handler(handler, message)
                         except Exception as e:
                             self.logger.error(f"Error in message handler: {e}")
-                            
+
     async def _deliver_broadcast_message(self, message: AgentMessage) -> None:
         """Deliver a message to all subscribers."""
         for agent_id, handlers in self.subscribers.items():
             # Don't send to sender
             if agent_id == message.sender_id:
                 continue
-                
+
             for handler in handlers:
                 if await self._should_handle_message(handler, message):
                     try:
                         await self._invoke_handler(handler, message)
                     except Exception as e:
                         self.logger.error(f"Error in message handler: {e}")
-                        
+
     async def _should_handle_message(
         self,
         handler: MessageHandler,
@@ -242,17 +237,17 @@ class MessageBus:
         # Check message type
         if message.message_type not in handler.message_types:
             return False
-            
+
         # Check priority filter
         if handler.priority_filter and message.priority != handler.priority_filter:
             return False
-            
+
         # Check sender filter
         if handler.sender_filter and message.sender_id not in handler.sender_filter:
             return False
-            
+
         return True
-        
+
     async def _invoke_handler(
         self,
         handler: MessageHandler,
@@ -263,7 +258,7 @@ class MessageBus:
             await handler.handler_func(message)
         else:
             handler.handler_func(message)
-            
+
     async def _wait_for_response(
         self,
         message: AgentMessage,
@@ -272,13 +267,13 @@ class MessageBus:
         """Wait for a response to a message."""
         future = asyncio.Future()
         self.pending_responses[message.message_id] = future
-        
+
         try:
             return await asyncio.wait_for(future, timeout=timeout)
         except asyncio.TimeoutError:
             self.pending_responses.pop(message.message_id, None)
             raise
-            
+
     def get_message_history(
         self,
         agent_id: Optional[str] = None,
@@ -287,31 +282,30 @@ class MessageBus:
     ) -> List[AgentMessage]:
         """Get message history with optional filtering."""
         messages = self.message_history
-        
+
         if agent_id:
             messages = [
                 msg for msg in messages
                 if msg.sender_id == agent_id or msg.recipient_id == agent_id
             ]
-            
+
         if message_type:
             messages = [msg for msg in messages if msg.message_type == message_type]
-            
-        return messages[-limit:]
 
+        return messages[-limit:]
 
 class AgentCommunicationHub:
     """
     High-level communication hub for semantic agents.
-    
+
     Provides simplified interfaces for common communication patterns.
     """
-    
+
     def __init__(self, message_bus: MessageBus):
         """Initialize the communication hub."""
         self.message_bus = message_bus
         self.logger = logging.getLogger("communication_hub")
-        
+
     async def request_task_execution(
         self,
         requester_id: str,
@@ -332,14 +326,14 @@ class AgentCommunicationHub:
             },
             requires_response=True,
         )
-        
+
         try:
             response = await self.message_bus.publish(message)
             return response
         except asyncio.TimeoutError:
             self.logger.error(f"Task request to {target_agent_id} timed out")
             raise
-            
+
     async def share_knowledge(
         self,
         sender_id: str,
@@ -354,14 +348,14 @@ class AgentCommunicationHub:
             priority=MessagePriority.NORMAL,
             data=knowledge_data,
         )
-        
+
         if target_agents:
             for agent_id in target_agents:
                 message.recipient_id = agent_id
                 await self.message_bus.publish(message)
         else:
             await self.message_bus.publish(message, topic=topic)
-            
+
     async def query_agent_status(
         self,
         requester_id: str,
@@ -374,10 +368,10 @@ class AgentCommunicationHub:
             message_type=MessageType.STATUS_QUERY,
             requires_response=True,
         )
-        
+
         response = await self.message_bus.publish(message)
         return response
-        
+
     async def broadcast_event(
         self,
         sender_id: str,
@@ -395,5 +389,5 @@ class AgentCommunicationHub:
                 "event_data": event_data,
             },
         )
-        
+
         await self.message_bus.publish(message, topic=topic)

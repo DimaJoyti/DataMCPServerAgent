@@ -28,7 +28,6 @@ from .executor import PipelineExecutor
 from ..storage.unified_access.data_access_layer import DataAccessLayer
 from ..monitoring.metrics.pipeline_metrics import PipelineMetrics
 
-
 class OrchestratorConfig(BaseModel):
     """Configuration for the pipeline orchestrator."""
     max_concurrent_pipelines: int = 10
@@ -39,7 +38,6 @@ class OrchestratorConfig(BaseModel):
     max_retry_attempts: int = 3
     enable_metrics: bool = True
     enable_logging: bool = True
-
 
 class PipelineOrchestrator:
     """

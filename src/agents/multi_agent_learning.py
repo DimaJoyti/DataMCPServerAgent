@@ -6,7 +6,7 @@ This module provides mechanisms for agents to learn from each other and collabor
 import asyncio
 import json
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -16,24 +16,23 @@ from langchain_core.tools import BaseTool
 from src.memory.memory_persistence import MemoryDatabase
 from src.agents.learning_capabilities import LearningAgent, FeedbackCollector
 
-
 class KnowledgeTransferAgent:
     """Agent responsible for transferring knowledge between specialized agents."""
-    
+
     def __init__(
-        self, 
-        model: ChatAnthropic, 
+        self,
+        model: ChatAnthropic,
         db: MemoryDatabase
     ):
         """Initialize the knowledge transfer agent.
-        
+
         Args:
             model: Language model to use
             db: Memory database for persistence
         """
         self.model = model
         self.db = db
-        
+
         # Create the knowledge extraction prompt
         self.extraction_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are a knowledge extraction agent responsible for identifying valuable knowledge from agent interactions.
@@ -63,7 +62,7 @@ Task context:
 Extract valuable knowledge from this interaction.
 """)
         ])
-        
+
         # Create the knowledge integration prompt
         self.integration_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are a knowledge integration agent responsible for adapting knowledge for use by other agents.
@@ -92,14 +91,14 @@ Target agent: {target_agent}
 Adapt this knowledge for the target agent.
 """)
         ])
-    
+
     async def extract_knowledge(self, response: str, context: str) -> Dict[str, Any]:
         """Extract valuable knowledge from an agent's response.
-        
+
         Args:
             response: Agent's response
             context: Context of the task
-            
+
         Returns:
             Extracted knowledge
         """
@@ -108,18 +107,18 @@ Adapt this knowledge for the target agent.
             "response": response,
             "context": context
         }
-        
+
         # Get the extracted knowledge from the model
         messages = self.extraction_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
-        
+
         try:
             # Parse the response as JSON
             knowledge = json.loads(response.content)
-            
+
             # Store the knowledge in the database
             self.db.store_knowledge(knowledge)
-            
+
             return knowledge
         except json.JSONDecodeError:
             # If the response is not valid JSON, extract it manually
@@ -130,20 +129,20 @@ Adapt this knowledge for the target agent.
                 "applicability": ["all"],
                 "prerequisites": []
             }
-    
+
     async def adapt_knowledge(
-        self, 
-        knowledge: Dict[str, Any], 
-        source_agent: str, 
+        self,
+        knowledge: Dict[str, Any],
+        source_agent: str,
         target_agent: str
     ) -> Dict[str, Any]:
         """Adapt knowledge from one agent for use by another.
-        
+
         Args:
             knowledge: Knowledge to adapt
             source_agent: Source agent type
             target_agent: Target agent type
-            
+
         Returns:
             Adapted knowledge
         """
@@ -153,11 +152,11 @@ Adapt this knowledge for the target agent.
             "source_agent": source_agent,
             "target_agent": target_agent
         }
-        
+
         # Get the adapted knowledge from the model
         messages = self.integration_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
-        
+
         try:
             # Parse the response as JSON
             adapted_knowledge = json.loads(response.content)
@@ -171,19 +170,18 @@ Adapt this knowledge for the target agent.
                 "expected_benefits": ["Improved performance"]
             }
 
-
 class CollaborativeLearningSystem:
     """System for collaborative learning between multiple agents."""
-    
+
     def __init__(
-        self, 
-        model: ChatAnthropic, 
+        self,
+        model: ChatAnthropic,
         db: MemoryDatabase,
         learning_agents: Dict[str, LearningAgent],
         knowledge_transfer_agent: KnowledgeTransferAgent
     ):
         """Initialize the collaborative learning system.
-        
+
         Args:
             model: Language model to use
             db: Memory database for persistence
@@ -194,7 +192,7 @@ class CollaborativeLearningSystem:
         self.db = db
         self.learning_agents = learning_agents
         self.knowledge_transfer_agent = knowledge_transfer_agent
-        
+
         # Create the collaboration strategy prompt
         self.strategy_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are a collaboration strategist responsible for developing strategies for agent collaboration.
@@ -221,31 +219,31 @@ Agent performance:
 Develop collaboration strategies for these agents.
 """)
         ])
-    
+
     async def develop_collaboration_strategy(
-        self, 
+        self,
         agent_performance: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Develop strategies for agent collaboration.
-        
+
         Args:
             agent_performance: Performance metrics for each agent
-            
+
         Returns:
             Collaboration strategies
         """
         # Format agent performance for the prompt
         formatted_performance = json.dumps(agent_performance, indent=2)
-        
+
         # Prepare the input for the strategy prompt
         input_values = {
             "agent_performance": formatted_performance
         }
-        
+
         # Get the collaboration strategies from the model
         messages = self.strategy_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
-        
+
         try:
             # Parse the response as JSON
             strategies = json.loads(response.content)
@@ -259,20 +257,20 @@ Develop collaboration strategies for these agents.
                 "knowledge_sharing_opportunities": [],
                 "collaborative_problem_solving_plan": "Implement collaborative problem-solving."
             }
-    
+
     async def share_knowledge(
-        self, 
-        source_agent: str, 
-        target_agent: str, 
+        self,
+        source_agent: str,
+        target_agent: str,
         knowledge: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Share knowledge from one agent to another.
-        
+
         Args:
             source_agent: Source agent name
             target_agent: Target agent name
             knowledge: Knowledge to share
-            
+
         Returns:
             Result of knowledge sharing
         """
@@ -280,12 +278,12 @@ Develop collaboration strategies for these agents.
         adapted_knowledge = await self.knowledge_transfer_agent.adapt_knowledge(
             knowledge, source_agent, target_agent
         )
-        
+
         # Apply the knowledge to the target agent
         if target_agent in self.learning_agents:
             learning_agent = self.learning_agents[target_agent]
             await learning_agent.incorporate_knowledge(adapted_knowledge)
-        
+
         return {
             "source_agent": source_agent,
             "target_agent": target_agent,
@@ -293,18 +291,18 @@ Develop collaboration strategies for these agents.
             "adapted_knowledge": adapted_knowledge,
             "status": "success" if target_agent in self.learning_agents else "failed"
         }
-    
+
     async def collaborative_problem_solving(
-        self, 
-        request: str, 
+        self,
+        request: str,
         agent_results: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Solve a problem collaboratively using multiple agents.
-        
+
         Args:
             request: User request
             agent_results: Results from individual agents
-            
+
         Returns:
             Collaborative solution
         """
@@ -321,39 +319,38 @@ Based on these results, provide a comprehensive solution that leverages the stre
 Identify any conflicts or inconsistencies and resolve them.
 Explain how the collaborative approach improved the solution compared to individual agents.
 """
-        
+
         # Get the collaborative solution from the model
         messages = [
             {"role": "system", "content": "You are a collaborative problem-solving coordinator."},
             {"role": "user", "content": prompt}
         ]
-        
+
         response = await self.model.ainvoke(messages)
-        
+
         # Extract knowledge from the collaborative solution
         knowledge = await self.knowledge_transfer_agent.extract_knowledge(
-            response.content, 
+            response.content,
             f"Collaborative solution for: {request}"
         )
-        
+
         return {
             "collaborative_solution": response.content,
             "extracted_knowledge": knowledge
         }
 
-
 class MultiAgentLearningSystem:
     """System for multi-agent learning and collaboration."""
-    
+
     def __init__(
-        self, 
-        model: ChatAnthropic, 
+        self,
+        model: ChatAnthropic,
         db: MemoryDatabase,
         learning_agents: Dict[str, LearningAgent],
         feedback_collector: FeedbackCollector
     ):
         """Initialize the multi-agent learning system.
-        
+
         Args:
             model: Language model to use
             db: Memory database for persistence
@@ -364,15 +361,15 @@ class MultiAgentLearningSystem:
         self.db = db
         self.learning_agents = learning_agents
         self.feedback_collector = feedback_collector
-        
+
         # Initialize knowledge transfer agent
         self.knowledge_transfer_agent = KnowledgeTransferAgent(model, db)
-        
+
         # Initialize collaborative learning system
         self.collaborative_learning = CollaborativeLearningSystem(
             model, db, learning_agents, self.knowledge_transfer_agent
         )
-        
+
         # Create the performance analysis prompt
         self.analysis_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are a performance analysis agent responsible for analyzing agent performance.
@@ -398,31 +395,31 @@ Performance metrics:
 Analyze agent performance and identify opportunities for improvement.
 """)
         ])
-    
+
     async def analyze_performance(
-        self, 
+        self,
         performance_metrics: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Analyze agent performance and identify opportunities for improvement.
-        
+
         Args:
             performance_metrics: Performance metrics for each agent
-            
+
         Returns:
             Performance analysis
         """
         # Format performance metrics for the prompt
         formatted_metrics = json.dumps(performance_metrics, indent=2)
-        
+
         # Prepare the input for the analysis prompt
         input_values = {
             "performance_metrics": formatted_metrics
         }
-        
+
         # Get the performance analysis from the model
         messages = self.analysis_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
-        
+
         try:
             # Parse the response as JSON
             analysis = json.loads(response.content)
@@ -435,10 +432,10 @@ Analyze agent performance and identify opportunities for improvement.
                 "improvement_strategies": [],
                 "multi_agent_learning_plan": "Implement multi-agent learning."
             }
-    
+
     async def execute_learning_cycle(self) -> Dict[str, Any]:
         """Execute a complete multi-agent learning cycle.
-        
+
         Returns:
             Results of the learning cycle
         """
@@ -447,56 +444,56 @@ Analyze agent performance and identify opportunities for improvement.
         for agent_name in self.learning_agents:
             agent_metrics = self.db.get_agent_performance(agent_name)
             performance_metrics[agent_name] = agent_metrics
-        
+
         # Analyze performance
         performance_analysis = await self.analyze_performance(performance_metrics)
-        
+
         # Develop collaboration strategy
         collaboration_strategy = await self.collaborative_learning.develop_collaboration_strategy(
             performance_metrics
         )
-        
+
         # Execute knowledge transfers
         knowledge_transfers = []
         for opportunity in performance_analysis.get("knowledge_transfer_opportunities", []):
             if isinstance(opportunity, dict) and "source" in opportunity and "target" in opportunity:
                 source_agent = opportunity["source"]
                 target_agent = opportunity["target"]
-                
+
                 # Get knowledge from the source agent
                 knowledge = self.db.get_agent_knowledge(source_agent)
-                
+
                 # Share knowledge with the target agent
                 transfer_result = await self.collaborative_learning.share_knowledge(
                     source_agent, target_agent, knowledge
                 )
-                
+
                 knowledge_transfers.append(transfer_result)
-        
+
         # Learn from feedback for each agent
         learning_results = {}
         for agent_name, learning_agent in self.learning_agents.items():
             agent_results = await learning_agent.learn_from_feedback()
             learning_results[agent_name] = agent_results
-        
+
         return {
             "performance_analysis": performance_analysis,
             "collaboration_strategy": collaboration_strategy,
             "knowledge_transfers": knowledge_transfers,
             "learning_results": learning_results
         }
-    
+
     async def process_request_collaboratively(
-        self, 
-        request: str, 
+        self,
+        request: str,
         agent_results: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process a request collaboratively using multiple agents.
-        
+
         Args:
             request: User request
             agent_results: Results from individual agents
-            
+
         Returns:
             Collaborative response
         """
@@ -504,23 +501,22 @@ Analyze agent performance and identify opportunities for improvement.
         collaborative_solution = await self.collaborative_learning.collaborative_problem_solving(
             request, agent_results
         )
-        
+
         # Extract knowledge from each agent's result
         for agent_name, result in agent_results.items():
             if "response" in result:
                 knowledge = await self.knowledge_transfer_agent.extract_knowledge(
-                    result["response"], 
+                    result["response"],
                     f"Agent {agent_name}'s response to: {request}"
                 )
-                
+
                 # Store the knowledge in the database
                 self.db.store_agent_knowledge(agent_name, knowledge)
-        
+
         return {
             "collaborative_solution": collaborative_solution["collaborative_solution"],
             "extracted_knowledge": collaborative_solution["extracted_knowledge"]
         }
-
 
 # Factory function to create multi-agent learning system
 def create_multi_agent_learning_system(
@@ -530,13 +526,13 @@ def create_multi_agent_learning_system(
     feedback_collector: FeedbackCollector
 ) -> MultiAgentLearningSystem:
     """Create a multi-agent learning system.
-    
+
     Args:
         model: Language model to use
         db: Memory database for persistence
         learning_agents: Dictionary of learning agents by name
         feedback_collector: Feedback collector
-        
+
     Returns:
         Multi-agent learning system
     """

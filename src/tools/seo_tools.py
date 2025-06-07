@@ -308,7 +308,6 @@ class SEOAnalyzerTool:
 
         return output
 
-
 # Create tool instances
 seo_analyzer = SEOAnalyzerTool()
 
@@ -318,7 +317,6 @@ seo_analyzer_tool = Tool(
     func=seo_analyzer.run,
     description="Analyze a webpage for SEO factors. Provides SEO score, content analysis, and recommendations for improvement.",
 )
-
 
 class KeywordResearchTool:
     """Tool for researching keywords related to a topic."""
@@ -392,7 +390,6 @@ class KeywordResearchTool:
         output += "- Target a mix of high-volume and low-difficulty keywords\n"
 
         return output
-
 
 class ContentOptimizerTool:
     """Tool for optimizing content for SEO."""
@@ -579,7 +576,6 @@ class ContentOptimizerTool:
 
         return output
 
-
 # Create additional tool instances
 keyword_research = KeywordResearchTool()
 content_optimizer = ContentOptimizerTool()
@@ -596,7 +592,6 @@ content_optimizer_tool = Tool(
     func=content_optimizer.run,
     description="Optimize content for SEO. Analyzes keyword density, readability, and heading structure.",
 )
-
 
 class MetadataGeneratorTool:
     """Tool for generating optimized metadata for SEO."""
@@ -754,7 +749,6 @@ class MetadataGeneratorTool:
 
         return output
 
-
 class BacklinkAnalyzerTool:
     """Tool for analyzing backlinks to a website."""
 
@@ -836,7 +830,6 @@ class BacklinkAnalyzerTool:
         output += "- Target relevant websites in your industry for the most effective backlinks\n"
 
         return output
-
 
 # Create additional tool instances
 metadata_generator = MetadataGeneratorTool()

@@ -27,14 +27,13 @@ from src.tools.research_visualization_tools import (
     generate_wordcloud_tool,
 )
 
-
 def test_chart_visualization():
     """Test chart visualization."""
     print("Testing chart visualization...")
-    
+
     # Create visualization generator
     generator = VisualizationGenerator()
-    
+
     # Create chart data
     chart_data = ChartData(
         chart_type="bar",
@@ -43,7 +42,7 @@ def test_chart_visualization():
         x_label="Categories",
         y_label="Values"
     )
-    
+
     # Create chart configuration
     chart_config = VisualizationConfig(
         title="Test Bar Chart",
@@ -51,13 +50,13 @@ def test_chart_visualization():
         height=600,
         interactive=True
     )
-    
+
     # Generate chart
     result = generator.generate_chart(chart_data, chart_config)
-    
+
     print(f"Chart generated: {result['filepath']}")
     print(f"Chart URL: {result['url']}")
-    
+
     # Test tool function
     tool_input = {
         "data": {
@@ -74,21 +73,20 @@ def test_chart_visualization():
             "interactive": True
         }
     }
-    
+
     tool_result = generate_chart_tool(json.dumps(tool_input))
     tool_result_dict = json.loads(tool_result)
-    
+
     print(f"Chart tool result: {tool_result_dict['filepath']}")
     print(f"Chart tool URL: {tool_result_dict['url']}")
-
 
 def test_network_visualization():
     """Test network visualization."""
     print("\nTesting network visualization...")
-    
+
     # Create visualization generator
     generator = VisualizationGenerator()
-    
+
     # Create network data
     network_data = NetworkData(
         nodes=[
@@ -107,7 +105,7 @@ def test_network_visualization():
         ],
         layout="force"
     )
-    
+
     # Create network configuration
     network_config = VisualizationConfig(
         title="Test Network Diagram",
@@ -115,13 +113,13 @@ def test_network_visualization():
         height=600,
         interactive=True
     )
-    
+
     # Generate network
     result = generator.generate_network(network_data, network_config)
-    
+
     print(f"Network generated: {result['filepath']}")
     print(f"Network URL: {result['url']}")
-    
+
     # Test tool function
     tool_input = {
         "data": {
@@ -144,21 +142,20 @@ def test_network_visualization():
             "interactive": True
         }
     }
-    
+
     tool_result = generate_network_diagram_tool(json.dumps(tool_input))
     tool_result_dict = json.loads(tool_result)
-    
+
     print(f"Network tool result: {tool_result_dict['filepath']}")
     print(f"Network tool URL: {tool_result_dict['url']}")
-
 
 def test_wordcloud_visualization():
     """Test word cloud visualization."""
     print("\nTesting word cloud visualization...")
-    
+
     # Create visualization generator
     generator = VisualizationGenerator()
-    
+
     # Create word cloud data
     wordcloud_data = WordCloudData(
         text="This is a test word cloud visualization. It should show the most frequent words in larger font sizes. "
@@ -166,31 +163,30 @@ def test_wordcloud_visualization():
              "Word clouds are useful for visualizing text data and identifying the most important terms. "
              "They can be used for research summaries, content analysis, and more."
     )
-    
+
     # Create word cloud configuration
     wordcloud_config = VisualizationConfig(
         title="Test Word Cloud",
         width=800,
         height=600
     )
-    
+
     # Generate word cloud
     try:
         result = generator.generate_wordcloud(wordcloud_data, wordcloud_config)
-        
+
         print(f"Word cloud generated: {result['filepath']}")
         print(f"Word cloud URL: {result['url']}")
     except ImportError:
         print("WordCloud library not available. Skipping word cloud test.")
 
-
 def test_timeline_visualization():
     """Test timeline visualization."""
     print("\nTesting timeline visualization...")
-    
+
     # Create visualization generator
     generator = VisualizationGenerator()
-    
+
     # Create timeline data
     timeline_data = TimelineData(
         events=[
@@ -204,7 +200,7 @@ def test_timeline_visualization():
         description_field="description",
         category_field="category"
     )
-    
+
     # Create timeline configuration
     timeline_config = VisualizationConfig(
         title="Test Timeline",
@@ -212,37 +208,35 @@ def test_timeline_visualization():
         height=600,
         interactive=True
     )
-    
+
     # Generate timeline
     try:
         result = generator.generate_timeline(timeline_data, timeline_config)
-        
+
         print(f"Timeline generated: {result['filepath']}")
         print(f"Timeline URL: {result['url']}")
     except ImportError:
         print("Plotly library not available. Skipping timeline test.")
-
 
 def main():
     """Run the tests."""
     # Create a temporary directory for test visualizations
     with tempfile.TemporaryDirectory() as temp_dir:
         print(f"Using temporary directory: {temp_dir}")
-        
+
         # Test chart visualization
         test_chart_visualization()
-        
+
         # Test network visualization
         test_network_visualization()
-        
+
         # Test word cloud visualization
         test_wordcloud_visualization()
-        
+
         # Test timeline visualization
         test_timeline_visualization()
-        
-        print("\nAll tests completed.")
 
+        print("\nAll tests completed.")
 
 if __name__ == "__main__":
     main()

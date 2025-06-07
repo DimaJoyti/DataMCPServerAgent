@@ -36,23 +36,23 @@ __author__ = "DataMCPServerAgent Team"
 __all__ = [
     # Schemas
     "BaseVectorSchema",
-    "DocumentVectorSchema", 
+    "DocumentVectorSchema",
     "VectorStoreConfig",
     "SearchQuery",
     "SearchResult",
-    
+
     # Backends
     "BaseVectorStore",
     "ChromaVectorStore",
     "FAISSVectorStore",
     "PineconeVectorStore",
     "WeaviateVectorStore",
-    
+
     # Search
     "VectorSearchEngine",
     "HybridSearchEngine",
     "SearchFilters",
-    
+
     # Management
     "VectorStoreManager",
     "VectorStoreFactory",

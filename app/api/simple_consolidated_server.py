@@ -14,7 +14,6 @@ from pydantic import BaseModel
 
 from app.core.simple_config import SimpleSettings
 
-
 # Pydantic models
 class HealthResponse(BaseModel):
     status: str
@@ -23,12 +22,10 @@ class HealthResponse(BaseModel):
     timestamp: str
     structure: str
 
-
 class AgentCreate(BaseModel):
     name: str
     description: str = ""
     agent_type: str = "worker"
-
 
 class AgentResponse(BaseModel):
     id: str
@@ -38,12 +35,10 @@ class AgentResponse(BaseModel):
     status: str
     created_at: str
 
-
 class TaskCreate(BaseModel):
     name: str
     agent_id: str
     description: str = ""
-
 
 class TaskResponse(BaseModel):
     id: str
@@ -53,11 +48,9 @@ class TaskResponse(BaseModel):
     status: str
     created_at: str
 
-
 # In-memory storage
 agents_db: List[Dict[str, Any]] = []
 tasks_db: List[Dict[str, Any]] = []
-
 
 def create_simple_consolidated_app() -> FastAPI:
     """Create simple consolidated FastAPI application."""

@@ -21,7 +21,7 @@ from .pipeline_models import (
 __all__ = [
     "PipelineOrchestrator",
     "PipelineScheduler",
-    "PipelineExecutor", 
+    "PipelineExecutor",
     "Pipeline",
     "PipelineTask",
     "PipelineRun",

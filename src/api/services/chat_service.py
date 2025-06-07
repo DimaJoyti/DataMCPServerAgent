@@ -24,7 +24,6 @@ from src.core.seo_main import chat_with_seo_agent
 from ..config import config
 from ..models.response_models import ChatResponse, ChatStreamResponse
 
-
 class ChatService:
     """Service for chat interactions."""
 

@@ -2,7 +2,7 @@
 Memory router for the API.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
@@ -14,7 +14,6 @@ from ..middleware.auth import get_api_key
 
 router = APIRouter(prefix="/memory", tags=["memory"])
 
-
 @router.post("/", response_model=MemoryResponse)
 async def store_memory(
     request: MemoryRequest,
@@ -22,7 +21,7 @@ async def store_memory(
 ) -> MemoryResponse:
     """
     Store a memory item.
-    
+
     - **session_id**: Session ID for the memory
     - **memory_item**: Memory item to store
     - **memory_backend**: (Optional) Memory backend to use
@@ -34,24 +33,23 @@ async def store_memory(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail="Memory item is required",
             )
-        
+
         # Create a memory service
         memory_service = MemoryService()
-        
+
         # Store the memory item
         response = await memory_service.store_memory(
             session_id=request.session_id,
             memory_item=request.memory_item,
             memory_backend=request.memory_backend,
         )
-        
+
         return response
     except Exception as e:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
 
 @router.get("/{session_id}", response_model=MemoryResponse)
 async def retrieve_memory(
@@ -64,7 +62,7 @@ async def retrieve_memory(
 ) -> MemoryResponse:
     """
     Retrieve memory items for a session.
-    
+
     - **session_id**: Session ID for the memory
     - **query**: (Optional) Query for retrieving memory
     - **limit**: (Optional) Maximum number of memory items to return
@@ -74,7 +72,7 @@ async def retrieve_memory(
     try:
         # Create a memory service
         memory_service = MemoryService()
-        
+
         # Retrieve memory items
         response = await memory_service.retrieve_memory(
             session_id=session_id,
@@ -83,13 +81,13 @@ async def retrieve_memory(
             offset=offset,
             memory_backend=memory_backend,
         )
-        
+
         if not response.memory_items:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
                 detail=f"No memory items found for session {session_id}",
             )
-        
+
         return response
     except HTTPException:
         raise
@@ -99,7 +97,6 @@ async def retrieve_memory(
             detail=str(e),
         )
 
-
 @router.delete("/{session_id}", response_model=MemoryResponse)
 async def clear_memory(
     session_id: str = Path(..., description="Session ID"),
@@ -108,20 +105,20 @@ async def clear_memory(
 ) -> MemoryResponse:
     """
     Clear memory for a session.
-    
+
     - **session_id**: Session ID for the memory
     - **memory_backend**: (Optional) Memory backend to use
     """
     try:
         # Create a memory service
         memory_service = MemoryService()
-        
+
         # Clear memory
         response = await memory_service.clear_memory(
             session_id=session_id,
             memory_backend=memory_backend,
         )
-        
+
         return response
     except Exception as e:
         raise HTTPException(

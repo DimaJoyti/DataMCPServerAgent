@@ -13,7 +13,6 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
-
 class DecisionExplainer:
     """Utility for explaining reinforcement learning-based decisions."""
 
@@ -110,7 +109,6 @@ Explain this decision in a way that is understandable to the user.
 
         # Return the explanation
         return response.content.strip()
-
 
 class QValueVisualizer:
     """Utility for visualizing Q-values for better understanding."""
@@ -215,7 +213,6 @@ class QValueVisualizer:
             "best_actions": best_actions,
         }
 
-
 class PolicyExplainer:
     """Utility for explaining reinforcement learning policies."""
 
@@ -298,7 +295,6 @@ Explain this reinforcement learning policy in a way that is understandable to th
 
         # Return the explanation
         return response.content.strip()
-
 
 class DecisionTracker:
     """Utility for tracking and analyzing reinforcement learning decisions over time."""

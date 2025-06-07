@@ -11,7 +11,6 @@ from pydantic import Field, field_validator
 
 from .base import BaseEntity, BaseValueObject, ValidationError
 
-
 class Role(str, Enum):
     """User roles enumeration."""
 
@@ -20,7 +19,6 @@ class Role(str, Enum):
     VIEWER = "viewer"
     AGENT = "agent"
     API_USER = "api_user"
-
 
 class Permission(str, Enum):
     """User permissions enumeration."""
@@ -58,7 +56,6 @@ class Permission(str, Enum):
     SYSTEM_ADMIN = "system:admin"
     SYSTEM_MONITOR = "system:monitor"
 
-
 class UserStatus(str, Enum):
     """User status enumeration."""
 
@@ -66,7 +63,6 @@ class UserStatus(str, Enum):
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     PENDING = "pending"
-
 
 class ApiKey(BaseValueObject):
     """API key value object."""
@@ -99,7 +95,6 @@ class ApiKey(BaseValueObject):
     def is_valid(self) -> bool:
         """Check if API key is valid."""
         return not self.is_expired
-
 
 class Session(BaseValueObject):
     """User session value object."""
@@ -138,7 +133,6 @@ class Session(BaseValueObject):
         """Extend session expiration."""
         self.expires_at = datetime.now(timezone.utc) + timedelta(hours=hours)
         self.last_activity_at = datetime.now(timezone.utc)
-
 
 class User(BaseEntity):
     """User entity."""

@@ -12,7 +12,6 @@ from app.domain.models.task import Task, TaskPriority, TaskStatus, TaskType
 
 logger = get_logger(__name__)
 
-
 class TaskService(DomainService, LoggerMixin):
     """Core task management service."""
 
@@ -57,7 +56,6 @@ class TaskService(DomainService, LoggerMixin):
         task_repo = self.get_repository("task")
         return await task_repo.list(status=status)
 
-
 class TaskSchedulingService(DomainService, LoggerMixin):
     """Service for task scheduling operations."""
 
@@ -71,7 +69,6 @@ class TaskSchedulingService(DomainService, LoggerMixin):
 
         task.scheduled_at = scheduled_at
         return await task_repo.save(task)
-
 
 class TaskDependencyService(DomainService, LoggerMixin):
     """Service for managing task dependencies."""

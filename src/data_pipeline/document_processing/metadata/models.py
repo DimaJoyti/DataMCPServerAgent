@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
-
 class DocumentType(str, Enum):
     """Supported document types."""
     PDF = "pdf"
@@ -30,7 +29,6 @@ class DocumentType(str, Enum):
     PRESENTATION = "presentation"
     UNKNOWN = "unknown"
 
-
 class ProcessingStatus(str, Enum):
     """Document processing status."""
     PENDING = "pending"
@@ -38,7 +36,6 @@ class ProcessingStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
-
 
 class DocumentMetadata(BaseModel):
     """Comprehensive document metadata model."""
@@ -167,7 +164,6 @@ class DocumentMetadata(BaseModel):
             created_at=datetime.fromtimestamp(path.stat().st_ctime) if path.exists() else None,
             modified_at=datetime.fromtimestamp(path.stat().st_mtime) if path.exists() else None,
         )
-
 
 class ChunkMetadata(BaseModel):
     """Metadata for document chunks."""

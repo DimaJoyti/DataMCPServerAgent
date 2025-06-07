@@ -32,7 +32,6 @@ except ImportError:
 
 from src.models.research_models import Source, SourceType
 
-
 class GoogleScholarTool:
     """Tool for searching Google Scholar."""
 
@@ -164,7 +163,6 @@ class GoogleScholarTool:
             results.append("")
 
         return "\n".join(results)
-
 
 class PubMedTool:
     """Tool for searching PubMed."""
@@ -342,7 +340,6 @@ class PubMedTool:
 
         return "\n".join(results)
 
-
 class ArXivTool:
     """Tool for searching arXiv."""
 
@@ -457,7 +454,6 @@ class ArXivTool:
             results.append("")
 
         return "\n".join(results)
-
 
 class GoogleBooksTool:
     """Tool for searching Google Books."""
@@ -599,7 +595,6 @@ class GoogleBooksTool:
 
         return "\n".join(results)
 
-
 class OpenLibraryTool:
     """Tool for searching Open Library."""
 
@@ -729,7 +724,6 @@ class OpenLibraryTool:
             results.append("")
 
         return "\n".join(results)
-
 
 # Create tool instances
 google_scholar = GoogleScholarTool()

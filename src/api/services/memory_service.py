@@ -24,7 +24,6 @@ try:
 except ImportError:
     MEMORY_MODULES_AVAILABLE = False
 
-
 class MemoryService:
     """Service for memory operations."""
 

@@ -11,7 +11,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class Dashboard:
     """Dashboard for the Fetch.ai Advanced Crypto Trading System."""
-    
+
     def __init__(
         self,
         trading_system: Optional[AdvancedCryptoTradingSystem] = None,
@@ -40,7 +40,7 @@ class Dashboard:
         debug: bool = False
     ):
         """Initialize the dashboard.
-        
+
         Args:
             trading_system: Trading system to visualize
             port: Port for the dashboard server
@@ -49,27 +49,27 @@ class Dashboard:
         self.trading_system = trading_system
         self.port = port
         self.debug = debug
-        
+
         # Initialize data storage
         self.data = {
             "recommendations": [],
             "market_data": {},
             "performance": {}
         }
-        
+
         # Initialize dashboard
         self.app = dash.Dash(
             __name__,
             external_stylesheets=[dbc.themes.DARKLY],
             title="Fetch.ai Trading Dashboard"
         )
-        
+
         # Set up layout
         self._setup_layout()
-        
+
         # Set up callbacks
         self._setup_callbacks()
-    
+
     def _setup_layout(self):
         """Set up the dashboard layout."""
         self.app.layout = dbc.Container([
@@ -79,7 +79,7 @@ class Dashboard:
                     html.Hr()
                 ])
             ]),
-            
+
             dbc.Row([
                 dbc.Col([
                     html.H3("Trading Recommendations", className="text-center"),
@@ -87,7 +87,7 @@ class Dashboard:
                     html.Div(id="recommendations-table")
                 ], width=12)
             ]),
-            
+
             dbc.Row([
                 dbc.Col([
                     html.H3("Market Data", className="text-center"),
@@ -104,14 +104,14 @@ class Dashboard:
                     ),
                     dcc.Graph(id="price-chart")
                 ], width=6),
-                
+
                 dbc.Col([
                     html.H3("System Performance", className="text-center"),
                     dcc.Graph(id="performance-chart"),
                     html.Div(id="performance-stats")
                 ], width=6)
             ]),
-            
+
             dbc.Row([
                 dbc.Col([
                     html.H3("Agent Insights", className="text-center"),
@@ -125,17 +125,17 @@ class Dashboard:
                     html.Div(id="agent-content")
                 ], width=12)
             ]),
-            
+
             dcc.Interval(
                 id="interval-component",
                 interval=60 * 1000,  # 1 minute in milliseconds
                 n_intervals=0
             )
         ], fluid=True)
-    
+
     def _setup_callbacks(self):
         """Set up the dashboard callbacks."""
-        
+
         @self.app.callback(
             [
                 Output("recommendations-chart", "figure"),
@@ -147,13 +147,13 @@ class Dashboard:
             """Update recommendations chart and table."""
             # Load recommendations
             recommendations = self._load_recommendations()
-            
+
             if not recommendations:
                 return self._empty_figure("No recommendations available"), html.Div("No recommendations available")
-            
+
             # Create figure
             fig = go.Figure()
-            
+
             # Add buy signals
             buy_recs = [r for r in recommendations if r["signal"] == "buy"]
             if buy_recs:
@@ -161,7 +161,7 @@ class Dashboard:
                 buy_prices = [r["entry_price"] for r in buy_recs]
                 buy_confidences = [r["confidence"] for r in buy_recs]
                 buy_sizes = [c * 20 for c in buy_confidences]
-                
+
                 fig.add_trace(go.Scatter(
                     x=buy_times,
                     y=buy_prices,
@@ -173,7 +173,7 @@ class Dashboard:
                     ),
                     name="Buy Signals"
                 ))
-            
+
             # Add sell signals
             sell_recs = [r for r in recommendations if r["signal"] == "sell"]
             if sell_recs:
@@ -181,7 +181,7 @@ class Dashboard:
                 sell_prices = [r["entry_price"] for r in sell_recs]
                 sell_confidences = [r["confidence"] for r in sell_recs]
                 sell_sizes = [c * 20 for c in sell_confidences]
-                
+
                 fig.add_trace(go.Scatter(
                     x=sell_times,
                     y=sell_prices,
@@ -193,7 +193,7 @@ class Dashboard:
                     ),
                     name="Sell Signals"
                 ))
-            
+
             # Update layout
             fig.update_layout(
                 title="Trading Recommendations",
@@ -202,7 +202,7 @@ class Dashboard:
                 template="plotly_dark",
                 height=400
             )
-            
+
             # Create table
             table = dbc.Table([
                 html.Thead(html.Tr([
@@ -228,9 +228,9 @@ class Dashboard:
                     ]) for r in recommendations[:5]
                 ])
             ], bordered=True, dark=True, hover=True, responsive=True, striped=True)
-            
+
             return fig, table
-        
+
         @self.app.callback(
             Output("price-chart", "figure"),
             [
@@ -242,24 +242,24 @@ class Dashboard:
             """Update price chart."""
             # Load market data
             market_data = self._load_market_data(symbol)
-            
+
             if not market_data:
                 return self._empty_figure(f"No market data available for {symbol}")
-            
+
             # Create figure
             fig = go.Figure()
-            
+
             # Add price line
             times = [datetime.fromisoformat(d["timestamp"]) for d in market_data]
             prices = [d["price"] for d in market_data]
-            
+
             fig.add_trace(go.Scatter(
                 x=times,
                 y=prices,
                 mode="lines",
                 name="Price"
             ))
-            
+
             # Update layout
             fig.update_layout(
                 title=f"{symbol} Price",
@@ -268,9 +268,9 @@ class Dashboard:
                 template="plotly_dark",
                 height=400
             )
-            
+
             return fig
-        
+
         @self.app.callback(
             [
                 Output("performance-chart", "figure"),
@@ -282,25 +282,25 @@ class Dashboard:
             """Update performance chart and stats."""
             # Load performance data
             performance = self._load_performance()
-            
+
             if not performance:
                 return self._empty_figure("No performance data available"), html.Div("No performance data available")
-            
+
             # Create figure
             fig = go.Figure()
-            
+
             # Add performance metrics
             if "accuracy_over_time" in performance:
                 times = [datetime.fromisoformat(d["timestamp"]) for d in performance["accuracy_over_time"]]
                 values = [d["value"] for d in performance["accuracy_over_time"]]
-                
+
                 fig.add_trace(go.Scatter(
                     x=times,
                     y=values,
                     mode="lines",
                     name="Prediction Accuracy"
                 ))
-            
+
             # Update layout
             fig.update_layout(
                 title="System Performance",
@@ -309,7 +309,7 @@ class Dashboard:
                 template="plotly_dark",
                 height=400
             )
-            
+
             # Create stats
             stats = dbc.Card([
                 dbc.CardHeader("Performance Statistics"),
@@ -319,9 +319,9 @@ class Dashboard:
                     html.P(f"Profit/Loss: {performance.get('profit_loss', 0):.2f}%")
                 ])
             ])
-            
+
             return fig, stats
-        
+
         @self.app.callback(
             Output("agent-content", "children"),
             [
@@ -343,18 +343,18 @@ class Dashboard:
                 return self._render_learning_tab()
             else:
                 return html.Div("Select a tab to view agent insights")
-    
+
     def _empty_figure(self, message: str) -> go.Figure:
         """Create an empty figure with a message.
-        
+
         Args:
             message: Message to display
-            
+
         Returns:
             Empty figure
         """
         fig = go.Figure()
-        
+
         fig.add_annotation(
             text=message,
             xref="paper",
@@ -364,17 +364,17 @@ class Dashboard:
             showarrow=False,
             font=dict(size=16)
         )
-        
+
         fig.update_layout(
             template="plotly_dark",
             height=400
         )
-        
+
         return fig
-    
+
     def _load_recommendations(self) -> List[Dict[str, Any]]:
         """Load trading recommendations.
-        
+
         Returns:
             List of recommendations
         """
@@ -388,70 +388,70 @@ class Dashboard:
                     return json.load(f)
             except:
                 return []
-    
+
     def _load_market_data(self, symbol: str) -> List[Dict[str, Any]]:
         """Load market data for a symbol.
-        
+
         Args:
             symbol: Trading symbol
-            
+
         Returns:
             List of market data points
         """
         if symbol in self.data["market_data"]:
             return self.data["market_data"][symbol]
-        
+
         # Generate mock data
         now = datetime.now()
         data = []
-        
+
         for i in range(100):
             time = now - timedelta(minutes=i)
             price = 50000 - i * 10 + (i % 10) * 20  # Mock price data
-            
+
             data.append({
                 "timestamp": time.isoformat(),
                 "price": price,
                 "volume": 1000000 - i * 1000
             })
-        
+
         self.data["market_data"][symbol] = data
         return data
-    
+
     def _load_performance(self) -> Dict[str, Any]:
         """Load system performance data.
-        
+
         Returns:
             Performance data
         """
         if self.data["performance"]:
             return self.data["performance"]
-        
+
         # Generate mock data
         now = datetime.now()
         accuracy_over_time = []
-        
+
         for i in range(20):
             time = now - timedelta(hours=i)
             accuracy = 0.7 + (i % 10) * 0.02  # Mock accuracy data
-            
+
             accuracy_over_time.append({
                 "timestamp": time.isoformat(),
                 "value": accuracy
             })
-        
+
         self.data["performance"] = {
             "total_recommendations": 50,
             "accuracy": 0.75,
             "profit_loss": 12.5,
             "accuracy_over_time": accuracy_over_time
         }
-        
+
         return self.data["performance"]
-    
+
     def _render_sentiment_tab(self) -> html.Div:
         """Render sentiment tab content.
-        
+
         Returns:
             Tab content
         """
@@ -490,27 +490,27 @@ class Dashboard:
                 ])
             ])
         ])
-    
+
     def _create_sentiment_chart(self) -> go.Figure:
         """Create sentiment chart.
-        
+
         Returns:
             Sentiment chart
         """
         fig = go.Figure()
-        
+
         # Add sentiment data
         now = datetime.now()
         times = [now - timedelta(days=i) for i in range(7)]
         sentiments = [0.6, 0.2, -0.3, 0.1, 0.5, 0.7, 0.4]  # Mock sentiment data
-        
+
         fig.add_trace(go.Scatter(
             x=times,
             y=sentiments,
             mode="lines+markers",
             name="Sentiment Score"
         ))
-        
+
         # Add zero line
         fig.add_shape(
             type="line",
@@ -524,7 +524,7 @@ class Dashboard:
                 dash="dash"
             )
         )
-        
+
         # Update layout
         fig.update_layout(
             title="Sentiment Analysis Over Time",
@@ -536,12 +536,12 @@ class Dashboard:
                 range=[-1, 1]
             )
         )
-        
+
         return fig
-    
+
     def _render_technical_tab(self) -> html.Div:
         """Render technical tab content.
-        
+
         Returns:
             Tab content
         """
@@ -583,30 +583,30 @@ class Dashboard:
                 ])
             ])
         ])
-    
+
     def _create_technical_chart(self) -> go.Figure:
         """Create technical chart.
-        
+
         Returns:
             Technical chart
         """
         fig = go.Figure()
-        
+
         # Add price data
         now = datetime.now()
         times = [now - timedelta(hours=i) for i in range(24)]
         prices = [50000 - i * 10 + (i % 10) * 20 for i in range(24)]  # Mock price data
-        
+
         fig.add_trace(go.Scatter(
             x=times,
             y=prices,
             mode="lines",
             name="Price"
         ))
-        
+
         # Add moving average
         ma = [sum(prices[max(0, i-5):i+1]) / min(i+1, 5) for i in range(len(prices))]
-        
+
         fig.add_trace(go.Scatter(
             x=times,
             y=ma,
@@ -617,7 +617,7 @@ class Dashboard:
             ),
             name="5-period MA"
         ))
-        
+
         # Update layout
         fig.update_layout(
             title="Price and Moving Average",
@@ -626,12 +626,12 @@ class Dashboard:
             template="plotly_dark",
             height=400
         )
-        
+
         return fig
-    
+
     def _render_risk_tab(self) -> html.Div:
         """Render risk tab content.
-        
+
         Returns:
             Tab content
         """
@@ -672,10 +672,10 @@ class Dashboard:
                 html.P("Current Risk Level: Medium")
             ])
         ])
-    
+
     def _render_macro_tab(self) -> html.Div:
         """Render macro tab content.
-        
+
         Returns:
             Tab content
         """
@@ -716,26 +716,26 @@ class Dashboard:
                 ], bordered=True, dark=True, hover=True, responsive=True, striped=True)
             ])
         ])
-    
+
     def _create_correlation_chart(self) -> go.Figure:
         """Create correlation chart.
-        
+
         Returns:
             Correlation chart
         """
         fig = go.Figure()
-        
+
         # Add correlation data
         assets = ["S&P 500", "Gold", "US Dollar", "Oil", "10Y Treasury"]
         correlations = [0.65, -0.45, -0.7, 0.2, -0.3]  # Mock correlation data
-        
+
         # Create bar chart
         fig.add_trace(go.Bar(
             x=assets,
             y=correlations,
             marker_color=["green" if c > 0 else "red" for c in correlations]
         ))
-        
+
         # Add zero line
         fig.add_shape(
             type="line",
@@ -749,7 +749,7 @@ class Dashboard:
                 dash="dash"
             )
         )
-        
+
         # Update layout
         fig.update_layout(
             title="Bitcoin Correlation with Traditional Assets",
@@ -761,12 +761,12 @@ class Dashboard:
                 range=[-1, 1]
             )
         )
-        
+
         return fig
-    
+
     def _render_learning_tab(self) -> html.Div:
         """Render learning tab content.
-        
+
         Returns:
             Tab content
         """
@@ -808,27 +808,27 @@ class Dashboard:
                 ])
             ])
         ])
-    
+
     def _create_learning_chart(self) -> go.Figure:
         """Create learning chart.
-        
+
         Returns:
             Learning chart
         """
         fig = go.Figure()
-        
+
         # Add learning data
         now = datetime.now()
         times = [now - timedelta(days=i) for i in range(10)]
         accuracy = [0.65, 0.67, 0.68, 0.7, 0.69, 0.72, 0.73, 0.74, 0.75, 0.75]  # Mock accuracy data
-        
+
         fig.add_trace(go.Scatter(
             x=times,
             y=accuracy,
             mode="lines+markers",
             name="Model Accuracy"
         ))
-        
+
         # Update layout
         fig.update_layout(
             title="Model Accuracy Over Time",
@@ -840,9 +840,9 @@ class Dashboard:
                 range=[0.6, 0.8]
             )
         )
-        
+
         return fig
-    
+
     def run(self):
         """Run the dashboard."""
         self.app.run_server(debug=self.debug, port=self.port)
@@ -851,7 +851,7 @@ async def main():
     """Main entry point."""
     # Load environment variables
     load_dotenv()
-    
+
     # Create trading system
     trading_system = AdvancedCryptoTradingSystem(
         name="dashboard_trading_system",
@@ -859,10 +859,10 @@ async def main():
         api_key=os.getenv('EXCHANGE_API_KEY'),
         api_secret=os.getenv('EXCHANGE_API_SECRET')
     )
-    
+
     # Create dashboard
     dashboard = Dashboard(trading_system=trading_system)
-    
+
     # Run dashboard
     dashboard.run()
 

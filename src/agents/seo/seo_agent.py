@@ -33,7 +33,6 @@ from src.tools.seo_ml_tools import (
 from src.tools.seo_scheduled_reporting import scheduled_reporting_tool
 from src.utils.error_handlers import format_error_for_user
 
-
 class SEOAgent:
     """Specialized agent for SEO tasks."""
 

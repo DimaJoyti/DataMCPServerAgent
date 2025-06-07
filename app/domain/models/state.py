@@ -11,7 +11,6 @@ from pydantic import Field, field_validator
 
 from .base import BaseEntity, BaseValueObject, ValidationError
 
-
 class StateType(str, Enum):
     """Type of persistent state."""
 
@@ -21,7 +20,6 @@ class StateType(str, Enum):
     CONFIGURATION_STATE = "configuration_state"
     CACHE_STATE = "cache_state"
 
-
 class StateStatus(str, Enum):
     """Status of state synchronization."""
 
@@ -30,7 +28,6 @@ class StateStatus(str, Enum):
     SYNCING = "syncing"
     CONFLICT = "conflict"
     ERROR = "error"
-
 
 class StateMetadata(BaseValueObject):
     """State metadata value object."""
@@ -47,7 +44,6 @@ class StateMetadata(BaseValueObject):
         if v < 0:
             raise ValidationError("State size cannot be negative")
         return v
-
 
 class StateVersion(BaseValueObject):
     """State version information."""
@@ -66,7 +62,6 @@ class StateVersion(BaseValueObject):
         if v < 1:
             raise ValidationError("Version number must be positive")
         return v
-
 
 class PersistentState(BaseEntity):
     """Persistent state entity."""

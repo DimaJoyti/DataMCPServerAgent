@@ -12,7 +12,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 class AgentType(str, Enum):
     """Types of agents in the consolidated system."""
 
@@ -23,7 +22,6 @@ class AgentType(str, Enum):
     ANALYST = "analyst"
     COMMUNICATOR = "communicator"
 
-
 class AgentStatus(str, Enum):
     """Status of agents in the consolidated system."""
 
@@ -32,7 +30,6 @@ class AgentStatus(str, Enum):
     BUSY = "busy"
     ERROR = "error"
     MAINTENANCE = "maintenance"
-
 
 class AgentCapability(str, Enum):
     """Capabilities that agents can have."""
@@ -46,7 +43,6 @@ class AgentCapability(str, Enum):
     VISUALIZATION = "visualization"
     API_INTEGRATION = "api_integration"
 
-
 class AgentConfiguration(BaseModel):
     """Configuration for agent behavior."""
 
@@ -59,7 +55,6 @@ class AgentConfiguration(BaseModel):
     priority_level: int = Field(default=5, ge=1, le=10)
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
 
-
 class AgentMetrics(BaseModel):
     """Metrics for agent performance."""
 
@@ -71,7 +66,6 @@ class AgentMetrics(BaseModel):
     memory_usage_mb: float = Field(default=0.0, ge=0.0)
     cpu_usage_percent: float = Field(default=0.0, ge=0.0, le=100.0)
     last_activity: Optional[datetime] = None
-
 
 class ConsolidatedAgent(BaseModel):
     """
@@ -306,7 +300,6 @@ class ConsolidatedAgent(BaseModel):
         """Update version and timestamp."""
         self.version += 1
         self.updated_at = datetime.now()
-
 
 # Type alias for backward compatibility
 Agent = ConsolidatedAgent

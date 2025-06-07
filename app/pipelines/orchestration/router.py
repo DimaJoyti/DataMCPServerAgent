@@ -11,7 +11,6 @@ from typing import Any, Dict, Optional
 
 from app.core.logging import get_logger
 
-
 class PipelineType(str, Enum):
     """Available pipeline types."""
     TEXT_ONLY = "text_only"
@@ -20,7 +19,6 @@ class PipelineType(str, Enum):
     MULTIMODAL = "multimodal"
     STREAMING = "streaming"
     RAG = "rag"
-
 
 @dataclass
 class RoutingDecision:
@@ -31,7 +29,6 @@ class RoutingDecision:
     reasoning: str
     estimated_processing_time: float
     resource_requirements: Dict[str, Any]
-
 
 class PipelineRouter:
     """Intelligent pipeline router."""

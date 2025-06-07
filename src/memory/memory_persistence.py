@@ -20,7 +20,6 @@ except ImportError:
     subprocess.check_call(["pip", "install", "aiofiles"])
     import aiofiles
 
-
 class MemoryDatabase:
     """Database for persisting agent memory."""
 
@@ -1021,7 +1020,6 @@ class MemoryDatabase:
         summary += f"- Interactions: {interactions_count}\n"
 
         return summary
-
 
 class FileBackedMemoryDatabase:
     """File-backed database for persisting agent memory."""

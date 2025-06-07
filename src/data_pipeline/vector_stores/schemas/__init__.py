@@ -8,7 +8,7 @@ from .search_models import SearchQuery, SearchResult, SearchFilters
 
 __all__ = [
     "BaseVectorSchema",
-    "VectorStoreConfig", 
+    "VectorStoreConfig",
     "DocumentVectorSchema",
     "SearchQuery",
     "SearchResult",

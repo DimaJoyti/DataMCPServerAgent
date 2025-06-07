@@ -72,7 +72,6 @@ except ImportError:
     format_citation_tool = MockTool("Citation Formatter")
     generate_bibliography_tool = MockTool("Bibliography Generator")
 
-
 class EnhancedResearchResponseModel(BaseModel):
     """Enhanced structured response format for research results with advanced features."""
 
@@ -86,7 +85,6 @@ class EnhancedResearchResponseModel(BaseModel):
     query_id: Optional[str] = None
     visualizations: List[Dict] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
-
 
 class EnhancedResearchAssistant:
     """Enhanced Research Assistant with advanced features."""

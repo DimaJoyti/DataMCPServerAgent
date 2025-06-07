@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-
 class Source(BaseModel):
     """Source model for research results."""
 
@@ -28,7 +27,6 @@ class Source(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         """Convert source to dictionary."""
         return self.model_dump(exclude_none=True)
-
 
 class ResearchResult(BaseModel):
     """Research result model."""
@@ -51,7 +49,6 @@ class ResearchResult(BaseModel):
         result["created_at"] = result["created_at"].isoformat()
         return result
 
-
 class ResearchQuery(BaseModel):
     """Research query model."""
 
@@ -70,7 +67,6 @@ class ResearchQuery(BaseModel):
     def add_result(self, result: ResearchResult) -> None:
         """Add a result to the query."""
         self.results.append(result)
-
 
 class ResearchProject(BaseModel):
     """Research project model."""
@@ -107,7 +103,6 @@ class ResearchProject(BaseModel):
                 self.updated_at = datetime.now()
                 return True
         return False
-
 
 class ResearchMemoryDatabase:
     """Database for persisting research memory."""

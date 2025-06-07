@@ -27,18 +27,17 @@ except ImportError:
     DASHBOARD_AVAILABLE = False
     print("Увага: Dash або Plotly не доступні. Пропускаємо тести дашбордів.")
 
-
 def test_grid_dashboard():
     """Тестування дашборду з сітковим макетом."""
     if not DASHBOARD_AVAILABLE:
         print("Dash або Plotly не доступні. Пропускаємо тест дашборду з сітковим макетом.")
         return
-    
+
     print("Тестування дашборду з сітковим макетом...")
-    
+
     # Створюємо генератор дашбордів
     generator = DashboardGenerator()
-    
+
     # Створюємо дашборд
     dashboard = Dashboard(
         id="test-grid-dashboard",
@@ -101,7 +100,7 @@ def test_grid_dashboard():
             )
         ]
     )
-    
+
     # Генеруємо дашборд
     try:
         result = generator.generate_dashboard(dashboard)
@@ -109,18 +108,17 @@ def test_grid_dashboard():
     except Exception as e:
         print(f"Помилка при генерації дашборду з сітковим макетом: {str(e)}")
 
-
 def test_tabs_dashboard():
     """Тестування дашборду з вкладками."""
     if not DASHBOARD_AVAILABLE:
         print("Dash або Plotly не доступні. Пропускаємо тест дашборду з вкладками.")
         return
-    
+
     print("\nТестування дашборду з вкладками...")
-    
+
     # Створюємо генератор дашбордів
     generator = DashboardGenerator()
-    
+
     # Створюємо дашборд
     dashboard = Dashboard(
         id="test-tabs-dashboard",
@@ -188,7 +186,7 @@ def test_tabs_dashboard():
             )
         ]
     )
-    
+
     # Генеруємо дашборд
     try:
         result = generator.generate_dashboard(dashboard)
@@ -196,15 +194,14 @@ def test_tabs_dashboard():
     except Exception as e:
         print(f"Помилка при генерації дашборду з вкладками: {str(e)}")
 
-
 def test_dashboard_tool():
     """Тестування інструменту для генерації дашбордів."""
     if not DASHBOARD_AVAILABLE:
         print("Dash або Plotly не доступні. Пропускаємо тест інструменту для генерації дашбордів.")
         return
-    
+
     print("\nТестування інструменту для генерації дашбордів...")
-    
+
     # Створюємо дані для інструменту
     tool_input = {
         "id": "tool-dashboard",
@@ -236,34 +233,32 @@ def test_dashboard_tool():
             }
         ]
     }
-    
+
     # Викликаємо інструмент
     try:
         result = generate_dashboard_tool(json.dumps(tool_input))
         result_dict = json.loads(result)
-        
+
         print(f"Результат інструменту для генерації дашбордів: {result_dict}")
     except Exception as e:
         print(f"Помилка при виклику інструменту для генерації дашбордів: {str(e)}")
-
 
 def main():
     """Запуск тестів."""
     if not DASHBOARD_AVAILABLE:
         print("Dash або Plotly не доступні. Пропускаємо всі тести дашбордів.")
         return
-    
+
     # Тестуємо дашборд з сітковим макетом
     test_grid_dashboard()
-    
+
     # Тестуємо дашборд з вкладками
     test_tabs_dashboard()
-    
+
     # Тестуємо інструмент для генерації дашбордів
     test_dashboard_tool()
-    
-    print("\nВсі тести завершено.")
 
+    print("\nВсі тести завершено.")
 
 if __name__ == "__main__":
     main()

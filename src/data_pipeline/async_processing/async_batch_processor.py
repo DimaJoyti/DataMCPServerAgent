@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional, Union
 from ..document_processing.chunking.models import TextChunk
 from ..vectorization.batch_processor import BatchVectorProcessor
 
-
 @dataclass
 class AsyncBatchResult:
     """Result of async batch processing."""
@@ -27,7 +26,6 @@ class AsyncBatchResult:
     def get_successful_results(self) -> List[Any]:
         """Get only successful results (non-None)."""
         return [r for r in self.results if r is not None]
-
 
 class AsyncBatchProcessor:
     """Asynchronous batch processor for high-throughput processing."""

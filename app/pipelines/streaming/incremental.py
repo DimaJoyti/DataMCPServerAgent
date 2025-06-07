@@ -18,14 +18,12 @@ from typing import Any, Dict, List, Optional
 
 from app.core.logging import get_logger
 
-
 class UpdateStrategy(str, Enum):
     """Strategies for incremental updates."""
     IMMEDIATE = "immediate"  # Apply updates immediately
     BATCHED = "batched"     # Batch updates for efficiency
     SCHEDULED = "scheduled"  # Apply updates on schedule
     ADAPTIVE = "adaptive"   # Adapt strategy based on load
-
 
 class UpdateType(str, Enum):
     """Types of incremental updates."""
@@ -37,7 +35,6 @@ class UpdateType(str, Enum):
     BATCH_UPDATE = "batch_update"
     BATCH_DELETE = "batch_delete"
 
-
 class ConflictResolution(str, Enum):
     """Conflict resolution strategies."""
     LAST_WRITE_WINS = "last_write_wins"
@@ -45,7 +42,6 @@ class ConflictResolution(str, Enum):
     MERGE = "merge"
     MANUAL = "manual"
     VERSION_BASED = "version_based"
-
 
 @dataclass
 class IncrementalUpdate:
@@ -77,7 +73,6 @@ class IncrementalUpdate:
     def __post_init__(self):
         if self.dependencies is None:
             self.dependencies = []
-
 
 class IndexManager:
     """Manages incremental updates to various indexes."""
@@ -245,7 +240,6 @@ class IndexManager:
             "pending_updates": len(self.pending_updates),
             "applied_updates": len(self.applied_updates)
         }
-
 
 class IncrementalProcessor:
     """Processes incremental updates with batching and optimization."""

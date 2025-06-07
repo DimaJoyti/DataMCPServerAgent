@@ -21,14 +21,12 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
-
 class EventPriority(int, Enum):
     """Event priority levels."""
     LOW = 1
     NORMAL = 5
     HIGH = 8
     CRITICAL = 10
-
 
 @dataclass
 class EventFilter:
@@ -71,7 +69,6 @@ class EventFilter:
 
         return True
 
-
 class BusEvent(BaseModel):
     """Event in the event bus."""
 
@@ -100,7 +97,6 @@ class BusEvent(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
 @dataclass
 class EventSubscription:
     """Subscription to events."""
@@ -114,7 +110,6 @@ class EventSubscription:
     def __post_init__(self):
         if self.created_at == 0.0:
             self.created_at = time.time()
-
 
 class EventHandler:
     """Base class for event handlers."""
@@ -130,7 +125,6 @@ class EventHandler:
     def can_handle(self, event: BusEvent) -> bool:
         """Check if this handler can handle the event."""
         return True
-
 
 class EventBus:
     """Event bus for coordinating streaming pipeline components."""

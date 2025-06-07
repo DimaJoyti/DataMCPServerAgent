@@ -6,7 +6,7 @@ and balance different goals in decision making.
 
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from langchain_anthropic import ChatAnthropic
@@ -16,7 +16,6 @@ from langchain_core.tools import BaseTool
 
 from src.agents.reinforcement_learning import RewardSystem
 from src.memory.memory_persistence import MemoryDatabase
-
 
 class MultiObjectiveRewardSystem(RewardSystem):
     """System for calculating rewards based on multiple objectives."""
@@ -181,7 +180,6 @@ class MultiObjectiveRewardSystem(RewardSystem):
 
         return []
 
-
 class MOQLearningAgent:
     """Agent that learns using multi-objective Q-learning algorithm."""
 
@@ -314,7 +312,6 @@ class MOQLearningAgent:
 
         # Save Q-tables to database
         self.db.save_mo_q_tables(self.name, self.q_tables)
-
 
 class MultiObjectiveRLCoordinatorAgent:
     """Coordinator agent that uses multi-objective reinforcement learning for decision making."""
@@ -497,7 +494,6 @@ Extract a state identifier for this request.
             "rewards": rewards,
             "performance_metrics": performance_metrics,
         }
-
 
 # Factory function to create multi-objective RL-based agent architecture
 async def create_multi_objective_rl_agent_architecture(

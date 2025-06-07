@@ -43,7 +43,6 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-
 async def simulate_error_for_tool(tool: BaseTool, url: str) -> Dict[str, Any]:
     """Simulate an error for a tool based on the URL.
 
@@ -74,7 +73,6 @@ async def simulate_error_for_tool(tool: BaseTool, url: str) -> Dict[str, Any]:
         )
     else:
         raise Exception(f"Unknown error for {tool.name}.")
-
 
 async def generate_error_patterns(
     error_recovery: ErrorRecoverySystem, tools: List[BaseTool]
@@ -135,7 +133,6 @@ async def generate_error_patterns(
 
             # Add a small delay between errors
             await asyncio.sleep(0.1)
-
 
 async def main():
     """Main entry point for the example."""
@@ -222,7 +219,6 @@ async def main():
             logger.info("Advanced error analysis example complete")
     except Exception as e:
         logger.error(f"Error in advanced error analysis example: {str(e)}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

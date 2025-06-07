@@ -66,7 +66,6 @@ if config.enable_distributed:
         if hasattr(app.state, "redis"):
             await app.state.redis.disconnect()
 
-
 # Add exception handlers
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(
@@ -92,7 +91,6 @@ async def http_exception_handler(
         },
     )
 
-
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
@@ -115,14 +113,12 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         },
     )
 
-
 # Include routers
 app.include_router(health.router)
 app.include_router(agents.router)
 app.include_router(chat.router)
 app.include_router(memory.router)
 app.include_router(tools.router)
-
 
 @app.get("/", tags=["root"])
 async def root() -> Dict[str, Any]:
@@ -140,7 +136,6 @@ async def root() -> Dict[str, Any]:
         "redoc_url": config.redoc_url,
     }
 
-
 def start_api():
     """Start the API server."""
     import uvicorn
@@ -151,7 +146,6 @@ def start_api():
         port=config.port,
         reload=config.reload,
     )
-
 
 if __name__ == "__main__":
     start_api()

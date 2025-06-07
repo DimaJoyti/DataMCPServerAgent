@@ -38,7 +38,6 @@ from .base import (
     ProcessorFactory,
 )
 
-
 class ImageAnalyzer:
     """Analyzer for image content and properties."""
 
@@ -135,7 +134,6 @@ class ImageAnalyzer:
         except Exception as e:
             self.logger.error(f"Description generation failed: {e}")
             return "Image content (description unavailable)"
-
 
 class TextImageProcessor(MultiModalProcessor):
     """Processor for combined text and image content."""
@@ -330,7 +328,6 @@ class TextImageProcessor(MultiModalProcessor):
         )
 
         return result
-
 
 # Register the processor
 ProcessorFactory.register("text_image", TextImageProcessor)

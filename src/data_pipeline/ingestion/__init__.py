@@ -18,7 +18,7 @@ from .connectors.object_storage_connector import ObjectStorageConnector
 
 __all__ = [
     "BatchIngestionEngine",
-    "StreamIngestionEngine", 
+    "StreamIngestionEngine",
     "DatabaseConnector",
     "FileConnector",
     "APIConnector",

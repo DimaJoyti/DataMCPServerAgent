@@ -6,7 +6,7 @@ decision-making algorithms and approaches.
 
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from langchain_anthropic import ChatAnthropic
@@ -21,7 +21,6 @@ from src.agents.reinforcement_learning import (
     RLCoordinatorAgent,
 )
 from src.memory.memory_persistence import MemoryDatabase
-
 
 class DeepRLAgent:
     """Agent that uses deep reinforcement learning for decision making."""
@@ -197,10 +196,9 @@ class DeepRLAgent:
         # Update weights using simple gradient descent
         # In a real implementation, you would use a proper deep learning framework
         # This is a simplified version for illustration
-        
+
         # Save weights to database
         self.db.save_drl_weights(self.name, self.weights)
-
 
 class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
     """Advanced coordinator agent that uses reinforcement learning for decision making."""
@@ -228,10 +226,10 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
         """
         # Initialize parent class
         super().__init__(name, model, db, reward_system, sub_agents, rl_agent_type)
-        
+
         # Store tools
         self.tools = tools
-        
+
         # Create tool selection RL agent if using deep_rl
         if rl_agent_type == "deep_rl":
             self.rl_agent = DeepRLAgent(
@@ -242,7 +240,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
                 state_extractor=self._extract_state_features,
                 actions=self.actions,
             )
-            
+
             # Create tool selection RL agent
             self.tool_selection_agent = DeepRLAgent(
                 name=f"{name}_tool_selection",
@@ -291,13 +289,13 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
         """
         # Create context for state extraction
         context = {"request": request, "history": history}
-        
+
         # Extract state features
         state_features = await self._extract_state_features(context)
-        
+
         # Select tools using RL
         selected_tools = await self.select_tools(request, state_features)
-        
+
         # Select sub-agent using RL
         if isinstance(self.rl_agent, DeepRLAgent):
             selected_agent_name = self.rl_agent.select_action(state_features)
@@ -306,20 +304,20 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             selected_agent_name = self.rl_agent.select_action(state)
         else:  # PolicyGradientAgent
             selected_agent_name = self.rl_agent.select_action(state_features)
-        
+
         # Get the selected sub-agent
         selected_agent = self.sub_agents[selected_agent_name]
-        
+
         # Record start time for performance tracking
         start_time = time.time()
-        
+
         # Execute the selected sub-agent with selected tools
         result = await selected_agent.execute(request, self.db, selected_tools)
-        
+
         # Record end time and calculate duration
         end_time = time.time()
         duration = end_time - start_time
-        
+
         # Calculate performance metrics
         performance_metrics = {
             "success_rate": 1.0 if result["success"] else 0.0,
@@ -328,17 +326,17 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             if "tool_calls" in result
             else 0,
         }
-        
+
         # Calculate reward
         feedback = {
             "user_feedback": {},  # Will be updated later with actual user feedback
             "self_evaluation": result.get("self_evaluation", {}),
         }
-        
+
         reward = self.reward_system.calculate_reward(
             selected_agent_name, feedback, performance_metrics
         )
-        
+
         # Update RL agents
         if isinstance(self.rl_agent, DeepRLAgent):
             # For Deep RL, we need the next state features
@@ -356,29 +354,29 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
                 ],
             }
             next_state_features = await self._extract_state_features(next_context)
-            
+
             # Add experience to replay buffer
             self.rl_agent.add_to_replay_buffer(
                 state_features, selected_agent_name, reward, next_state_features, False
             )
-            
+
             # Update network
             self.rl_agent.update_network()
-            
+
             # Update tool selection agent if used
             if self.tool_selection_agent and selected_tools:
                 # Calculate tool reward based on overall success
                 tool_reward = reward * 0.8  # Slightly lower weight for tool selection
-                
+
                 # Add experience to replay buffer for each selected tool
                 for tool_name in selected_tools:
                     self.tool_selection_agent.add_to_replay_buffer(
                         state_features, tool_name, tool_reward, next_state_features, False
                     )
-                
+
                 # Update network
                 self.tool_selection_agent.update_network()
-        
+
         elif isinstance(self.rl_agent, QLearningAgent):
             # For Q-learning, we need the next state
             next_context = {
@@ -395,14 +393,14 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
                 ],
             }
             next_state = await self._extract_state(next_context)
-            
+
             # Update Q-value
             self.rl_agent.update_q_value(state, selected_agent_name, reward, next_state)
-        
+
         else:  # PolicyGradientAgent
             # For policy gradient, we record the step
             self.rl_agent.record_step(state_features, selected_agent_name, reward)
-        
+
         # Return the result with additional RL information
         return {
             **result,
@@ -411,7 +409,6 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             "reward": reward,
             "performance_metrics": performance_metrics,
         }
-
 
 # Factory function to create advanced RL-based agent architecture
 async def create_advanced_rl_agent_architecture(

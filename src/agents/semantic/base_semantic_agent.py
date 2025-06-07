@@ -20,7 +20,6 @@ from pydantic import BaseModel, Field
 from src.memory.distributed_memory_manager import DistributedMemoryManager
 from src.memory.knowledge_graph_manager import KnowledgeGraphManager
 
-
 @dataclass
 class SemanticAgentConfig:
     """Configuration for semantic agents."""
@@ -40,7 +39,6 @@ class SemanticAgentConfig:
     max_context_length: int = 8000
     memory_retention_days: int = 30
 
-
 class SemanticContext(BaseModel):
     """Semantic context for agent operations."""
 
@@ -52,7 +50,6 @@ class SemanticContext(BaseModel):
     confidence_score: float = 0.0
     metadata: Dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.now)
-
 
 class BaseSemanticAgent(ABC):
     """

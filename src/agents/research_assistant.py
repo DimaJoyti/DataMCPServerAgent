@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 from src.tools.research_assistant_tools import save_tool, search_tool, wiki_tool
 
-
 # Import mock tools for testing
 class MockTool:
     def __init__(self, name):
@@ -15,7 +14,6 @@ class MockTool:
 
     def run(self, query):
         return f"Mock {self.name} result for: {query}"
-
 
 # Create mock tools for academic sources
 google_scholar_tool = MockTool("Google Scholar")
@@ -40,7 +38,6 @@ generate_chart_tool = MockTool("Chart Generator")
 generate_mind_map_tool = MockTool("Mind Map Generator")
 generate_timeline_tool = MockTool("Timeline Generator")
 generate_network_diagram_tool = MockTool("Network Diagram Generator")
-
 
 # Create mock research project manager
 class MockResearchProjectManager:
@@ -102,10 +99,8 @@ class MockResearchProjectManager:
 
         return False
 
-
 # Create a mock research project manager instance
 research_project_manager = MockResearchProjectManager()
-
 
 # Create mock models
 class Source:
@@ -114,14 +109,12 @@ class Source:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-
 class SourceType:
     WEB = "web"
     WIKIPEDIA = "wikipedia"
     ACADEMIC = "academic"
     BOOK = "book"
     JOURNAL = "journal"
-
 
 class ResearchResult:
     def __init__(self, topic, summary, sources, tools_used, tags=None):
@@ -131,9 +124,7 @@ class ResearchResult:
         self.tools_used = tools_used
         self.tags = tags or []
 
-
 load_dotenv()
-
 
 class ResearchResponse(BaseModel):
     """
@@ -144,7 +135,6 @@ class ResearchResponse(BaseModel):
     summary: str
     sources: list[str]
     tools_used: list[str]
-
 
 # Define the enhanced research response model
 class EnhancedResearchResponseModel(BaseModel):
@@ -163,10 +153,8 @@ class EnhancedResearchResponseModel(BaseModel):
     visualizations: List[Dict] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
 
-
 # Use a mock agent for testing purposes
 print("Using an enhanced mock research agent for testing purposes.")
-
 
 # Create an enhanced mock agent that returns predefined responses with advanced features
 class EnhancedMockResearchAgent:
@@ -445,10 +433,8 @@ class EnhancedMockResearchAgent:
         # Return the response in the expected format
         return {"output": json.dumps(response)}
 
-
 # Create the enhanced mock agent
 agent_executor = EnhancedMockResearchAgent()
-
 
 def run_research_assistant():
     """
@@ -975,7 +961,6 @@ def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the Enhanced Research Assistant!")
-
 
 if __name__ == "__main__":
     run_research_assistant()

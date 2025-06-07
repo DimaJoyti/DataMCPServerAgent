@@ -19,7 +19,6 @@ _metrics = {
     "uptime_seconds": 0,
 }
 
-
 def increment_metric(name: str, labels: dict = None) -> None:
     """Increment a metric counter."""
     if name in _metrics:
@@ -30,16 +29,13 @@ def increment_metric(name: str, labels: dict = None) -> None:
         else:
             _metrics[name] += 1
 
-
 def set_metric(name: str, value: float) -> None:
     """Set a metric value."""
     _metrics[name] = value
 
-
 def get_metrics() -> dict:
     """Get all metrics."""
     return _metrics.copy()
-
 
 def setup_monitoring(app: FastAPI) -> None:
     """Setup monitoring and metrics."""

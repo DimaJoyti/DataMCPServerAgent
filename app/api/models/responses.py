@@ -2,12 +2,11 @@
 API response models.
 """
 
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, List, OptionalVar
 
 from pydantic import BaseModel, Field
 
 T = TypeVar("T")
-
 
 class SuccessResponse(BaseModel):
     """Generic success response."""
@@ -16,7 +15,6 @@ class SuccessResponse(BaseModel):
     message: str = Field(description="Success message")
     data: Optional[dict] = Field(default=None, description="Optional response data")
 
-
 class ErrorResponse(BaseModel):
     """Generic error response."""
 
@@ -24,7 +22,6 @@ class ErrorResponse(BaseModel):
     error: str = Field(description="Error type")
     message: str = Field(description="Error message")
     details: Optional[dict] = Field(default=None, description="Error details")
-
 
 class PaginatedResponse(BaseModel, Generic[T]):
     """Paginated response wrapper."""

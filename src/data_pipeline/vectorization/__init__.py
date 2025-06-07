@@ -28,13 +28,13 @@ __all__ = [
     "EmbeddingConfig",
     "EmbeddingResult",
     "OpenAIEmbedder",
-    "HuggingFaceEmbedder", 
+    "HuggingFaceEmbedder",
     "CloudflareEmbedder",
-    
+
     # Batch processing
     "BatchVectorProcessor",
     "BatchProcessingConfig",
-    
+
     # Caching
     "VectorCache",
     "CacheConfig",
