@@ -3,13 +3,16 @@ import Sidebar from '@/components/playground/Sidebar/Sidebar'
 import { ChatArea } from '@/components/playground/ChatArea'
 import { Phase3Dashboard } from '@/components/phase3/Phase3Dashboard'
 import { BrandAgentManager } from '@/components/brand-agent/BrandAgentManager'
+import { TradingDashboard } from '@/components/trading/TradingDashboard'
+import { MarketDataProvider } from '@/services/contexts/MarketDataContext'
+import { TradingProvider } from '@/services/contexts/TradingContext'
 import { Suspense, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Brain, MessageSquare, Zap, Sparkles } from 'lucide-react'
+import { Brain, MessageSquare, Zap, Sparkles, TrendingUp } from 'lucide-react'
 
 export default function Home() {
-  const [activeMode, setActiveMode] = useState<'playground' | 'phase3' | 'brand-agents'>('playground')
+  const [activeMode, setActiveMode] = useState<'playground' | 'phase3' | 'brand-agents' | 'trading'>('playground')
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
@@ -124,6 +127,23 @@ export default function Home() {
                     Beta
                   </Badge>
                 </Button>
+                <Button
+                  variant={activeMode === 'trading' ? 'default' : 'outline'}
+                  size="lg"
+                  onClick={() => setActiveMode('trading')}
+                  className={`transition-all duration-200 ${
+                    activeMode === 'trading'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25'
+                      : 'hover:bg-emerald-50 dark:hover:bg-slate-800 border-2'
+                  }`}
+                >
+                  <TrendingUp className="mr-2 h-5 w-5" />
+                  Trading System
+                  <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
+                    <Zap className="mr-1 h-3 w-3" />
+                    Pro
+                  </Badge>
+                </Button>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-4">
@@ -133,7 +153,9 @@ export default function Home() {
                     ? 'Interactive Agent Chat'
                     : activeMode === 'phase3'
                     ? 'Integrated Semantic Agents'
-                    : 'Brand Agent Platform'
+                    : activeMode === 'brand-agents'
+                    ? 'Brand Agent Platform'
+                    : 'Institutional Trading System'
                   }
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -141,7 +163,9 @@ export default function Home() {
                     ? 'Real-time AI conversations'
                     : activeMode === 'phase3'
                     ? 'Advanced agent management'
-                    : 'AI-powered customer engagement'
+                    : activeMode === 'brand-agents'
+                    ? 'AI-powered customer engagement'
+                    : 'High-frequency trading & risk management'
                   }
                 </p>
               </div>
@@ -161,9 +185,17 @@ export default function Home() {
             <div className="h-full">
               <Phase3Dashboard />
             </div>
-          ) : (
+          ) : activeMode === 'brand-agents' ? (
             <div className="h-full">
               <BrandAgentManager />
+            </div>
+          ) : (
+            <div className="h-full">
+              <MarketDataProvider>
+                <TradingProvider>
+                  <TradingDashboard />
+                </TradingProvider>
+              </MarketDataProvider>
             </div>
           )}
         </div>
