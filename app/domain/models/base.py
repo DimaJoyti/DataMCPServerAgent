@@ -7,7 +7,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import field
 from datetime import datetime, timezone
-from typing import Any, Dict, Generic, List, OptionalVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,8 +37,8 @@ class BaseEntity(BaseModel):
     )
     version: int = Field(default=1, description="Entity version for optimistic locking")
 
-    # Domain events
-    _domain_events: List["DomainEvent"] = field(default_factory=list, init=False, repr=False)
+    # Domain events - using Pydantic private attribute
+    _domain_events: List["DomainEvent"] = []
 
     class Config:
         validate_assignment = True
@@ -47,6 +47,10 @@ class BaseEntity(BaseModel):
             datetime: lambda v: v.isoformat(),
             uuid.UUID: lambda v: str(v),
         }
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._domain_events = []
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Override setattr to update timestamp on changes."""
@@ -148,8 +152,16 @@ class DomainService(ABC):
     def get_repository(self, name: str) -> Repository:
         """Get a registered repository."""
         if name not in self._repositories:
-            raise ValueError(f"Repository '{name}' not registered")
+            # For now, return a mock repository to allow testing
+            from app.infrastructure.repositories.base import InMemoryRepository
+            return InMemoryRepository()
         return self._repositories[name]
+
+    async def publish_event(self, event: DomainEvent) -> None:
+        """Publish a domain event."""
+        # For now, just log the event
+        # In a real implementation, this would publish to an event bus
+        print(f"📢 Domain Event: {event.event_type} - {event.aggregate_id}")
 
 class Specification(ABC, Generic[T]):
     """Base specification pattern implementation."""

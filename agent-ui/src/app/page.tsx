@@ -2,13 +2,14 @@
 import Sidebar from '@/components/playground/Sidebar/Sidebar'
 import { ChatArea } from '@/components/playground/ChatArea'
 import { Phase3Dashboard } from '@/components/phase3/Phase3Dashboard'
+import { BrandAgentManager } from '@/components/brand-agent/BrandAgentManager'
 import { Suspense, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Brain, MessageSquare, Zap } from 'lucide-react'
+import { Brain, MessageSquare, Zap, Sparkles } from 'lucide-react'
 
 export default function Home() {
-  const [activeMode, setActiveMode] = useState<'playground' | 'phase3'>('playground')
+  const [activeMode, setActiveMode] = useState<'playground' | 'phase3' | 'brand-agents'>('playground')
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
@@ -106,15 +107,42 @@ export default function Home() {
                     New
                   </Badge>
                 </Button>
+                <Button
+                  variant={activeMode === 'brand-agents' ? 'default' : 'outline'}
+                  size="lg"
+                  onClick={() => setActiveMode('brand-agents')}
+                  className={`transition-all duration-200 ${
+                    activeMode === 'brand-agents'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-lg shadow-purple-500/25'
+                      : 'hover:bg-purple-50 dark:hover:bg-slate-800 border-2'
+                  }`}
+                >
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Brand Agents
+                  <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+                    <Zap className="mr-1 h-3 w-3" />
+                    Beta
+                  </Badge>
+                </Button>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {activeMode === 'playground' ? 'Interactive Agent Chat' : 'Integrated Semantic Agents'}
+                  {activeMode === 'playground'
+                    ? 'Interactive Agent Chat'
+                    : activeMode === 'phase3'
+                    ? 'Integrated Semantic Agents'
+                    : 'Brand Agent Platform'
+                  }
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {activeMode === 'playground' ? 'Real-time AI conversations' : 'Advanced agent management'}
+                  {activeMode === 'playground'
+                    ? 'Real-time AI conversations'
+                    : activeMode === 'phase3'
+                    ? 'Advanced agent management'
+                    : 'AI-powered customer engagement'
+                  }
                 </p>
               </div>
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50"></div>
@@ -129,9 +157,13 @@ export default function Home() {
               <Sidebar />
               <ChatArea />
             </div>
-          ) : (
+          ) : activeMode === 'phase3' ? (
             <div className="h-full">
               <Phase3Dashboard />
+            </div>
+          ) : (
+            <div className="h-full">
+              <BrandAgentManager />
             </div>
           )}
         </div>

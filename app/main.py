@@ -98,6 +98,14 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(api_router, prefix="/api/v1")
 
+    # Add WebSocket endpoint
+    from app.api.websocket.chat_websocket import websocket_endpoint
+
+    @app.websocket("/ws/chat/{conversation_id}")
+    async def chat_websocket(websocket, conversation_id: str, session_token: str):
+        """WebSocket endpoint for real-time chat."""
+        await websocket_endpoint(websocket, conversation_id, session_token)
+
     # Add health check endpoint
     @app.get("/health")
     async def health_check():

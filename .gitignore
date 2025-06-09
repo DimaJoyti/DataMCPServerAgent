@@ -131,3 +131,5 @@ Thumbs.db
 /agent-ui/package-lock.json
 /.ruff_cache
 .cursor
+/promts
+/.augment/env

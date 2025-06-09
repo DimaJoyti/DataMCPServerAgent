@@ -15,6 +15,7 @@ class AgentType(str, Enum):
     WORKER = "worker"
     COORDINATOR = "coordinator"
     SPECIALIST = "specialist"
+    BRAND_AGENT = "brand_agent"  # New type for brand agents
 
 class AgentStatus(str, Enum):
     ACTIVE = "active"
@@ -25,6 +26,9 @@ class AgentCapability(str, Enum):
     DATA_ANALYSIS = "data_analysis"
     RESEARCH = "research"
     COMMUNICATION = "communication"
+    BRAND_ENGAGEMENT = "brand_engagement"  # New capability
+    CUSTOMER_SUPPORT = "customer_support"  # New capability
+    SALES_ASSISTANCE = "sales_assistance"  # New capability
 
 class Agent(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

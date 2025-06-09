@@ -7,6 +7,13 @@ from typing import Optional
 from fastapi import Header
 
 from app.domain.services.agent_service import AgentScalingService, AgentService
+from app.domain.services.brand_agent_service import BrandAgentService, ConversationService, KnowledgeService
+from app.domain.services.conversation_engine import ConversationEngine
+from app.domain.services.ai_response_service import AIResponseService
+from app.domain.services.knowledge_integration_service import KnowledgeIntegrationService
+from app.domain.services.analytics_service import AnalyticsService
+from app.domain.services.learning_service import LearningService
+from app.domain.services.ab_testing_service import ABTestingService
 from app.domain.services.communication_service import EmailService, WebRTCService
 from app.domain.services.deployment_service import DeploymentService
 from app.domain.services.state_service import StateService
@@ -51,3 +58,39 @@ async def get_webrtc_service() -> WebRTCService:
 async def get_deployment_service() -> DeploymentService:
     """Get deployment service instance."""
     return DeploymentService()
+
+async def get_brand_agent_service() -> BrandAgentService:
+    """Get brand agent service instance."""
+    return BrandAgentService()
+
+async def get_knowledge_service() -> KnowledgeService:
+    """Get knowledge service instance."""
+    return KnowledgeService()
+
+async def get_conversation_service() -> ConversationService:
+    """Get conversation service instance."""
+    return ConversationService()
+
+async def get_conversation_engine() -> ConversationEngine:
+    """Get conversation engine instance."""
+    return ConversationEngine()
+
+async def get_ai_response_service() -> AIResponseService:
+    """Get AI response service instance."""
+    return AIResponseService()
+
+async def get_knowledge_integration_service() -> KnowledgeIntegrationService:
+    """Get knowledge integration service instance."""
+    return KnowledgeIntegrationService()
+
+async def get_analytics_service() -> AnalyticsService:
+    """Get analytics service instance."""
+    return AnalyticsService()
+
+async def get_learning_service() -> LearningService:
+    """Get learning service instance."""
+    return LearningService()
+
+async def get_ab_testing_service() -> ABTestingService:
+    """Get A/B testing service instance."""
+    return ABTestingService()
