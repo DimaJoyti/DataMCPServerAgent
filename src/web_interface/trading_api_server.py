@@ -23,6 +23,7 @@ from ..trading.core.base_models import BaseOrder, BasePosition, BaseTrade
 from ..trading.core.enums import OrderSide, OrderType, OrderStatus, Exchange, Currency
 from ..trading.market_data.feed_handler import MockFeedHandler
 from ..trading.risk.risk_manager import RiskManager
+from .strategy_api import router as strategy_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -211,6 +212,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include strategy management router
+app.include_router(strategy_router)
 
 # Authentication endpoints
 @app.post("/api/v1/auth/login", response_model=AuthResponse)

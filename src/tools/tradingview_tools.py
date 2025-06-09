@@ -705,6 +705,148 @@ class TradingViewToolkit:
         """Get list of supported timeframes."""
         return list(TimeFrame)
 
+
+class TradingViewWebSocketClient:
+    """WebSocket client for real-time TradingView data."""
+
+    def __init__(self, symbols: List[str], callback=None):
+        self.symbols = symbols
+        self.callback = callback
+        self.websocket = None
+        self.is_connected = False
+
+    async def connect(self):
+        """Connect to TradingView WebSocket."""
+        try:
+            # This is a placeholder for actual TradingView WebSocket implementation
+            # In production, you would connect to TradingView's real-time data feed
+            self.is_connected = True
+            self.logger.info("Connected to TradingView WebSocket")
+        except Exception as e:
+            self.logger.error(f"Failed to connect to TradingView WebSocket: {e}")
+
+    async def subscribe_symbols(self, symbols: List[str]):
+        """Subscribe to real-time data for symbols."""
+        if not self.is_connected:
+            await self.connect()
+
+        for symbol in symbols:
+            # Send subscription message
+            message = {
+                "method": "subscribe",
+                "params": {
+                    "symbol": symbol,
+                    "resolution": "1"
+                }
+            }
+            # In production, send this message via WebSocket
+
+    async def disconnect(self):
+        """Disconnect from WebSocket."""
+        if self.websocket:
+            await self.websocket.close()
+        self.is_connected = False
+
+
+class TradingViewChartingEngine:
+    """Advanced charting engine with TradingView integration."""
+
+    def __init__(self):
+        self.chart_configs = {}
+        self.indicators = {}
+        self.strategies = {}
+
+    def create_chart_config(
+        self,
+        symbol: str,
+        timeframe: str = "1H",
+        indicators: List[str] = None,
+        overlays: List[str] = None
+    ) -> Dict[str, Any]:
+        """Create TradingView chart configuration."""
+        config = {
+            "symbol": symbol,
+            "interval": timeframe,
+            "container_id": f"tradingview_chart_{symbol.replace('/', '_')}",
+            "width": "100%",
+            "height": 600,
+            "theme": "dark",
+            "style": "1",  # Candlestick
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": False,
+            "allow_symbol_change": True,
+            "studies": indicators or [],
+            "drawings": overlays or [],
+            "show_popup_button": True,
+            "popup_width": "1000",
+            "popup_height": "650",
+            "no_referrer_policy": True
+        }
+
+        self.chart_configs[symbol] = config
+        return config
+
+    def add_custom_indicator(
+        self,
+        name: str,
+        script: str,
+        inputs: Dict[str, Any] = None
+    ) -> None:
+        """Add custom Pine Script indicator."""
+        self.indicators[name] = {
+            "script": script,
+            "inputs": inputs or {},
+            "type": "custom"
+        }
+
+    def add_strategy_overlay(
+        self,
+        strategy_name: str,
+        signals: List[Dict[str, Any]]
+    ) -> None:
+        """Add strategy signals as chart overlay."""
+        self.strategies[strategy_name] = {
+            "signals": signals,
+            "type": "strategy_overlay"
+        }
+
+    def generate_chart_html(self, symbol: str) -> str:
+        """Generate HTML for TradingView chart widget."""
+        config = self.chart_configs.get(symbol, {})
+
+        html_template = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>TradingView Chart - {symbol}</title>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+        </head>
+        <body>
+            <div id="{config.get('container_id', 'tradingview_chart')}" style="height: {config.get('height', 600)}px;"></div>
+            <script type="text/javascript">
+                new TradingView.widget({{
+                    "width": "{config.get('width', '100%')}",
+                    "height": {config.get('height', 600)},
+                    "symbol": "{config.get('symbol', symbol)}",
+                    "interval": "{config.get('interval', '1H')}",
+                    "timezone": "Etc/UTC",
+                    "theme": "{config.get('theme', 'dark')}",
+                    "style": "{config.get('style', '1')}",
+                    "locale": "{config.get('locale', 'en')}",
+                    "toolbar_bg": "{config.get('toolbar_bg', '#f1f3f6')}",
+                    "enable_publishing": {str(config.get('enable_publishing', False)).lower()},
+                    "allow_symbol_change": {str(config.get('allow_symbol_change', True)).lower()},
+                    "container_id": "{config.get('container_id', 'tradingview_chart')}"
+                }});
+            </script>
+        </body>
+        </html>
+        """
+
+        return html_template
+
+
 # Factory function for easy tool creation
 async def create_tradingview_tools(session: ClientSession) -> List[BaseTool]:
     """Factory function to create TradingView tools.

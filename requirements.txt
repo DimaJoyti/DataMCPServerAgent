@@ -259,3 +259,29 @@ jinja2>=3.1.2
 matplotlib>=3.7.0
 plotly>=5.17.0
 reportlab>=4.0.0
+
+# Algorithmic Trading Dependencies
+# Machine Learning for Trading Strategies
+tensorflow>=2.13.0
+scipy>=1.11.0
+joblib>=1.3.0
+
+# Financial and Technical Analysis
+ta-lib>=0.4.25
+yfinance>=0.2.18
+ccxt>=4.0.0
+quantlib>=1.31
+zipline-reloaded>=3.0.0
+
+# Trading Visualization
+seaborn>=0.12.0
+mplfinance>=0.12.0
+
+# WebSocket for Real-time Data
+websockets>=11.0.0
+aiohttp>=3.8.0
+
+# Additional Trading Utilities
+python-binance>=1.0.19
+alpha-vantage>=2.3.1
+polygon-api-client>=1.12.0
