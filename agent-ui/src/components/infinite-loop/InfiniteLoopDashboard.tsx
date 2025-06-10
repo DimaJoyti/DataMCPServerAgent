@@ -27,6 +27,8 @@ import { ConfigurationPanel } from './ConfigurationPanel'
 import { ExecutionMonitor } from './ExecutionMonitor'
 import { AnalyticsDashboard } from './AnalyticsDashboard'
 import { AgentPoolViewer } from './AgentPoolViewer'
+import { TradingStrategyViewer } from './TradingStrategyViewer'
+import { PerformanceCharts } from './PerformanceCharts'
 
 export const InfiniteLoopDashboard: React.FC = () => {
   const {
@@ -167,7 +169,7 @@ export const InfiniteLoopDashboard: React.FC = () => {
             <ConfigurationPanel />
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-6 mb-6">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
                   <Activity className="h-4 w-4" />
                   <span>Overview</span>
@@ -179,6 +181,14 @@ export const InfiniteLoopDashboard: React.FC = () => {
                 <TabsTrigger value="agents" className="flex items-center space-x-2">
                   <Users className="h-4 w-4" />
                   <span>Agents</span>
+                </TabsTrigger>
+                <TabsTrigger value="strategies" className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Strategies</span>
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Charts</span>
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
@@ -196,6 +206,14 @@ export const InfiniteLoopDashboard: React.FC = () => {
 
               <TabsContent value="agents" className="h-full">
                 <AgentPoolViewer />
+              </TabsContent>
+
+              <TabsContent value="strategies" className="h-full">
+                <TradingStrategyViewer />
+              </TabsContent>
+
+              <TabsContent value="charts" className="h-full">
+                <PerformanceCharts />
               </TabsContent>
 
               <TabsContent value="analytics" className="h-full">
