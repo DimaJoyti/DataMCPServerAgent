@@ -1,0 +1,60 @@
+content_type: "documentation"
+format: "markdown"
+evolution_pattern: "incremental"
+
+requirements:
+  - "Clear and concise writing style"
+  - "Include practical examples"
+  - "Use proper markdown formatting"
+  - "Provide actionable insights"
+  - "Include code snippets where relevant"
+  - "Target beginner to intermediate audience"
+
+constraints:
+  - "Maximum 1500 words per iteration"
+  - "Use standard markdown syntax only"
+  - "No external image dependencies"
+  - "Keep technical jargon to minimum"
+  - "Include table of contents for longer guides"
+
+innovation_areas:
+  - "content_clarity"
+  - "example_quality"
+  - "structure_optimization"
+  - "practical_application"
+  - "user_engagement"
+  - "accessibility_improvement"
+
+naming_pattern: "guide_{number}.md"
+
+quality:
+  min_length: 200
+  max_length: 8000
+  required_sections:
+    - "Introduction"
+    - "Examples"
+    - "Conclusion"
+
+output_structure:
+  header_required: true
+  toc_for_long_content: true
+  code_blocks_formatted: true
+  examples_highlighted: true
+
+description: |
+  Generate comprehensive guides about AI and automation topics.
+  Each iteration should cover a different aspect of AI/automation
+  and provide practical, actionable information for developers
+  and business users.
+
+topics:
+  - "AI Agent Development Best Practices"
+  - "Automation Workflow Design"
+  - "Machine Learning Integration Patterns"
+  - "Data Pipeline Optimization"
+  - "API Design for AI Systems"
+  - "Error Handling in Automated Systems"
+  - "Performance Monitoring for AI Applications"
+  - "Security Considerations for AI Agents"
+  - "Testing Strategies for Intelligent Systems"
+  - "Deployment Patterns for AI Services"
