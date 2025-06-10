@@ -4,15 +4,16 @@ import { ChatArea } from '@/components/playground/ChatArea'
 import { Phase3Dashboard } from '@/components/phase3/Phase3Dashboard'
 import { BrandAgentManager } from '@/components/brand-agent/BrandAgentManager'
 import { TradingDashboard } from '@/components/trading/TradingDashboard'
+import { InfiniteLoopDashboard } from '@/components/infinite-loop/InfiniteLoopDashboard'
 import { MarketDataProvider } from '@/services/contexts/MarketDataContext'
 import { TradingProvider } from '@/services/contexts/TradingContext'
 import { Suspense, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Brain, MessageSquare, Zap, Sparkles, TrendingUp } from 'lucide-react'
+import { Brain, MessageSquare, Zap, Sparkles, TrendingUp, Infinity } from 'lucide-react'
 
 export default function Home() {
-  const [activeMode, setActiveMode] = useState<'playground' | 'phase3' | 'brand-agents' | 'trading'>('playground')
+  const [activeMode, setActiveMode] = useState<'playground' | 'phase3' | 'brand-agents' | 'trading' | 'infinite-loop'>('playground')
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
@@ -144,6 +145,23 @@ export default function Home() {
                     Pro
                   </Badge>
                 </Button>
+                <Button
+                  variant={activeMode === 'infinite-loop' ? 'default' : 'outline'}
+                  size="lg"
+                  onClick={() => setActiveMode('infinite-loop')}
+                  className={`transition-all duration-200 ${
+                    activeMode === 'infinite-loop'
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/25'
+                      : 'hover:bg-violet-50 dark:hover:bg-slate-800 border-2'
+                  }`}
+                >
+                  <Infinity className="mr-2 h-5 w-5" />
+                  Infinite Loop
+                  <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0">
+                    <Zap className="mr-1 h-3 w-3" />
+                    Alpha
+                  </Badge>
+                </Button>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-4">
@@ -155,7 +173,9 @@ export default function Home() {
                     ? 'Integrated Semantic Agents'
                     : activeMode === 'brand-agents'
                     ? 'Brand Agent Platform'
-                    : 'Institutional Trading System'
+                    : activeMode === 'trading'
+                    ? 'Institutional Trading System'
+                    : 'Infinite Agentic Loop System'
                   }
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -165,7 +185,9 @@ export default function Home() {
                     ? 'Advanced agent management'
                     : activeMode === 'brand-agents'
                     ? 'AI-powered customer engagement'
-                    : 'High-frequency trading & risk management'
+                    : activeMode === 'trading'
+                    ? 'High-frequency trading & risk management'
+                    : 'Infinite content generation & orchestration'
                   }
                 </p>
               </div>
@@ -188,6 +210,10 @@ export default function Home() {
           ) : activeMode === 'brand-agents' ? (
             <div className="h-full">
               <BrandAgentManager />
+            </div>
+          ) : activeMode === 'infinite-loop' ? (
+            <div className="h-full">
+              <InfiniteLoopDashboard />
             </div>
           ) : (
             <div className="h-full">
