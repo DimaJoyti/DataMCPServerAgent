@@ -63,7 +63,7 @@ A sophisticated Python-based agent system that combines context-aware memory, ad
 
 ```bash
 # Install pipeline dependencies
-python install_pipeline_deps.py
+uv pip install -r requirements.txt
 
 # Start web interface
 python start_web_interface.py

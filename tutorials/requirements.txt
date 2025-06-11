@@ -1,15 +1,44 @@
+# Tutorial-specific dependencies for DataMCPServerAgent
 # Core dependencies (already in main requirements.txt)
 # These are listed here for reference but should be installed with the main package
 
-# Additional dependencies for tutorials
+# Interactive notebook dependencies
 jupyter==1.0.0
 notebook==7.0.6
+jupyterlab>=3.0.0
 ipywidgets==8.1.1
-matplotlib==3.8.2
-seaborn==0.13.0
-plotly==5.18.0
 ipython==8.18.1
+ipykernel==6.26.0
 nbconvert==7.10.0
 nbformat==5.9.2
 voila==0.5.5
-ipykernel==6.26.0
+
+# Visualization and plotting
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.18.0
+
+# Data processing for examples
+pandas>=1.3.0
+numpy>=1.21.0
+openpyxl>=3.0.0
+xlsxwriter>=3.0.0
+
+# Web interface testing
+requests>=2.25.0
+websockets>=10.0.0
+
+# Development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+
+# Documentation and examples
+markdown>=3.3.0
+pyyaml>=6.0.0
+
+# Optional: For advanced tutorial examples
+# Uncomment these if you want to run distributed memory or vector store examples
+# redis>=4.0.0  # For distributed memory tutorials
+# pymongo>=4.0.0  # For MongoDB tutorials
+# chromadb>=0.4.0  # For vector store tutorials
+# faiss-cpu>=1.7.0  # For FAISS vector store tutorials

@@ -1,112 +1,162 @@
-# Interactive Examples for DataMCPServerAgent
+# Interactive Tutorials
 
-This directory contains interactive Jupyter notebooks and web-based examples for the DataMCPServerAgent.
+This directory contains comprehensive Jupyter notebooks that provide hands-on, interactive learning experiences for DataMCPServerAgent.
 
-## Jupyter Notebooks
+## 📚 Available Notebooks
 
-The Jupyter notebooks provide an interactive environment for exploring and learning about the DataMCPServerAgent. Each notebook focuses on a specific aspect of the agent and includes code examples, explanations, and interactive elements.
+### 🚀 Getting Started
+- **`01_basic_agent.ipynb`** - Interactive introduction to the basic agent
+  - Agent setup and configuration
+  - Interactive chat interface
+  - Tool exploration
+  - Configuration customization
 
-### Getting Started
+### 🧠 Advanced Agent Types
+- **`02_advanced_agents.ipynb`** - Explore all agent architectures
+  - Agent type comparison
+  - Interactive configuration simulator
+  - Performance metrics visualization
+  - Best practices and recommendations
 
-To run the Jupyter notebooks, you'll need to install the required dependencies:
+### 🏢 Enterprise Features
+- **`03_data_pipelines.ipynb`** - Enterprise-grade capabilities
+  - Data pipeline system exploration
+  - Document processing simulator
+  - Web interface testing
+  - Monitoring and observability
 
+### 🔧 Custom Development
+- **`04_custom_tools.ipynb`** - Build your own tools
+  - Interactive tool generator
+  - Tool testing environment
+  - Integration guide
+  - Best practices and guidelines
+
+## 🚀 Quick Start
+
+### Prerequisites
 ```bash
-pip install -r ../requirements.txt
+# Install core dependencies
+uv pip install -r requirements.txt
+
+# Install tutorial dependencies (includes Jupyter)
+uv pip install -r tutorials/requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
 ```
 
-Then, start the Jupyter notebook server:
+### Running Notebooks
 
+#### Option 1: Jupyter Notebook (Classic)
 ```bash
-jupyter notebook
+jupyter notebook tutorials/interactive/
 ```
 
-This will open a browser window where you can navigate to and open the notebooks.
-
-### Available Notebooks
-
-1. **01_basic_agent.ipynb** - Introduction to the basic agent
-2. **02_custom_tools.ipynb** - Creating and using custom tools
-3. **03_memory_management.ipynb** - Working with the memory system
-4. **04_tool_selection.ipynb** - Understanding the tool selection process
-5. **05_multi_agent_system.ipynb** - Building a multi-agent system
-
-## Web-Based Examples
-
-The web-based examples use Voila to create interactive web applications based on Jupyter notebooks. These examples provide a more user-friendly interface for exploring the DataMCPServerAgent.
-
-### Running Web-Based Examples
-
-To run the web-based examples, you'll need to install Voila:
-
+#### Option 2: JupyterLab (Modern Interface)
 ```bash
-pip install voila
+jupyter lab tutorials/interactive/
 ```
 
-Then, run Voila with the notebook you want to convert to a web application:
-
+#### Option 3: VS Code (If you have the Jupyter extension)
 ```bash
-voila web_app_basic_agent.ipynb
+code tutorials/interactive/01_basic_agent.ipynb
 ```
 
-This will start a web server and open a browser window with the interactive application.
+## 📋 Learning Paths
 
-### Available Web Applications
+### Path 1: Complete Beginner
+1. **`01_basic_agent.ipynb`** - Start here for basic concepts
+2. **`04_custom_tools.ipynb`** - Learn to create simple tools
+3. Practice with the interactive examples
 
-1. **web_app_basic_agent.ipynb** - Interactive web application for the basic agent
-2. **web_app_custom_tools.ipynb** - Interactive web application for creating and using custom tools
-3. **web_app_memory_visualization.ipynb** - Interactive visualization of the memory system
+### Path 2: Agent Developer
+1. Complete Path 1
+2. **`02_advanced_agents.ipynb`** - Explore different agent types
+3. **`03_data_pipelines.ipynb`** - Understand enterprise features
+4. Build custom solutions
 
-## Creating Your Own Interactive Examples
+### Path 3: Enterprise Developer
+1. Complete Path 1-2
+2. Focus on **`03_data_pipelines.ipynb`** for production features
+3. Implement monitoring and deployment strategies
+4. Scale to production environments
 
-You can create your own interactive examples by:
+## 🎯 Interactive Features
 
-1. Creating a new Jupyter notebook in this directory
-2. Adding code cells with examples of using the DataMCPServerAgent
-3. Adding markdown cells with explanations
-4. Adding interactive widgets using ipywidgets
+Each notebook includes:
+- ✅ **Live Code Execution** - Run code directly in the browser
+- ✅ **Interactive Widgets** - Buttons, sliders, and input fields
+- ✅ **Real-time Output** - See results immediately
+- ✅ **Configuration Tools** - Adjust settings on the fly
+- ✅ **Progress Tracking** - Visual progress indicators
+- ✅ **Error Handling** - Graceful error management
+- ✅ **Best Practices** - Following development guidelines
 
-For example, to create a simple interactive example with a text input and a button:
+## 🔧 Notebook Features
 
-```python
-import ipywidgets as widgets
-from IPython.display import display
-import asyncio
-from src.core.main import chat_with_agent
+### Widget-Based Interfaces
+- **Dropdown Selectors** - Choose options easily
+- **Text Inputs** - Enter custom parameters
+- **Sliders** - Adjust numerical values
+- **Buttons** - Trigger actions and simulations
+- **Output Areas** - View results and logs
 
-# Create widgets
-text_input = widgets.Text(
-    value='',
-    placeholder='Enter your message',
-    description='Message:',
-    disabled=False
-)
+### Interactive Simulations
+- **Agent Configuration** - Test different settings
+- **Performance Metrics** - Visualize agent performance
+- **Tool Testing** - Validate custom tools
+- **Pipeline Simulation** - Model data processing workflows
 
-output = widgets.Output()
+### Real-time Feedback
+- **Instant Results** - See outputs immediately
+- **Progress Indicators** - Track long-running operations
+- **Error Messages** - Clear error reporting
+- **Success Notifications** - Confirmation of completed tasks
 
-button = widgets.Button(
-    description='Send',
-    disabled=False,
-    button_style='', 
-    tooltip='Send message to agent',
-    icon='paper-plane'
-)
+## 🆘 Troubleshooting
 
-# Define button click handler
-async def on_button_clicked(b):
-    with output:
-        output.clear_output()
-        print(f"User: {text_input.value}")
-        response = await chat_with_agent(text_input.value)
-        print(f"Agent: {response}")
+### Common Issues
 
-# Use event loop to handle async function
-def handle_button_click(b):
-    asyncio.create_task(on_button_clicked(b))
+**Jupyter Not Starting:**
+```bash
+# Install Jupyter if missing
+uv pip install jupyter
 
-button.on_click(handle_button_click)
-
-# Display widgets
-display(text_input, button, output)
+# Start with specific port
+jupyter notebook --port=8888 tutorials/interactive/
 ```
 
-This creates a simple interactive example where the user can enter a message, click the "Send" button, and see the agent's response.
+**Widget Not Displaying:**
+```bash
+# Enable widgets extension
+jupyter nbextension enable --py widgetsnbextension
+
+# For JupyterLab
+jupyter labextension install @jupyter-widgets/jupyterlab-manager
+```
+
+**Kernel Issues:**
+```bash
+# Install kernel
+python -m ipykernel install --user --name=datamcp
+
+# Select the correct kernel in Jupyter
+```
+
+## 📈 What's Next?
+
+After completing the interactive tutorials:
+
+1. **Run Tutorial Scripts** - Try `tutorials/scripts/` for command-line learning
+2. **Explore Examples** - Check `examples/` for real-world implementations
+3. **Read Documentation** - Deep dive into `docs/` for detailed guides
+4. **Build Custom Solutions** - Create your own agents and tools
+5. **Join Community** - Share your work and get help
+
+---
+
+**Happy Interactive Learning! 🚀**
+
+*DataMCPServerAgent - Empowering the next generation of AI agents*
