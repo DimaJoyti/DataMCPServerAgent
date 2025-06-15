@@ -6,9 +6,10 @@ import math
 import time
 from typing import Any, Dict, List, Optional
 
-from .base_store import BaseVectorStore, VectorStoreStats
 from ..schemas.base_schema import VectorRecord
-from ..schemas.search_models import SearchQuery, SearchResults, SearchResult, SearchType
+from ..schemas.search_models import SearchQuery, SearchResult, SearchResults, SearchType
+from .base_store import BaseVectorStore, VectorStoreStats
+
 
 class MemoryVectorStore(BaseVectorStore):
     """In-memory vector store implementation."""
@@ -22,6 +23,7 @@ class MemoryVectorStore(BaseVectorStore):
     async def initialize(self) -> None:
         """Initialize memory store."""
         from datetime import datetime
+
         self.vectors = {}
         self.created_at = datetime.now()
         self._is_initialized = True
@@ -95,6 +97,7 @@ class MemoryVectorStore(BaseVectorStore):
 
                 # Update timestamp
                 from datetime import datetime
+
                 record.updated_at = datetime.now()
 
                 self.vectors[record.id] = record
@@ -154,7 +157,7 @@ class MemoryVectorStore(BaseVectorStore):
                 search_time=search_time,
                 offset=query.offset,
                 limit=query.limit,
-                has_more=len(results) == query.limit
+                has_more=len(results) == query.limit,
             )
 
         except Exception as e:
@@ -174,9 +177,7 @@ class MemoryVectorStore(BaseVectorStore):
 
         for vector_id, record in candidate_vectors.items():
             similarity = self._calculate_similarity(
-                query.query_vector,
-                record.vector,
-                self.config.distance_metric.value
+                query.query_vector, record.vector, self.config.distance_metric.value
             )
 
             # Apply similarity threshold if specified
@@ -203,7 +204,7 @@ class MemoryVectorStore(BaseVectorStore):
                 text=record.text,
                 metadata=record.metadata,
                 rank=rank,
-                distance=1.0 - similarity  # Convert similarity to distance
+                distance=1.0 - similarity,  # Convert similarity to distance
             )
 
             if query.include_vectors:
@@ -244,11 +245,7 @@ class MemoryVectorStore(BaseVectorStore):
 
         for rank, (vector_id, record, score) in enumerate(selected_scores, 1):
             search_result = SearchResult(
-                id=vector_id,
-                score=score,
-                text=record.text,
-                metadata=record.metadata,
-                rank=rank
+                id=vector_id, score=score, text=record.text, metadata=record.metadata, rank=rank
             )
 
             if query.include_vectors:
@@ -269,7 +266,7 @@ class MemoryVectorStore(BaseVectorStore):
                 query_vector=query.query_vector,
                 search_type=SearchType.VECTOR,
                 limit=query.limit * 2,  # Get more results for fusion
-                filters=query.filters
+                filters=query.filters,
             )
             vector_results = await self._vector_search(vector_query)
 
@@ -279,17 +276,13 @@ class MemoryVectorStore(BaseVectorStore):
                 query_text=query.query_text,
                 search_type=SearchType.KEYWORD,
                 limit=query.limit * 2,  # Get more results for fusion
-                filters=query.filters
+                filters=query.filters,
             )
             keyword_results = await self._keyword_search(keyword_query)
 
         # Combine and rerank results
         return self._combine_search_results(
-            vector_results,
-            keyword_results,
-            query.vector_weight,
-            query.keyword_weight,
-            query.limit
+            vector_results, keyword_results, query.vector_weight, query.keyword_weight, query.limit
         )
 
     def _apply_filters(self, filters) -> Dict[str, VectorRecord]:
@@ -378,7 +371,9 @@ class MemoryVectorStore(BaseVectorStore):
 
         return False
 
-    def _calculate_similarity(self, vector1: List[float], vector2: List[float], metric: str) -> float:
+    def _calculate_similarity(
+        self, vector1: List[float], vector2: List[float], metric: str
+    ) -> float:
         """Calculate similarity between two vectors."""
         if metric == "cosine":
             return self._cosine_similarity(vector1, vector2)
@@ -434,7 +429,7 @@ class MemoryVectorStore(BaseVectorStore):
         keyword_results: List[SearchResult],
         vector_weight: float,
         keyword_weight: float,
-        limit: int
+        limit: int,
     ) -> List[SearchResult]:
         """Combine vector and keyword search results."""
         # Create a map of all unique results
@@ -471,7 +466,7 @@ class MemoryVectorStore(BaseVectorStore):
                 total_vectors=len(self.vectors),
                 index_type="Memory",
                 is_trained=True,
-                created_at=self.created_at
+                created_at=self.created_at,
             )
 
         except Exception as e:

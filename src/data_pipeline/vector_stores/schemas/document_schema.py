@@ -2,11 +2,11 @@
 Document-specific vector store schema.
 """
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .base_schema import BaseVectorSchema, VectorRecord, VectorStoreConfig
-from ...document_processing.metadata.models import DocumentMetadata, ChunkMetadata
+from ...document_processing.metadata.models import ChunkMetadata, DocumentMetadata
+from .base_schema import BaseVectorSchema, VectorRecord
+
 
 class DocumentVectorRecord(VectorRecord):
     """Vector record specifically for document chunks."""
@@ -42,7 +42,7 @@ class DocumentVectorRecord(VectorRecord):
         document_metadata: DocumentMetadata,
         vector: List[float],
         embedding_model: str,
-        processing_time: float = 0.0
+        processing_time: float = 0.0,
     ) -> "DocumentVectorRecord":
         """
         Create document vector record from chunk metadata and embedding.
@@ -63,7 +63,9 @@ class DocumentVectorRecord(VectorRecord):
             text=chunk_metadata.text,
             document_id=document_metadata.document_id,
             document_title=document_metadata.title,
-            document_type=document_metadata.document_type.value if document_metadata.document_type else None,
+            document_type=(
+                document_metadata.document_type.value if document_metadata.document_type else None
+            ),
             chunk_id=chunk_metadata.chunk_id,
             chunk_index=chunk_metadata.chunk_index,
             chunk_size=chunk_metadata.character_count,
@@ -79,9 +81,10 @@ class DocumentVectorRecord(VectorRecord):
             source_type="document",
             metadata={
                 "document_metadata": document_metadata.dict(),
-                "chunk_metadata": chunk_metadata.dict()
-            }
+                "chunk_metadata": chunk_metadata.dict(),
+            },
         )
+
 
 class DocumentVectorSchema(BaseVectorSchema):
     """Schema for document-based vector storage."""
@@ -93,7 +96,7 @@ class DocumentVectorSchema(BaseVectorSchema):
         vector: List[float],
         embedding_model: str,
         processing_time: float = 0.0,
-        **kwargs
+        **kwargs,
     ) -> DocumentVectorRecord:
         """
         Create a document vector record.
@@ -114,7 +117,7 @@ class DocumentVectorSchema(BaseVectorSchema):
             document_metadata=document_metadata,
             vector=vector,
             embedding_model=embedding_model,
-            processing_time=processing_time
+            processing_time=processing_time,
         )
 
         # Add any additional fields
@@ -169,14 +172,7 @@ class DocumentVectorSchema(BaseVectorSchema):
         Returns:
             List[str]: Required field names
         """
-        return [
-            "id",
-            "vector",
-            "text",
-            "document_id",
-            "chunk_id",
-            "chunk_index"
-        ]
+        return ["id", "vector", "text", "document_id", "chunk_id", "chunk_index"]
 
     def get_searchable_fields(self) -> List[str]:
         """
@@ -196,7 +192,7 @@ class DocumentVectorSchema(BaseVectorSchema):
             "source",
             "source_type",
             "word_count",
-            "sentence_count"
+            "sentence_count",
         ]
 
     def prepare_for_storage(self, record: DocumentVectorRecord) -> Dict[str, Any]:
@@ -228,7 +224,7 @@ class DocumentVectorSchema(BaseVectorSchema):
                 "sentence_count": record.sentence_count,
                 "language": record.language,
                 "embedding_model": record.embedding_model,
-                "processing_time": record.processing_time
+                "processing_time": record.processing_time,
             }
 
             # Add non-null fields to metadata
@@ -277,7 +273,7 @@ class DocumentVectorSchema(BaseVectorSchema):
             sentence_count=metadata.get("sentence_count"),
             language=metadata.get("language"),
             embedding_model=metadata.get("embedding_model"),
-            processing_time=metadata.get("processing_time")
+            processing_time=metadata.get("processing_time"),
         )
 
         return doc_record
@@ -294,7 +290,7 @@ class DocumentVectorSchema(BaseVectorSchema):
             "description": "Document chunks with embeddings",
             "vector_config": {
                 "dimension": self.config.embedding_dimension,
-                "distance": self.config.distance_metric.value
+                "distance": self.config.distance_metric.value,
             },
             "fields": [
                 {"name": "id", "type": "string", "primary": True},
@@ -309,6 +305,6 @@ class DocumentVectorSchema(BaseVectorSchema):
                 {"name": "source", "type": "string", "indexed": True},
                 {"name": "word_count", "type": "integer", "indexed": False},
                 {"name": "sentence_count", "type": "integer", "indexed": False},
-                {"name": "created_at", "type": "datetime", "indexed": True}
-            ]
+                {"name": "created_at", "type": "datetime", "indexed": True},
+            ],
         }

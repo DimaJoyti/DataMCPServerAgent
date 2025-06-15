@@ -3,22 +3,22 @@ Crypto Portfolio Management Agent.
 This agent specializes in cryptocurrency portfolio management using TradingView data.
 """
 
-import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from mcp import ClientSession
 
-from src.tools.tradingview_tools import create_tradingview_tools, TradingViewToolkit
 from src.memory.memory_persistence import MemoryDatabase
-from src.utils.error_recovery import ErrorRecoverySystem
+from src.tools.tradingview_tools import TradingViewToolkit, create_tradingview_tools
 from src.utils.env_config import load_dotenv
+from src.utils.error_recovery import ErrorRecoverySystem
 
 # Load environment variables
 load_dotenv()
+
 
 class CryptoPortfolioAgent:
     """An intelligent agent for cryptocurrency portfolio management."""
@@ -28,7 +28,7 @@ class CryptoPortfolioAgent:
         model: ChatAnthropic,
         session: ClientSession,
         db: MemoryDatabase,
-        error_recovery: Optional[ErrorRecoverySystem] = None
+        error_recovery: Optional[ErrorRecoverySystem] = None,
     ):
         """Initialize the crypto portfolio agent.
 
@@ -51,8 +51,8 @@ class CryptoPortfolioAgent:
         self.alerts = []
         self.risk_limits = {
             "max_position_size": 0.2,  # 20% max per position
-            "max_daily_loss": 0.05,    # 5% max daily loss
-            "min_cash_reserve": 0.1,   # 10% cash reserve
+            "max_daily_loss": 0.05,  # 5% max daily loss
+            "min_cash_reserve": 0.1,  # 10% cash reserve
         }
 
     async def initialize(self):
@@ -79,7 +79,7 @@ class CryptoPortfolioAgent:
                 "total_pnl": 0.0,
                 "positions": [],
                 "risk_metrics": {},
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Analyze each position
@@ -113,19 +113,23 @@ class CryptoPortfolioAgent:
                 "price_data": {},
                 "technical_signals": {},
                 "sentiment_data": {},
-                "alerts": []
+                "alerts": [],
             }
 
             # Get price data for each symbol
             for symbol in symbols:
                 try:
                     # Use TradingView price tool
-                    price_tool = next(tool for tool in self.tools if tool.name == "tradingview_crypto_price")
+                    price_tool = next(
+                        tool for tool in self.tools if tool.name == "tradingview_crypto_price"
+                    )
                     price_result = await price_tool.invoke({"symbol": symbol})
                     market_data["price_data"][symbol] = price_result
 
                     # Get technical analysis
-                    analysis_tool = next(tool for tool in self.tools if tool.name == "tradingview_crypto_analysis")
+                    analysis_tool = next(
+                        tool for tool in self.tools if tool.name == "tradingview_crypto_analysis"
+                    )
                     analysis_result = await analysis_tool.invoke({"symbol": symbol})
                     market_data["technical_signals"][symbol] = analysis_result
 
@@ -158,8 +162,8 @@ class CryptoPortfolioAgent:
             # Calculate position size
             position_size = await self._calculate_position_size(signal)
 
-# Simulate trade execution (in real implementation, this would connect to
-# exchange APIs)
+            # Simulate trade execution (in real implementation, this would connect to
+            # exchange APIs)
             trade_result = {
                 "status": "executed",
                 "symbol": signal["symbol"],
@@ -167,7 +171,7 @@ class CryptoPortfolioAgent:
                 "quantity": position_size,
                 "price": signal["price"],
                 "timestamp": datetime.now(),
-                "trade_id": f"trade_{datetime.now().timestamp()}"
+                "trade_id": f"trade_{datetime.now().timestamp()}",
             }
 
             # Update portfolio
@@ -203,7 +207,8 @@ class CryptoPortfolioAgent:
         """Chat interface for the crypto portfolio agent."""
         try:
             # Prepare system message
-            system_message = SystemMessage(content=f"""
+            system_message = SystemMessage(
+                content=f"""
 You are a professional cryptocurrency portfolio manager with access to TradingView data and analysis tools.
 
 Current Portfolio Status:
@@ -224,7 +229,8 @@ Your capabilities include:
 
 Always provide actionable insights and consider risk management in your recommendations.
 Use the available tools to gather current market data when needed.
-""")
+"""
+            )
 
             # Get current market context if needed
             context = await self._get_market_context(user_message)
@@ -232,7 +238,7 @@ Use the available tools to gather current market data when needed.
             # Prepare messages
             messages = [
                 system_message,
-                HumanMessage(content=f"{user_message}\n\nCurrent Market Context:\n{context}")
+                HumanMessage(content=f"{user_message}\n\nCurrent Market Context:\n{context}"),
             ]
 
             # Get response from model
@@ -277,7 +283,9 @@ Use the available tools to gather current market data when needed.
             recommendations.append("Consider reducing position sizes to limit losses")
 
         if len(analysis["positions"]) > 10:
-            recommendations.append("Portfolio may be over-diversified, consider consolidating positions")
+            recommendations.append(
+                "Portfolio may be over-diversified, consider consolidating positions"
+            )
 
         return recommendations
 
@@ -315,7 +323,7 @@ Use the available tools to gather current market data when needed.
         await self.db.store_memory(
             "trade_log",
             json.dumps(trade_result),
-            {"type": "trade", "symbol": trade_result["symbol"]}
+            {"type": "trade", "symbol": trade_result["symbol"]},
         )
 
     async def _load_portfolio_state(self):
@@ -332,7 +340,7 @@ Use the available tools to gather current market data when needed.
         await self.db.store_memory(
             "portfolio_analysis",
             json.dumps(analysis, default=str),
-            {"type": "analysis", "timestamp": str(analysis["timestamp"])}
+            {"type": "analysis", "timestamp": str(analysis["timestamp"])},
         )
 
     async def _get_market_context(self, user_message: str) -> str:
@@ -374,11 +382,11 @@ Use the available tools to gather current market data when needed.
             return "No positions to display"
 
         # Sort by P&L and take top 3
-        sorted_positions = sorted(positions, key=lambda x: x.get('pnl', 0), reverse=True)[:3]
+        sorted_positions = sorted(positions, key=lambda x: x.get("pnl", 0), reverse=True)[:3]
 
         result = ""
         for pos in sorted_positions:
-            emoji = "📈" if pos.get('pnl', 0) >= 0 else "📉"
+            emoji = "📈" if pos.get("pnl", 0) >= 0 else "📉"
             result += f"{emoji} {pos['symbol']}: ${pos.get('pnl', 0):+,.2f}\n"
 
         return result

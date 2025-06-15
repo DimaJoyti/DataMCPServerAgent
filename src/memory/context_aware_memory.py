@@ -14,6 +14,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class MemoryRetriever:
     """Advanced memory retrieval system with semantic search capabilities."""
 
@@ -125,9 +126,7 @@ Rank these memory items by relevance to the request.
             # Try to extract JSON from the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 
@@ -190,9 +189,7 @@ Rank these memory items by relevance to the request.
 
         for message in conversation:
             # Check if any keyword is in the message
-            if any(
-                keyword.lower() in message["content"].lower() for keyword in keywords
-            ):
+            if any(keyword.lower() in message["content"].lower() for keyword in keywords):
                 relevant_messages.append(message)
 
         # If no messages match keywords, return the most recent messages
@@ -303,9 +300,7 @@ Rank these memory items by relevance to the request.
             # Try to extract JSON from the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 
@@ -351,9 +346,7 @@ Rank these memory items by relevance to the request.
         # Format entities
         if "entities" in memory_items and memory_items["entities"]:
             formatted += "## Entity Memory\n\n"
-            for i, (entity_id, entity) in enumerate(
-                memory_items["entities"].items(), 1
-            ):
+            for i, (entity_id, entity) in enumerate(memory_items["entities"].items(), 1):
                 formatted += f"### Entity {i} (item_entity_{i})\n"
                 formatted += f"ID: {entity_id}\n"
                 formatted += f"Data: {json.dumps(entity)[:100]}...\n\n"
@@ -361,9 +354,7 @@ Rank these memory items by relevance to the request.
         # Format tool usage
         if "tool_usage" in memory_items and memory_items["tool_usage"]:
             formatted += "## Tool Usage History\n\n"
-            for i, (tool_name, usages) in enumerate(
-                memory_items["tool_usage"].items(), 1
-            ):
+            for i, (tool_name, usages) in enumerate(memory_items["tool_usage"].items(), 1):
                 for j, usage in enumerate(usages[:3], 1):  # Limit to 3 usages per tool
                     formatted += f"### Tool Usage {i}.{j} (item_tool_{i}_{j})\n"
                     formatted += f"Tool: {tool_name}\n"
@@ -379,6 +370,7 @@ Rank these memory items by relevance to the request.
             List of memory types
         """
         return ["conversation", "entities", "tool_usage"]
+
 
 class ContextManager:
     """Manager for maintaining and updating context during agent execution."""
@@ -411,21 +403,15 @@ class ContextManager:
 
         # Update conversation context
         if "conversation" in memory_search["relevant_items"]:
-            self.current_context["conversation"] = memory_search["relevant_items"][
-                "conversation"
-            ]
+            self.current_context["conversation"] = memory_search["relevant_items"]["conversation"]
 
         # Update entity context
         if "entities" in memory_search["relevant_items"]:
-            self.current_context["entities"].update(
-                memory_search["relevant_items"]["entities"]
-            )
+            self.current_context["entities"].update(memory_search["relevant_items"]["entities"])
 
         # Update tool usage context
         if "tool_usage" in memory_search["relevant_items"]:
-            self.current_context["tool_usage"].update(
-                memory_search["relevant_items"]["tool_usage"]
-            )
+            self.current_context["tool_usage"].update(memory_search["relevant_items"]["tool_usage"])
 
         # Extract entities from the request and add them to working memory
         entities = self._extract_entities(request)

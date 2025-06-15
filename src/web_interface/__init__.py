@@ -8,13 +8,13 @@ This module provides REST API endpoints and web interface for:
 - Integration with agent-ui
 """
 
-from .api import create_app, DocumentProcessingAPI
+from .api import DocumentProcessingAPI, create_app
 from .models import (
-    DocumentUploadRequest,
     DocumentProcessingResponse,
+    DocumentUploadRequest,
+    PipelineStatus,
     VectorSearchRequest,
     VectorSearchResponse,
-    PipelineStatus
 )
 
 __version__ = "1.0.0"

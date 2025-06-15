@@ -5,18 +5,15 @@ This agent implements position sizing, stop-loss calculation, and a curve.fi-ins
 soft liquidation process.
 """
 
-import asyncio
-import json
 import logging
-import math
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class RiskLevel(str, Enum):
     """Risk levels for trading."""
@@ -24,6 +21,7 @@ class RiskLevel(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
 
 class PositionSizing(Model):
     """Model for position sizing recommendations."""
@@ -35,6 +33,7 @@ class PositionSizing(Model):
     risk_level: RiskLevel
     risk_percentage: float
     timestamp: str
+
 
 class StopLossRecommendation(Model):
     """Model for stop-loss recommendations."""
@@ -48,6 +47,7 @@ class StopLossRecommendation(Model):
     max_loss_amount: float
     max_loss_percentage: float
     timestamp: str
+
 
 class LiquidationInfo(Model):
     """Model for liquidation information."""
@@ -63,6 +63,7 @@ class LiquidationInfo(Model):
     soft_liquidation_recommended: bool
     timestamp: str
 
+
 class RiskAssessment(Model):
     """Model for overall risk assessment."""
 
@@ -72,6 +73,7 @@ class RiskAssessment(Model):
     liquidation: Optional[LiquidationInfo] = None
     overall_risk_level: RiskLevel
     timestamp: str
+
 
 class RiskAgentState(BaseAgentState):
     """State model for the Risk Management Agent."""
@@ -83,6 +85,7 @@ class RiskAgentState(BaseAgentState):
     symbols_to_track: List[str] = ["BTC/USD", "ETH/USD"]
     recent_assessments: List[RiskAssessment] = []
 
+
 class RiskManagementAgent(BaseAgent):
     """Agent for managing trading risk."""
 
@@ -92,7 +95,7 @@ class RiskManagementAgent(BaseAgent):
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the Risk Management Agent.
 
@@ -139,11 +142,7 @@ class RiskManagementAgent(BaseAgent):
                 await ctx.send(sender, assessment.dict())
 
     async def _assess_risk(
-        self,
-        symbol: str,
-        entry_price: float,
-        account_balance: float,
-        leverage: float = 1.0
+        self, symbol: str, entry_price: float, account_balance: float, leverage: float = 1.0
     ) -> RiskAssessment:
         """Assess risk for a potential trade.
 
@@ -185,7 +184,7 @@ class RiskManagementAgent(BaseAgent):
             stop_loss=stop_loss,
             liquidation=liquidation_info,
             overall_risk_level=overall_risk_level,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
         # Update state
@@ -196,11 +195,7 @@ class RiskManagementAgent(BaseAgent):
         return assessment
 
     def _calculate_position_sizing(
-        self,
-        symbol: str,
-        entry_price: float,
-        account_balance: float,
-        leverage: float = 1.0
+        self, symbol: str, entry_price: float, account_balance: float, leverage: float = 1.0
     ) -> PositionSizing:
         """Calculate position sizing based on risk parameters.
 
@@ -255,14 +250,11 @@ class RiskManagementAgent(BaseAgent):
             max_position_size=max_position_size,
             risk_level=risk_level,
             risk_percentage=risk_percentage,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     def _calculate_stop_loss(
-        self,
-        symbol: str,
-        entry_price: float,
-        position_size: float
+        self, symbol: str, entry_price: float, position_size: float
     ) -> StopLossRecommendation:
         """Calculate stop loss recommendation.
 
@@ -279,7 +271,9 @@ class RiskManagementAgent(BaseAgent):
         stop_loss_price = entry_price * (1 - stop_loss_percentage)
 
         # Calculate take profit based on risk-reward ratio
-        take_profit_price = entry_price * (1 + (stop_loss_percentage * self.state.default_risk_reward_ratio))
+        take_profit_price = entry_price * (
+            1 + (stop_loss_percentage * self.state.default_risk_reward_ratio)
+        )
 
         # Calculate maximum loss
         max_loss_amount = position_size * (entry_price - stop_loss_price)
@@ -294,15 +288,11 @@ class RiskManagementAgent(BaseAgent):
             risk_reward_ratio=self.state.default_risk_reward_ratio,
             max_loss_amount=max_loss_amount,
             max_loss_percentage=max_loss_percentage,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     def _calculate_liquidation_info(
-        self,
-        symbol: str,
-        entry_price: float,
-        position_size: float,
-        leverage: float
+        self, symbol: str, entry_price: float, position_size: float, leverage: float
     ) -> LiquidationInfo:
         """Calculate liquidation information.
 
@@ -342,14 +332,14 @@ class RiskManagementAgent(BaseAgent):
             distance_to_liquidation_percentage=distance_percentage,
             soft_liquidation_threshold=soft_liquidation_threshold,
             soft_liquidation_recommended=soft_liquidation_recommended,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     def _determine_overall_risk_level(
         self,
         position_sizing: PositionSizing,
         stop_loss: StopLossRecommendation,
-        liquidation_info: Optional[LiquidationInfo]
+        liquidation_info: Optional[LiquidationInfo],
     ) -> RiskLevel:
         """Determine overall risk level.
 

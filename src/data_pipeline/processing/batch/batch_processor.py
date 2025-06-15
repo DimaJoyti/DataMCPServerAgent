@@ -7,21 +7,25 @@ large datasets with parallel and distributed processing support.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Union, Callable
+import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import polars as pl
-from datetime import datetime, timezone
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import multiprocessing as mp
-
 import structlog
 from pydantic import BaseModel, Field
 
+
 class BatchProcessingConfig(BaseModel):
     """Configuration for batch processing."""
+
     # Processing options
     enable_parallel_processing: bool = Field(default=True, description="Enable parallel processing")
-    max_workers: int = Field(default=mp.cpu_count(), description="Maximum number of worker processes")
+    max_workers: int = Field(
+        default=mp.cpu_count(), description="Maximum number of worker processes"
+    )
     chunk_size: int = Field(default=10000, description="Chunk size for processing")
     use_processes: bool = Field(default=True, description="Use processes instead of threads")
 
@@ -37,8 +41,10 @@ class BatchProcessingConfig(BaseModel):
     continue_on_error: bool = Field(default=False, description="Continue processing on errors")
     max_error_rate: float = Field(default=0.05, description="Maximum acceptable error rate")
 
+
 class ProcessingMetrics(BaseModel):
     """Metrics for batch processing."""
+
     total_records: int = 0
     processed_records: int = 0
     failed_records: int = 0
@@ -58,6 +64,7 @@ class ProcessingMetrics(BaseModel):
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
 
+
 class BatchProcessor:
     """
     Batch processor for large-scale data processing.
@@ -69,7 +76,7 @@ class BatchProcessor:
     def __init__(
         self,
         config: Optional[BatchProcessingConfig] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the batch processor.
@@ -91,9 +98,7 @@ class BatchProcessor:
         self.logger.info("Batch processor initialized")
 
     async def process_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame, Any],
-        processing_config: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame, Any], processing_config: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """
         Process data according to configuration.
@@ -149,7 +154,8 @@ class BatchProcessor:
 
                 if self.current_metrics.processing_time > 0:
                     self.current_metrics.throughput_records_per_second = (
-                        self.current_metrics.processed_records / self.current_metrics.processing_time
+                        self.current_metrics.processed_records
+                        / self.current_metrics.processing_time
                     )
 
             self.logger.info(
@@ -158,7 +164,7 @@ class BatchProcessor:
                 processed_records=self.current_metrics.processed_records,
                 failed_records=self.current_metrics.failed_records,
                 processing_time=self.current_metrics.processing_time,
-                throughput_rps=self.current_metrics.throughput_records_per_second
+                throughput_rps=self.current_metrics.throughput_records_per_second,
             )
 
             return result
@@ -173,9 +179,7 @@ class BatchProcessor:
                 self.executor = None
 
     async def _process_parallel(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        operations: List[Dict[str, Any]]
+        self, data: Union[pd.DataFrame, pl.DataFrame], operations: List[Dict[str, Any]]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Process data in parallel chunks."""
         try:
@@ -195,11 +199,7 @@ class BatchProcessor:
 
             for i, chunk in enumerate(chunks):
                 task = loop.run_in_executor(
-                    self.executor,
-                    self._process_chunk,
-                    chunk,
-                    operations,
-                    i
+                    self.executor, self._process_chunk, chunk, operations, i
                 )
                 tasks.append(task)
 
@@ -238,9 +238,7 @@ class BatchProcessor:
             raise e
 
     async def _process_sequential(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        operations: List[Dict[str, Any]]
+        self, data: Union[pd.DataFrame, pl.DataFrame], operations: List[Dict[str, Any]]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Process data sequentially."""
         try:
@@ -258,7 +256,7 @@ class BatchProcessor:
         self,
         chunk: Union[pd.DataFrame, pl.DataFrame],
         operations: List[Dict[str, Any]],
-        chunk_id: int
+        chunk_id: int,
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Process a single chunk of data."""
         try:
@@ -275,9 +273,7 @@ class BatchProcessor:
             raise e
 
     def _apply_operation(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        operation: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], operation: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Apply a single processing operation."""
         operation_type = operation.get("type")
@@ -300,9 +296,7 @@ class BatchProcessor:
             return data
 
     def _filter_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Filter data based on conditions."""
         condition = parameters.get("condition")
@@ -318,9 +312,7 @@ class BatchProcessor:
             return data
 
     def _transform_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Transform data columns."""
         transformations = parameters.get("transformations", {})
@@ -341,9 +333,7 @@ class BatchProcessor:
         return data
 
     def _aggregate_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Aggregate data."""
         group_by = parameters.get("group_by", [])
@@ -355,15 +345,19 @@ class BatchProcessor:
         try:
             if isinstance(data, pl.DataFrame):
                 if group_by:
-                    return data.group_by(group_by).agg([
-                        getattr(pl.col(col), agg_func)().alias(f"{col}_{agg_func}")
-                        for col, agg_func in aggregations.items()
-                    ])
+                    return data.group_by(group_by).agg(
+                        [
+                            getattr(pl.col(col), agg_func)().alias(f"{col}_{agg_func}")
+                            for col, agg_func in aggregations.items()
+                        ]
+                    )
                 else:
-                    return data.select([
-                        getattr(pl.col(col), agg_func)().alias(f"{col}_{agg_func}")
-                        for col, agg_func in aggregations.items()
-                    ])
+                    return data.select(
+                        [
+                            getattr(pl.col(col), agg_func)().alias(f"{col}_{agg_func}")
+                            for col, agg_func in aggregations.items()
+                        ]
+                    )
             else:
                 if group_by:
                     return data.groupby(group_by).agg(aggregations).reset_index()
@@ -373,9 +367,7 @@ class BatchProcessor:
             return data
 
     def _sort_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Sort data."""
         columns = parameters.get("columns", [])
@@ -393,9 +385,7 @@ class BatchProcessor:
             return data
 
     def _deduplicate_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Remove duplicate rows."""
         columns = parameters.get("columns")
@@ -412,9 +402,7 @@ class BatchProcessor:
             return data
 
     def _custom_operation(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        parameters: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], parameters: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Apply custom operation."""
         # This would allow for custom processing functions
@@ -422,8 +410,7 @@ class BatchProcessor:
         return data
 
     def _split_data_into_chunks(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame]
+        self, data: Union[pd.DataFrame, pl.DataFrame]
     ) -> List[Union[pd.DataFrame, pl.DataFrame]]:
         """Split data into chunks for parallel processing."""
         chunks = []
@@ -451,5 +438,5 @@ class BatchProcessor:
             "is_processing": self.is_processing,
             "config": self.config.model_dump(),
             "metrics": self.current_metrics.model_dump(),
-            "processor": "batch_processor"
+            "processor": "batch_processor",
         }

@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agents.research_assistant import run_research_assistant
 
+
 def run_example():
     """Run the research assistant example."""
     print("Running research assistant example...")

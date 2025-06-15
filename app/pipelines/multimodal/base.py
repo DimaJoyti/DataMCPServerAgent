@@ -15,13 +15,16 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
+
 class ModalityType(str, Enum):
     """Types of modalities supported."""
+
     TEXT = "text"
     IMAGE = "image"
     AUDIO = "audio"
     VIDEO = "video"
     DOCUMENT = "document"
+
 
 class MultiModalContent(BaseModel):
     """Container for multimodal content."""
@@ -45,6 +48,7 @@ class MultiModalContent(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+
 class ProcessingMetrics(BaseModel):
     """Metrics for processing operations."""
 
@@ -61,6 +65,7 @@ class ProcessingMetrics(BaseModel):
     accuracy: Optional[float] = Field(None, description="Accuracy score (0-1)")
     relevance: Optional[float] = Field(None, description="Relevance score (0-1)")
 
+
 class ProcessedResult(BaseModel):
     """Result of multimodal processing."""
 
@@ -71,7 +76,9 @@ class ProcessedResult(BaseModel):
     # Processing results
     extracted_text: Optional[str] = Field(None, description="Extracted or generated text")
     generated_description: Optional[str] = Field(None, description="Generated description")
-    extracted_entities: List[Dict[str, Any]] = Field(default_factory=list, description="Extracted entities")
+    extracted_entities: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Extracted entities"
+    )
 
     # Embeddings
     text_embedding: Optional[List[float]] = Field(None, description="Text embedding vector")
@@ -87,6 +94,7 @@ class ProcessedResult(BaseModel):
     status: str = Field(..., description="Processing status")
     errors: List[str] = Field(default_factory=list, description="Processing errors")
     warnings: List[str] = Field(default_factory=list, description="Processing warnings")
+
 
 class MultiModalProcessor(ABC):
     """Abstract base class for multimodal processors."""
@@ -158,8 +166,7 @@ class MultiModalProcessor(ABC):
             final_result.status = "completed"
 
             self.logger.info(
-                f"Successfully processed {content.content_id} "
-                f"in {processing_time:.2f}s"
+                f"Successfully processed {content.content_id} " f"in {processing_time:.2f}s"
             )
 
             return final_result
@@ -174,11 +181,10 @@ class MultiModalProcessor(ABC):
                 content_id=content.content_id,
                 input_modalities=content.modalities,
                 processing_metrics=ProcessingMetrics(
-                    processing_time=processing_time,
-                    modalities_processed=[]
+                    processing_time=processing_time, modalities_processed=[]
                 ),
                 status="failed",
-                errors=[error_msg]
+                errors=[error_msg],
             )
 
     async def process_batch(self, contents: List[MultiModalContent]) -> List[ProcessedResult]:
@@ -197,11 +203,10 @@ class MultiModalProcessor(ABC):
                     content_id=contents[i].content_id,
                     input_modalities=contents[i].modalities,
                     processing_metrics=ProcessingMetrics(
-                        processing_time=0.0,
-                        modalities_processed=[]
+                        processing_time=0.0, modalities_processed=[]
                     ),
                     status="failed",
-                    errors=[str(result)]
+                    errors=[str(result)],
                 )
                 processed_results.append(error_result)
             else:
@@ -217,6 +222,7 @@ class MultiModalProcessor(ABC):
         """Update configuration."""
         self.config.update(updates)
         self.logger.info(f"Updated configuration: {list(updates.keys())}")
+
 
 class ProcessorFactory:
     """Factory for creating multimodal processors."""

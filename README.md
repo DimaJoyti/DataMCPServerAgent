@@ -1,254 +1,115 @@
 # DataMCPServerAgent
 
-A sophisticated Python-based agent system that combines context-aware memory, adaptive learning, and enhanced tool selection capabilities. Built on top of Bright Data's MCP (Model Context Protocol) server.
+A comprehensive AI agent system built with reinforcement learning, multi-agent coordination, and cloud integration capabilities. This project provides a modern, scalable platform for building intelligent agents that can learn, adapt, and collaborate to solve complex tasks.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+## 🚀 Features
 
-## Features
+### Core Capabilities
+- **Multi-Agent System**: Coordinate multiple specialized agents for complex tasks
+- **Reinforcement Learning**: Advanced RL algorithms including DQN, PPO, and meta-learning
+- **Cloud Integration**: Deploy and scale across AWS, Azure, and Google Cloud Platform
+- **Real-time Communication**: WebSocket support for live agent interactions
+- **Memory Systems**: Persistent and distributed memory with semantic search
+- **Tool Integration**: Extensible tool system with performance tracking
 
-- **Context-Aware Memory**: Maintains and utilizes contextual information across interactions
-- **Adaptive Learning**: Learns from user interactions and feedback to improve responses
-- **Enhanced Tool Selection**: Sophisticated tool selection and performance tracking
-- **Multi-Agent Learning**: Collaborative learning capabilities across multiple agent instances
-- **Reinforcement Learning**: Continuous improvement through reward-based learning
-- **Distributed Memory**: Scalable memory persistence across Redis and MongoDB backends with caching
-- **Knowledge Graph Integration**: Enhanced context understanding through entity and relationship modeling
-- **Enhanced Error Recovery**: Sophisticated retry strategies, automatic fallback mechanisms, and self-healing capabilities
-- **Advanced Error Analysis**: Error clustering, root cause analysis, correlation analysis, and predictive error detection
-- **Advanced Agent Orchestration**: Sophisticated multi-step reasoning, planning, meta-reasoning, and reflection systems
-- **Bright Data Integration**: Seamless integration with Bright Data's web unlocker and proxy services
+### Advanced Features
+- **Brand Agent Platform**: AI-powered conversational agents for marketing
+- **Trading System**: Algorithmic trading with TradingView integration
+- **Document Processing**: Advanced NLP pipeline with vector stores
+- **Semantic Agents**: Context-aware agents with knowledge graphs
+- **Infinite Loop System**: Continuous improvement and content generation
 
-## 🏗️ Data Pipeline System
+## 📋 Quick Start
 
-### Enterprise Data Processing Infrastructure
+### Prerequisites
+- Python 3.9+
+- Redis (optional, for distributed features)
+- Node.js 18+ (for web UI)
 
-- **Pipeline Orchestration**: Advanced workflow management with dependency resolution
-- **Data Ingestion**: Batch and streaming data ingestion from multiple sources
-- **Data Transformation**: ETL/ELT pipelines with validation and quality checks
-- **Processing Engines**: Parallel batch processing and real-time stream processing
-- **Monitoring & Observability**: Comprehensive metrics and monitoring
-- **Storage Integration**: Unified access to databases, object storage, and file systems
-
-### Supported Data Sources
-
-- **Databases**: PostgreSQL, MySQL, SQLite, MongoDB
-- **Files**: CSV, JSON, Parquet, Excel
-- **APIs**: REST APIs with authentication and pagination
-- **Object Storage**: S3-compatible storage (AWS S3, MinIO)
-- **Streaming**: Apache Kafka, Redis Streams
-
-### Processing Capabilities
-
-- **Batch Processing**: Large-scale data processing with parallel execution
-- **Stream Processing**: Real-time data processing with windowing
-- **Data Validation**: Schema validation and quality checks
-- **Error Handling**: Retry mechanisms and error recovery
-- **Scheduling**: Cron-based pipeline scheduling
-
-## 📄 Document Processing Pipeline
-
-### Advanced Document Processing System
-
-- **Multi-format Support**: PDF, DOCX, HTML, Markdown, TXT, Excel, PowerPoint, CSV
-- **Intelligent Chunking**: Text, semantic, and adaptive chunking strategies
-- **AI Vectorization**: OpenAI, HuggingFace, Cloudflare AI embeddings
-- **Vector Stores**: Memory, ChromaDB, FAISS, Pinecone, Weaviate support
-- **Hybrid Search**: Vector + keyword search with filtering
-- **Web Interface**: FastAPI REST API with interactive UI
-- **Async Processing**: Parallel processing with task queues
-- **Real-time Monitoring**: Progress tracking and performance metrics
-
-### Quick Start - Document Pipeline
+### Installation
 
 ```bash
-# Install pipeline dependencies
-uv pip install -r requirements.txt
-
-# Start web interface
-python start_web_interface.py
-
-# Test the pipeline
-python test_pipeline.py
-```
-
-### Web Interface Access
-- **API Documentation**: http://localhost:8000/docs
-- **Interactive UI**: http://localhost:8000/ui
-- **Health Check**: http://localhost:8000/health
-
-## Prerequisites
-
-- Python 3.8 or higher
-- Node.js (for Bright Data MCP)
-- Bright Data MCP credentials
-- Anthropic API key (for Claude model)
-
-## Installation
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/DimaJoyti/DataMCPServerAgent.git
+# Clone the repository
+git clone https://github.com/your-org/DataMCPServerAgent.git
 cd DataMCPServerAgent
-```
 
-2. Install dependencies:
+# Install Python dependencies
+pip install -r requirements.txt
 
-```bash
-uv pip install -r requirements.txt
-```
+# Install UI dependencies
+cd agent-ui
+npm install
+cd ..
 
-3. Set up environment variables:
-
-```bash
+# Copy environment template
 cp .env.example .env
+# Edit .env with your configuration
 ```
 
-Then edit `.env` with your credentials.
+### Quick Start
 
-## Usage
+```bash
+# Start the API server
+python app/main_consolidated.py api
 
-Basic usage:
+# Start the web interface
+cd agent-ui && npm run dev
 
-```python
-from src.core.main import chat_with_agent
-
-# Start the agent
-asyncio.run(chat_with_agent())
+# Access the application
+# API: http://localhost:8003
+# UI: http://localhost:3000
 ```
 
-For advanced features:
+## 🏗️ Architecture
 
-```python
-from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
+DataMCPServerAgent follows Clean Architecture principles with Domain-Driven Design:
+```bash
+# Start API server
+python app/main_simple_consolidated.py api
 
-# Start the advanced enhanced agent
-asyncio.run(chat_with_advanced_enhanced_agent())
+# Or start CLI interface
+python app/main_simple_consolidated.py cli
 ```
 
-For reinforcement learning:
+## 📖 Usage Examples
 
-```python
-from src.core.reinforcement_learning_main import chat_with_rl_agent
+### API Server
+```bash
+# Start server with hot reload
+python app/main_simple_consolidated.py api --reload
 
-# Start the reinforcement learning agent
-asyncio.run(chat_with_rl_agent())
+# Check system status
+curl http://localhost:8003/health
+
+# View API documentation
+# Open http://localhost:8003/docs in your browser
 ```
 
-For distributed memory:
+### CLI Interface
+```bash
+# Interactive CLI
+python app/main_simple_consolidated.py cli
 
-```python
-from src.core.distributed_memory_main import chat_with_distributed_memory_agent
-
-# Start the distributed memory agent
-asyncio.run(chat_with_distributed_memory_agent())
+# Available commands:
+# - help: Show available commands
+# - status: Show system status
+# - agents: List available agents
+# - tasks: Manage tasks
+# - structure: Show system architecture
 ```
 
-For knowledge graph integration:
+### Reinforcement Learning
+```bash
+# Basic RL mode
+RL_MODE=basic python src/core/reinforcement_learning_main.py
 
-```python
-from src.core.knowledge_graph_main import chat_with_knowledge_graph_agent
+# Advanced RL with modern algorithms
+RL_MODE=modern_deep RL_ALGORITHM=ppo python src/core/reinforcement_learning_main.py
 
-# Start the knowledge graph agent
-asyncio.run(chat_with_knowledge_graph_agent())
+# Multi-agent learning
+RL_MODE=multi_agent python src/core/reinforcement_learning_main.py
 ```
 
-For enhanced error recovery:
+## 🏗️ Architecture
 
-```python
-from src.core.error_recovery_main import chat_with_error_recovery_agent
-
-# Start the error recovery agent
-asyncio.run(chat_with_error_recovery_agent())
-```
-
-For advanced orchestration (NEW):
-
-```python
-from src.core.orchestration_main import chat_with_orchestrated_agent
-
-# Start the advanced orchestrated agent system
-asyncio.run(chat_with_orchestrated_agent())
-For data pipeline processing:
-
-```python
-from src.core.data_pipeline_main import chat_with_data_pipeline_system
-
-# Start the data pipeline system
-asyncio.run(chat_with_data_pipeline_system())
-```
-
-Or run the data pipeline example:
-
-```python
-# Run the comprehensive data pipeline example
-python examples/data_pipeline_example.py
-```
-
-See the `examples/` directory for more usage examples.
-
-## 📚 Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-- [Installation Guide](docs/installation.md)
-- [Architecture Overview](docs/architecture.md)
-- [Usage Guide](docs/usage.md)
-- [Memory Management](docs/memory.md)
-- [Distributed Memory](docs/distributed_memory.md)
-- [Knowledge Graph](docs/knowledge_graph.md)
-- [Multi-Agent Learning](docs/multi_agent_learning.md)
-- [Reinforcement Learning](docs/reinforcement_learning.md)
-- [Reinforcement Learning Memory Persistence](docs/reinforcement_learning_memory.md)
-- [Error Recovery](docs/error_recovery.md)
-- [Advanced Error Analysis](docs/advanced_error_analysis.md)
-- [Advanced Agent Orchestration](docs/orchestration.md)
-- [Custom Tools](docs/custom_tools.md)
-- [Tool Development Guide](docs/tool_development.md)
-- [Contributing Guide](docs/contributing.md)
-### 🏗️ Architecture & Design
-- [System Architecture Blueprint](docs/system_architecture_blueprint.md) - Comprehensive system architecture overview
-- [Component Specifications](docs/component_specifications.md) - Detailed component interfaces and specifications
-- [Data Flow & Integration](docs/data_flow_integration.md) - Data flow patterns and integration architecture
-- [Architecture Overview](docs/architecture.md) - High-level system architecture
-
-### 🚀 Deployment & Operations
-- [Deployment & Operations Guide](docs/deployment_operations.md) - Complete deployment and operational procedures
-- [API Reference](docs/api_reference.md) - Comprehensive REST API and SDK documentation
-- [Installation Guide](docs/installation.md) - Setup and installation instructions
-
-### 🔧 Feature Guides
-- [Data Pipeline Guide](docs/data_pipeline_guide.md) - Enterprise data processing capabilities
-- [Memory Management](docs/memory.md) - Memory system overview
-- [Distributed Memory](docs/distributed_memory.md) - Distributed memory architecture
-- [Knowledge Graph](docs/knowledge_graph.md) - Knowledge graph integration
-- [Multi-Agent Learning](docs/multi_agent_learning.md) - Multi-agent coordination
-- [Reinforcement Learning](docs/reinforcement_learning.md) - RL capabilities
-- [Reinforcement Learning Memory Persistence](docs/reinforcement_learning_memory.md) - RL memory systems
-- [Error Recovery](docs/error_recovery.md) - Error handling systems
-- [Advanced Error Analysis](docs/advanced_error_analysis.md) - Advanced error analysis
-
-### 💻 Development & Usage
-- [Usage Guide](docs/usage.md) - Getting started guide
-- [Custom Tools](docs/custom_tools.md) - Building custom tools and integrations
-- [Tool Development Guide](docs/tool_development.md) - Development best practices
-- [Contributing Guide](docs/contributing.md) - How to contribute to the project
-
-## Contributing
-
-See [Contributing Guide](docs/contributing.md) for guidelines on how to contribute to this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Bright Data for their MCP server implementation
-- Anthropic for the Claude model API
-- The LangChain community for various tools and utilities
-
-## Contact
-
-- GitHub: [@DimaJoyti](https://github.com/DimaJoyti)
+### System Structure

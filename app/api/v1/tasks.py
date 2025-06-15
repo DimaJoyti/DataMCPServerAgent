@@ -13,6 +13,7 @@ from app.domain.services.task_service import TaskService
 
 router = APIRouter()
 
+
 class CreateTaskRequest(BaseModel):
     """Request model for creating a task."""
 
@@ -21,6 +22,7 @@ class CreateTaskRequest(BaseModel):
     agent_id: str = Field(description="Agent ID to assign task to")
     priority: TaskPriority = Field(default=TaskPriority.NORMAL, description="Task priority")
     description: Optional[str] = Field(default=None, description="Task description")
+
 
 class TaskResponse(BaseModel):
     """Response model for task data."""
@@ -36,6 +38,7 @@ class TaskResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 @router.post("/", response_model=TaskResponse)
 async def create_task(
@@ -53,6 +56,7 @@ async def create_task(
     )
 
     return TaskResponse.from_orm(task)
+
 
 @router.get("/", response_model=List[TaskResponse])
 async def list_tasks(

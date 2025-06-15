@@ -3,13 +3,14 @@ Tests for learning capabilities module.
 """
 
 import os
-import unittest
-from unittest.mock import patch, MagicMock, AsyncMock
-
 import sys
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agents.learning_capabilities import FeedbackCollector, LearningAgent
+
 
 class TestFeedbackCollector(unittest.TestCase):
     """Tests for FeedbackCollector class."""

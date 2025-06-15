@@ -2,13 +2,13 @@
 MCP Inspector for debugging and monitoring MCP connections and tool usage.
 """
 
-import asyncio
 import json
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 
 class MCPEventType(Enum):
     CONNECTION_OPENED = "connection_opened"
@@ -32,29 +32,29 @@ class MCPEvent:
 
 class MCPInspector:
     """Inspector for monitoring MCP connections and tool usage."""
-    
+
     def __init__(self):
         self.events: List[MCPEvent] = []
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
         self.tool_usage_stats: Dict[str, int] = {}
         self.auth_failures: List[MCPEvent] = []
-        
+
         # Setup logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("MCPInspector")
-    
+
     def log_event(self, event: MCPEvent):
         """Log an MCP event."""
         self.events.append(event)
         self.logger.info(f"MCP Event: {event.event_type.value} - {event.session_id}")
-        
+
         # Update statistics
         if event.tool_name:
             self.tool_usage_stats[event.tool_name] = self.tool_usage_stats.get(event.tool_name, 0) + 1
-        
+
         if event.event_type == MCPEventType.AUTH_CHECK and event.error:
             self.auth_failures.append(event)
-    
+
     def log_connection_opened(self, session_id: str, user_id: str, metadata: Dict[str, Any] = None):
         """Log when an MCP connection is opened."""
         event = MCPEvent(
@@ -64,16 +64,16 @@ class MCPInspector:
             user_id=user_id,
             metadata=metadata or {}
         )
-        
+
         self.active_sessions[session_id] = {
             "user_id": user_id,
             "connected_at": event.timestamp,
             "tools_used": [],
             "metadata": metadata or {}
         }
-        
+
         self.log_event(event)
-    
+
     def log_connection_closed(self, session_id: str, reason: str = None):
         """Log when an MCP connection is closed."""
         event = MCPEvent(
@@ -82,12 +82,12 @@ class MCPInspector:
             session_id=session_id,
             metadata={"reason": reason} if reason else None
         )
-        
+
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
-        
+
         self.log_event(event)
-    
+
     def log_tool_call(self, session_id: str, tool_name: str, parameters: Dict[str, Any], user_id: str = None):
         """Log when a tool is called."""
         event = MCPEvent(
@@ -98,7 +98,7 @@ class MCPInspector:
             tool_name=tool_name,
             parameters=parameters
         )
-        
+
         # Update session data
         if session_id in self.active_sessions:
             self.active_sessions[session_id]["tools_used"].append({
@@ -106,9 +106,9 @@ class MCPInspector:
                 "timestamp": event.timestamp,
                 "parameters": parameters
             })
-        
+
         self.log_event(event)
-    
+
     def log_tool_result(self, session_id: str, tool_name: str, result: Dict[str, Any], user_id: str = None):
         """Log the result of a tool call."""
         event = MCPEvent(
@@ -119,9 +119,9 @@ class MCPInspector:
             tool_name=tool_name,
             result=result
         )
-        
+
         self.log_event(event)
-    
+
     def log_auth_check(self, session_id: str, user_id: str, tool_name: str, success: bool, error: str = None):
         """Log an authentication/authorization check."""
         event = MCPEvent(
@@ -133,9 +133,9 @@ class MCPInspector:
             error=error if not success else None,
             metadata={"success": success}
         )
-        
+
         self.log_event(event)
-    
+
     def log_error(self, session_id: str, error: str, tool_name: str = None, user_id: str = None):
         """Log an error."""
         event = MCPEvent(
@@ -146,25 +146,25 @@ class MCPInspector:
             tool_name=tool_name,
             error=error
         )
-        
+
         self.log_event(event)
-    
+
     def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get information about a specific session."""
         return self.active_sessions.get(session_id)
-    
+
     def get_tool_usage_stats(self) -> Dict[str, int]:
         """Get tool usage statistics."""
         return self.tool_usage_stats.copy()
-    
+
     def get_auth_failures(self) -> List[Dict[str, Any]]:
         """Get recent authentication failures."""
         return [asdict(event) for event in self.auth_failures[-10:]]  # Last 10 failures
-    
+
     def get_recent_events(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get recent MCP events."""
         return [asdict(event) for event in self.events[-limit:]]
-    
+
     def get_active_sessions_summary(self) -> Dict[str, Any]:
         """Get summary of active sessions."""
         return {
@@ -178,12 +178,12 @@ class MCPInspector:
                 for session_id, data in self.active_sessions.items()
             }
         }
-    
+
     def export_events(self, filename: str = None) -> str:
         """Export events to JSON file."""
         if not filename:
             filename = f"mcp_events_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        
+
         export_data = {
             "export_timestamp": datetime.utcnow().isoformat(),
             "total_events": len(self.events),
@@ -191,10 +191,10 @@ class MCPInspector:
             "tool_usage_stats": self.tool_usage_stats,
             "events": [asdict(event) for event in self.events]
         }
-        
+
         with open(filename, 'w') as f:
             json.dump(export_data, f, indent=2)
-        
+
         return filename
 
 # Global inspector instance
@@ -207,7 +207,7 @@ def log_tool_call(tool_name: str):
         async def wrapper(*args, **kwargs):
             session_id = kwargs.get('session_id', 'unknown')
             user_id = kwargs.get('user_id', 'unknown')
-            
+
             # Log tool call
             mcp_inspector.log_tool_call(
                 session_id=session_id,
@@ -215,10 +215,10 @@ def log_tool_call(tool_name: str):
                 parameters=kwargs,
                 user_id=user_id
             )
-            
+
             try:
                 result = await func(*args, **kwargs)
-                
+
                 # Log successful result
                 mcp_inspector.log_tool_result(
                     session_id=session_id,
@@ -226,9 +226,9 @@ def log_tool_call(tool_name: str):
                     result={"success": True, "data": result},
                     user_id=user_id
                 )
-                
+
                 return result
-                
+
             except Exception as e:
                 # Log error
                 mcp_inspector.log_error(
@@ -238,6 +238,6 @@ def log_tool_call(tool_name: str):
                     user_id=user_id
                 )
                 raise
-        
+
         return wrapper
     return decorator

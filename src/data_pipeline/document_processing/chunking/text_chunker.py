@@ -2,21 +2,17 @@
 Basic text chunker implementation.
 """
 
-import logging
-import re
 from typing import List
 
-from .base_chunker import BaseChunker, TextChunk
 from ..metadata.models import DocumentMetadata
+from .base_chunker import BaseChunker, TextChunk
+
 
 class TextChunker(BaseChunker):
     """Basic text chunker that splits text based on character count and boundaries."""
 
     def chunk_text(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata,
-        **kwargs
+        self, text: str, document_metadata: DocumentMetadata, **kwargs
     ) -> List[TextChunk]:
         """
         Chunk text into smaller pieces based on character count.
@@ -64,7 +60,7 @@ class TextChunker(BaseChunker):
 
                 # If chunk is too large, split it
                 elif len(chunk_text) > self.config.max_chunk_size:
-                    chunk_text = chunk_text[:self.config.max_chunk_size]
+                    chunk_text = chunk_text[: self.config.max_chunk_size]
                     chunk_end = current_position + len(chunk_text)
 
             # Create chunk
@@ -73,7 +69,7 @@ class TextChunker(BaseChunker):
                 chunk_index=chunk_index,
                 start_char=current_position,
                 end_char=chunk_end,
-                document_metadata=document_metadata
+                document_metadata=document_metadata,
             )
 
             chunks.append(chunk)
@@ -99,10 +95,7 @@ class TextChunker(BaseChunker):
         return chunks
 
     def _get_optimal_split_point(
-        self,
-        text: str,
-        target_position: int,
-        search_window: int = 100
+        self, text: str, target_position: int, search_window: int = 100
     ) -> int:
         """
         Find optimal split point near target position.
@@ -123,10 +116,7 @@ class TextChunker(BaseChunker):
         return super()._get_optimal_split_point(text, target_position, search_window)
 
     def _find_custom_separator_split(
-        self,
-        text: str,
-        target_position: int,
-        search_window: int
+        self, text: str, target_position: int, search_window: int
     ) -> int:
         """
         Find split point using custom separators.
@@ -144,7 +134,7 @@ class TextChunker(BaseChunker):
         search_text = text[start:end]
 
         best_position = target_position
-        best_distance = float('inf')
+        best_distance = float("inf")
 
         for separator in self.config.custom_separators:
             # Find all occurrences of separator in search window
@@ -168,10 +158,7 @@ class TextChunker(BaseChunker):
         return best_position
 
     def chunk_by_sentences(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata,
-        sentences_per_chunk: int = 5
+        self, text: str, document_metadata: DocumentMetadata, sentences_per_chunk: int = 5
     ) -> List[TextChunk]:
         """
         Chunk text by sentences.
@@ -192,7 +179,9 @@ class TextChunker(BaseChunker):
 
         for i in range(0, len(sentence_boundaries) - 1, sentences_per_chunk):
             start_boundary = sentence_boundaries[i]
-            end_boundary = sentence_boundaries[min(i + sentences_per_chunk, len(sentence_boundaries) - 1)]
+            end_boundary = sentence_boundaries[
+                min(i + sentences_per_chunk, len(sentence_boundaries) - 1)
+            ]
 
             chunk_text = text[start_boundary:end_boundary].strip()
 
@@ -203,7 +192,7 @@ class TextChunker(BaseChunker):
                     start_char=start_boundary,
                     end_char=end_boundary,
                     document_metadata=document_metadata,
-                    chunking_method="sentence_based"
+                    chunking_method="sentence_based",
                 )
 
                 chunks.append(chunk)
@@ -212,10 +201,7 @@ class TextChunker(BaseChunker):
         return self._link_chunks(chunks)
 
     def chunk_by_paragraphs(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata,
-        paragraphs_per_chunk: int = 2
+        self, text: str, document_metadata: DocumentMetadata, paragraphs_per_chunk: int = 2
     ) -> List[TextChunk]:
         """
         Chunk text by paragraphs.
@@ -236,7 +222,9 @@ class TextChunker(BaseChunker):
 
         for i in range(0, len(paragraph_boundaries) - 1, paragraphs_per_chunk):
             start_boundary = paragraph_boundaries[i]
-            end_boundary = paragraph_boundaries[min(i + paragraphs_per_chunk, len(paragraph_boundaries) - 1)]
+            end_boundary = paragraph_boundaries[
+                min(i + paragraphs_per_chunk, len(paragraph_boundaries) - 1)
+            ]
 
             chunk_text = text[start_boundary:end_boundary].strip()
 
@@ -247,7 +235,7 @@ class TextChunker(BaseChunker):
                     start_char=start_boundary,
                     end_char=end_boundary,
                     document_metadata=document_metadata,
-                    chunking_method="paragraph_based"
+                    chunking_method="paragraph_based",
                 )
 
                 chunks.append(chunk)
@@ -255,11 +243,7 @@ class TextChunker(BaseChunker):
 
         return self._link_chunks(chunks)
 
-    def chunk_by_sections(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata
-    ) -> List[TextChunk]:
+    def chunk_by_sections(self, text: str, document_metadata: DocumentMetadata) -> List[TextChunk]:
         """
         Chunk text by sections (headers).
 
@@ -303,7 +287,7 @@ class TextChunker(BaseChunker):
                         start_char=start_boundary,
                         end_char=end_boundary,
                         document_metadata=document_metadata,
-                        chunking_method="section_based"
+                        chunking_method="section_based",
                     )
 
                     chunks.append(chunk)

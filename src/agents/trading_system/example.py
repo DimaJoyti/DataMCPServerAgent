@@ -4,35 +4,27 @@ Example script demonstrating how to use the Fetch.ai Advanced Crypto Trading Sys
 
 import asyncio
 import logging
-import os
-from datetime import datetime
 
 from dotenv import load_dotenv
 
+from .risk_agent import RiskManagementAgent
 from .sentiment_agent import SentimentIntelligenceAgent
 from .technical_agent import TechnicalAnalysisAgent
-from .risk_agent import RiskManagementAgent
-from .regulatory_agent import RegulatoryComplianceAgent
-from .macro_agent import MacroCorrelationAgent
-from .learning_agent import LearningOptimizationAgent
-from .trading_system import AdvancedCryptoTradingSystem, TradeRecommendation
+from .trading_system import AdvancedCryptoTradingSystem
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def run_single_agent_example():
     """Run an example with a single agent."""
     logger.info("Running single agent example")
 
     # Create a technical analysis agent
-    technical_agent = TechnicalAnalysisAgent(
-        name="example_technical_agent",
-        exchange_id="binance"
-    )
+    technical_agent = TechnicalAnalysisAgent(name="example_technical_agent", exchange_id="binance")
 
     # Start the agent
     agent_task = asyncio.create_task(technical_agent.run_async())
@@ -44,6 +36,7 @@ async def run_single_agent_example():
     agent_task.cancel()
 
     logger.info("Single agent example completed")
+
 
 async def run_multi_agent_example():
     """Run an example with multiple agents."""
@@ -58,7 +51,7 @@ async def run_multi_agent_example():
     agent_tasks = [
         asyncio.create_task(sentiment_agent.run_async()),
         asyncio.create_task(technical_agent.run_async()),
-        asyncio.create_task(risk_agent.run_async())
+        asyncio.create_task(risk_agent.run_async()),
     ]
 
     # Wait for a few seconds to let the agents initialize
@@ -70,14 +63,14 @@ async def run_multi_agent_example():
 
     logger.info("Multi-agent example completed")
 
+
 async def run_full_system_example():
     """Run an example with the full trading system."""
     logger.info("Running full system example")
 
     # Create trading system
     trading_system = AdvancedCryptoTradingSystem(
-        name="example_trading_system",
-        exchange_id="binance"
+        name="example_trading_system", exchange_id="binance"
     )
 
     # Update symbols to track
@@ -111,6 +104,7 @@ async def run_full_system_example():
 
     logger.info("Full system example completed")
 
+
 async def main():
     """Main entry point."""
     # Load environment variables
@@ -120,6 +114,7 @@ async def main():
     await run_single_agent_example()
     await run_multi_agent_example()
     await run_full_system_example()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

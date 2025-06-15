@@ -4,11 +4,9 @@ Provides a unified interface to launch different agent modes and services.
 """
 
 import argparse
-import asyncio
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -25,7 +23,7 @@ console = Console()
 # Import configuration and logging
 try:
     from app.core.config import Settings
-    from app.core.logging import setup_logging, get_logger
+    from app.core.logging import get_logger, setup_logging
     from app.main_improved import create_app
 
     # Load settings
@@ -60,6 +58,7 @@ def start_api_server(host: str, port: int, reload: bool, debug: bool):
     """Start the API server."""
     try:
         import uvicorn
+
         from app.main_improved import app
 
         console.print(f"[green]🚀 Starting API server on {host}:{port}[/green]")

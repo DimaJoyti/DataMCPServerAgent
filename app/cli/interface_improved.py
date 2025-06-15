@@ -24,24 +24,44 @@ from rich.tree import Tree
 from app.core.config import Settings
 from app.core.logging import get_logger
 
+
 # Temporary mock managers until they are implemented
 class MockAgentManager:
-    def __init__(self, settings): pass
-    async def list_agents(self): return []
-    async def create_agent(self, **kwargs): return type('Agent', (), {'name': kwargs['name'], 'id': 'mock-id'})()
-    async def delete_agent(self, agent_id): pass
-    async def get_agent(self, agent_id): return None
+    def __init__(self, settings):
+        pass
+
+    async def list_agents(self):
+        return []
+
+    async def create_agent(self, **kwargs):
+        return type("Agent", (), {"name": kwargs["name"], "id": "mock-id"})()
+
+    async def delete_agent(self, agent_id):
+        pass
+
+    async def get_agent(self, agent_id):
+        return None
+
 
 class MockTaskManager:
-    def __init__(self, settings): pass
-    async def list_tasks(self): return []
+    def __init__(self, settings):
+        pass
+
+    async def list_tasks(self):
+        return []
+
 
 class MockToolManager:
-    def __init__(self, settings): pass
-    async def list_tools(self): return []
+    def __init__(self, settings):
+        pass
+
+    async def list_tools(self):
+        return []
+
 
 logger = get_logger(__name__)
 console = Console()
+
 
 class CLIInterface:
     """Interactive CLI interface for DataMCPServerAgent."""
@@ -510,6 +530,7 @@ class CLIInterface:
             history_table.add_row(str(i), entry["command"], f"{entry['timestamp']:.2f}s")
 
         console.print(history_table)
+
 
 def create_cli_interface(settings: Settings) -> CLIInterface:
     """Create CLI interface instance."""

@@ -1,7 +1,7 @@
 """
-Інтерактивні дашборди для Дослідницького Асистента.
-Цей модуль надає можливості для створення інтерактивних дашбордів
-для візуалізації та аналізу дослідницьких даних.
+Interactive dashboards for the Research Assistant.
+This module provides capabilities for creating interactive dashboards
+for visualizing and analyzing research data.
 """
 
 import json
@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
-# Спробуємо імпортувати бібліотеки для дашбордів
+# Try to import the libraries for the dashboards
 try:
     import dash
     from dash import dcc, html
@@ -20,7 +20,7 @@ try:
     DASH_AVAILABLE = True
 except ImportError:
     DASH_AVAILABLE = False
-    print("Увага: Dash не доступний. Встановіть його за допомогою 'pip install dash'")
+    print("Warning: Dash is not available. Install it using 'pip install dash'")
 
 try:
     import plotly.express as px
@@ -30,12 +30,11 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-    print(
-        "Увага: Plotly не доступний. Встановіть його за допомогою 'pip install plotly'"
-    )
+    print("Warning: Plotly is not available. Install it using 'pip install plotly'")
+
 
 class DashboardConfig(BaseModel):
-    """Конфігурація для дашбордів."""
+    """Configuration for dashboards."""
 
     title: str
     subtitle: Optional[str] = None
@@ -45,34 +44,36 @@ class DashboardConfig(BaseModel):
     background_color: str = "#ffffff"
     font_family: str = "Arial"
     layout: str = "grid"  # grid, tabs, vertical, horizontal
-    refresh_interval: Optional[int] = None  # в секундах
+    refresh_interval: Optional[int] = None  # in seconds
 
     class Config:
-        """Pydantic конфігурація."""
+        """Pydantic configuration."""
 
         arbitrary_types_allowed = True
 
+
 class DashboardPanel(BaseModel):
-    """Панель для дашборду."""
+    """Panel for the dashboard."""
 
     id: str
     title: str
     type: str  # chart, table, map, text, html, iframe
     data: Dict[str, Any]
     config: Dict[str, Any] = {}
-    width: int = 1  # відносна ширина (1-12 для grid layout)
-    height: int = 1  # відносна висота (1-12 для grid layout)
-    x: int = 0  # позиція x для grid layout
-    y: int = 0  # позиція y для grid layout
-    tab: Optional[str] = None  # для tab layout
+    width: int = 1  # relative width (1-12 for grid layout)
+    height: int = 1  # relative height (1-12 for grid layout)
+    x: int = 0  # x position for grid layout
+    y: int = 0  # y position for grid layout
+    tab: Optional[str] = None  # for tab layout
 
     class Config:
-        """Pydantic конфігурація."""
+        """Pydantic configuration."""
 
         arbitrary_types_allowed = True
 
+
 class Dashboard(BaseModel):
-    """Дашборд для візуалізації дослідницьких даних."""
+    """Dashboard for visualizing research data."""
 
     id: str
     title: str
@@ -80,61 +81,62 @@ class Dashboard(BaseModel):
     panels: List[DashboardPanel]
 
     class Config:
-        """Pydantic конфігурація."""
+        """Pydantic configuration."""
 
         arbitrary_types_allowed = True
 
+
 class DashboardGenerator:
-    """Генератор для дашбордів."""
+    """Generator for dashboards."""
 
     def __init__(self, output_dir: Optional[str] = None):
-        """Ініціалізація генератора дашбордів.
+        """Initialize the dashboard generator.
 
         Args:
-            output_dir: Директорія для збереження дашбордів
+            output_dir: Directory for saving dashboards
         """
         self.output_dir = output_dir or tempfile.mkdtemp()
         os.makedirs(self.output_dir, exist_ok=True)
 
         if not DASH_AVAILABLE or not PLOTLY_AVAILABLE:
-            print("Увага: Dash або Plotly не доступні. Дашборди будуть обмежені.")
+            print("Warning: Dash or Plotly is not available. Dashboards will be limited.")
 
     def generate_dashboard(self, dashboard: Dashboard) -> Dict[str, Any]:
-        """Генерація дашборду.
+        """Generate a dashboard.
 
         Args:
-            dashboard: Дашборд для генерації
+            dashboard: Dashboard to generate
 
         Returns:
-            Метадані дашборду
+            Metadata of the dashboard
         """
         if not DASH_AVAILABLE:
-            raise ImportError("Dash необхідний для генерації дашбордів")
+            raise ImportError("Dash is required to generate dashboards")
 
-        # Створюємо додаток Dash
+        # Create Dash app
         app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
-        # Встановлюємо заголовок
+        # Set the title
         app.title = dashboard.title
 
-        # Створюємо макет на основі конфігурації
+        # Create layout based on configuration
         if dashboard.config.layout == "tabs":
             app.layout = self._create_tabs_layout(dashboard)
         elif dashboard.config.layout == "vertical":
             app.layout = self._create_vertical_layout(dashboard)
         elif dashboard.config.layout == "horizontal":
             app.layout = self._create_horizontal_layout(dashboard)
-        else:  # grid (за замовчуванням)
+        else:  # grid (default)
             app.layout = self._create_grid_layout(dashboard)
 
-        # Додаємо колбеки для інтерактивності
+        # Add callbacks for interactivity
         self._add_callbacks(app, dashboard)
 
-        # Зберігаємо дашборд
+        # Save the dashboard
         filename = f"{dashboard.id.lower().replace(' ', '_')}_dashboard.html"
         filepath = os.path.join(self.output_dir, filename)
 
-        # Запускаємо сервер і зберігаємо HTML
+        # Run the server and save HTML
         app.run_server(debug=False, port=8050, mode="inline")
 
         return {
@@ -146,25 +148,27 @@ class DashboardGenerator:
         }
 
     def _create_grid_layout(self, dashboard: Dashboard) -> html.Div:
-        """Створення макету сітки для дашборду.
+        """Create a grid layout for the dashboard.
 
         Args:
-            dashboard: Дашборд для генерації
+            dashboard: Dashboard to generate
 
         Returns:
-            Макет дашборду
+            Dashboard layout
         """
-        # Створюємо заголовок
+        # Create a header
         header = html.Div(
             [
                 html.H1(dashboard.title, style={"textAlign": "center"}),
-                html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
-                if dashboard.config.subtitle
-                else None,
+                (
+                    html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
+                    if dashboard.config.subtitle
+                    else None
+                ),
             ]
         )
 
-        # Створюємо сітку
+        # Create a grid
         grid = html.Div(
             [
                 html.Div(
@@ -174,7 +178,7 @@ class DashboardGenerator:
             ]
         )
 
-        # Створюємо стилі для сітки
+        # Create styles for the grid
         grid_style = {
             "display": "grid",
             "gridTemplateColumns": "repeat(12, 1fr)",
@@ -182,7 +186,7 @@ class DashboardGenerator:
             "padding": "10px",
         }
 
-        # Додаємо стилі для кожної панелі
+        # Add styles for each panel
         panel_styles = {}
         for panel in dashboard.panels:
             panel_styles[f"#{panel.id}"] = {
@@ -190,8 +194,9 @@ class DashboardGenerator:
                 "gridRow": f"span {panel.height}",
             }
 
-        # Створюємо стилі
-        styles = html.Style(f"""
+        # Create styles
+        styles = html.Style(
+            f"""
             .grid-container {{
                 display: grid;
                 grid-template-columns: repeat(12, 1fr);
@@ -200,9 +205,10 @@ class DashboardGenerator:
             }}
 
             {" ".join([f"#{panel.id} {{ grid-column: span {panel.width}; grid-row: span {panel.height}; }}" for panel in dashboard.panels])}
-        """)
+        """
+        )
 
-        # Створюємо макет
+        # Create layout
         layout = html.Div(
             [styles, header, grid],
             style={
@@ -215,28 +221,30 @@ class DashboardGenerator:
         return layout
 
     def _create_tabs_layout(self, dashboard: Dashboard) -> html.Div:
-        """Створення макету з вкладками для дашборду.
+        """Create a tabbed layout for the dashboard.
 
         Args:
-            dashboard: Дашборд для генерації
+            dashboard: Dashboard to generate
 
         Returns:
-            Макет дашборду
+            Dashboard layout
         """
-        # Створюємо заголовок
+        # Create a header
         header = html.Div(
             [
                 html.H1(dashboard.title, style={"textAlign": "center"}),
-                html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
-                if dashboard.config.subtitle
-                else None,
+                (
+                    html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
+                    if dashboard.config.subtitle
+                    else None
+                ),
             ]
         )
 
-        # Отримуємо унікальні вкладки
+        # Get unique tabs
         tabs = list(set([panel.tab for panel in dashboard.panels if panel.tab]))
 
-        # Створюємо вкладки
+        # Create tabs
         tab_content = []
         for tab in tabs:
             tab_panels = [panel for panel in dashboard.panels if panel.tab == tab]
@@ -250,12 +258,12 @@ class DashboardGenerator:
                 )
             )
 
-        # Додаємо панелі без вкладок
+        # Add panels without tabs
         no_tab_panels = [panel for panel in dashboard.panels if not panel.tab]
         if no_tab_panels:
             tab_content.append(
                 dcc.Tab(
-                    label="Загальне",
+                    label="General",
                     children=html.Div(
                         [self._create_panel(panel) for panel in no_tab_panels],
                         style={"padding": "20px"},
@@ -263,12 +271,10 @@ class DashboardGenerator:
                 )
             )
 
-        # Створюємо компонент вкладок
-        tabs_component = dcc.Tabs(
-            id="tabs", children=tab_content, style={"marginTop": "20px"}
-        )
+        # Create tabs component
+        tabs_component = dcc.Tabs(id="tabs", children=tab_content, style={"marginTop": "20px"})
 
-        # Створюємо макет
+        # Create layout
         layout = html.Div(
             [header, tabs_component],
             style={
@@ -281,31 +287,33 @@ class DashboardGenerator:
         return layout
 
     def _create_vertical_layout(self, dashboard: Dashboard) -> html.Div:
-        """Створення вертикального макету для дашборду.
+        """Create a vertical layout for the dashboard.
 
         Args:
-            dashboard: Дашборд для генерації
+            dashboard: Dashboard to generate
 
         Returns:
-            Макет дашборду
+            Dashboard layout
         """
-        # Створюємо заголовок
+        # Create a header
         header = html.Div(
             [
                 html.H1(dashboard.title, style={"textAlign": "center"}),
-                html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
-                if dashboard.config.subtitle
-                else None,
+                (
+                    html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
+                    if dashboard.config.subtitle
+                    else None
+                ),
             ]
         )
 
-        # Створюємо панелі
+        # Create panels
         panels = html.Div(
             [self._create_panel(panel) for panel in dashboard.panels],
             style={"display": "flex", "flexDirection": "column", "gap": "20px"},
         )
 
-        # Створюємо макет
+        # Create layout
         layout = html.Div(
             [header, panels],
             style={
@@ -318,25 +326,27 @@ class DashboardGenerator:
         return layout
 
     def _create_horizontal_layout(self, dashboard: Dashboard) -> html.Div:
-        """Створення горизонтального макету для дашборду.
+        """Create a horizontal layout for the dashboard.
 
         Args:
-            dashboard: Дашборд для генерації
+            dashboard: Dashboard to generate
 
         Returns:
-            Макет дашборду
+            Dashboard layout
         """
-        # Створюємо заголовок
+        # Create a header
         header = html.Div(
             [
                 html.H1(dashboard.title, style={"textAlign": "center"}),
-                html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
-                if dashboard.config.subtitle
-                else None,
+                (
+                    html.H3(dashboard.config.subtitle, style={"textAlign": "center"})
+                    if dashboard.config.subtitle
+                    else None
+                ),
             ]
         )
 
-        # Створюємо панелі
+        # Create panels
         panels = html.Div(
             [self._create_panel(panel) for panel in dashboard.panels],
             style={
@@ -347,7 +357,7 @@ class DashboardGenerator:
             },
         )
 
-        # Створюємо макет
+        # Create layout
         layout = html.Div(
             [header, panels],
             style={
@@ -360,15 +370,15 @@ class DashboardGenerator:
         return layout
 
     def _create_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі для дашборду.
+        """Create a panel for the dashboard.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
-        # Створюємо вміст панелі на основі типу
+        # Create panel content based on type
         if panel.type == "chart":
             content = self._create_chart_panel(panel)
         elif panel.type == "table":
@@ -382,14 +392,12 @@ class DashboardGenerator:
         elif panel.type == "iframe":
             content = self._create_iframe_panel(panel)
         else:
-            content = html.Div(f"Непідтримуваний тип панелі: {panel.type}")
+            content = html.Div(f"Unsupported panel type: {panel.type}")
 
-        # Створюємо панель
+        # Create panel
         panel_div = html.Div(
             [
-                html.H3(
-                    panel.title, style={"textAlign": "center", "marginBottom": "10px"}
-                ),
+                html.H3(panel.title, style={"textAlign": "center", "marginBottom": "10px"}),
                 content,
             ],
             id=panel.id,
@@ -404,23 +412,23 @@ class DashboardGenerator:
         return panel_div
 
     def _create_chart_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з графіком.
+        """Create a panel with a chart.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
         if not PLOTLY_AVAILABLE:
-            return html.Div("Plotly не доступний. Неможливо створити графік.")
+            return html.Div("Plotly is not available. Cannot create chart.")
 
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         chart_type = panel.data.get("chart_type", "bar")
         x_data = panel.data.get("x_data", [])
         y_data = panel.data.get("y_data", [])
 
-        # Створюємо графік на основі типу
+        # Create chart based on type
         if chart_type == "bar":
             fig = go.Figure(data=[go.Bar(x=x_data, y=y_data)])
         elif chart_type == "line":
@@ -432,9 +440,9 @@ class DashboardGenerator:
         elif chart_type == "area":
             fig = go.Figure(data=[go.Scatter(x=x_data, y=y_data, fill="tozeroy")])
         else:
-            return html.Div(f"Непідтримуваний тип графіка: {chart_type}")
+            return html.Div(f"Unsupported chart type: {chart_type}")
 
-        # Оновлюємо макет
+        # Update layout
         fig.update_layout(
             title=panel.config.get("title"),
             xaxis_title=panel.config.get("x_label"),
@@ -442,7 +450,7 @@ class DashboardGenerator:
             margin=dict(l=40, r=40, t=40, b=40),
         )
 
-        # Створюємо компонент графіка
+        # Create chart component
         graph = dcc.Graph(
             id=f"{panel.id}-graph",
             figure=fig,
@@ -452,34 +460,35 @@ class DashboardGenerator:
         return html.Div(graph, style={"height": "100%", "width": "100%"})
 
     def _create_table_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з таблицею.
+        """Create a panel with a table.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         columns = panel.data.get("columns", [])
         data = panel.data.get("data", [])
 
-        # Створюємо заголовки таблиці
+        # Create table headers
         header = html.Tr([html.Th(col) for col in columns])
 
-        # Створюємо рядки таблиці
+        # Create table rows
         rows = []
         for row in data:
             rows.append(html.Tr([html.Td(cell) for cell in row]))
 
-        # Створюємо таблицю
+        # Create table
         table = html.Table(
             [html.Thead(header), html.Tbody(rows)],
             style={"width": "100%", "borderCollapse": "collapse"},
         )
 
-        # Створюємо стилі для таблиці
-        styles = html.Style("""
+        # Create styles for the table
+        styles = html.Style(
+            """
             table {
                 width: 100%;
                 border-collapse: collapse;
@@ -498,30 +507,31 @@ class DashboardGenerator:
             tr:hover {
                 background-color: #f5f5f5;
             }
-        """)
+        """
+        )
 
         return html.Div([styles, table], style={"overflowX": "auto"})
 
     def _create_map_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з картою.
+        """Create a panel with a map.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
         if not PLOTLY_AVAILABLE:
-            return html.Div("Plotly не доступний. Неможливо створити карту.")
+            return html.Div("Plotly is not available. Cannot create map.")
 
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         locations = panel.data.get("locations", [])
         location_mode = panel.data.get("location_mode", "ISO-3")
         color_field = panel.data.get("color_field")
 
-        # Створюємо карту
+        # Create map
         if location_mode == "ISO-3":
-            # Створюємо хороплет
+            # Create choropleth
             fig = px.choropleth(
                 locations=locations,
                 locationmode="ISO-3",
@@ -530,7 +540,7 @@ class DashboardGenerator:
                 title=panel.config.get("title"),
             )
         else:
-            # Створюємо точкову карту
+            # Create scatter map
             fig = px.scatter_geo(
                 lat=[loc.get("lat") for loc in locations],
                 lon=[loc.get("lon") for loc in locations],
@@ -538,7 +548,7 @@ class DashboardGenerator:
                 title=panel.config.get("title"),
             )
 
-        # Оновлюємо макет
+        # Update layout
         fig.update_layout(
             margin=dict(l=0, r=0, t=30, b=0),
             geo=dict(
@@ -553,7 +563,7 @@ class DashboardGenerator:
             ),
         )
 
-        # Створюємо компонент карти
+        # Create map component
         graph = dcc.Graph(
             id=f"{panel.id}-map", figure=fig, style={"height": "100%", "width": "100%"}
         )
@@ -561,18 +571,18 @@ class DashboardGenerator:
         return html.Div(graph, style={"height": "100%", "width": "100%"})
 
     def _create_text_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з текстом.
+        """Create a panel with text.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         text = panel.data.get("text", "")
 
-        # Створюємо текстовий компонент
+        # Create text component
         return html.Div(
             text,
             style={
@@ -584,48 +594,46 @@ class DashboardGenerator:
         )
 
     def _create_html_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з HTML.
+        """Create a panel with HTML.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         html_content = panel.data.get("html", "")
 
-        # Створюємо HTML компонент
+        # Create HTML component
         return html.Iframe(
             srcDoc=html_content,
             style={"width": "100%", "height": "100%", "border": "none"},
         )
 
     def _create_iframe_panel(self, panel: DashboardPanel) -> html.Div:
-        """Створення панелі з iframe.
+        """Create a panel with iframe.
 
         Args:
-            panel: Панель для створення
+            panel: Panel to create
 
         Returns:
-            Компонент панелі
+            Panel component
         """
-        # Отримуємо дані та конфігурацію
+        # Get data and configuration
         url = panel.data.get("url", "")
 
-        # Створюємо iframe компонент
-        return html.Iframe(
-            src=url, style={"width": "100%", "height": "100%", "border": "none"}
-        )
+        # Create iframe component
+        return html.Iframe(src=url, style={"width": "100%", "height": "100%", "border": "none"})
 
     def _add_callbacks(self, app: dash.Dash, dashboard: Dashboard) -> None:
-        """Додавання колбеків для інтерактивності.
+        """Add callbacks for interactivity.
 
         Args:
-            app: Додаток Dash
-            dashboard: Дашборд для генерації
+            app: Dash app
+            dashboard: Dashboard to generate
         """
-        # Додаємо колбеки для оновлення даних
+        # Add callbacks for data updates
         if dashboard.config.refresh_interval:
 
             @app.callback(
@@ -633,56 +641,58 @@ class DashboardGenerator:
                 Input("refresh-interval", "n_intervals"),
             )
             def update_dashboard(n):
-                # Тут можна додати логіку для оновлення даних
+                # Logic for updating data can be added here
                 return self._create_dashboard_content(dashboard)
 
+
 def generate_dashboard_tool(data_str: str) -> str:
-    """Генерація дашборду.
+    """Generate a dashboard.
 
     Args:
-        data_str: JSON-рядок з даними дашборду та конфігурацією
+        data_str: JSON string with dashboard data and configuration
 
     Returns:
-        JSON-рядок з метаданими дашборду
+        JSON string with dashboard metadata
     """
     try:
         data = json.loads(data_str)
 
-        # Створюємо генератор дашбордів
+        # Create dashboard generator
         generator = DashboardGenerator()
 
-        # Створюємо дашборд
+        # Create dashboard
         dashboard = Dashboard(
             id=data.get("id", "dashboard"),
-            title=data.get("title", "Дашборд"),
+            title=data.get("title", "Dashboard"),
             config=DashboardConfig(**data.get("config", {})),
             panels=[DashboardPanel(**panel) for panel in data.get("panels", [])],
         )
 
-        # Генеруємо дашборд
+        # Generate dashboard
         result = generator.generate_dashboard(dashboard)
 
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 if __name__ == "__main__":
-    # Приклад використання
+    # Example usage
     generator = DashboardGenerator()
 
-    # Створюємо дашборд
+    # Create dashboard
     dashboard = Dashboard(
         id="example-dashboard",
-        title="Приклад дашборду",
+        title="Example Dashboard",
         config=DashboardConfig(
-            title="Приклад дашборду",
-            subtitle="Демонстрація можливостей дашбордів",
+            title="Example Dashboard",
+            subtitle="Demonstration of dashboard capabilities",
             layout="grid",
         ),
         panels=[
             DashboardPanel(
                 id="chart-panel",
-                title="Графік",
+                title="Chart",
                 type="chart",
                 data={
                     "chart_type": "bar",
@@ -690,9 +700,9 @@ if __name__ == "__main__":
                     "y_data": [10, 20, 15, 25, 30],
                 },
                 config={
-                    "title": "Приклад графіка",
-                    "x_label": "Категорії",
-                    "y_label": "Значення",
+                    "title": "Example Chart",
+                    "x_label": "Categories",
+                    "y_label": "Values",
                 },
                 width=6,
                 height=4,
@@ -701,16 +711,16 @@ if __name__ == "__main__":
             ),
             DashboardPanel(
                 id="table-panel",
-                title="Таблиця",
+                title="Table",
                 type="table",
                 data={
-                    "columns": ["Назва", "Значення", "Опис"],
+                    "columns": ["Name", "Value", "Description"],
                     "data": [
-                        ["A", 10, "Опис A"],
-                        ["B", 20, "Опис B"],
-                        ["C", 15, "Опис C"],
-                        ["D", 25, "Опис D"],
-                        ["E", 30, "Опис E"],
+                        ["A", 10, "Description A"],
+                        ["B", 20, "Description B"],
+                        ["C", 15, "Description C"],
+                        ["D", 25, "Description D"],
+                        ["E", 30, "Description E"],
                     ],
                 },
                 width=6,
@@ -720,10 +730,10 @@ if __name__ == "__main__":
             ),
             DashboardPanel(
                 id="text-panel",
-                title="Текст",
+                title="Text",
                 type="text",
                 data={
-                    "text": "Це приклад текстової панелі. Тут можна розмістити будь-який текст, включаючи результати дослідження, висновки, тощо."
+                    "text": "This is an example of a text panel. Any text can be placed here, including research results, conclusions, etc."
                 },
                 width=12,
                 height=2,
@@ -733,6 +743,6 @@ if __name__ == "__main__":
         ],
     )
 
-    # Генеруємо дашборд
+    # Generate dashboard
     result = generator.generate_dashboard(dashboard)
-    print(f"Дашборд згенеровано: {result['url']}")
+    print(f"Dashboard generated: {result['url']}")

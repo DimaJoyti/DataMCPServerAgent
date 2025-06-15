@@ -13,15 +13,11 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
+
 class ReportGenerator:
     """Component for generating research reports."""
 
-    def __init__(
-        self,
-        model: ChatAnthropic,
-        memory_db: MemoryDatabase,
-        templates: Dict[str, Any]
-    ):
+    def __init__(self, model: ChatAnthropic, memory_db: MemoryDatabase, templates: Dict[str, Any]):
         """Initialize the report generator.
 
         Args:
@@ -38,7 +34,7 @@ class ReportGenerator:
         topic: str,
         analyzed_data: Dict[str, Any],
         template_name: str = "standard",
-        audience: str = "general"
+        audience: str = "general",
     ) -> Dict[str, Any]:
         """Generate a research report.
 
@@ -64,20 +60,13 @@ class ReportGenerator:
             sections = {}
             for section_name in structure:
                 section_content = await self._generate_section_content(
-                    section_name,
-                    structure[section_name],
-                    analyzed_data,
-                    audience
+                    section_name, structure[section_name], analyzed_data, audience
                 )
                 sections[section_name] = section_content
 
             # Generate executive summary
             print("Generating executive summary...")
-            executive_summary = await self._generate_executive_summary(
-                topic,
-                sections,
-                audience
-            )
+            executive_summary = await self._generate_executive_summary(topic, sections, audience)
 
             # Generate bibliography
             print("Generating bibliography...")
@@ -92,16 +81,12 @@ class ReportGenerator:
                 "metadata": {
                     "generated_at": time.time(),
                     "template": template_name,
-                    "audience": audience
-                }
+                    "audience": audience,
+                },
             }
 
             # Store report in memory
-            self.memory_db.save_entity(
-                "research_reports",
-                f"report_{int(time.time())}",
-                report
-            )
+            self.memory_db.save_entity("research_reports", f"report_{int(time.time())}", report)
 
             return report
         except Exception as e:
@@ -110,10 +95,7 @@ class ReportGenerator:
             return {"error": error_message}
 
     async def _generate_structure(
-        self,
-        topic: str,
-        template: Dict[str, Any],
-        audience: str
+        self, topic: str, template: Dict[str, Any], audience: str
     ) -> Dict[str, str]:
         """Generate report structure based on template.
 
@@ -169,11 +151,7 @@ class ReportGenerator:
         return structure
 
     async def _generate_section_content(
-        self,
-        section_name: str,
-        section_prompt: str,
-        analyzed_data: Dict[str, Any],
-        audience: str
+        self, section_name: str, section_prompt: str, analyzed_data: Dict[str, Any], audience: str
     ) -> str:
         """Generate content for a report section.
 
@@ -191,7 +169,9 @@ class ReportGenerator:
 
         # Get relevant themes for this section
         themes = analyzed_data.get("themes", [])
-        theme_text = "\n".join([f"Theme: {theme['name']}\nDescription: {theme['description']}" for theme in themes])
+        theme_text = "\n".join(
+            [f"Theme: {theme['name']}\nDescription: {theme['description']}" for theme in themes]
+        )
 
         # Get relevant key points for this section
         key_points = analyzed_data.get("key_points", {})
@@ -203,18 +183,19 @@ class ReportGenerator:
 
         # Create a prompt for the model
         messages = [
-            SystemMessage(content=f"You are an expert at writing research reports for a {audience} audience. Write a {section_name} section based on the provided information."),
-            HumanMessage(content=f"{section_prompt}\n\nUse the following information to write this section:\n\nSYNTHESIS:\n{synthesis}\n\nTHEMES:\n{theme_text}\n\nKEY POINTS:{points_text}")
+            SystemMessage(
+                content=f"You are an expert at writing research reports for a {audience} audience. Write a {section_name} section based on the provided information."
+            ),
+            HumanMessage(
+                content=f"{section_prompt}\n\nUse the following information to write this section:\n\nSYNTHESIS:\n{synthesis}\n\nTHEMES:\n{theme_text}\n\nKEY POINTS:{points_text}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
         return response.content
 
     async def _generate_executive_summary(
-        self,
-        topic: str,
-        sections: Dict[str, str],
-        audience: str
+        self, topic: str, sections: Dict[str, str], audience: str
     ) -> str:
         """Generate an executive summary for the report.
 
@@ -235,8 +216,12 @@ class ReportGenerator:
             sections_text += f"\n\n{section_name}:\n{first_paragraph}"
 
         messages = [
-            SystemMessage(content=f"You are an expert at writing executive summaries for research reports for a {audience} audience. Write a concise executive summary that captures the key points of the report."),
-            HumanMessage(content=f"Write an executive summary for a research report on {topic}. The audience is {audience}.\n\nUse the following section excerpts to create the summary:{sections_text}")
+            SystemMessage(
+                content=f"You are an expert at writing executive summaries for research reports for a {audience} audience. Write a concise executive summary that captures the key points of the report."
+            ),
+            HumanMessage(
+                content=f"Write an executive summary for a research report on {topic}. The audience is {audience}.\n\nUse the following section excerpts to create the summary:{sections_text}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
@@ -261,8 +246,13 @@ class ReportGenerator:
 
         # Use the model to generate bibliography entries
         messages = [
-            SystemMessage(content="You are an expert at creating bibliographies for research reports. Create bibliography entries for the provided sources."),
-            HumanMessage(content="Create bibliography entries for the following sources:\n\n" + "\n".join([f"- {source}" for source in sources]))
+            SystemMessage(
+                content="You are an expert at creating bibliographies for research reports. Create bibliography entries for the provided sources."
+            ),
+            HumanMessage(
+                content="Create bibliography entries for the following sources:\n\n"
+                + "\n".join([f"- {source}" for source in sources])
+            ),
         ]
 
         response = await self.model.ainvoke(messages)

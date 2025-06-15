@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class AdvancedMemoryDatabase(MemoryDatabase):
     """Extended database for persisting advanced agent memory."""
 
@@ -28,7 +29,8 @@ class AdvancedMemoryDatabase(MemoryDatabase):
         cursor = conn.cursor()
 
         # Deep RL weights
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS drl_weights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -36,10 +38,12 @@ class AdvancedMemoryDatabase(MemoryDatabase):
             last_updated REAL NOT NULL,
             UNIQUE(agent_name)
         )
-        """)
+        """
+        )
 
         # Multi-objective Q-tables
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS mo_q_tables (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -48,10 +52,12 @@ class AdvancedMemoryDatabase(MemoryDatabase):
             last_updated REAL NOT NULL,
             UNIQUE(agent_name, objective)
         )
-        """)
+        """
+        )
 
         # Multi-objective agent rewards
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS agent_mo_rewards (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -59,10 +65,12 @@ class AdvancedMemoryDatabase(MemoryDatabase):
             objective_rewards TEXT NOT NULL,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
         # Agent decisions
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS agent_decisions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -72,7 +80,8 @@ class AdvancedMemoryDatabase(MemoryDatabase):
             reward TEXT NOT NULL,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -123,7 +132,9 @@ class AdvancedMemoryDatabase(MemoryDatabase):
             return json.loads(row[0])
         return None
 
-    def save_mo_q_tables(self, agent_name: str, mo_q_tables: Dict[str, Dict[str, Dict[str, float]]]) -> None:
+    def save_mo_q_tables(
+        self, agent_name: str, mo_q_tables: Dict[str, Dict[str, Dict[str, float]]]
+    ) -> None:
         """Save multi-objective Q-tables to the database.
 
         Args:
@@ -273,9 +284,7 @@ class AdvancedMemoryDatabase(MemoryDatabase):
         conn.commit()
         conn.close()
 
-    def get_agent_decisions(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_agent_decisions(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get decisions for an agent.
 
         Args:

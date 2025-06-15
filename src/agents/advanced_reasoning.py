@@ -4,23 +4,23 @@ This module implements sophisticated reasoning capabilities including backtracki
 causal reasoning, counterfactual thinking, and multi-perspective analysis.
 """
 
-import asyncio
 import json
 import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.tools import BaseTool
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class ReasoningStepType(Enum):
     """Types of reasoning steps."""
+
     OBSERVATION = "observation"
     HYPOTHESIS = "hypothesis"
     INFERENCE = "inference"
@@ -29,9 +29,11 @@ class ReasoningStepType(Enum):
     CAUSAL_LINK = "causal_link"
     COUNTERFACTUAL = "counterfactual"
 
+
 @dataclass
 class ReasoningStep:
     """Represents a single step in the reasoning chain."""
+
     step_id: str
     step_type: ReasoningStepType
     content: str
@@ -41,9 +43,11 @@ class ReasoningStep:
     evidence: Dict[str, Any]
     alternatives: List[str]
 
+
 @dataclass
 class ReasoningChain:
     """Represents a complete reasoning chain with backtracking capabilities."""
+
     chain_id: str
     goal: str
     steps: List[ReasoningStep]
@@ -51,6 +55,7 @@ class ReasoningChain:
     confidence_threshold: float
     max_backtrack_depth: int
     metadata: Dict[str, Any]
+
 
 class AdvancedReasoningEngine:
     """Advanced reasoning engine with backtracking and causal reasoning capabilities."""
@@ -60,7 +65,7 @@ class AdvancedReasoningEngine:
         model: ChatAnthropic,
         db: MemoryDatabase,
         confidence_threshold: float = 0.7,
-        max_backtrack_depth: int = 5
+        max_backtrack_depth: int = 5,
     ):
         """Initialize the advanced reasoning engine.
 
@@ -83,8 +88,10 @@ class AdvancedReasoningEngine:
         """Initialize reasoning prompts."""
 
         # Chain-of-thought reasoning prompt
-        self.reasoning_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an advanced reasoning agent capable of sophisticated multi-step reasoning.
+        self.reasoning_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an advanced reasoning agent capable of sophisticated multi-step reasoning.
 Your task is to break down complex problems into logical steps, validate each step, and backtrack when necessary.
 
 For each reasoning step, you should:
@@ -104,19 +111,25 @@ Respond with a JSON object containing:
 - "alternatives": Alternative explanations
 - "dependencies": IDs of dependent steps
 - "should_backtrack": Whether to backtrack (boolean)
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Problem: {problem}
 Current reasoning chain: {current_chain}
 Previous step: {previous_step}
 
 Continue the reasoning chain or suggest backtracking if needed.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Causal reasoning prompt
-        self.causal_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a causal reasoning specialist. Your task is to identify and analyze causal relationships.
+        self.causal_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a causal reasoning specialist. Your task is to identify and analyze causal relationships.
 
 For causal analysis, consider:
 1. Temporal precedence (cause before effect)
@@ -129,18 +142,24 @@ Respond with a JSON object containing:
 - "confidence": Confidence in causal analysis
 - "alternative_causes": Other possible causes
 - "mechanism": Explanation of causal mechanism
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Analyze the causal relationships in this scenario:
 {scenario}
 
 Context: {context}
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Counterfactual reasoning prompt
-        self.counterfactual_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a counterfactual reasoning specialist. Your task is to explore "what if" scenarios.
+        self.counterfactual_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a counterfactual reasoning specialist. Your task is to explore "what if" scenarios.
 
 For counterfactual analysis, consider:
 1. Alternative conditions or actions
@@ -153,20 +172,21 @@ Respond with a JSON object containing:
 - "outcomes": Predicted outcomes for each scenario
 - "probabilities": Likelihood of each outcome
 - "implications": What this means for current situation
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Explore counterfactual scenarios for:
 {situation}
 
 Current facts: {facts}
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def start_reasoning_chain(
-        self,
-        goal: str,
-        initial_context: Dict[str, Any],
-        chain_id: Optional[str] = None
+        self, goal: str, initial_context: Dict[str, Any], chain_id: Optional[str] = None
     ) -> str:
         """Start a new reasoning chain.
 
@@ -192,25 +212,21 @@ Current facts: {facts}
             metadata={
                 "start_time": time.time(),
                 "initial_context": initial_context,
-                "backtrack_count": 0
-            }
+                "backtrack_count": 0,
+            },
         )
 
         self.active_chains[chain_id] = chain
 
         # Save to database
-        await self.db.save_reasoning_chain(chain_id, {
-            "goal": goal,
-            "initial_context": initial_context,
-            "start_time": time.time()
-        })
+        await self.db.save_reasoning_chain(
+            chain_id, {"goal": goal, "initial_context": initial_context, "start_time": time.time()}
+        )
 
         return chain_id
 
     async def continue_reasoning(
-        self,
-        chain_id: str,
-        new_information: Optional[Dict[str, Any]] = None
+        self, chain_id: str, new_information: Optional[Dict[str, Any]] = None
     ) -> ReasoningStep:
         """Continue reasoning in an existing chain.
 
@@ -234,7 +250,7 @@ Current facts: {facts}
         input_values = {
             "problem": chain.goal,
             "current_chain": current_chain_summary,
-            "previous_step": json.dumps(previous_step.__dict__ if previous_step else {}, indent=2)
+            "previous_step": json.dumps(previous_step.__dict__ if previous_step else {}, indent=2),
         }
 
         # Get next reasoning step
@@ -252,7 +268,7 @@ Current facts: {facts}
                 "evidence": {},
                 "alternatives": [],
                 "dependencies": [],
-                "should_backtrack": False
+                "should_backtrack": False,
             }
 
         # Create reasoning step
@@ -264,12 +280,11 @@ Current facts: {facts}
             dependencies=step_data.get("dependencies", []),
             timestamp=time.time(),
             evidence=step_data.get("evidence", {}),
-            alternatives=step_data.get("alternatives", [])
+            alternatives=step_data.get("alternatives", []),
         )
 
         # Check if backtracking is needed
-        if (step_data.get("should_backtrack", False) or
-            step.confidence < chain.confidence_threshold):
+        if step_data.get("should_backtrack", False) or step.confidence < chain.confidence_threshold:
             await self._handle_backtrack(chain, step)
         else:
             # Add step to chain
@@ -282,9 +297,7 @@ Current facts: {facts}
         return step
 
     async def analyze_causal_relationships(
-        self,
-        scenario: str,
-        context: Dict[str, Any]
+        self, scenario: str, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Analyze causal relationships in a scenario.
 
@@ -295,10 +308,7 @@ Current facts: {facts}
         Returns:
             Causal analysis results
         """
-        input_values = {
-            "scenario": scenario,
-            "context": json.dumps(context, indent=2)
-        }
+        input_values = {"scenario": scenario, "context": json.dumps(context, indent=2)}
 
         messages = self.causal_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
@@ -310,13 +320,11 @@ Current facts: {facts}
                 "causal_links": [],
                 "confidence": 0.5,
                 "alternative_causes": [response.content],
-                "mechanism": "Unable to parse causal analysis"
+                "mechanism": "Unable to parse causal analysis",
             }
 
     async def explore_counterfactuals(
-        self,
-        situation: str,
-        facts: Dict[str, Any]
+        self, situation: str, facts: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Explore counterfactual scenarios.
 
@@ -327,10 +335,7 @@ Current facts: {facts}
         Returns:
             Counterfactual analysis results
         """
-        input_values = {
-            "situation": situation,
-            "facts": json.dumps(facts, indent=2)
-        }
+        input_values = {"situation": situation, "facts": json.dumps(facts, indent=2)}
 
         messages = self.counterfactual_prompt.format_messages(**input_values)
         response = await self.model.ainvoke(messages)
@@ -342,7 +347,7 @@ Current facts: {facts}
                 "scenarios": [],
                 "outcomes": [],
                 "probabilities": [],
-                "implications": response.content
+                "implications": response.content,
             }
 
     def _summarize_chain(self, chain: ReasoningChain) -> str:
@@ -389,7 +394,7 @@ Current facts: {facts}
                 break
 
         # Remove steps after backtrack point
-        chain.steps = chain.steps[:backtrack_point + 1]
+        chain.steps = chain.steps[: backtrack_point + 1]
         chain.current_step = len(chain.steps)
 
         # Add backtrack step
@@ -401,7 +406,7 @@ Current facts: {facts}
             dependencies=[],
             timestamp=time.time(),
             evidence={"failed_step": failed_step.__dict__},
-            alternatives=failed_step.alternatives
+            alternatives=failed_step.alternatives,
         )
 
         chain.steps.append(backtrack_step)

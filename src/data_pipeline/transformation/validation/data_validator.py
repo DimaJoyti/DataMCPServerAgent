@@ -5,42 +5,50 @@ This module provides comprehensive data validation capabilities
 including schema validation, data quality checks, and anomaly detection.
 """
 
-import asyncio
 import logging
 import re
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import polars as pl
-from datetime import datetime, timezone
-
 import structlog
 from pydantic import BaseModel, Field
 
-from ...core.pipeline_models import ValidationRule, QualityMetrics
+from ...core.pipeline_models import QualityMetrics, ValidationRule
+
 
 class ValidationConfig(BaseModel):
     """Configuration for data validation."""
+
     enable_schema_validation: bool = Field(default=True, description="Enable schema validation")
     enable_quality_checks: bool = Field(default=True, description="Enable data quality checks")
     enable_anomaly_detection: bool = Field(default=False, description="Enable anomaly detection")
 
     # Quality thresholds
     max_null_percentage: float = Field(default=0.1, description="Maximum null percentage allowed")
-    max_duplicate_percentage: float = Field(default=0.05, description="Maximum duplicate percentage allowed")
+    max_duplicate_percentage: float = Field(
+        default=0.05, description="Maximum duplicate percentage allowed"
+    )
     min_completeness_score: float = Field(default=0.9, description="Minimum completeness score")
 
     # Validation options
     fail_on_error: bool = Field(default=True, description="Fail validation on first error")
     collect_all_errors: bool = Field(default=False, description="Collect all validation errors")
 
+
 class ValidationResult(BaseModel):
     """Result of data validation."""
+
     is_valid: bool = Field(..., description="Whether data passed validation")
-    validation_errors: List[str] = Field(default_factory=list, description="List of validation errors")
+    validation_errors: List[str] = Field(
+        default_factory=list, description="List of validation errors"
+    )
     quality_metrics: Optional[QualityMetrics] = Field(None, description="Data quality metrics")
     validation_time: float = Field(..., description="Time taken for validation")
     rules_applied: int = Field(..., description="Number of rules applied")
     rules_passed: int = Field(..., description="Number of rules passed")
+
 
 class DataValidator:
     """
@@ -51,9 +59,7 @@ class DataValidator:
     """
 
     def __init__(
-        self,
-        config: Optional[ValidationConfig] = None,
-        logger: Optional[logging.Logger] = None
+        self, config: Optional[ValidationConfig] = None, logger: Optional[logging.Logger] = None
     ):
         """
         Initialize the data validator.
@@ -83,9 +89,7 @@ class DataValidator:
         self.logger.info("Data validator initialized")
 
     async def validate_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame, Any],
-        validation_rules: List[Dict[str, Any]]
+        self, data: Union[pd.DataFrame, pl.DataFrame, Any], validation_rules: List[Dict[str, Any]]
     ) -> ValidationResult:
         """
         Validate data according to rules.
@@ -161,7 +165,7 @@ class DataValidator:
                 quality_metrics=quality_metrics,
                 validation_time=validation_time,
                 rules_applied=len(rules),
-                rules_passed=rules_passed
+                rules_passed=rules_passed,
             )
 
             self.logger.info(
@@ -170,7 +174,7 @@ class DataValidator:
                 errors_count=len(validation_errors),
                 rules_applied=len(rules),
                 rules_passed=rules_passed,
-                validation_time=validation_time
+                validation_time=validation_time,
             )
 
             return result
@@ -180,9 +184,7 @@ class DataValidator:
             raise e
 
     async def _apply_validation_rule(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Apply a single validation rule."""
         try:
@@ -199,14 +201,12 @@ class DataValidator:
                 "Validation rule failed",
                 rule_id=rule.rule_id,
                 rule_type=rule.rule_type,
-                error=str(e)
+                error=str(e),
             )
             raise e
 
     async def _validate_not_null(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that column has no null values."""
         if not rule.column or rule.column not in data.columns:
@@ -220,9 +220,7 @@ class DataValidator:
         return null_count == 0
 
     async def _validate_unique(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that column has unique values."""
         if not rule.column or rule.column not in data.columns:
@@ -238,9 +236,7 @@ class DataValidator:
         return unique_count == total_count
 
     async def _validate_range(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that values are within specified range."""
         if not rule.column or rule.column not in data.columns:
@@ -272,9 +268,7 @@ class DataValidator:
         return True
 
     async def _validate_regex(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that values match regex pattern."""
         if not rule.column or rule.column not in data.columns:
@@ -305,9 +299,7 @@ class DataValidator:
             return False
 
     async def _validate_email(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate email format."""
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -318,15 +310,13 @@ class DataValidator:
             name=rule.name,
             rule_type="regex",
             column=rule.column,
-            condition=email_pattern
+            condition=email_pattern,
         )
 
         return await self._validate_regex(data, email_rule)
 
     async def _validate_phone(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate phone number format."""
         # Simple phone pattern (can be customized)
@@ -338,15 +328,13 @@ class DataValidator:
             name=rule.name,
             rule_type="regex",
             column=rule.column,
-            condition=phone_pattern
+            condition=phone_pattern,
         )
 
         return await self._validate_regex(data, phone_rule)
 
     async def _validate_date(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate date format."""
         if not rule.column or rule.column not in data.columns:
@@ -360,16 +348,14 @@ class DataValidator:
                 column_data = data[rule.column]
 
             # Try to convert to datetime
-            pd.to_datetime(column_data, errors='raise')
+            pd.to_datetime(column_data, errors="raise")
             return True
 
         except (ValueError, TypeError):
             return False
 
     async def _validate_numeric(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that values are numeric."""
         if not rule.column or rule.column not in data.columns:
@@ -383,9 +369,7 @@ class DataValidator:
             return pd.api.types.is_numeric_dtype(column_data)
 
     async def _validate_length(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate string length."""
         if not rule.column or rule.column not in data.columns:
@@ -416,9 +400,7 @@ class DataValidator:
         return True
 
     async def _validate_in_list(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Validate that values are in allowed list."""
         if not rule.column or rule.column not in data.columns:
@@ -441,9 +423,7 @@ class DataValidator:
         return non_null_data.isin(allowed_values).all()
 
     async def _validate_custom(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        rule: ValidationRule
+        self, data: Union[pd.DataFrame, pl.DataFrame], rule: ValidationRule
     ) -> bool:
         """Apply custom validation logic."""
         # This would allow for custom validation functions
@@ -451,8 +431,7 @@ class DataValidator:
         return True
 
     async def _calculate_quality_metrics(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame]
+        self, data: Union[pd.DataFrame, pl.DataFrame]
     ) -> QualityMetrics:
         """Calculate data quality metrics."""
         if isinstance(data, pl.DataFrame):
@@ -480,7 +459,7 @@ class DataValidator:
             consistency_score=consistency_score,
             null_count=null_count,
             duplicate_count=duplicate_count,
-            measured_at=datetime.now(timezone.utc)
+            measured_at=datetime.now(timezone.utc),
         )
 
     async def get_validation_info(self) -> Dict[str, Any]:
@@ -488,5 +467,5 @@ class DataValidator:
         return {
             "available_validators": list(self.built_in_validators.keys()),
             "config": self.config.model_dump(),
-            "validator": "data_validator"
+            "validator": "data_validator",
         }

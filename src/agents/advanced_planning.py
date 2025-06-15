@@ -4,7 +4,6 @@ This module implements sophisticated planning capabilities including STRIPS-like
 temporal planning, contingency planning, and hierarchical task networks (HTN).
 """
 
-import asyncio
 import json
 import time
 import uuid
@@ -18,24 +17,30 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class ActionType(Enum):
     """Types of planning actions."""
+
     PRIMITIVE = "primitive"
     COMPOSITE = "composite"
     CONDITIONAL = "conditional"
     TEMPORAL = "temporal"
 
+
 class PlanStatus(Enum):
     """Status of plan execution."""
+
     PENDING = "pending"
     EXECUTING = "executing"
     COMPLETED = "completed"
     FAILED = "failed"
     CONTINGENCY = "contingency"
 
+
 @dataclass
 class Condition:
     """Represents a logical condition in planning."""
+
     predicate: str
     parameters: List[str]
     negated: bool = False
@@ -44,9 +49,11 @@ class Condition:
         pred_str = f"{self.predicate}({', '.join(self.parameters)})"
         return f"¬{pred_str}" if self.negated else pred_str
 
+
 @dataclass
 class Action:
     """Represents a planning action with preconditions and effects."""
+
     action_id: str
     name: str
     action_type: ActionType
@@ -84,9 +91,11 @@ class Action:
 
         return new_state
 
+
 @dataclass
 class Plan:
     """Represents a complete plan."""
+
     plan_id: str
     goal: str
     actions: List[Action]
@@ -98,16 +107,19 @@ class Plan:
     temporal_constraints: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class HTNTask:
     """Represents a Hierarchical Task Network task."""
+
     task_id: str
     name: str
     is_primitive: bool
     parameters: List[str]
     preconditions: List[Condition]
-    subtasks: List['HTNTask'] = field(default_factory=list)
+    subtasks: List["HTNTask"] = field(default_factory=list)
     ordering_constraints: List[Tuple[str, str]] = field(default_factory=list)
+
 
 class AdvancedPlanningEngine:
     """Advanced planning engine with multiple planning paradigms."""
@@ -117,7 +129,7 @@ class AdvancedPlanningEngine:
         model: ChatAnthropic,
         db: MemoryDatabase,
         max_plan_length: int = 20,
-        planning_timeout: float = 30.0
+        planning_timeout: float = 30.0,
     ):
         """Initialize the advanced planning engine.
 
@@ -145,8 +157,10 @@ class AdvancedPlanningEngine:
         """Initialize planning prompts."""
 
         # STRIPS planning prompt
-        self.strips_planning_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a STRIPS-style planning agent. Your task is to create a sequence of actions to achieve a goal.
+        self.strips_planning_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a STRIPS-style planning agent. Your task is to create a sequence of actions to achieve a goal.
 
 For STRIPS planning, consider:
 1. Current state (what is true now)
@@ -164,20 +178,26 @@ Respond with a JSON object containing:
 - "state_progression": How state changes after each action
 - "plan_rationale": Explanation of the planning strategy
 - "estimated_cost": Total estimated cost/time
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Goal: {goal}
 Initial state: {initial_state}
 Available actions: {available_actions}
 Constraints: {constraints}
 
 Create a plan to achieve the goal.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Temporal planning prompt
-        self.temporal_planning_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a temporal planning agent. Your task is to create plans with timing constraints and durations.
+        self.temporal_planning_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a temporal planning agent. Your task is to create plans with timing constraints and durations.
 
 For temporal planning, consider:
 1. Action durations and resource requirements
@@ -192,8 +212,10 @@ Respond with a JSON object containing:
 - "critical_path": Sequence of actions that determines total time
 - "parallel_opportunities": Actions that can run in parallel
 - "timeline": Complete timeline of plan execution
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Goal: {goal}
 Available actions: {available_actions}
 Temporal constraints: {temporal_constraints}
@@ -201,12 +223,16 @@ Resource constraints: {resource_constraints}
 Deadline: {deadline}
 
 Create a temporal plan.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Contingency planning prompt
-        self.contingency_planning_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a contingency planning agent. Your task is to create robust plans that handle uncertainty and failures.
+        self.contingency_planning_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a contingency planning agent. Your task is to create robust plans that handle uncertainty and failures.
 
 For contingency planning, consider:
 1. Potential failure points in the main plan
@@ -221,16 +247,20 @@ Respond with a JSON object containing:
 - "contingency_actions": Alternative actions for each scenario
 - "monitoring_points": Where to check for failures
 - "recovery_strategies": How to recover from failures
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Goal: {goal}
 Main plan: {main_plan}
 Risk factors: {risk_factors}
 Failure probabilities: {failure_probabilities}
 
 Create contingency plans for potential failures.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     def _initialize_action_library(self):
         """Initialize basic action library."""
@@ -244,7 +274,7 @@ Create contingency plans for potential failures.
             preconditions=[Condition("need_information", ["query"])],
             effects=[Condition("has_information", ["query"])],
             duration=2.0,
-            cost=1.0
+            cost=1.0,
         )
 
         # Data analysis action
@@ -256,7 +286,7 @@ Create contingency plans for potential failures.
             preconditions=[Condition("has_information", ["data"])],
             effects=[Condition("has_analysis", ["data"])],
             duration=3.0,
-            cost=2.0
+            cost=2.0,
         )
 
         # Report generation action
@@ -268,13 +298,13 @@ Create contingency plans for potential failures.
             preconditions=[Condition("has_analysis", ["analysis"])],
             effects=[Condition("has_report", ["analysis"])],
             duration=2.0,
-            cost=1.5
+            cost=1.5,
         )
 
         self.action_library = {
             "web_search": search_action,
             "analyze_data": analyze_action,
-            "generate_report": report_action
+            "generate_report": report_action,
         }
 
     async def create_strips_plan(
@@ -282,7 +312,7 @@ Create contingency plans for potential failures.
         goal: str,
         initial_state: Set[str],
         goal_conditions: List[Condition],
-        constraints: Optional[Dict[str, Any]] = None
+        constraints: Optional[Dict[str, Any]] = None,
     ) -> Plan:
         """Create a STRIPS-style plan.
 
@@ -304,7 +334,7 @@ Create contingency plans for potential failures.
                 "preconditions": [str(p) for p in action.preconditions],
                 "effects": [str(e) for e in action.effects],
                 "duration": action.duration,
-                "cost": action.cost
+                "cost": action.cost,
             }
 
         # Prepare input for planning
@@ -312,7 +342,7 @@ Create contingency plans for potential failures.
             "goal": goal,
             "initial_state": list(initial_state),
             "available_actions": json.dumps(available_actions, indent=2),
-            "constraints": json.dumps(constraints or {}, indent=2)
+            "constraints": json.dumps(constraints or {}, indent=2),
         }
 
         # Get plan from model
@@ -328,7 +358,7 @@ Create contingency plans for potential failures.
                 "action_details": {},
                 "state_progression": [],
                 "plan_rationale": response.content,
-                "estimated_cost": 10.0
+                "estimated_cost": 10.0,
             }
 
         # Create plan object
@@ -350,20 +380,23 @@ Create contingency plans for potential failures.
                 "planning_method": "strips",
                 "estimated_cost": plan_data.get("estimated_cost", 0),
                 "rationale": plan_data.get("plan_rationale", ""),
-                "created_at": time.time()
-            }
+                "created_at": time.time(),
+            },
         )
 
         self.active_plans[plan_id] = plan
 
         # Save to database
-        await self.db.save_plan(plan_id, {
-            "goal": goal,
-            "actions": [a.name for a in plan_actions],
-            "initial_state": list(initial_state),
-            "goal_state": list(goal_state),
-            "metadata": plan.metadata
-        })
+        await self.db.save_plan(
+            plan_id,
+            {
+                "goal": goal,
+                "actions": [a.name for a in plan_actions],
+                "initial_state": list(initial_state),
+                "goal_state": list(goal_state),
+                "metadata": plan.metadata,
+            },
+        )
 
         return plan
 
@@ -373,7 +406,7 @@ Create contingency plans for potential failures.
         available_actions: List[Action],
         temporal_constraints: List[Dict[str, Any]],
         resource_constraints: Dict[str, Any],
-        deadline: Optional[float] = None
+        deadline: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Create a temporal plan with timing constraints.
 
@@ -394,7 +427,7 @@ Create contingency plans for potential failures.
                 "duration": action.duration,
                 "cost": action.cost,
                 "preconditions": [str(p) for p in action.preconditions],
-                "effects": [str(e) for e in action.effects]
+                "effects": [str(e) for e in action.effects],
             }
 
         input_values = {
@@ -402,7 +435,7 @@ Create contingency plans for potential failures.
             "available_actions": json.dumps(actions_data, indent=2),
             "temporal_constraints": json.dumps(temporal_constraints, indent=2),
             "resource_constraints": json.dumps(resource_constraints, indent=2),
-            "deadline": str(deadline) if deadline else "No deadline"
+            "deadline": str(deadline) if deadline else "No deadline",
         }
 
         messages = self.temporal_planning_prompt.format_messages(**input_values)
@@ -416,14 +449,14 @@ Create contingency plans for potential failures.
                 "resource_schedule": {},
                 "critical_path": [],
                 "parallel_opportunities": [],
-                "timeline": response.content
+                "timeline": response.content,
             }
 
     async def create_contingency_plan(
         self,
         main_plan: Plan,
         risk_factors: List[Dict[str, Any]],
-        failure_probabilities: Dict[str, float]
+        failure_probabilities: Dict[str, float],
     ) -> Dict[str, Any]:
         """Create contingency plans for potential failures.
 
@@ -439,14 +472,14 @@ Create contingency plans for potential failures.
         main_plan_data = {
             "actions": [a.name for a in main_plan.actions],
             "goal": main_plan.goal,
-            "estimated_duration": sum(a.duration for a in main_plan.actions)
+            "estimated_duration": sum(a.duration for a in main_plan.actions),
         }
 
         input_values = {
             "goal": main_plan.goal,
             "main_plan": json.dumps(main_plan_data, indent=2),
             "risk_factors": json.dumps(risk_factors, indent=2),
-            "failure_probabilities": json.dumps(failure_probabilities, indent=2)
+            "failure_probabilities": json.dumps(failure_probabilities, indent=2),
         }
 
         messages = self.contingency_planning_prompt.format_messages(**input_values)
@@ -460,7 +493,7 @@ Create contingency plans for potential failures.
                 "failure_scenarios": [],
                 "contingency_actions": {},
                 "monitoring_points": [],
-                "recovery_strategies": [response.content]
+                "recovery_strategies": [response.content],
             }
 
         # Update main plan with contingencies
@@ -468,11 +501,7 @@ Create contingency plans for potential failures.
 
         return contingency_data
 
-    async def execute_plan(
-        self,
-        plan_id: str,
-        execution_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def execute_plan(self, plan_id: str, execution_context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a plan with monitoring and contingency handling.
 
         Args:
@@ -498,28 +527,28 @@ Create contingency plans for potential failures.
                 if action.name in plan.contingencies:
                     contingency_actions = plan.contingencies[action.name]
                     # Execute contingency (simplified)
-                    execution_results.append({
-                        "action": action.name,
-                        "status": "failed",
-                        "contingency_used": True,
-                        "contingency_actions": contingency_actions
-                    })
+                    execution_results.append(
+                        {
+                            "action": action.name,
+                            "status": "failed",
+                            "contingency_used": True,
+                            "contingency_actions": contingency_actions,
+                        }
+                    )
                 else:
                     plan.status = PlanStatus.FAILED
                     return {
                         "plan_id": plan_id,
                         "status": "failed",
                         "failed_at_action": i,
-                        "results": execution_results
+                        "results": execution_results,
                     }
             else:
                 # Execute action (simplified simulation)
                 current_state = action.apply(current_state)
-                execution_results.append({
-                    "action": action.name,
-                    "status": "completed",
-                    "new_state": list(current_state)
-                })
+                execution_results.append(
+                    {"action": action.name, "status": "completed", "new_state": list(current_state)}
+                )
 
         # Check if goal is achieved
         goal_achieved = plan.goal_state.issubset(current_state)
@@ -534,7 +563,7 @@ Create contingency plans for potential failures.
             "status": plan.status.value,
             "goal_achieved": goal_achieved,
             "results": execution_results,
-            "final_state": list(current_state)
+            "final_state": list(current_state),
         }
 
     def validate_plan(self, plan: Plan) -> Dict[str, Any]:
@@ -546,11 +575,7 @@ Create contingency plans for potential failures.
         Returns:
             Validation results
         """
-        validation_results = {
-            "is_valid": True,
-            "issues": [],
-            "warnings": []
-        }
+        validation_results = {"is_valid": True, "issues": [], "warnings": []}
 
         # Check action sequence validity
         current_state = plan.initial_state.copy()

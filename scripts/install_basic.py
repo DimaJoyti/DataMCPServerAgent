@@ -6,10 +6,11 @@ Install basic dependencies for DataMCPServerAgent.
 import subprocess
 import sys
 
+
 def install_basic_deps():
     """Install basic dependencies."""
     print("📦 Installing basic dependencies...")
-    
+
     basic_deps = [
         "fastapi>=0.104.0",
         "uvicorn>=0.24.0",
@@ -19,7 +20,7 @@ def install_basic_deps():
         "structlog>=23.2.0",
         "aiofiles>=23.2.1"
     ]
-    
+
     for dep in basic_deps:
         try:
             print(f"Installing {dep}...")
@@ -28,7 +29,7 @@ def install_basic_deps():
         except subprocess.CalledProcessError as e:
             print(f"❌ Failed to install {dep}: {e}")
             return False
-    
+
     print("✅ Basic dependencies installed successfully!")
     return True
 

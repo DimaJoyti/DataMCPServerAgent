@@ -5,28 +5,25 @@ This module provides integration with n8n workflows through webhooks and API cal
 """
 
 import asyncio
-import json
 import logging
 import os
-import time
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-import requests
 from dotenv import load_dotenv
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
-from .trading_system import AdvancedCryptoTradingSystem, TradeRecommendation, TradingSignal
+from .trading_system import AdvancedCryptoTradingSystem
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class WebhookType(str, Enum):
     """Types of webhooks."""
@@ -40,6 +37,7 @@ class WebhookType(str, Enum):
     MACRO = "macro"
     LEARNING = "learning"
 
+
 class N8nWebhook(Model):
     """Model for an n8n webhook."""
 
@@ -48,6 +46,7 @@ class N8nWebhook(Model):
     url: str
     headers: Dict[str, str] = {}
     active: bool = True
+
 
 class N8nWorkflow(Model):
     """Model for an n8n workflow."""
@@ -58,6 +57,7 @@ class N8nWorkflow(Model):
     active: bool = True
     webhooks: List[N8nWebhook] = []
 
+
 class N8nIntegrationState(BaseAgentState):
     """State model for the n8n Integration."""
 
@@ -66,6 +66,7 @@ class N8nIntegrationState(BaseAgentState):
     workflows: List[N8nWorkflow] = []
     webhooks: List[N8nWebhook] = []
     last_sent_data: Dict[str, Any] = {}
+
 
 class N8nIntegration(BaseAgent):
     """Integration with n8n workflows."""
@@ -79,7 +80,7 @@ class N8nIntegration(BaseAgent):
         logger: Optional[logging.Logger] = None,
         n8n_base_url: Optional[str] = None,
         n8n_api_key: Optional[str] = None,
-        trading_system: Optional[AdvancedCryptoTradingSystem] = None
+        trading_system: Optional[AdvancedCryptoTradingSystem] = None,
     ):
         """Initialize the n8n Integration.
 
@@ -120,43 +121,43 @@ class N8nIntegration(BaseAgent):
             N8nWebhook(
                 name="Trading Recommendations",
                 type=WebhookType.RECOMMENDATION,
-                url=f"{self.state.n8n_base_url}/webhook/trading-recommendations"
+                url=f"{self.state.n8n_base_url}/webhook/trading-recommendations",
             ),
             N8nWebhook(
                 name="Market Data",
                 type=WebhookType.MARKET_DATA,
-                url=f"{self.state.n8n_base_url}/webhook/market-data"
+                url=f"{self.state.n8n_base_url}/webhook/market-data",
             ),
             N8nWebhook(
                 name="Sentiment Analysis",
                 type=WebhookType.SENTIMENT,
-                url=f"{self.state.n8n_base_url}/webhook/sentiment-analysis"
+                url=f"{self.state.n8n_base_url}/webhook/sentiment-analysis",
             ),
             N8nWebhook(
                 name="Technical Analysis",
                 type=WebhookType.TECHNICAL,
-                url=f"{self.state.n8n_base_url}/webhook/technical-analysis"
+                url=f"{self.state.n8n_base_url}/webhook/technical-analysis",
             ),
             N8nWebhook(
                 name="Risk Assessment",
                 type=WebhookType.RISK,
-                url=f"{self.state.n8n_base_url}/webhook/risk-assessment"
+                url=f"{self.state.n8n_base_url}/webhook/risk-assessment",
             ),
             N8nWebhook(
                 name="Regulatory Compliance",
                 type=WebhookType.REGULATORY,
-                url=f"{self.state.n8n_base_url}/webhook/regulatory-compliance"
+                url=f"{self.state.n8n_base_url}/webhook/regulatory-compliance",
             ),
             N8nWebhook(
                 name="Macro Correlation",
                 type=WebhookType.MACRO,
-                url=f"{self.state.n8n_base_url}/webhook/macro-correlation"
+                url=f"{self.state.n8n_base_url}/webhook/macro-correlation",
             ),
             N8nWebhook(
                 name="Learning Optimization",
                 type=WebhookType.LEARNING,
-                url=f"{self.state.n8n_base_url}/webhook/learning-optimization"
-            )
+                url=f"{self.state.n8n_base_url}/webhook/learning-optimization",
+            ),
         ]
 
     def _register_handlers(self):
@@ -178,8 +179,12 @@ class N8nIntegration(BaseAgent):
 
             # Find webhook
             webhook = next(
-                (w for w in self.state.webhooks if w.type == WebhookType.RECOMMENDATION and w.active),
-                None
+                (
+                    w
+                    for w in self.state.webhooks
+                    if w.type == WebhookType.RECOMMENDATION and w.active
+                ),
+                None,
             )
 
             if not webhook:
@@ -191,8 +196,8 @@ class N8nIntegration(BaseAgent):
                 webhook,
                 {
                     "recommendations": [rec.dict() for rec in recommendations],
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
 
         @self.agent.on_interval(period=300.0)
@@ -205,7 +210,7 @@ class N8nIntegration(BaseAgent):
             # Find webhook
             webhook = next(
                 (w for w in self.state.webhooks if w.type == WebhookType.MARKET_DATA and w.active),
-                None
+                None,
             )
 
             if not webhook:
@@ -222,18 +227,14 @@ class N8nIntegration(BaseAgent):
                         "bid": ticker["bid"],
                         "ask": ticker["ask"],
                         "volume": ticker["volume"],
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     }
                 except Exception as e:
                     ctx.logger.error(f"Error fetching ticker for {symbol}: {str(e)}")
 
             # Send market data
             await self._send_to_webhook(
-                webhook,
-                {
-                    "market_data": market_data,
-                    "timestamp": datetime.now().isoformat()
-                }
+                webhook, {"market_data": market_data, "timestamp": datetime.now().isoformat()}
             )
 
     async def _send_to_webhook(self, webhook: N8nWebhook, data: Dict[str, Any]) -> bool:
@@ -250,15 +251,13 @@ class N8nIntegration(BaseAgent):
             # Store last sent data
             self.state.last_sent_data[webhook.type] = {
                 "data": data,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             # Send data
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    webhook.url,
-                    json=data,
-                    headers=webhook.headers
+                    webhook.url, json=data, headers=webhook.headers
                 ) as response:
                     if response.status == 200:
                         self.logger.info(f"Successfully sent data to {webhook.name} webhook")
@@ -289,9 +288,7 @@ class N8nIntegration(BaseAgent):
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.state.n8n_base_url}/api/v1/workflows",
-                    headers={
-                        "X-N8N-API-KEY": self.state.n8n_api_key
-                    }
+                    headers={"X-N8N-API-KEY": self.state.n8n_api_key},
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
@@ -303,7 +300,7 @@ class N8nIntegration(BaseAgent):
                                 id=item["id"],
                                 name=item["name"],
                                 description=item.get("description"),
-                                active=item.get("active", True)
+                                active=item.get("active", True),
                             )
                             workflows.append(workflow)
 
@@ -314,8 +311,7 @@ class N8nIntegration(BaseAgent):
                         return workflows
                     else:
                         self.logger.error(
-                            f"Error fetching workflows from n8n: "
-                            f"Status {response.status}"
+                            f"Error fetching workflows from n8n: " f"Status {response.status}"
                         )
                         return []
 
@@ -343,17 +339,14 @@ class N8nIntegration(BaseAgent):
                 async with session.post(
                     f"{self.state.n8n_base_url}/api/v1/workflows/{workflow_id}/trigger",
                     json=data,
-                    headers={
-                        "X-N8N-API-KEY": self.state.n8n_api_key
-                    }
+                    headers={"X-N8N-API-KEY": self.state.n8n_api_key},
                 ) as response:
                     if response.status == 200:
                         self.logger.info(f"Successfully triggered workflow {workflow_id}")
                         return True
                     else:
                         self.logger.error(
-                            f"Error triggering workflow {workflow_id}: "
-                            f"Status {response.status}"
+                            f"Error triggering workflow {workflow_id}: " f"Status {response.status}"
                         )
                         return False
 
@@ -361,21 +354,22 @@ class N8nIntegration(BaseAgent):
             self.logger.error(f"Error triggering workflow {workflow_id}: {str(e)}")
             return False
 
+
 async def main():
     """Main entry point."""
     # Load environment variables
     load_dotenv()
 
     # Get n8n configuration from environment variables
-    n8n_base_url = os.getenv('N8N_BASE_URL', 'http://localhost:5678')
-    n8n_api_key = os.getenv('N8N_API_KEY')
+    n8n_base_url = os.getenv("N8N_BASE_URL", "http://localhost:5678")
+    n8n_api_key = os.getenv("N8N_API_KEY")
 
     # Create trading system
     trading_system = AdvancedCryptoTradingSystem(
         name="n8n_trading_system",
         exchange_id="binance",
-        api_key=os.getenv('EXCHANGE_API_KEY'),
-        api_secret=os.getenv('EXCHANGE_API_SECRET')
+        api_key=os.getenv("EXCHANGE_API_KEY"),
+        api_secret=os.getenv("EXCHANGE_API_SECRET"),
     )
 
     # Create n8n integration
@@ -383,14 +377,12 @@ async def main():
         name="n8n_integration",
         n8n_base_url=n8n_base_url,
         n8n_api_key=n8n_api_key,
-        trading_system=trading_system
+        trading_system=trading_system,
     )
 
     # Start agents
-    await asyncio.gather(
-        trading_system.start_all_agents(),
-        n8n_integration.run_async()
-    )
+    await asyncio.gather(trading_system.start_all_agents(), n8n_integration.run_async())
+
 
 if __name__ == "__main__":
     asyncio.run(main())

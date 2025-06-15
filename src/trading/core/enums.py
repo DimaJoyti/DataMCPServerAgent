@@ -2,12 +2,13 @@
 Core enums for the institutional trading system.
 """
 
-from enum import Enum, auto
-from typing import Dict, List
+from enum import Enum
+from typing import Dict
 
 
 class OrderType(Enum):
     """Order types supported by the trading system."""
+
     MARKET = "MARKET"
     LIMIT = "LIMIT"
     STOP = "STOP"
@@ -22,6 +23,7 @@ class OrderType(Enum):
 
 class OrderSide(Enum):
     """Order side (buy/sell)."""
+
     BUY = "BUY"
     SELL = "SELL"
     SHORT = "SHORT"
@@ -30,6 +32,7 @@ class OrderSide(Enum):
 
 class OrderStatus(Enum):
     """Order status lifecycle."""
+
     PENDING = "PENDING"
     NEW = "NEW"
     PARTIALLY_FILLED = "PARTIALLY_FILLED"
@@ -42,6 +45,7 @@ class OrderStatus(Enum):
 
 class TimeInForce(Enum):
     """Time in force options."""
+
     DAY = "DAY"
     GTC = "GTC"  # Good Till Cancelled
     IOC = "IOC"  # Immediate or Cancel
@@ -53,6 +57,7 @@ class TimeInForce(Enum):
 
 class AssetClass(Enum):
     """Asset classes supported by the system."""
+
     EQUITY = "EQUITY"
     FIXED_INCOME = "FIXED_INCOME"
     COMMODITY = "COMMODITY"
@@ -64,25 +69,26 @@ class AssetClass(Enum):
 
 class Exchange(Enum):
     """Supported exchanges."""
+
     # Equity Exchanges
     NYSE = "NYSE"
     NASDAQ = "NASDAQ"
     LSE = "LSE"
     TSE = "TSE"
     HKEX = "HKEX"
-    
+
     # Crypto Exchanges
     BINANCE = "BINANCE"
     COINBASE = "COINBASE"
     KRAKEN = "KRAKEN"
     BITFINEX = "BITFINEX"
     HUOBI = "HUOBI"
-    
+
     # FX Exchanges
     EBS = "EBS"
     REUTERS = "REUTERS"
     CURRENEX = "CURRENEX"
-    
+
     # Futures Exchanges
     CME = "CME"
     ICE = "ICE"
@@ -91,6 +97,7 @@ class Exchange(Enum):
 
 class Currency(Enum):
     """Supported currencies."""
+
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
@@ -101,7 +108,7 @@ class Currency(Enum):
     CNY = "CNY"
     HKD = "HKD"
     SGD = "SGD"
-    
+
     # Cryptocurrencies
     BTC = "BTC"
     ETH = "ETH"
@@ -111,6 +118,7 @@ class Currency(Enum):
 
 class RiskLevel(Enum):
     """Risk levels for positions and strategies."""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -119,6 +127,7 @@ class RiskLevel(Enum):
 
 class StrategyType(Enum):
     """Trading strategy types."""
+
     MOMENTUM = "MOMENTUM"
     MEAN_REVERSION = "MEAN_REVERSION"
     ARBITRAGE = "ARBITRAGE"
@@ -132,6 +141,7 @@ class StrategyType(Enum):
 
 class ExecutionAlgorithm(Enum):
     """Execution algorithm types."""
+
     TWAP = "TWAP"  # Time Weighted Average Price
     VWAP = "VWAP"  # Volume Weighted Average Price
     IMPLEMENTATION_SHORTFALL = "IMPLEMENTATION_SHORTFALL"
@@ -144,6 +154,7 @@ class ExecutionAlgorithm(Enum):
 
 class MarketDataType(Enum):
     """Market data types."""
+
     TICK = "TICK"
     QUOTE = "QUOTE"
     TRADE = "TRADE"
@@ -155,6 +166,7 @@ class MarketDataType(Enum):
 
 class SystemStatus(Enum):
     """System status levels."""
+
     HEALTHY = "HEALTHY"
     WARNING = "WARNING"
     ERROR = "ERROR"
@@ -174,7 +186,12 @@ EXCHANGE_CONFIGS: Dict[Exchange, Dict] = {
     },
     Exchange.NYSE: {
         "asset_classes": [AssetClass.EQUITY],
-        "supported_order_types": [OrderType.MARKET, OrderType.LIMIT, OrderType.STOP, OrderType.STOP_LIMIT],
+        "supported_order_types": [
+            OrderType.MARKET,
+            OrderType.LIMIT,
+            OrderType.STOP,
+            OrderType.STOP_LIMIT,
+        ],
         "min_order_size": 1,
         "max_order_size": 1000000,
         "tick_size": 0.01,
@@ -182,7 +199,12 @@ EXCHANGE_CONFIGS: Dict[Exchange, Dict] = {
     },
     Exchange.CME: {
         "asset_classes": [AssetClass.DERIVATIVE, AssetClass.COMMODITY],
-        "supported_order_types": [OrderType.MARKET, OrderType.LIMIT, OrderType.STOP, OrderType.ICEBERG],
+        "supported_order_types": [
+            OrderType.MARKET,
+            OrderType.LIMIT,
+            OrderType.STOP,
+            OrderType.ICEBERG,
+        ],
         "min_order_size": 1,
         "max_order_size": 10000,
         "tick_size": 0.25,

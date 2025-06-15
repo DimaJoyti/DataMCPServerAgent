@@ -5,18 +5,14 @@ This module provides advanced SEO tools for competitor analysis, rank tracking,
 and other advanced SEO tasks.
 """
 
-import os
-import json
-import re
-from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
-import requests
-from urllib.parse import urlparse
-from bs4 import BeautifulSoup
+from typing import Any, Dict, List
 
 from langchain.tools import Tool
-from src.tools.seo_api_clients import SEMrushClient, MozClient
+
+from src.tools.seo_api_clients import MozClient, SEMrushClient
 from src.tools.seo_tools import SEOAnalyzerTool
+
 
 class CompetitorAnalysisTool:
     """Tool for analyzing competitors for SEO."""
@@ -47,80 +43,79 @@ class CompetitorAnalysisTool:
             # Mock competitor data
             mock_competitors = [
                 {
-                    "domain": f"competitor1.com",
+                    "domain": "competitor1.com",
                     "overlap_score": 85,
                     "common_keywords": 250,
                     "domain_authority": 75,
-                    "estimated_traffic": 45000
+                    "estimated_traffic": 45000,
                 },
                 {
-                    "domain": f"competitor2.com",
+                    "domain": "competitor2.com",
                     "overlap_score": 72,
                     "common_keywords": 180,
                     "domain_authority": 68,
-                    "estimated_traffic": 38000
+                    "estimated_traffic": 38000,
                 },
                 {
-                    "domain": f"competitor3.com",
+                    "domain": "competitor3.com",
                     "overlap_score": 65,
                     "common_keywords": 150,
                     "domain_authority": 72,
-                    "estimated_traffic": 42000
+                    "estimated_traffic": 42000,
                 },
                 {
-                    "domain": f"competitor4.com",
+                    "domain": "competitor4.com",
                     "overlap_score": 58,
                     "common_keywords": 120,
                     "domain_authority": 65,
-                    "estimated_traffic": 35000
+                    "estimated_traffic": 35000,
                 },
                 {
-                    "domain": f"competitor5.com",
+                    "domain": "competitor5.com",
                     "overlap_score": 52,
                     "common_keywords": 100,
                     "domain_authority": 70,
-                    "estimated_traffic": 40000
+                    "estimated_traffic": 40000,
                 },
                 {
-                    "domain": f"competitor6.com",
+                    "domain": "competitor6.com",
                     "overlap_score": 45,
                     "common_keywords": 90,
                     "domain_authority": 62,
-                    "estimated_traffic": 32000
+                    "estimated_traffic": 32000,
                 },
                 {
-                    "domain": f"competitor7.com",
+                    "domain": "competitor7.com",
                     "overlap_score": 40,
                     "common_keywords": 80,
                     "domain_authority": 58,
-                    "estimated_traffic": 28000
+                    "estimated_traffic": 28000,
                 },
                 {
-                    "domain": f"competitor8.com",
+                    "domain": "competitor8.com",
                     "overlap_score": 35,
                     "common_keywords": 70,
                     "domain_authority": 55,
-                    "estimated_traffic": 25000
-                }
+                    "estimated_traffic": 25000,
+                },
             ]
 
             # Sort by overlap score and limit results
-            sorted_competitors = sorted(mock_competitors, key=lambda x: x["overlap_score"], reverse=True)[:limit]
+            sorted_competitors = sorted(
+                mock_competitors, key=lambda x: x["overlap_score"], reverse=True
+            )[:limit]
 
             # Prepare result
             result = {
                 "domain": domain,
                 "competitors": sorted_competitors,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "domain": domain
-            }
+            return {"error": str(e), "domain": domain}
 
     def compare_with_competitor(self, domain: str, competitor_domain: str) -> Dict[str, Any]:
         """
@@ -138,7 +133,9 @@ class CompetitorAnalysisTool:
         try:
             # Analyze both domains
             main_domain_analysis = self.seo_analyzer.analyze(f"https://{domain}", "detailed")
-            competitor_analysis = self.seo_analyzer.analyze(f"https://{competitor_domain}", "detailed")
+            competitor_analysis = self.seo_analyzer.analyze(
+                f"https://{competitor_domain}", "detailed"
+            )
 
             # Get keyword data for both domains
             main_keywords = self.semrush_client.keyword_research(domain, "us", 20)
@@ -146,7 +143,9 @@ class CompetitorAnalysisTool:
 
             # Identify common keywords
             main_keyword_list = [kw["keyword"] for kw in main_keywords.get("keywords", [])]
-            competitor_keyword_list = [kw["keyword"] for kw in competitor_keywords.get("keywords", [])]
+            competitor_keyword_list = [
+                kw["keyword"] for kw in competitor_keywords.get("keywords", [])
+            ]
             common_keywords = list(set(main_keyword_list) & set(competitor_keyword_list))
 
             # Compare metrics
@@ -155,50 +154,58 @@ class CompetitorAnalysisTool:
                     "word_count": {
                         "main": main_domain_analysis.get("word_count", 0),
                         "competitor": competitor_analysis.get("word_count", 0),
-                        "difference": main_domain_analysis.get("word_count", 0) - competitor_analysis.get("word_count", 0)
+                        "difference": main_domain_analysis.get("word_count", 0)
+                        - competitor_analysis.get("word_count", 0),
                     },
                     "internal_links": {
                         "main": main_domain_analysis.get("internal_links", 0),
                         "competitor": competitor_analysis.get("internal_links", 0),
-                        "difference": main_domain_analysis.get("internal_links", 0) - competitor_analysis.get("internal_links", 0)
+                        "difference": main_domain_analysis.get("internal_links", 0)
+                        - competitor_analysis.get("internal_links", 0),
                     },
                     "external_links": {
                         "main": main_domain_analysis.get("external_links", 0),
                         "competitor": competitor_analysis.get("external_links", 0),
-                        "difference": main_domain_analysis.get("external_links", 0) - competitor_analysis.get("external_links", 0)
+                        "difference": main_domain_analysis.get("external_links", 0)
+                        - competitor_analysis.get("external_links", 0),
                     },
                     "image_count": {
                         "main": main_domain_analysis.get("image_count", 0),
                         "competitor": competitor_analysis.get("image_count", 0),
-                        "difference": main_domain_analysis.get("image_count", 0) - competitor_analysis.get("image_count", 0)
-                    }
+                        "difference": main_domain_analysis.get("image_count", 0)
+                        - competitor_analysis.get("image_count", 0),
+                    },
                 },
                 "seo_metrics": {
                     "seo_score": {
                         "main": main_domain_analysis.get("seo_score", 0),
                         "competitor": competitor_analysis.get("seo_score", 0),
-                        "difference": main_domain_analysis.get("seo_score", 0) - competitor_analysis.get("seo_score", 0)
+                        "difference": main_domain_analysis.get("seo_score", 0)
+                        - competitor_analysis.get("seo_score", 0),
                     },
                     "title_length": {
                         "main": main_domain_analysis.get("title_length", 0),
                         "competitor": competitor_analysis.get("title_length", 0),
-                        "difference": main_domain_analysis.get("title_length", 0) - competitor_analysis.get("title_length", 0)
+                        "difference": main_domain_analysis.get("title_length", 0)
+                        - competitor_analysis.get("title_length", 0),
                     },
                     "meta_description_length": {
                         "main": main_domain_analysis.get("meta_description_length", 0),
                         "competitor": competitor_analysis.get("meta_description_length", 0),
-                        "difference": main_domain_analysis.get("meta_description_length", 0) - competitor_analysis.get("meta_description_length", 0)
-                    }
+                        "difference": main_domain_analysis.get("meta_description_length", 0)
+                        - competitor_analysis.get("meta_description_length", 0),
+                    },
                 },
                 "keyword_metrics": {
                     "total_keywords": {
                         "main": len(main_keywords.get("keywords", [])),
                         "competitor": len(competitor_keywords.get("keywords", [])),
-                        "difference": len(main_keywords.get("keywords", [])) - len(competitor_keywords.get("keywords", []))
+                        "difference": len(main_keywords.get("keywords", []))
+                        - len(competitor_keywords.get("keywords", [])),
                     },
                     "common_keywords": len(common_keywords),
-                    "common_keyword_list": common_keywords[:10]  # Limit to 10 common keywords
-                }
+                    "common_keyword_list": common_keywords[:10],  # Limit to 10 common keywords
+                },
             }
 
             # Generate recommendations based on comparison
@@ -206,18 +213,26 @@ class CompetitorAnalysisTool:
 
             # Content recommendations
             if comparison["content_metrics"]["word_count"]["difference"] < 0:
-                recommendations.append(f"Increase content length to match or exceed competitor ({abs(comparison['content_metrics']['word_count']['difference'])} words difference)")
+                recommendations.append(
+                    f"Increase content length to match or exceed competitor ({abs(comparison['content_metrics']['word_count']['difference'])} words difference)"
+                )
 
             if comparison["content_metrics"]["internal_links"]["difference"] < 0:
-                recommendations.append(f"Add more internal links to improve site structure ({abs(comparison['content_metrics']['internal_links']['difference'])} links difference)")
+                recommendations.append(
+                    f"Add more internal links to improve site structure ({abs(comparison['content_metrics']['internal_links']['difference'])} links difference)"
+                )
 
             # SEO recommendations
             if comparison["seo_metrics"]["seo_score"]["difference"] < 0:
-                recommendations.append(f"Improve overall SEO score to match or exceed competitor ({abs(comparison['seo_metrics']['seo_score']['difference'])} points difference)")
+                recommendations.append(
+                    f"Improve overall SEO score to match or exceed competitor ({abs(comparison['seo_metrics']['seo_score']['difference'])} points difference)"
+                )
 
             # Keyword recommendations
             if comparison["keyword_metrics"]["total_keywords"]["difference"] < 0:
-                recommendations.append(f"Target more keywords to expand your keyword portfolio ({abs(comparison['keyword_metrics']['total_keywords']['difference'])} keywords difference)")
+                recommendations.append(
+                    f"Target more keywords to expand your keyword portfolio ({abs(comparison['keyword_metrics']['total_keywords']['difference'])} keywords difference)"
+                )
 
             # Prepare result
             result = {
@@ -225,17 +240,13 @@ class CompetitorAnalysisTool:
                 "competitor_domain": competitor_domain,
                 "comparison": comparison,
                 "recommendations": recommendations,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "main_domain": domain,
-                "competitor_domain": competitor_domain
-            }
+            return {"error": str(e), "main_domain": domain, "competitor_domain": competitor_domain}
 
     def run(self, domain: str, competitor_domain: str = None, limit: int = 5) -> str:
         """
@@ -284,7 +295,9 @@ class CompetitorAnalysisTool:
             total_kw = result["comparison"]["keyword_metrics"]["total_keywords"]
             diff = total_kw["difference"]
             diff_str = f"+{diff}" if diff > 0 else str(diff)
-            output += f"| Total Keywords | {total_kw['main']} | {total_kw['competitor']} | {diff_str} |\n"
+            output += (
+                f"| Total Keywords | {total_kw['main']} | {total_kw['competitor']} | {diff_str} |\n"
+            )
             output += f"| Common Keywords | {result['comparison']['keyword_metrics']['common_keywords']} | - | - |\n"
 
             output += "\n### Common Keywords\n"
@@ -318,9 +331,12 @@ class CompetitorAnalysisTool:
             output += "- Run a detailed comparison with a specific competitor using the 'competitor_domain' parameter\n"
             output += "- Analyze the content strategy of your top competitors\n"
             output += "- Identify keyword gaps between your site and competitors\n"
-            output += "- Evaluate backlink profiles of competitors for link building opportunities\n"
+            output += (
+                "- Evaluate backlink profiles of competitors for link building opportunities\n"
+            )
 
         return output
+
 
 class RankTrackingTool:
     """Tool for tracking keyword rankings over time."""
@@ -330,7 +346,9 @@ class RankTrackingTool:
         self.semrush_client = SEMrushClient()
         self.rankings_db = {}  # In a real implementation, this would be a database
 
-    def track_rankings(self, domain: str, keywords: List[str] = None, limit: int = 10) -> Dict[str, Any]:
+    def track_rankings(
+        self, domain: str, keywords: List[str] = None, limit: int = 10
+    ) -> Dict[str, Any]:
         """
         Track keyword rankings for a domain.
 
@@ -364,14 +382,16 @@ class RankTrackingTool:
                 current_rank = max(1, min(100, keyword_hash))
                 previous_rank = max(1, min(100, current_rank + (hash(keyword) % 20 - 10)))
 
-                rankings.append({
-                    "keyword": keyword,
-                    "current_rank": current_rank,
-                    "previous_rank": previous_rank,
-                    "change": previous_rank - current_rank,
-                    "search_volume": 500 + (keyword_hash * 100),
-                    "url": f"https://{domain}/{keyword.replace(' ', '-').lower()}"
-                })
+                rankings.append(
+                    {
+                        "keyword": keyword,
+                        "current_rank": current_rank,
+                        "previous_rank": previous_rank,
+                        "change": previous_rank - current_rank,
+                        "search_volume": 500 + (keyword_hash * 100),
+                        "url": f"https://{domain}/{keyword.replace(' ', '-').lower()}",
+                    }
+                )
 
             # Sort by current rank
             sorted_rankings = sorted(rankings, key=lambda x: x["current_rank"])
@@ -388,16 +408,13 @@ class RankTrackingTool:
                 "date": current_date,
                 "previous_date": previous_date,
                 "rankings": sorted_rankings,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "domain": domain
-            }
+            return {"error": str(e), "domain": domain}
 
     def run(self, domain: str, keywords: str = None, limit: int = 10) -> str:
         """
@@ -414,7 +431,7 @@ class RankTrackingTool:
         # Parse keywords if provided
         keyword_list = None
         if keywords:
-            keyword_list = [k.strip() for k in keywords.split(',')]
+            keyword_list = [k.strip() for k in keywords.split(",")]
 
         result = self.track_rankings(domain, keyword_list, limit)
 
@@ -447,9 +464,12 @@ class RankTrackingTool:
         output += "\n## Recommendations\n"
         output += "- Focus on improving content for keywords with declining rankings\n"
         output += "- Analyze top-ranking pages for keywords with good rankings to identify success factors\n"
-        output += "- Consider creating new content for high-volume keywords not currently in the top 10\n"
+        output += (
+            "- Consider creating new content for high-volume keywords not currently in the top 10\n"
+        )
 
         return output
+
 
 # Create tool instances
 competitor_analysis = CompetitorAnalysisTool()

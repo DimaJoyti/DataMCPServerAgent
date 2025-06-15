@@ -4,18 +4,16 @@ Macro-Correlation Agent for the Fetch.ai Advanced Crypto Trading System.
 This agent analyzes relationships between crypto and traditional markets.
 """
 
-import asyncio
-import json
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
-import pandas as pd
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class MarketType(str, Enum):
     """Types of markets."""
@@ -27,6 +25,7 @@ class MarketType(str, Enum):
     BOND = "bond"
     INDEX = "index"
 
+
 class CorrelationStrength(str, Enum):
     """Correlation strength."""
 
@@ -37,6 +36,7 @@ class CorrelationStrength(str, Enum):
     MODERATE_NEGATIVE = "moderate_negative"  # -0.7 to -0.3
     STRONG_NEGATIVE = "strong_negative"  # -1.0 to -0.7
 
+
 class MarketData(Model):
     """Model for market data."""
 
@@ -46,6 +46,7 @@ class MarketData(Model):
     timestamp: str
     change_24h: float
     volume_24h: float
+
 
 class CorrelationPair(Model):
     """Model for a correlation between two markets."""
@@ -59,6 +60,7 @@ class CorrelationPair(Model):
     sample_size: int
     timestamp: str
 
+
 class MacroEvent(Model):
     """Model for a macroeconomic event."""
 
@@ -69,6 +71,7 @@ class MacroEvent(Model):
     affected_markets: List[MarketType]
     expected_crypto_impact: str  # "positive", "negative", "neutral"
 
+
 class MacroAnalysis(Model):
     """Model for a macro analysis result."""
 
@@ -78,6 +81,7 @@ class MacroAnalysis(Model):
     overall_macro_sentiment: str  # "bullish", "bearish", "neutral"
     confidence: float  # 0.0 to 1.0
     timestamp: str
+
 
 class MacroAgentState(BaseAgentState):
     """State model for the Macro-Correlation Agent."""
@@ -98,6 +102,7 @@ class MacroAgentState(BaseAgentState):
     upcoming_events: List[MacroEvent] = []
     analysis_interval: int = 86400  # 24 hours in seconds
 
+
 class MacroCorrelationAgent(BaseAgent):
     """Agent for analyzing macro correlations between crypto and traditional markets."""
 
@@ -107,7 +112,7 @@ class MacroCorrelationAgent(BaseAgent):
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the Macro-Correlation Agent.
 
@@ -139,7 +144,7 @@ class MacroCorrelationAgent(BaseAgent):
                 event_time=(datetime.now() + timedelta(days=15)).isoformat(),
                 impact="high",
                 affected_markets=[MarketType.STOCK, MarketType.BOND, MarketType.FOREX],
-                expected_crypto_impact="negative"
+                expected_crypto_impact="negative",
             ),
             MacroEvent(
                 name="US CPI Data Release",
@@ -147,7 +152,7 @@ class MacroCorrelationAgent(BaseAgent):
                 event_time=(datetime.now() + timedelta(days=7)).isoformat(),
                 impact="medium",
                 affected_markets=[MarketType.STOCK, MarketType.BOND],
-                expected_crypto_impact="neutral"
+                expected_crypto_impact="neutral",
             ),
             MacroEvent(
                 name="ECB Monetary Policy Statement",
@@ -155,8 +160,8 @@ class MacroCorrelationAgent(BaseAgent):
                 event_time=(datetime.now() + timedelta(days=21)).isoformat(),
                 impact="medium",
                 affected_markets=[MarketType.FOREX, MarketType.BOND],
-                expected_crypto_impact="neutral"
-            )
+                expected_crypto_impact="neutral",
+            ),
         ]
 
     def _register_handlers(self):
@@ -249,7 +254,7 @@ class MacroCorrelationAgent(BaseAgent):
             price=price,
             timestamp=datetime.now().isoformat(),
             change_24h=change_24h,
-            volume_24h=volume_24h
+            volume_24h=volume_24h,
         )
 
     async def _calculate_correlations(self, ctx: Context):
@@ -273,11 +278,7 @@ class MacroCorrelationAgent(BaseAgent):
                         self.state.correlations.append(correlation)
 
     async def _calculate_correlation(
-        self,
-        crypto_symbol: str,
-        traditional_symbol: str,
-        market_type: MarketType,
-        timeframe: str
+        self, crypto_symbol: str, traditional_symbol: str, market_type: MarketType, timeframe: str
     ) -> Optional[CorrelationPair]:
         """Calculate correlation between a crypto and traditional market.
 
@@ -291,7 +292,10 @@ class MacroCorrelationAgent(BaseAgent):
             Correlation pair or None if not enough data
         """
         # Get market data
-        if crypto_symbol not in self.state.market_data or traditional_symbol not in self.state.market_data:
+        if (
+            crypto_symbol not in self.state.market_data
+            or traditional_symbol not in self.state.market_data
+        ):
             return None
 
         crypto_data = self.state.market_data[crypto_symbol]
@@ -340,7 +344,7 @@ class MacroCorrelationAgent(BaseAgent):
             correlation_strength=strength,
             timeframe=timeframe,
             sample_size=sample_size,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     async def _perform_macro_analysis(self, ctx: Context, crypto_symbol: str) -> MacroAnalysis:
@@ -354,17 +358,13 @@ class MacroCorrelationAgent(BaseAgent):
             Macro analysis
         """
         # Get correlations for this crypto symbol
-        correlations = [
-            c for c in self.state.correlations if c.crypto_symbol == crypto_symbol
-        ]
+        correlations = [c for c in self.state.correlations if c.crypto_symbol == crypto_symbol]
 
         # Get upcoming events
         upcoming_events = self.state.upcoming_events
 
         # Determine overall macro sentiment
-        sentiment, confidence = self._determine_macro_sentiment(
-            correlations, upcoming_events
-        )
+        sentiment, confidence = self._determine_macro_sentiment(correlations, upcoming_events)
 
         return MacroAnalysis(
             crypto_symbol=crypto_symbol,
@@ -372,13 +372,11 @@ class MacroCorrelationAgent(BaseAgent):
             upcoming_events=upcoming_events,
             overall_macro_sentiment=sentiment,
             confidence=confidence,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     def _determine_macro_sentiment(
-        self,
-        correlations: List[CorrelationPair],
-        upcoming_events: List[MacroEvent]
+        self, correlations: List[CorrelationPair], upcoming_events: List[MacroEvent]
     ) -> tuple[str, float]:
         """Determine overall macro sentiment.
 
@@ -394,31 +392,23 @@ class MacroCorrelationAgent(BaseAgent):
 
         # Count positive and negative correlations
         positive_count = sum(
-            1 for c in correlations
-            if c.correlation_strength in [
-                CorrelationStrength.STRONG_POSITIVE,
-                CorrelationStrength.MODERATE_POSITIVE
-            ]
+            1
+            for c in correlations
+            if c.correlation_strength
+            in [CorrelationStrength.STRONG_POSITIVE, CorrelationStrength.MODERATE_POSITIVE]
         )
 
         negative_count = sum(
-            1 for c in correlations
-            if c.correlation_strength in [
-                CorrelationStrength.STRONG_NEGATIVE,
-                CorrelationStrength.MODERATE_NEGATIVE
-            ]
+            1
+            for c in correlations
+            if c.correlation_strength
+            in [CorrelationStrength.STRONG_NEGATIVE, CorrelationStrength.MODERATE_NEGATIVE]
         )
 
         # Count positive and negative event impacts
-        positive_events = sum(
-            1 for e in upcoming_events
-            if e.expected_crypto_impact == "positive"
-        )
+        positive_events = sum(1 for e in upcoming_events if e.expected_crypto_impact == "positive")
 
-        negative_events = sum(
-            1 for e in upcoming_events
-            if e.expected_crypto_impact == "negative"
-        )
+        negative_events = sum(1 for e in upcoming_events if e.expected_crypto_impact == "negative")
 
         # Calculate overall sentiment
         correlation_score = positive_count - negative_count

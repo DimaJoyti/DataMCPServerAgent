@@ -5,15 +5,13 @@ This module integrates all specialized agents into a cohesive trading system.
 """
 
 import asyncio
-import json
 import logging
-import os
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import ccxt
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
 from .learning_agent import LearningOptimizationAgent
@@ -23,6 +21,7 @@ from .risk_agent import RiskManagementAgent
 from .sentiment_agent import SentimentIntelligenceAgent
 from .technical_agent import TechnicalAnalysisAgent
 
+
 class TradingSignal(str, Enum):
     """Trading signal types."""
 
@@ -30,12 +29,14 @@ class TradingSignal(str, Enum):
     SELL = "sell"
     HOLD = "hold"
 
+
 class SignalStrength(str, Enum):
     """Signal strength levels."""
 
     STRONG = "strong"
     MODERATE = "moderate"
     WEAK = "weak"
+
 
 class TradingSignalSource(str, Enum):
     """Sources of trading signals."""
@@ -46,6 +47,7 @@ class TradingSignalSource(str, Enum):
     RISK = "risk"
     REGULATORY = "regulatory"
     LEARNING = "learning"
+
 
 class TradeRecommendation(Model):
     """Model for a trade recommendation."""
@@ -63,6 +65,7 @@ class TradeRecommendation(Model):
     reasoning: str
     timestamp: str
 
+
 class TradingSystemState(BaseAgentState):
     """State model for the Advanced Crypto Trading System."""
 
@@ -70,6 +73,7 @@ class TradingSystemState(BaseAgentState):
     recent_recommendations: List[TradeRecommendation] = []
     agent_addresses: Dict[str, str] = {}
     analysis_interval: int = 3600  # 1 hour in seconds
+
 
 class AdvancedCryptoTradingSystem(BaseAgent):
     """Advanced Crypto Trading System integrating all specialized agents."""
@@ -83,7 +87,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
         logger: Optional[logging.Logger] = None,
         exchange_id: str = "binance",
         api_key: Optional[str] = None,
-        api_secret: Optional[str] = None
+        api_secret: Optional[str] = None,
     ):
         """Initialize the Advanced Crypto Trading System.
 
@@ -101,18 +105,22 @@ class AdvancedCryptoTradingSystem(BaseAgent):
 
         # Initialize exchange
         exchange_class = getattr(ccxt, exchange_id)
-        self.exchange = exchange_class({
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': True,
-        })
+        self.exchange = exchange_class(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+            }
+        )
 
         # Initialize agent state
         self.state = TradingSystemState()
 
         # Initialize specialized agents
         self.sentiment_agent = SentimentIntelligenceAgent()
-        self.technical_agent = TechnicalAnalysisAgent(exchange_id=exchange_id, api_key=api_key, api_secret=api_secret)
+        self.technical_agent = TechnicalAnalysisAgent(
+            exchange_id=exchange_id, api_key=api_key, api_secret=api_secret
+        )
         self.risk_agent = RiskManagementAgent()
         self.regulatory_agent = RegulatoryComplianceAgent()
         self.macro_agent = MacroCorrelationAgent()
@@ -183,7 +191,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
                 macro_signal,
                 risk_assessment,
                 regulatory_check,
-                learning_insight
+                learning_insight,
             )
 
             # If no clear signal, return None
@@ -192,18 +200,24 @@ class AdvancedCryptoTradingSystem(BaseAgent):
 
             # Get current market price
             ticker = await self.exchange.fetch_ticker(symbol)
-            current_price = ticker['last']
+            current_price = ticker["last"]
 
             # Calculate entry, stop loss, and take profit
             entry_price = current_price
 
             # For simplicity, we'll use fixed percentages
             # In a real system, these would be calculated based on volatility and risk
-            stop_loss = entry_price * 0.95 if combined_signal == TradingSignal.BUY else entry_price * 1.05
-            take_profit = entry_price * 1.1 if combined_signal == TradingSignal.BUY else entry_price * 0.9
+            stop_loss = (
+                entry_price * 0.95 if combined_signal == TradingSignal.BUY else entry_price * 1.05
+            )
+            take_profit = (
+                entry_price * 1.1 if combined_signal == TradingSignal.BUY else entry_price * 0.9
+            )
 
             # Calculate position size (if risk assessment available)
-            position_size = risk_assessment.get("position_size", 0.1)  # Default to 10% of available balance
+            position_size = risk_assessment.get(
+                "position_size", 0.1
+            )  # Default to 10% of available balance
 
             # Generate reasoning
             reasoning = self._generate_reasoning(
@@ -214,7 +228,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
                 macro_signal,
                 risk_assessment,
                 regulatory_check,
-                learning_insight
+                learning_insight,
             )
 
             return TradeRecommendation(
@@ -229,7 +243,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
                 sources=sources,
                 confidence=confidence,
                 reasoning=reasoning,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         except Exception as e:
@@ -258,7 +272,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             "signal": random.choice(signals),
             "strength": random.choice(strengths),
             "confidence": random.uniform(0.5, 0.9),
-            "indicators": ["RSI", "MACD", "Bollinger Bands"]
+            "indicators": ["RSI", "MACD", "Bollinger Bands"],
         }
 
     async def _get_sentiment_signal(self, symbol: str) -> Dict[str, Any]:
@@ -283,7 +297,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             "signal": random.choice(signals),
             "strength": random.choice(strengths),
             "confidence": random.uniform(0.5, 0.9),
-            "sentiment_score": random.uniform(-1.0, 1.0)
+            "sentiment_score": random.uniform(-1.0, 1.0),
         }
 
     async def _get_macro_signal(self, symbol: str) -> Dict[str, Any]:
@@ -308,7 +322,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             "signal": random.choice(signals),
             "strength": random.choice(strengths),
             "confidence": random.uniform(0.5, 0.9),
-            "macro_sentiment": random.choice(["bullish", "bearish", "neutral"])
+            "macro_sentiment": random.choice(["bullish", "bearish", "neutral"]),
         }
 
     async def _get_risk_assessment(self, symbol: str) -> Dict[str, Any]:
@@ -330,7 +344,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             "risk_level": random.choice(["low", "medium", "high"]),
             "position_size": random.uniform(0.05, 0.2),
             "stop_loss_percentage": random.uniform(0.03, 0.07),
-            "confidence": random.uniform(0.5, 0.9)
+            "confidence": random.uniform(0.5, 0.9),
         }
 
     async def _get_regulatory_check(self, symbol: str) -> Dict[str, Any]:
@@ -351,7 +365,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
         return {
             "status": random.choice(["compliant", "needs_review", "non_compliant"]),
             "issues": [],
-            "confidence": random.uniform(0.8, 1.0)
+            "confidence": random.uniform(0.8, 1.0),
         }
 
     async def _get_learning_insight(self, symbol: str) -> Dict[str, Any]:
@@ -375,7 +389,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             "signal": random.choice(signals),
             "prediction": random.choice(["up", "down", "sideways"]),
             "confidence": random.uniform(0.5, 0.9),
-            "features_used": ["price", "volume", "sentiment"]
+            "features_used": ["price", "volume", "sentiment"],
         }
 
     def _combine_signals(
@@ -385,7 +399,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
         macro_signal: Dict[str, Any],
         risk_assessment: Dict[str, Any],
         regulatory_check: Dict[str, Any],
-        learning_insight: Dict[str, Any]
+        learning_insight: Dict[str, Any],
     ) -> tuple[TradingSignal, SignalStrength, float, List[TradingSignalSource]]:
         """Combine signals from all agents.
 
@@ -414,12 +428,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             risk_multiplier = 1.0
 
         # Assign weights to each signal source
-        weights = {
-            "technical": 0.3,
-            "sentiment": 0.2,
-            "macro": 0.2,
-            "learning": 0.3
-        }
+        weights = {"technical": 0.3, "sentiment": 0.2, "macro": 0.2, "learning": 0.3}
 
         # Calculate weighted scores for BUY and SELL
         buy_score = 0.0
@@ -502,7 +511,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
         macro_signal: Dict[str, Any],
         risk_assessment: Dict[str, Any],
         regulatory_check: Dict[str, Any],
-        learning_insight: Dict[str, Any]
+        learning_insight: Dict[str, Any],
     ) -> str:
         """Generate reasoning for a trading recommendation.
 
@@ -523,26 +532,38 @@ class AdvancedCryptoTradingSystem(BaseAgent):
 
         if signal == TradingSignal.BUY:
             if technical_signal["signal"] == TradingSignal.BUY:
-                reasons.append(f"Technical indicators ({', '.join(technical_signal['indicators'])}) suggest bullish momentum")
+                reasons.append(
+                    f"Technical indicators ({', '.join(technical_signal['indicators'])}) suggest bullish momentum"
+                )
 
             if sentiment_signal["signal"] == TradingSignal.BUY:
-                reasons.append(f"Positive sentiment with score {sentiment_signal['sentiment_score']:.2f}")
+                reasons.append(
+                    f"Positive sentiment with score {sentiment_signal['sentiment_score']:.2f}"
+                )
 
             if macro_signal["signal"] == TradingSignal.BUY:
-                reasons.append(f"Favorable macro conditions with {macro_signal['macro_sentiment']} outlook")
+                reasons.append(
+                    f"Favorable macro conditions with {macro_signal['macro_sentiment']} outlook"
+                )
 
             if learning_insight["signal"] == TradingSignal.BUY:
                 reasons.append(f"ML model predicts price movement {learning_insight['prediction']}")
 
         elif signal == TradingSignal.SELL:
             if technical_signal["signal"] == TradingSignal.SELL:
-                reasons.append(f"Technical indicators ({', '.join(technical_signal['indicators'])}) suggest bearish momentum")
+                reasons.append(
+                    f"Technical indicators ({', '.join(technical_signal['indicators'])}) suggest bearish momentum"
+                )
 
             if sentiment_signal["signal"] == TradingSignal.SELL:
-                reasons.append(f"Negative sentiment with score {sentiment_signal['sentiment_score']:.2f}")
+                reasons.append(
+                    f"Negative sentiment with score {sentiment_signal['sentiment_score']:.2f}"
+                )
 
             if macro_signal["signal"] == TradingSignal.SELL:
-                reasons.append(f"Unfavorable macro conditions with {macro_signal['macro_sentiment']} outlook")
+                reasons.append(
+                    f"Unfavorable macro conditions with {macro_signal['macro_sentiment']} outlook"
+                )
 
             if learning_insight["signal"] == TradingSignal.SELL:
                 reasons.append(f"ML model predicts price movement {learning_insight['prediction']}")
@@ -568,7 +589,7 @@ class AdvancedCryptoTradingSystem(BaseAgent):
             self.regulatory_agent.run_async(),
             self.macro_agent.run_async(),
             self.learning_agent.run_async(),
-            self.agent.async_run()
+            self.agent.async_run(),
         )
 
     def run_all(self):

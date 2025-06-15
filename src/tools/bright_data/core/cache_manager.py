@@ -11,25 +11,28 @@ This module provides multi-level caching with:
 """
 
 import asyncio
-import json
 import gzip
 import hashlib
-import time
+import json
 import logging
-from typing import Any, Optional, Dict, Callable
-from dataclasses import dataclass
-from collections import OrderedDict
+import time
 from abc import ABC, abstractmethod
+from collections import OrderedDict
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional
 
 try:
     import redis.asyncio as redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
 
+
 @dataclass
 class CacheEntry:
     """Cache entry with metadata"""
+
     value: Any
     timestamp: float
     ttl: Optional[int]
@@ -38,9 +41,11 @@ class CacheEntry:
     compressed: bool = False
     size_bytes: int = 0
 
+
 @dataclass
 class CacheStats:
     """Cache statistics"""
+
     hits: int = 0
     misses: int = 0
     sets: int = 0
@@ -48,6 +53,7 @@ class CacheStats:
     evictions: int = 0
     total_size: int = 0
     entry_count: int = 0
+
 
 class CacheBackend(ABC):
     """Abstract cache backend interface"""
@@ -81,6 +87,7 @@ class CacheBackend(ABC):
     def get_stats(self) -> CacheStats:
         """Get cache statistics"""
         pass
+
 
 class MemoryCache(CacheBackend):
     """In-memory LRU cache implementation"""
@@ -120,14 +127,14 @@ class MemoryCache(CacheBackend):
         """Set value in memory cache"""
         async with self._lock:
             # Calculate size
-            size_bytes = len(str(value).encode('utf-8'))
+            size_bytes = len(str(value).encode("utf-8"))
 
             # Create cache entry
             entry = CacheEntry(
                 value=value,
                 timestamp=time.time(),
                 ttl=ttl or self.default_ttl,
-                size_bytes=size_bytes
+                size_bytes=size_bytes,
             )
 
             # Remove existing entry if present
@@ -189,11 +196,16 @@ class MemoryCache(CacheBackend):
         self.stats.entry_count = len(self.cache)
         return self.stats
 
+
 class RedisCache(CacheBackend):
     """Redis distributed cache implementation"""
 
-    def __init__(self, redis_url: str = "redis://localhost:6379/0",
-                 key_prefix: str = "bright_data:", default_ttl: int = 3600):
+    def __init__(
+        self,
+        redis_url: str = "redis://localhost:6379/0",
+        key_prefix: str = "bright_data:",
+        default_ttl: int = 3600,
+    ):
         if not REDIS_AVAILABLE:
             raise ImportError("redis package is required for RedisCache")
 
@@ -225,7 +237,7 @@ class RedisCache(CacheBackend):
                 return None
 
             # Deserialize
-            value = json.loads(data.decode('utf-8'))
+            value = json.loads(data.decode("utf-8"))
             self.stats.hits += 1
             return value
 
@@ -241,7 +253,7 @@ class RedisCache(CacheBackend):
             prefixed_key = self._make_key(key)
 
             # Serialize
-            data = json.dumps(value).encode('utf-8')
+            data = json.dumps(value).encode("utf-8")
 
             # Set with TTL
             ttl_seconds = ttl or self.default_ttl
@@ -309,13 +321,17 @@ class RedisCache(CacheBackend):
         if self._redis:
             await self._redis.close()
 
+
 class CacheManager:
     """Multi-level cache manager with compression and warming"""
 
-    def __init__(self, memory_cache: Optional[MemoryCache] = None,
-                 redis_cache: Optional[RedisCache] = None,
-                 compression_threshold: int = 1024,
-                 enable_compression: bool = True):
+    def __init__(
+        self,
+        memory_cache: Optional[MemoryCache] = None,
+        redis_cache: Optional[RedisCache] = None,
+        compression_threshold: int = 1024,
+        enable_compression: bool = True,
+    ):
 
         self.memory_cache = memory_cache or MemoryCache()
         self.redis_cache = redis_cache
@@ -334,21 +350,20 @@ class CacheManager:
 
     def _should_compress(self, data: str) -> bool:
         """Check if data should be compressed"""
-        return (self.enable_compression and
-                len(data.encode('utf-8')) > self.compression_threshold)
+        return self.enable_compression and len(data.encode("utf-8")) > self.compression_threshold
 
     def _compress_data(self, data: str) -> bytes:
         """Compress data using gzip"""
-        return gzip.compress(data.encode('utf-8'))
+        return gzip.compress(data.encode("utf-8"))
 
     def _decompress_data(self, data: bytes) -> str:
         """Decompress data using gzip"""
-        return gzip.decompress(data).decode('utf-8')
+        return gzip.decompress(data).decode("utf-8")
 
     def _generate_key(self, *args, **kwargs) -> str:
         """Generate cache key from arguments"""
         key_data = f"{args}_{sorted(kwargs.items())}"
-        return hashlib.md5(key_data.encode('utf-8')).hexdigest()
+        return hashlib.md5(key_data.encode("utf-8")).hexdigest()
 
     async def get(self, key: str) -> Optional[Any]:
         """Get value from cache (memory first, then Redis)"""
@@ -441,6 +456,7 @@ class CacheManager:
 
     def cache_result(self, ttl: Optional[int] = None, key_func: Optional[Callable] = None):
         """Decorator for caching function results"""
+
         def decorator(func: Callable):
             async def wrapper(*args, **kwargs):
                 # Generate cache key
@@ -461,6 +477,7 @@ class CacheManager:
                 return result
 
             return wrapper
+
         return decorator
 
     def register_warming_function(self, name: str, func: Callable, interval: float = 3600):
@@ -507,13 +524,17 @@ class CacheManager:
                 "entry_count": memory_stats.entry_count,
                 "total_size_bytes": memory_stats.total_size,
             },
-            "redis_cache": {
-                "hits": redis_stats.hits,
-                "misses": redis_stats.misses,
-                "sets": redis_stats.sets,
-                "deletes": redis_stats.deletes,
-                "available": self.redis_cache is not None,
-            } if self.redis_cache else {"available": False}
+            "redis_cache": (
+                {
+                    "hits": redis_stats.hits,
+                    "misses": redis_stats.misses,
+                    "sets": redis_stats.sets,
+                    "deletes": redis_stats.deletes,
+                    "available": self.redis_cache is not None,
+                }
+                if self.redis_cache
+                else {"available": False}
+            ),
         }
 
     async def close(self) -> None:

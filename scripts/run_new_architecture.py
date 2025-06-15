@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Демонстрація нової архітектури DataMCPServerAgent.
-Показує як працювати з новою структурою коду.
+Demonstration of the new DataMCPServerAgent architecture.
+Shows how to work with the new code structure.
 """
 
 import asyncio
@@ -13,35 +13,34 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from app.core.config import settings
 from app.core.logging import get_logger, set_correlation_id
-from app.domain.models.agent import Agent, AgentType, AgentConfiguration, AgentCapability
-from app.domain.models.task import Task, TaskType, TaskPriority
+from app.domain.models.agent import Agent, AgentCapability, AgentConfiguration, AgentType
+from app.domain.models.task import Task, TaskPriority, TaskType
 from app.domain.services.agent_service import AgentService
 from app.infrastructure.repositories.base import InMemoryRepository
-
 
 logger = get_logger(__name__)
 
 
 async def demonstrate_new_architecture():
-    """Демонстрація роботи нової архітектури."""
-    
+    """Demonstration of the new architecture."""
+
     # Set correlation ID for request tracing
     set_correlation_id("demo_001")
-    
-    logger.info("🚀 Демонстрація нової архітектури DataMCPServerAgent")
-    
-    # 1. Створення агента з новою доменною моделлю
-    logger.info("📦 Створення агента...")
-    
-    # Конфігурація агента
+
+    logger.info("🚀 Demonstration of the new DataMCPServerAgent architecture")
+
+    # 1. Creating an agent with the new domain model
+    logger.info("📦 Creating an agent...")
+
+    # Agent configuration
     config = AgentConfiguration(
         max_concurrent_tasks=5,
         timeout_seconds=300,
         memory_limit_mb=512,
         cpu_limit_cores=1.0
     )
-    
-    # Можливості агента
+
+    # Agent capabilities
     capabilities = [
         AgentCapability(
             name="data_processing",
@@ -51,156 +50,156 @@ async def demonstrate_new_architecture():
         ),
         AgentCapability(
             name="email_handling",
-            version="1.0.0", 
+            version="1.0.0",
             description="Send and receive emails",
             enabled=True
         )
     ]
-    
-    # Створення агента
+
+    # Creating the agent
     agent = Agent(
         name="demo-analytics-agent",
         agent_type=AgentType.ANALYTICS,
-        description="Демонстраційний аналітичний агент",
+        description="Demonstration analytical agent",
         configuration=config,
         capabilities=capabilities
     )
-    
-    logger.info(f"✅ Агент створено: {agent.name} (ID: {agent.id})")
-    
-    # 2. Демонстрація доменних подій
-    logger.info("📡 Доменні події:")
+
+    logger.info(f"✅ Agent created: {agent.name} (ID: {agent.id})")
+
+    # 2. Demonstration of domain events
+    logger.info("📡 Domain events:")
     events = agent.clear_domain_events()
     for event in events:
         logger.info(f"  - {event.event_type}: {event.data}")
-    
-    # 3. Створення завдання
-    logger.info("📋 Створення завдання...")
-    
+
+    # 3. Creating a task
+    logger.info("📋 Creating a task...")
+
     task = Task(
-        name="Аналіз даних клієнтів",
+        name="Customer data analysis",
         task_type=TaskType.DATA_ANALYSIS,
         agent_id=agent.id,
         priority=TaskPriority.HIGH,
-        description="Проаналізувати дані клієнтів за останній місяць",
+        description="Analyze customer data from the last month",
         input_data={
             "dataset": "customers_2024_01",
             "analysis_type": "behavior_patterns",
             "output_format": "json"
         }
     )
-    
-    logger.info(f"✅ Завдання створено: {task.name} (ID: {task.id})")
-    
-    # 4. Демонстрація бізнес-логіки
-    logger.info("🔄 Виконання бізнес-логіки...")
-    
-    # Перевірка можливостей агента
+
+    logger.info(f"✅ Task created: {task.name} (ID: {task.id})")
+
+    # 4. Demonstration of business logic
+    logger.info("🔄 Executing business logic...")
+
+    # Checking agent capabilities
     if agent.has_capability("data_processing"):
-        logger.info("✅ Агент має можливість обробки даних")
-        
-        # Зміна статусу завдання
+        logger.info("✅ Agent has data processing capability")
+
+        # Changing task status
         task.change_status(task.status.__class__.RUNNING)
-        logger.info(f"📊 Статус завдання змінено на: {task.status}")
-        
-        # Оновлення прогресу
+        logger.info(f"📊 Task status changed to: {task.status}")
+
+        # Updating progress
         from app.domain.models.task import TaskProgress
         progress = TaskProgress(
             percentage=50.0,
-            current_step="Обробка даних",
+            current_step="Data processing",
             total_steps=4,
             completed_steps=2
         )
         task.update_progress(progress)
-        logger.info(f"📈 Прогрес завдання: {progress.percentage}%")
-        
-        # Завершення завдання
+        logger.info(f"📈 Task progress: {progress.percentage}%")
+
+        # Completing the task
         result_data = {
             "patterns_found": 15,
             "customer_segments": ["high_value", "regular", "new"],
             "recommendations": [
-                "Збільшити персоналізацію для high_value сегменту",
-                "Покращити onboarding для нових клієнтів"
+                "Increase personalization for high_value segment",
+                "Improve onboarding for new customers"
             ]
         }
         task.complete_successfully(result_data)
-        logger.info("✅ Завдання успішно завершено")
-    
-    # 5. Демонстрація масштабування
-    logger.info("📈 Демонстрація масштабування...")
-    
+        logger.info("✅ Task successfully completed")
+
+    # 5. Demonstration of scaling
+    logger.info("📈 Demonstration of scaling...")
+
     if agent.is_scalable():
         agent.scale_to(3)
-        logger.info(f"🔄 Агент масштабовано до {agent.desired_instances} інстансів")
-    
-    # 6. Демонстрація репозиторію
-    logger.info("💾 Демонстрація роботи з репозиторієм...")
-    
-    # Створення in-memory репозиторію для демонстрації
+        logger.info(f"🔄 Agent scaled to {agent.desired_instances} instances")
+
+    # 6. Demonstration of repository
+    logger.info("💾 Demonstration of repository operations...")
+
+    # Creating in-memory repository for demonstration
     agent_repo = InMemoryRepository()
-    
-    # Збереження агента
+
+    # Saving the agent
     saved_agent = await agent_repo.save(agent)
-    logger.info(f"💾 Агент збережено в репозиторії")
-    
-    # Завантаження агента
+    logger.info("💾 Agent saved in repository")
+
+    # Loading the agent
     loaded_agent = await agent_repo.get_by_id(saved_agent.id)
     if loaded_agent:
-        logger.info(f"📖 Агент завантажено з репозиторію: {loaded_agent.name}")
-    
-    # Пошук агентів за типом
+        logger.info(f"📖 Agent loaded from repository: {loaded_agent.name}")
+
+    # Searching agents by type
     agents = await agent_repo.list(agent_type=AgentType.ANALYTICS)
-    logger.info(f"🔍 Знайдено {len(agents)} аналітичних агентів")
-    
-    # 7. Демонстрація доменного сервісу
-    logger.info("🔧 Демонстрація доменного сервісу...")
-    
-    # Створення сервісу
+    logger.info(f"🔍 Found {len(agents)} analytical agents")
+
+    # 7. Demonstration of domain service
+    logger.info("🔧 Demonstration of domain service...")
+
+    # Creating service
     agent_service = AgentService()
     agent_service.register_repository("agent", agent_repo)
-    
-    # Пошук здорових агентів
+
+    # Finding healthy agents
     healthy_agents = await agent_service.get_healthy_agents()
-    logger.info(f"💚 Знайдено {len(healthy_agents)} здорових агентів")
-    
-    # 8. Демонстрація конфігурації
-    logger.info("⚙️ Демонстрація конфігурації...")
-    logger.info(f"🌍 Середовище: {settings.environment}")
-    logger.info(f"🐛 Debug режим: {settings.debug}")
-    logger.info(f"📊 Cloudflare увімкнено: {settings.enable_cloudflare}")
-    logger.info(f"📧 Email увімкнено: {settings.enable_email}")
-    logger.info(f"🎥 WebRTC увімкнено: {settings.enable_webrtc}")
-    
-    # 9. Демонстрація валідації
-    logger.info("✅ Демонстрація валідації...")
-    
+    logger.info(f"💚 Found {len(healthy_agents)} healthy agents")
+
+    # 8. Configuration demonstration
+    logger.info("⚙️ Configuration demonstration...")
+    logger.info(f"🌍 Environment: {settings.environment}")
+    logger.info(f"🐛 Debug mode: {settings.debug}")
+    logger.info(f"📊 Cloudflare enabled: {settings.enable_cloudflare}")
+    logger.info(f"📧 Email enabled: {settings.enable_email}")
+    logger.info(f"🎥 WebRTC enabled: {settings.enable_webrtc}")
+
+    # 9. Demonstration of validation
+    logger.info("✅ Demonstration of validation...")
+
     try:
-        # Спроба створити агента з некоректними даними
+        # Attempt to create an agent with invalid data
         invalid_agent = Agent(
-            name="",  # Порожнє ім'я - має викликати помилку
+            name="",  # Empty name - should trigger an error
             agent_type=AgentType.WORKER
         )
     except Exception as e:
-        logger.info(f"🚫 Валідація спрацювала: {type(e).__name__}")
-    
-    # 10. Фінальна статистика
-    logger.info("📊 Фінальна статистика:")
-    logger.info(f"  - Агентів створено: 1")
-    logger.info(f"  - Завдань виконано: 1") 
-    logger.info(f"  - Доменних подій: {len(events)}")
-    logger.info(f"  - Успішність: 100%")
-    
-    logger.info("🎉 Демонстрація нової архітектури завершена успішно!")
+        logger.info(f"🚫 Validation triggered: {type(e).__name__}")
+
+    # 10. Final statistics
+    logger.info("📊 Final statistics:")
+    logger.info("  - Agents created: 1")
+    logger.info("  - Tasks completed: 1")
+    logger.info(f"  - Domain events: {len(events)}")
+    logger.info("  - Success rate: 100%")
+
+    logger.info("🎉 Demonstration of the new architecture completed successfully!")
 
 
 async def main():
-    """Головна функція."""
+    """Main function."""
     try:
         await demonstrate_new_architecture()
     except Exception as e:
-        logger.error(f"❌ Помилка під час демонстрації: {e}", exc_info=True)
+        logger.error(f"❌ Error during demonstration: {e}", exc_info=True)
         return 1
-    
+
     return 0
 
 

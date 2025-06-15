@@ -4,14 +4,14 @@ This module provides mechanisms for agents to adapt to user preferences and impr
 """
 
 import json
-import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List
 
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class UserPreferenceModel:
     """Model for tracking and adapting to user preferences."""
@@ -33,29 +33,25 @@ class UserPreferenceModel:
                 "formality": "neutral",  # "casual", "neutral", "formal"
                 "technical_level": "medium",  # "basic", "medium", "advanced"
                 "include_examples": True,
-                "include_explanations": True
+                "include_explanations": True,
             },
             "content_preferences": {
                 "prefers_visual_content": False,
                 "prefers_structured_data": True,
-                "prefers_step_by_step": True
+                "prefers_step_by_step": True,
             },
-            "tool_preferences": {
-                "preferred_tools": [],
-                "avoided_tools": []
-            },
-            "topic_interests": {
-                "high_interest": [],
-                "low_interest": []
-            }
+            "tool_preferences": {"preferred_tools": [], "avoided_tools": []},
+            "topic_interests": {"high_interest": [], "low_interest": []},
         }
 
         # Load preferences from the database
         self._load_preferences()
 
         # Create the preference extraction prompt
-        self.extraction_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a preference analysis agent responsible for identifying user preferences from interactions.
+        self.extraction_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a preference analysis agent responsible for identifying user preferences from interactions.
 Your job is to analyze user requests and agent responses to identify preferences and interests.
 
 For each interaction, you should:
@@ -70,14 +66,18 @@ Respond with a JSON object containing:
 - "tool_preferences": Object with preferences about tools
 - "topic_interests": Object with topic interests
 - "confidence": Confidence score for each preference (0-100)
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 User request: {request}
 Agent response: {response}
 
 Extract user preferences from this interaction.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     def _load_preferences(self) -> None:
         """Load preferences from the database."""
@@ -101,10 +101,7 @@ Extract user preferences from this interaction.
             Extracted preferences
         """
         # Prepare the input for the extraction prompt
-        input_values = {
-            "request": request,
-            "response": response
-        }
+        input_values = {"request": request, "response": response}
 
         # Get the preference extraction from the model
         messages = self.extraction_prompt.format_messages(**input_values)
@@ -114,7 +111,9 @@ Extract user preferences from this interaction.
         try:
             # Try to extract JSON from the response
             content = response_obj.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -127,14 +126,14 @@ Extract user preferences from this interaction.
             extracted_preferences = json.loads(json_str)
 
             return extracted_preferences
-        except Exception as e:
+        except Exception:
             # If parsing fails, return an empty preferences object
             return {
                 "response_style": {},
                 "content_preferences": {},
                 "tool_preferences": {},
                 "topic_interests": {},
-                "confidence": 0
+                "confidence": 0,
             }
 
     async def update_preferences(self, new_preferences: Dict[str, Any]) -> None:
@@ -262,14 +261,12 @@ Extract user preferences from this interaction.
 
         return formatted
 
+
 class AdaptiveLearningSystem:
     """System for adaptive learning from user interactions."""
 
     def __init__(
-        self,
-        model: ChatAnthropic,
-        db: MemoryDatabase,
-        preference_model: UserPreferenceModel
+        self, model: ChatAnthropic, db: MemoryDatabase, preference_model: UserPreferenceModel
     ):
         """Initialize the adaptive learning system.
 
@@ -283,8 +280,10 @@ class AdaptiveLearningSystem:
         self.preference_model = preference_model
 
         # Create the response adaptation prompt
-        self.adaptation_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an adaptive response agent responsible for tailoring responses to user preferences.
+        self.adaptation_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an adaptive response agent responsible for tailoring responses to user preferences.
 Your job is to adapt a draft response to better match the user's preferences.
 
 For each response, you should:
@@ -301,8 +300,10 @@ Adapt the response based on:
 - Topic interests (emphasize high-interest topics)
 
 Respond with the adapted response, maintaining all factual information from the original.
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 User request: {request}
 Draft response: {draft_response}
 
@@ -310,12 +311,16 @@ User preferences:
 {preferences}
 
 Adapt the response to better match the user's preferences.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Create the learning strategy prompt
-        self.strategy_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a learning strategy agent responsible for developing strategies to improve agent performance.
+        self.strategy_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a learning strategy agent responsible for developing strategies to improve agent performance.
 Your job is to analyze feedback and performance data to identify areas for improvement and develop learning strategies.
 
 For each analysis, you should:
@@ -330,8 +335,10 @@ Respond with a JSON object containing:
 - "improvement_strategies": Array of strategies with priority levels
 - "tool_recommendations": Recommendations for tool usage
 - "response_recommendations": Recommendations for response generation
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Recent feedback:
 {feedback}
 
@@ -339,8 +346,10 @@ Performance metrics:
 {performance_metrics}
 
 Develop learning strategies based on this data.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def adapt_response(self, request: str, draft_response: str) -> str:
         """Adapt a draft response to better match user preferences.
@@ -362,7 +371,7 @@ Develop learning strategies based on this data.
         input_values = {
             "request": request,
             "draft_response": draft_response,
-            "preferences": formatted_preferences
+            "preferences": formatted_preferences,
         }
 
         # Get the adapted response from the model
@@ -372,9 +381,7 @@ Develop learning strategies based on this data.
         return response.content
 
     async def develop_learning_strategy(
-        self,
-        feedback: List[Dict[str, Any]],
-        performance_metrics: Dict[str, Any]
+        self, feedback: List[Dict[str, Any]], performance_metrics: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Develop learning strategies based on feedback and performance data.
 
@@ -392,10 +399,7 @@ Develop learning strategies based on this data.
         formatted_metrics = json.dumps(performance_metrics, indent=2)
 
         # Prepare the input for the strategy prompt
-        input_values = {
-            "feedback": formatted_feedback,
-            "performance_metrics": formatted_metrics
-        }
+        input_values = {"feedback": formatted_feedback, "performance_metrics": formatted_metrics}
 
         # Get the learning strategies from the model
         messages = self.strategy_prompt.format_messages(**input_values)
@@ -405,7 +409,9 @@ Develop learning strategies based on this data.
         try:
             # Try to extract JSON from the response
             content = response.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -421,26 +427,16 @@ Develop learning strategies based on this data.
             self.db.save_entity("learning", "strategies", strategies)
 
             return strategies
-        except Exception as e:
+        except Exception:
             # If parsing fails, return a default strategy
             default_strategy = {
                 "learning_focus": "Improve response quality",
                 "improvement_strategies": [
-                    {
-                        "strategy": "Enhance response clarity",
-                        "priority": "high"
-                    },
-                    {
-                        "strategy": "Improve tool selection",
-                        "priority": "medium"
-                    }
+                    {"strategy": "Enhance response clarity", "priority": "high"},
+                    {"strategy": "Improve tool selection", "priority": "medium"},
                 ],
-                "tool_recommendations": [
-                    "Focus on tools with higher success rates"
-                ],
-                "response_recommendations": [
-                    "Provide more structured responses"
-                ]
+                "tool_recommendations": ["Focus on tools with higher success rates"],
+                "response_recommendations": ["Provide more structured responses"],
             }
 
             # Save the default strategy to the database

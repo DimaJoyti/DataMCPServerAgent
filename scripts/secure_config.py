@@ -3,15 +3,14 @@ Secure configuration management with environment variables.
 Enhanced with Pydantic validation and modern Python practices.
 """
 
-import os
 import secrets
-from typing import Optional, List
 from enum import Enum
+from typing import List, Optional
 
-from pydantic import Field, validator, SecretStr
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
 import structlog
+from dotenv import load_dotenv
+from pydantic import Field, SecretStr, validator
+from pydantic_settings import BaseSettings
 
 # Load environment variables
 load_dotenv()
@@ -186,7 +185,6 @@ def validate_production_config(config: AppConfig) -> None:
 
 def setup_structured_logging(config: AppConfig) -> None:
     """Setup structured logging with structlog."""
-    import logging.config
 
     structlog.configure(
         processors=[

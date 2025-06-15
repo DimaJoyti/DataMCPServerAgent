@@ -32,6 +32,7 @@ except ImportError:
 
 from src.models.research_models import Source, SourceType
 
+
 class GoogleScholarTool:
     """Tool for searching Google Scholar."""
 
@@ -164,6 +165,7 @@ class GoogleScholarTool:
 
         return "\n".join(results)
 
+
 class PubMedTool:
     """Tool for searching PubMed."""
 
@@ -210,9 +212,7 @@ class PubMedTool:
                                 article = articles.get(pmid, {})
 
                                 # Extract article details
-                                title = article.get(
-                                    "title", f"Medical Paper on {query}"
-                                )
+                                title = article.get("title", f"Medical Paper on {query}")
 
                                 # Extract authors
                                 authors = []
@@ -221,9 +221,7 @@ class PubMedTool:
                                         authors.append(author["name"])
 
                                 # Extract journal information
-                                journal = article.get(
-                                    "fulljournalname", article.get("source", "")
-                                )
+                                journal = article.get("fulljournalname", article.get("source", ""))
                                 volume = article.get("volume", "")
                                 issue = article.get("issue", "")
                                 pages = article.get("pages", "")
@@ -232,9 +230,7 @@ class PubMedTool:
                                 pub_date = None
                                 if "pubdate" in article:
                                     try:
-                                        pub_date = datetime.strptime(
-                                            article["pubdate"], "%Y %b %d"
-                                        )
+                                        pub_date = datetime.strptime(article["pubdate"], "%Y %b %d")
                                     except ValueError:
                                         try:
                                             pub_date = datetime.strptime(
@@ -331,14 +327,13 @@ class PubMedTool:
                 results.append(f"   DOI: {source.doi}")
 
             if source.publication_date:
-                results.append(
-                    f"   Published: {source.publication_date.strftime('%Y-%m-%d')}"
-                )
+                results.append(f"   Published: {source.publication_date.strftime('%Y-%m-%d')}")
 
             results.append(f"   URL: {source.url}")
             results.append("")
 
         return "\n".join(results)
+
 
 class ArXivTool:
     """Tool for searching arXiv."""
@@ -447,13 +442,12 @@ class ArXivTool:
             results.append(f"   URL: {source.url}")
 
             if source.publication_date:
-                results.append(
-                    f"   Published: {source.publication_date.strftime('%Y-%m-%d')}"
-                )
+                results.append(f"   Published: {source.publication_date.strftime('%Y-%m-%d')}")
 
             results.append("")
 
         return "\n".join(results)
+
 
 class GoogleBooksTool:
     """Tool for searching Google Books."""
@@ -504,9 +498,7 @@ class GoogleBooksTool:
                                 elif len(pub_date_str) == 7:  # Year and month
                                     pub_date = datetime.strptime(pub_date_str, "%Y-%m")
                                 else:  # Full date
-                                    pub_date = datetime.strptime(
-                                        pub_date_str, "%Y-%m-%d"
-                                    )
+                                    pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
                             except ValueError:
                                 pass
 
@@ -586,14 +578,13 @@ class GoogleBooksTool:
                 results.append(f"   ISBN: {source.isbn}")
 
             if source.publication_date:
-                results.append(
-                    f"   Published: {source.publication_date.strftime('%Y')}"
-                )
+                results.append(f"   Published: {source.publication_date.strftime('%Y')}")
 
             results.append(f"   URL: {source.url}")
             results.append("")
 
         return "\n".join(results)
+
 
 class OpenLibraryTool:
     """Tool for searching Open Library."""
@@ -716,14 +707,13 @@ class OpenLibraryTool:
                 results.append(f"   ISBN: {source.isbn}")
 
             if source.publication_date:
-                results.append(
-                    f"   Published: {source.publication_date.strftime('%Y')}"
-                )
+                results.append(f"   Published: {source.publication_date.strftime('%Y')}")
 
             results.append(f"   URL: {source.url}")
             results.append("")
 
         return "\n".join(results)
+
 
 # Create tool instances
 google_scholar = GoogleScholarTool()

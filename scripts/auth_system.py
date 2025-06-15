@@ -3,19 +3,18 @@ Enhanced Authentication and Authorization system for MCP Agents.
 Features JWT tokens, bcrypt hashing, rate limiting, and comprehensive security.
 """
 
+import base64
 import secrets
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Set, Union
 from enum import Enum
-import structlog
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 # Security imports
 import jwt
-from passlib.context import CryptContext
-from passlib.hash import bcrypt
+import structlog
 from cryptography.fernet import Fernet
-import base64
+from passlib.context import CryptContext
 
 # Configuration
 from secure_config import config

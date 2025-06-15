@@ -6,8 +6,6 @@ This module provides the main entry point for the knowledge graph agent.
 import asyncio
 import logging
 import os
-import sys
-from typing import Dict, Any, Optional
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -20,13 +18,13 @@ from src.utils.error_handlers import format_error_for_user
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
 
 async def setup_knowledge_graph_agent():
     """Set up the knowledge graph agent.
@@ -52,26 +50,21 @@ async def setup_knowledge_graph_agent():
                 "port": int(os.getenv("REDIS_PORT", "6379")),
                 "db": int(os.getenv("REDIS_DB", "0")),
                 "password": os.getenv("REDIS_PASSWORD", None),
-                "prefix": "datamcp_kg:"
+                "prefix": "datamcp_kg:",
             }
         elif memory_type == "mongodb":
             memory_config = {
                 "connection_string": os.getenv("MONGODB_URI", "mongodb://localhost:27017/"),
-                "database_name": os.getenv("MONGODB_DB", "agent_memory")
+                "database_name": os.getenv("MONGODB_DB", "agent_memory"),
             }
 
         memory_manager = DistributedMemoryManager(
-            memory_type=memory_type,
-            config=memory_config,
-            namespace="knowledge_graph"
+            memory_type=memory_type, config=memory_config, namespace="knowledge_graph"
         )
 
         # Initialize knowledge graph integration
         kg_integration = KnowledgeGraphIntegration(
-            memory_manager=memory_manager,
-            db=db,
-            model=model,
-            namespace="knowledge_graph"
+            memory_manager=memory_manager, db=db, model=model, namespace="knowledge_graph"
         )
 
         return model, memory_manager, kg_integration
@@ -79,6 +72,7 @@ async def setup_knowledge_graph_agent():
         error_message = format_error_for_user(e)
         logger.error(f"Failed to set up knowledge graph agent: {error_message}")
         raise
+
 
 async def chat_with_knowledge_graph_agent():
     """Chat with the knowledge graph agent.
@@ -123,7 +117,9 @@ async def chat_with_knowledge_graph_agent():
                 print("\nSpecial commands:")
                 print("- !kg_summary: Get a summary of the knowledge graph")
                 print("- !kg_context <query>: Get context from the knowledge graph for a query")
-                print("- !kg_entity <type> <id>: Get context for an entity from the knowledge graph")
+                print(
+                    "- !kg_entity <type> <id>: Get context for an entity from the knowledge graph"
+                )
                 print("- !kg_sparql <query>: Execute a SPARQL query on the knowledge graph")
                 print("- !help: Show this help message")
                 print("- !exit: Exit the chat")
@@ -135,10 +131,10 @@ async def chat_with_knowledge_graph_agent():
                 print(f"Total Nodes: {summary['total_nodes']}")
                 print(f"Total Edges: {summary['total_edges']}")
                 print("\nNode Types:")
-                for node_type, count in summary['node_types'].items():
+                for node_type, count in summary["node_types"].items():
                     print(f"- {node_type}: {count}")
                 print("\nEdge Types:")
-                for edge_type, count in summary['edge_types'].items():
+                for edge_type, count in summary["edge_types"].items():
                     print(f"- {edge_type}: {count}")
                 continue
             elif user_input.lower().startswith("!kg_context "):
@@ -146,13 +142,17 @@ async def chat_with_knowledge_graph_agent():
                 query = user_input[12:].strip()
                 context = await kg_integration.get_context_for_request(query)
                 print("\nContext from Knowledge Graph:")
-                print(f"Found {len(context['entities'])} entities and {len(context['relationships'])} relationships")
+                print(
+                    f"Found {len(context['entities'])} entities and {len(context['relationships'])} relationships"
+                )
                 print("\nEntities:")
-                for entity in context['entities']:
+                for entity in context["entities"]:
                     print(f"- {entity['type']}: {entity['properties'].get('name', '')}")
                 print("\nRelationships:")
-                for relationship in context['relationships']:
-                    print(f"- {relationship['source']} -> {relationship['type']} -> {relationship['target']}")
+                for relationship in context["relationships"]:
+                    print(
+                        f"- {relationship['source']} -> {relationship['type']} -> {relationship['target']}"
+                    )
                 continue
             elif user_input.lower().startswith("!kg_entity "):
                 # Get entity context
@@ -163,15 +163,19 @@ async def chat_with_knowledge_graph_agent():
                 entity_type, entity_id = parts
                 context = await kg_integration.get_entity_context(entity_type, entity_id)
                 print("\nEntity Context:")
-                if context['entity']:
-                    print(f"Entity: {context['entity']['type']} - {context['entity']['properties'].get('name', '')}")
+                if context["entity"]:
+                    print(
+                        f"Entity: {context['entity']['type']} - {context['entity']['properties'].get('name', '')}"
+                    )
                     print(f"Properties: {context['entity']['properties']}")
                     print(f"\nNeighbors: {len(context['neighbors'])}")
-                    for neighbor in context['neighbors']:
+                    for neighbor in context["neighbors"]:
                         print(f"- {neighbor['type']}: {neighbor['properties'].get('name', '')}")
                     print(f"\nRelationships: {len(context['relationships'])}")
-                    for relationship in context['relationships']:
-                        print(f"- {relationship['source']} -> {relationship['type']} -> {relationship['target']}")
+                    for relationship in context["relationships"]:
+                        print(
+                            f"- {relationship['source']} -> {relationship['type']} -> {relationship['target']}"
+                        )
                 else:
                     print("Entity not found")
                 continue
@@ -188,10 +192,7 @@ async def chat_with_knowledge_graph_agent():
                 continue
 
             # Save user message
-            user_message = {
-                "role": "user",
-                "content": user_input
-            }
+            user_message = {"role": "user", "content": user_input}
             history.append(user_message)
             await memory_manager.save_conversation_message(user_message, conversation_id)
 
@@ -204,12 +205,16 @@ async def chat_with_knowledge_graph_agent():
                 context_str = "Relevant context from knowledge graph:\n"
                 for entity in context["entities"]:
                     context_str += f"- {entity['type']}: {entity['properties'].get('name', '')}\n"
-                    for key, value in entity['properties'].items():
-                        if key not in ['name', 'timestamp', 'source_type']:
+                    for key, value in entity["properties"].items():
+                        if key not in ["name", "timestamp", "source_type"]:
                             context_str += f"  - {key}: {value}\n"
 
             # Create messages for model
-            messages = [SystemMessage(content=system_prompt + "\n\n" + context_str if context_str else system_prompt)]
+            messages = [
+                SystemMessage(
+                    content=system_prompt + "\n\n" + context_str if context_str else system_prompt
+                )
+            ]
 
             # Add conversation history
             for message in history:
@@ -222,10 +227,7 @@ async def chat_with_knowledge_graph_agent():
             response = await model.ainvoke(messages)
 
             # Save assistant message
-            assistant_message = {
-                "role": "assistant",
-                "content": response.content
-            }
+            assistant_message = {"role": "assistant", "content": response.content}
             history.append(assistant_message)
             await memory_manager.save_conversation_message(assistant_message, conversation_id)
 
@@ -235,6 +237,7 @@ async def chat_with_knowledge_graph_agent():
         error_message = format_error_for_user(e)
         logger.error(f"Error in chat with knowledge graph agent: {error_message}")
         print(f"\nError: {error_message}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_knowledge_graph_agent())

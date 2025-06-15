@@ -16,6 +16,7 @@ from .text_parser import TextParser
 
 logger = logging.getLogger(__name__)
 
+
 class ParserFactory:
     """Factory for creating document parsers."""
 
@@ -54,18 +55,21 @@ class ParserFactory:
         # Register additional parsers (with error handling for missing dependencies)
         try:
             from .excel_parser import ExcelParser
+
             self.register_parser(ExcelParser)
         except ImportError as e:
             logger.warning(f"Excel parser not available: {e}")
 
         try:
             from .powerpoint_parser import PowerPointParser
+
             self.register_parser(PowerPointParser)
         except ImportError as e:
             logger.warning(f"PowerPoint parser not available: {e}")
 
         try:
             from .csv_parser import CSVParser
+
             self.register_parser(CSVParser)
         except ImportError as e:
             logger.warning(f"CSV parser not available: {e}")
@@ -99,7 +103,7 @@ class ParserFactory:
         self,
         document_type: Optional[DocumentType] = None,
         file_path: Optional[Union[str, Path]] = None,
-        config: Optional[ParsingConfig] = None
+        config: Optional[ParsingConfig] = None,
     ) -> BaseParser:
         """
         Get appropriate parser for document type or file.
@@ -139,9 +143,7 @@ class ParserFactory:
             raise
 
     def get_parser_for_file(
-        self,
-        file_path: Union[str, Path],
-        config: Optional[ParsingConfig] = None
+        self, file_path: Union[str, Path], config: Optional[ParsingConfig] = None
     ) -> BaseParser:
         """
         Get appropriate parser for a file.
@@ -200,7 +202,7 @@ class ParserFactory:
             Optional[DocumentType]: Detected document type
         """
         path = Path(file_path)
-        extension = path.suffix.lower().lstrip('.')
+        extension = path.suffix.lower().lstrip(".")
 
         # Check extension mapping
         doc_type = self._extension_map.get(extension)
@@ -211,6 +213,7 @@ class ParserFactory:
         if path.exists():
             try:
                 import mimetypes
+
                 mime_type, _ = mimetypes.guess_type(str(path))
 
                 if mime_type:
@@ -231,15 +234,15 @@ class ParserFactory:
             Optional[DocumentType]: Corresponding document type
         """
         mime_mapping = {
-            'application/pdf': DocumentType.PDF,
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': DocumentType.DOCX,
-            'text/html': DocumentType.HTML,
-            'text/markdown': DocumentType.MARKDOWN,
-            'text/plain': DocumentType.TEXT,
-            'application/json': DocumentType.JSON,
-            'application/xml': DocumentType.XML,
-            'text/xml': DocumentType.XML,
-            'text/csv': DocumentType.CSV,
+            "application/pdf": DocumentType.PDF,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": DocumentType.DOCX,
+            "text/html": DocumentType.HTML,
+            "text/markdown": DocumentType.MARKDOWN,
+            "text/plain": DocumentType.TEXT,
+            "application/json": DocumentType.JSON,
+            "application/xml": DocumentType.XML,
+            "text/xml": DocumentType.XML,
+            "text/csv": DocumentType.CSV,
         }
 
         return mime_mapping.get(mime_type)
@@ -260,7 +263,7 @@ class ParserFactory:
             DocumentType.CSV,
             DocumentType.JSON,
             DocumentType.XML,
-            DocumentType.MARKDOWN
+            DocumentType.MARKDOWN,
         }
 
         if document_type in text_based_types:
@@ -275,10 +278,8 @@ class ParserFactory:
         Returns:
             Dict[DocumentType, str]: Mapping of document types to parser names
         """
-        return {
-            doc_type: parser_class.__name__
-            for doc_type, parser_class in self._parsers.items()
-        }
+        return {doc_type: parser_class.__name__ for doc_type, parser_class in self._parsers.items()}
+
 
 # Global parser factory instance
 parser_factory = ParserFactory()

@@ -5,17 +5,17 @@ Example of using the enhanced tool selection capabilities of DataMCPServerAgent.
 import asyncio
 import os
 import sys
-from typing import Dict, Any
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from langchain_core.tools import BaseTool
 from langchain_anthropic import ChatAnthropic
+from langchain_core.tools import BaseTool
 
 from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.enhanced_tool_selection import EnhancedToolSelector, ToolPerformanceTracker
+
 
 class SearchTool(BaseTool):
     """Tool for searching the web."""
@@ -77,9 +77,9 @@ class WeatherTool(BaseTool):
         """
         # Mock weather data
         return f"## Weather for {location}\n\n" + \
-               f"Temperature: 22°C\n" + \
-               f"Humidity: 65%\n" + \
-               f"Conditions: Partly cloudy\n"
+               "Temperature: 22°C\n" + \
+               "Humidity: 65%\n" + \
+               "Conditions: Partly cloudy\n"
 
 class TranslationTool(BaseTool):
     """Tool for translating text."""

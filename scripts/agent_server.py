@@ -2,16 +2,17 @@
 Full-featured agent server with streaming chat and real agent integration.
 """
 
+import asyncio
+import json
+import os
+import sys
+from datetime import datetime
+from typing import Any, Dict, List
+
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-import uvicorn
-import json
-import asyncio
-from datetime import datetime
-from typing import Dict, Any, List
-import sys
-import os
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

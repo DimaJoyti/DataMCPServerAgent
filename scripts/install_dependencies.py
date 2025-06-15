@@ -4,16 +4,16 @@ Enhanced installation script for DataMCPServerAgent dependencies.
 Uses uv for fast and reliable package management.
 """
 
+import platform
+import shutil
 import subprocess
 import sys
-import shutil
 from typing import List
-import platform
 
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.panel import Panel
 import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
 

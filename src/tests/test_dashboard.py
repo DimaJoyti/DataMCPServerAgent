@@ -1,18 +1,15 @@
 """
-Тестовий скрипт для дашбордів.
-Цей скрипт тестує основну функціональність дашбордів.
+Test script for dashboards.
+This script tests the main functionality of the dashboards.
 """
 
 import json
-import os
 import sys
-import tempfile
 from pathlib import Path
 
-# Додаємо батьківську директорію до шляху Python
+# Adding the parent directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-import numpy as np
 
 try:
     from src.tools.research_dashboard import (
@@ -22,243 +19,239 @@ try:
         DashboardPanel,
         generate_dashboard_tool,
     )
+
     DASHBOARD_AVAILABLE = True
 except ImportError:
     DASHBOARD_AVAILABLE = False
-    print("Увага: Dash або Plotly не доступні. Пропускаємо тести дашбордів.")
+    print("Warning: Dash or Plotly not available. Skipping dashboard tests.")
+
 
 def test_grid_dashboard():
-    """Тестування дашборду з сітковим макетом."""
+    """Testing dashboard with grid layout."""
     if not DASHBOARD_AVAILABLE:
-        print("Dash або Plotly не доступні. Пропускаємо тест дашборду з сітковим макетом.")
+        print("Dash or Plotly not available. Skipping grid layout dashboard test.")
         return
 
-    print("Тестування дашборду з сітковим макетом...")
+    print("Testing dashboard with grid layout...")
 
-    # Створюємо генератор дашбордів
+    # Creating a dashboard generator
     generator = DashboardGenerator()
 
-    # Створюємо дашборд
+    # Creating a dashboard
     dashboard = Dashboard(
         id="test-grid-dashboard",
-        title="Тестовий дашборд з сітковим макетом",
+        title="Test Dashboard with Grid Layout",
         config=DashboardConfig(
-            title="Тестовий дашборд з сітковим макетом",
-            subtitle="Демонстрація сіткового макету",
-            layout="grid"
+            title="Test Dashboard with Grid Layout",
+            subtitle="Grid layout demonstration",
+            layout="grid",
         ),
         panels=[
             DashboardPanel(
                 id="chart-panel",
-                title="Графік",
+                title="Chart",
                 type="chart",
                 data={
                     "chart_type": "bar",
                     "x_data": ["A", "B", "C", "D", "E"],
-                    "y_data": [10, 20, 15, 25, 30]
+                    "y_data": [10, 20, 15, 25, 30],
                 },
-                config={
-                    "title": "Приклад графіка",
-                    "x_label": "Категорії",
-                    "y_label": "Значення"
-                },
+                config={"title": "Sample Chart", "x_label": "Categories", "y_label": "Values"},
                 width=6,
                 height=4,
                 x=0,
-                y=0
+                y=0,
             ),
             DashboardPanel(
                 id="table-panel",
-                title="Таблиця",
+                title="Table",
                 type="table",
                 data={
-                    "columns": ["Назва", "Значення", "Опис"],
+                    "columns": ["Name", "Value", "Description"],
                     "data": [
-                        ["A", 10, "Опис A"],
-                        ["B", 20, "Опис B"],
-                        ["C", 15, "Опис C"],
-                        ["D", 25, "Опис D"],
-                        ["E", 30, "Опис E"]
-                    ]
+                        ["A", 10, "Description A"],
+                        ["B", 20, "Description B"],
+                        ["C", 15, "Description C"],
+                        ["D", 25, "Description D"],
+                        ["E", 30, "Description E"],
+                    ],
                 },
                 width=6,
                 height=4,
                 x=6,
-                y=0
+                y=0,
             ),
             DashboardPanel(
                 id="text-panel",
-                title="Текст",
+                title="Text",
                 type="text",
                 data={
-                    "text": "Це приклад текстової панелі. Тут можна розмістити будь-який текст, включаючи результати дослідження, висновки, тощо."
+                    "text": "This is a sample text panel. You can place any text here, including research results, conclusions, etc."
                 },
                 width=12,
                 height=2,
                 x=0,
-                y=4
-            )
-        ]
+                y=4,
+            ),
+        ],
     )
 
-    # Генеруємо дашборд
+    # Generating the dashboard
     try:
         result = generator.generate_dashboard(dashboard)
-        print(f"Дашборд з сітковим макетом згенеровано: {result['url']}")
+        print(f"Dashboard with grid layout generated: {result['url']}")
     except Exception as e:
-        print(f"Помилка при генерації дашборду з сітковим макетом: {str(e)}")
+        print(f"Error generating dashboard with grid layout: {str(e)}")
+
 
 def test_tabs_dashboard():
-    """Тестування дашборду з вкладками."""
+    """Testing dashboard with tabs."""
     if not DASHBOARD_AVAILABLE:
-        print("Dash або Plotly не доступні. Пропускаємо тест дашборду з вкладками.")
+        print("Dash or Plotly not available. Skipping tabs dashboard test.")
         return
 
-    print("\nТестування дашборду з вкладками...")
+    print("\nTesting dashboard with tabs...")
 
-    # Створюємо генератор дашбордів
+    # Creating a dashboard generator
     generator = DashboardGenerator()
 
-    # Створюємо дашборд
+    # Creating a dashboard
     dashboard = Dashboard(
         id="test-tabs-dashboard",
-        title="Тестовий дашборд з вкладками",
+        title="Test Dashboard with Tabs",
         config=DashboardConfig(
-            title="Тестовий дашборд з вкладками",
-            subtitle="Демонстрація макету з вкладками",
-            layout="tabs"
+            title="Test Dashboard with Tabs",
+            subtitle="Tabs layout demonstration",
+            layout="tabs",
         ),
         panels=[
             DashboardPanel(
                 id="chart-panel",
-                title="Графік",
+                title="Chart",
                 type="chart",
                 data={
                     "chart_type": "line",
                     "x_data": [1, 2, 3, 4, 5],
-                    "y_data": [10, 20, 15, 25, 30]
+                    "y_data": [10, 20, 15, 25, 30],
                 },
-                config={
-                    "title": "Приклад лінійного графіка",
-                    "x_label": "X",
-                    "y_label": "Y"
-                },
-                tab="Графіки"
+                config={"title": "Sample Line Chart", "x_label": "X", "y_label": "Y"},
+                tab="Charts",
             ),
             DashboardPanel(
                 id="pie-chart-panel",
-                title="Кругова діаграма",
+                title="Pie Chart",
                 type="chart",
                 data={
                     "chart_type": "pie",
                     "x_data": ["A", "B", "C", "D", "E"],
-                    "y_data": [10, 20, 15, 25, 30]
+                    "y_data": [10, 20, 15, 25, 30],
                 },
-                config={
-                    "title": "Приклад кругової діаграми"
-                },
-                tab="Графіки"
+                config={"title": "Sample Pie Chart"},
+                tab="Charts",
             ),
             DashboardPanel(
                 id="table-panel",
-                title="Таблиця",
+                title="Table",
                 type="table",
                 data={
-                    "columns": ["Назва", "Значення", "Опис"],
+                    "columns": ["Name", "Value", "Description"],
                     "data": [
-                        ["A", 10, "Опис A"],
-                        ["B", 20, "Опис B"],
-                        ["C", 15, "Опис C"],
-                        ["D", 25, "Опис D"],
-                        ["E", 30, "Опис E"]
-                    ]
+                        ["A", 10, "Description A"],
+                        ["B", 20, "Description B"],
+                        ["C", 15, "Description C"],
+                        ["D", 25, "Description D"],
+                        ["E", 30, "Description E"],
+                    ],
                 },
-                tab="Дані"
+                tab="Data",
             ),
             DashboardPanel(
                 id="text-panel",
-                title="Текст",
+                title="Text",
                 type="text",
                 data={
-                    "text": "Це приклад текстової панелі. Тут можна розмістити будь-який текст, включаючи результати дослідження, висновки, тощо."
+                    "text": "This is a sample text panel. You can place any text here, including research results, conclusions, etc."
                 },
-                tab="Інформація"
-            )
-        ]
+                tab="Information",
+            ),
+        ],
     )
 
-    # Генеруємо дашборд
+    # Generating the dashboard
     try:
         result = generator.generate_dashboard(dashboard)
-        print(f"Дашборд з вкладками згенеровано: {result['url']}")
+        print(f"Dashboard with tabs generated: {result['url']}")
     except Exception as e:
-        print(f"Помилка при генерації дашборду з вкладками: {str(e)}")
+        print(f"Error generating dashboard with tabs: {str(e)}")
+
 
 def test_dashboard_tool():
-    """Тестування інструменту для генерації дашбордів."""
+    """Testing the dashboard generation tool."""
     if not DASHBOARD_AVAILABLE:
-        print("Dash або Plotly не доступні. Пропускаємо тест інструменту для генерації дашбордів.")
+        print("Dash or Plotly not available. Skipping dashboard generation tool test.")
         return
 
-    print("\nТестування інструменту для генерації дашбордів...")
+    print("\nTesting the dashboard generation tool...")
 
-    # Створюємо дані для інструменту
+    # Creating data for the tool
     tool_input = {
         "id": "tool-dashboard",
-        "title": "Дашборд, створений інструментом",
+        "title": "Dashboard created by the tool",
         "config": {
-            "title": "Дашборд, створений інструментом",
-            "subtitle": "Демонстрація інструменту для генерації дашбордів",
-            "layout": "grid"
+            "title": "Dashboard created by the tool",
+            "subtitle": "Demonstration of the dashboard generation tool",
+            "layout": "grid",
         },
         "panels": [
             {
                 "id": "chart-panel",
-                "title": "Графік",
+                "title": "Chart",
                 "type": "chart",
                 "data": {
                     "chart_type": "bar",
                     "x_data": ["A", "B", "C", "D", "E"],
-                    "y_data": [10, 20, 15, 25, 30]
+                    "y_data": [10, 20, 15, 25, 30],
                 },
                 "config": {
-                    "title": "Приклад графіка",
-                    "x_label": "Категорії",
-                    "y_label": "Значення"
+                    "title": "Sample Chart",
+                    "x_label": "Categories",
+                    "y_label": "Values",
                 },
                 "width": 12,
                 "height": 6,
                 "x": 0,
-                "y": 0
+                "y": 0,
             }
-        ]
+        ],
     }
 
-    # Викликаємо інструмент
+    # Calling the tool
     try:
         result = generate_dashboard_tool(json.dumps(tool_input))
         result_dict = json.loads(result)
 
-        print(f"Результат інструменту для генерації дашбордів: {result_dict}")
+        print(f"Result of the dashboard generation tool: {result_dict}")
     except Exception as e:
-        print(f"Помилка при виклику інструменту для генерації дашбордів: {str(e)}")
+        print(f"Error calling the dashboard generation tool: {str(e)}")
+
 
 def main():
-    """Запуск тестів."""
+    """Running the tests."""
     if not DASHBOARD_AVAILABLE:
-        print("Dash або Plotly не доступні. Пропускаємо всі тести дашбордів.")
+        print("Dash or Plotly not available. Skipping all dashboard tests.")
         return
 
-    # Тестуємо дашборд з сітковим макетом
+    # Testing the grid layout dashboard
     test_grid_dashboard()
 
-    # Тестуємо дашборд з вкладками
+    # Testing the tabs dashboard
     test_tabs_dashboard()
 
-    # Тестуємо інструмент для генерації дашбордів
+    # Testing the dashboard generation tool
     test_dashboard_tool()
 
-    print("\nВсі тести завершено.")
+    print("\nAll tests completed.")
+
 
 if __name__ == "__main__":
     main()

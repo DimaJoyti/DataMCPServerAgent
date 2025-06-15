@@ -2,7 +2,6 @@
 FAISS vector store implementation.
 """
 
-import json
 import pickle
 import time
 from pathlib import Path
@@ -11,13 +10,15 @@ from typing import Any, Dict, List, Optional
 try:
     import faiss
     import numpy as np
+
     HAS_FAISS = True
 except ImportError:
     HAS_FAISS = False
 
-from .base_store import BaseVectorStore, VectorStoreStats
 from ..schemas.base_schema import VectorRecord
-from ..schemas.search_models import SearchQuery, SearchResults, SearchResult, SearchType
+from ..schemas.search_models import SearchQuery, SearchResult, SearchResults, SearchType
+from .base_store import BaseVectorStore, VectorStoreStats
+
 
 class FAISSVectorStore(BaseVectorStore):
     """FAISS vector store implementation."""
@@ -110,13 +111,17 @@ class FAISSVectorStore(BaseVectorStore):
 
             if self.config.distance_metric.value == "cosine":
                 quantizer = faiss.IndexFlatIP(dimension)
-                self.index = faiss.IndexIVFFlat(quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT)
+                self.index = faiss.IndexIVFFlat(
+                    quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT
+                )
             elif self.config.distance_metric.value == "euclidean":
                 quantizer = faiss.IndexFlatL2(dimension)
                 self.index = faiss.IndexIVFFlat(quantizer, dimension, nlist, faiss.METRIC_L2)
             else:
                 quantizer = faiss.IndexFlatIP(dimension)
-                self.index = faiss.IndexIVFFlat(quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT)
+                self.index = faiss.IndexIVFFlat(
+                    quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT
+                )
 
         else:
             # Default to flat index
@@ -135,12 +140,12 @@ class FAISSVectorStore(BaseVectorStore):
 
         # Load metadata
         if self.metadata_file.exists():
-            with open(self.metadata_file, 'rb') as f:
+            with open(self.metadata_file, "rb") as f:
                 data = pickle.load(f)
-                self.id_map = data.get('id_map', {})
-                self.metadata_store = data.get('metadata_store', {})
-                self.text_store = data.get('text_store', {})
-                self.next_internal_id = data.get('next_internal_id', 0)
+                self.id_map = data.get("id_map", {})
+                self.metadata_store = data.get("metadata_store", {})
+                self.text_store = data.get("text_store", {})
+                self.next_internal_id = data.get("next_internal_id", 0)
 
     async def _save_index(self) -> None:
         """Save FAISS index to disk."""
@@ -152,13 +157,13 @@ class FAISSVectorStore(BaseVectorStore):
 
         # Save metadata
         data = {
-            'id_map': self.id_map,
-            'metadata_store': self.metadata_store,
-            'text_store': self.text_store,
-            'next_internal_id': self.next_internal_id
+            "id_map": self.id_map,
+            "metadata_store": self.metadata_store,
+            "text_store": self.text_store,
+            "next_internal_id": self.next_internal_id,
         }
 
-        with open(self.metadata_file, 'wb') as f:
+        with open(self.metadata_file, "wb") as f:
             pickle.dump(data, f)
 
     async def create_collection(self, schema: Optional[Dict[str, Any]] = None) -> bool:
@@ -212,12 +217,14 @@ class FAISSVectorStore(BaseVectorStore):
                 faiss.normalize_L2(vectors)
 
             # Check if IVF index needs training
-            if hasattr(self.index, 'is_trained') and not self.index.is_trained:
+            if hasattr(self.index, "is_trained") and not self.index.is_trained:
                 if vectors.shape[0] >= self.index.nlist:
                     self.index.train(vectors)
                     self.logger.info("Trained IVF index")
                 else:
-                    self.logger.warning(f"Not enough vectors to train IVF index. Need at least {self.index.nlist}")
+                    self.logger.warning(
+                        f"Not enough vectors to train IVF index. Need at least {self.index.nlist}"
+                    )
 
             # Add vectors to index
             internal_ids = list(range(self.next_internal_id, self.next_internal_id + len(records)))
@@ -231,11 +238,11 @@ class FAISSVectorStore(BaseVectorStore):
 
                 self.id_map[internal_id] = external_id
                 self.metadata_store[external_id] = {
-                    'metadata': record.metadata,
-                    'created_at': record.created_at.isoformat(),
-                    'updated_at': record.updated_at.isoformat() if record.updated_at else None,
-                    'source': record.source,
-                    'source_type': record.source_type
+                    "metadata": record.metadata,
+                    "created_at": record.created_at.isoformat(),
+                    "updated_at": record.updated_at.isoformat() if record.updated_at else None,
+                    "source": record.source,
+                    "source_type": record.source_type,
                 }
                 self.text_store[external_id] = record.text
                 inserted_ids.append(external_id)
@@ -328,20 +335,20 @@ class FAISSVectorStore(BaseVectorStore):
 
             from datetime import datetime
 
-            created_at = datetime.fromisoformat(metadata_info['created_at'])
+            created_at = datetime.fromisoformat(metadata_info["created_at"])
             updated_at = None
-            if metadata_info['updated_at']:
-                updated_at = datetime.fromisoformat(metadata_info['updated_at'])
+            if metadata_info["updated_at"]:
+                updated_at = datetime.fromisoformat(metadata_info["updated_at"])
 
             return VectorRecord(
                 id=id,
                 vector=[],  # We don't store the actual vector for retrieval
                 text=text,
-                metadata=metadata_info['metadata'],
+                metadata=metadata_info["metadata"],
                 created_at=created_at,
                 updated_at=updated_at,
-                source=metadata_info['source'],
-                source_type=metadata_info['source_type']
+                source=metadata_info["source"],
+                source_type=metadata_info["source_type"],
             )
 
         except Exception as e:
@@ -367,7 +374,7 @@ class FAISSVectorStore(BaseVectorStore):
                 search_time=search_time,
                 offset=query.offset,
                 limit=query.limit,
-                has_more=len(results) == query.limit
+                has_more=len(results) == query.limit,
             )
 
         except Exception as e:
@@ -384,7 +391,7 @@ class FAISSVectorStore(BaseVectorStore):
             faiss.normalize_L2(query_vector)
 
         # Set search parameters for HNSW
-        if hasattr(self.index, 'hnsw'):
+        if hasattr(self.index, "hnsw"):
             ef_search = self.config.index_params.get("ef_search", 50)
             self.index.hnsw.efSearch = ef_search
 
@@ -433,9 +440,9 @@ class FAISSVectorStore(BaseVectorStore):
                 id=external_id,
                 score=score,
                 text=text,
-                metadata=metadata_info['metadata'],
+                metadata=metadata_info["metadata"],
                 rank=len(search_results) + 1,
-                distance=float(distance)
+                distance=float(distance),
             )
 
             if query.include_vectors:
@@ -458,9 +465,9 @@ class FAISSVectorStore(BaseVectorStore):
             index_type = "Unknown"
             is_trained = True
 
-            if hasattr(self.index, 'hnsw'):
+            if hasattr(self.index, "hnsw"):
                 index_type = "HNSW"
-            elif hasattr(self.index, 'nlist'):
+            elif hasattr(self.index, "nlist"):
                 index_type = "IVF"
                 is_trained = self.index.is_trained
             else:
@@ -470,7 +477,7 @@ class FAISSVectorStore(BaseVectorStore):
                 total_vectors=total_vectors,
                 index_size=index_size,
                 index_type=index_type,
-                is_trained=is_trained
+                is_trained=is_trained,
             )
 
         except Exception as e:

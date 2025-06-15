@@ -24,6 +24,7 @@ try:
 except ImportError:
     MEMORY_MODULES_AVAILABLE = False
 
+
 class MemoryService:
     """Service for memory operations."""
 
@@ -134,9 +135,9 @@ class MemoryService:
                 memory_db.save_entity("memory", memory_item["id"], memory_item)
 
                 # Save session association
-                session_memories = memory_db.load_entity(
-                    "session_memory", session_id
-                ) or {"memory_ids": []}
+                session_memories = memory_db.load_entity("session_memory", session_id) or {
+                    "memory_ids": []
+                }
                 if memory_item["id"] not in session_memories["memory_ids"]:
                     session_memories["memory_ids"].append(memory_item["id"])
                 memory_db.save_entity("session_memory", session_id, session_memories)
@@ -144,9 +145,7 @@ class MemoryService:
         elif memory_backend == "distributed":
             distributed_backend = await self._get_distributed_backend()
             if distributed_backend:
-                await distributed_backend.save_entity(
-                    "memory", memory_item["id"], memory_item
-                )
+                await distributed_backend.save_entity("memory", memory_item["id"], memory_item)
 
                 # Save session association
                 session_memories = await distributed_backend.load_entity(
@@ -206,19 +205,16 @@ class MemoryService:
                 memory_item = await redis_service.get_entity("memory", memory_id)
                 if memory_item:
                     # Filter by query if provided
-                    if (
-                        query is None
-                        or query.lower() in json.dumps(memory_item).lower()
-                    ):
+                    if query is None or query.lower() in json.dumps(memory_item).lower():
                         memory_items.append(memory_item)
 
         elif memory_backend == "sqlite" or memory_backend == "file":
             memory_db = self._get_memory_db()
             if memory_db:
                 # Get session memory IDs
-                session_memories = memory_db.load_entity(
-                    "session_memory", session_id
-                ) or {"memory_ids": []}
+                session_memories = memory_db.load_entity("session_memory", session_id) or {
+                    "memory_ids": []
+                }
                 memory_ids = session_memories.get("memory_ids", [])
 
                 # Get memory items
@@ -226,10 +222,7 @@ class MemoryService:
                     memory_item = memory_db.load_entity("memory", memory_id)
                     if memory_item:
                         # Filter by query if provided
-                        if (
-                            query is None
-                            or query.lower() in json.dumps(memory_item).lower()
-                        ):
+                        if query is None or query.lower() in json.dumps(memory_item).lower():
                             memory_items.append(memory_item)
 
         elif memory_backend == "distributed":
@@ -243,15 +236,10 @@ class MemoryService:
 
                 # Get memory items
                 for memory_id in memory_ids[offset : offset + limit]:
-                    memory_item = await distributed_backend.load_entity(
-                        "memory", memory_id
-                    )
+                    memory_item = await distributed_backend.load_entity("memory", memory_id)
                     if memory_item:
                         # Filter by query if provided
-                        if (
-                            query is None
-                            or query.lower() in json.dumps(memory_item).lower()
-                        ):
+                        if query is None or query.lower() in json.dumps(memory_item).lower():
                             memory_items.append(memory_item)
 
         # If no memory items found, return empty list
@@ -322,9 +310,9 @@ class MemoryService:
             memory_db = self._get_memory_db()
             if memory_db:
                 # Get session memory IDs
-                session_memories = memory_db.load_entity(
-                    "session_memory", session_id
-                ) or {"memory_ids": []}
+                session_memories = memory_db.load_entity("session_memory", session_id) or {
+                    "memory_ids": []
+                }
                 memory_ids = session_memories.get("memory_ids", [])
 
                 # Delete each memory item

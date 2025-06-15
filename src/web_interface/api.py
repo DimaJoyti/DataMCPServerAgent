@@ -56,6 +56,7 @@ from .models import (
     VectorSearchResponse,
 )
 
+
 class DocumentProcessingAPI:
     """Document processing API service."""
 
@@ -78,7 +79,7 @@ class DocumentProcessingAPI:
             "total_documents": 0,
             "total_chunks": 0,
             "total_vectors": 0,
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
 
     async def initialize(self):
@@ -86,23 +87,18 @@ class DocumentProcessingAPI:
         try:
             # Initialize document processor
             parsing_config = ParsingConfig(
-                extract_metadata=True,
-                normalize_whitespace=True,
-                preserve_formatting=False
+                extract_metadata=True, normalize_whitespace=True, preserve_formatting=False
             )
 
             chunking_config = ChunkingConfig(
-                chunk_size=1000,
-                chunk_overlap=200,
-                strategy="text",
-                preserve_sentences=True
+                chunk_size=1000, chunk_overlap=200, strategy="text", preserve_sentences=True
             )
 
             processing_config = DocumentProcessingConfig(
                 parsing_config=parsing_config,
                 chunking_config=chunking_config,
                 enable_chunking=True,
-                enable_metadata_enrichment=True
+                enable_metadata_enrichment=True,
             )
 
             self.document_processor = DocumentProcessor(processing_config)
@@ -113,12 +109,11 @@ class DocumentProcessingAPI:
                 model_provider="huggingface",
                 embedding_dimension=384,
                 normalize_embeddings=True,
-                batch_size=32
+                batch_size=32,
             )
 
             self.embedder = HuggingFaceEmbedder(
-                config=embedding_config,
-                use_sentence_transformers=True
+                config=embedding_config, use_sentence_transformers=True
             )
 
             # Initialize batch processor
@@ -127,7 +122,7 @@ class DocumentProcessingAPI:
                 max_workers=2,
                 enable_caching=True,
                 show_progress=False,  # Disable for API
-                continue_on_error=True
+                continue_on_error=True,
             )
 
             self.batch_processor = BatchVectorProcessor(self.embedder, batch_config)
@@ -137,7 +132,7 @@ class DocumentProcessingAPI:
                 store_type=VectorStoreType.MEMORY,
                 collection_name="default",
                 embedding_dimension=384,
-                distance_metric=DistanceMetric.COSINE
+                distance_metric=DistanceMetric.COSINE,
             )
 
             await self.vector_store_manager.create_store("default", store_config)
@@ -149,10 +144,7 @@ class DocumentProcessingAPI:
             raise
 
     async def process_document(
-        self,
-        file_content: bytes,
-        request: DocumentUploadRequest,
-        task_id: str
+        self, file_content: bytes, request: DocumentUploadRequest, task_id: str
     ) -> DocumentProcessingResponse:
         """Process a document."""
         try:
@@ -162,7 +154,9 @@ class DocumentProcessingAPI:
             self.tasks[task_id].started_at = datetime.now()
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(suffix=Path(request.filename).suffix, delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(
+                suffix=Path(request.filename).suffix, delete=False
+            ) as temp_file:
                 temp_file.write(file_content)
                 temp_path = Path(temp_file.name)
 
@@ -184,7 +178,7 @@ class DocumentProcessingAPI:
                         character_count=len(chunk.text),
                         word_count=len(chunk.text.split()),
                         start_char=chunk.start_char,
-                        end_char=chunk.end_char
+                        end_char=chunk.end_char,
                     )
                     chunks_info.append(chunk_info)
 
@@ -194,11 +188,15 @@ class DocumentProcessingAPI:
                     self.tasks[task_id].progress = 60.0
                     self.tasks[task_id].current_step = "generating_embeddings"
 
-                    vector_result = await self.batch_processor.process_chunks_async(doc_result.chunks)
+                    vector_result = await self.batch_processor.process_chunks_async(
+                        doc_result.chunks
+                    )
                     vectorization_time = vector_result.total_time
 
                     # Update chunk info with embedding data
-                    for i, (chunk_info, embedding_result) in enumerate(zip(chunks_info, vector_result.results)):
+                    for i, (chunk_info, embedding_result) in enumerate(
+                        zip(chunks_info, vector_result.results)
+                    ):
                         if embedding_result:
                             chunk_info.has_embedding = True
                             chunk_info.embedding_model = embedding_result.model_name
@@ -222,9 +220,11 @@ class DocumentProcessingAPI:
                             store_type=VectorStoreType(request.vector_store_type),
                             collection_name=collection_name,
                             embedding_dimension=384,
-                            distance_metric=DistanceMetric.COSINE
+                            distance_metric=DistanceMetric.COSINE,
                         )
-                        store = await self.vector_store_manager.create_store(collection_name, store_config)
+                        store = await self.vector_store_manager.create_store(
+                            collection_name, store_config
+                        )
 
                     # Create vector records
                     schema = DocumentVectorSchema(store.config)
@@ -238,7 +238,7 @@ class DocumentProcessingAPI:
                                 document_metadata=doc_result.get_metadata(),
                                 vector=embedding_result.embedding,
                                 embedding_model=embedding_result.model_name,
-                                processing_time=embedding_result.processing_time
+                                processing_time=embedding_result.processing_time,
                             )
                             vector_records.append(record)
 
@@ -275,7 +275,7 @@ class DocumentProcessingAPI:
                     stored_in_vector_store=stored_in_vector_store,
                     vector_store_collection=vector_store_collection,
                     errors=doc_result.errors,
-                    warnings=doc_result.warnings
+                    warnings=doc_result.warnings,
                 )
 
                 # Store result in task
@@ -296,12 +296,13 @@ class DocumentProcessingAPI:
             self.logger.error(f"Document processing failed: {e}")
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
+
 def create_app() -> FastAPI:
     """Create FastAPI application."""
     app = FastAPI(
         title="Document Processing Pipeline API",
         description="API for document processing, vectorization, and search",
-        version="1.0.0"
+        version="1.0.0",
     )
 
     # Add CORS middleware
@@ -332,7 +333,7 @@ def create_app() -> FastAPI:
         return {
             "message": "Document Processing Pipeline API",
             "version": "1.0.0",
-            "status": "running"
+            "status": "running",
         }
 
     @app.get("/health")
@@ -347,7 +348,7 @@ def create_app() -> FastAPI:
             return {
                 "status": "healthy" if is_healthy else "unhealthy",
                 "timestamp": datetime.now().isoformat(),
-                "components": health_status
+                "components": health_status,
             }
         except Exception as e:
             return JSONResponse(
@@ -355,8 +356,8 @@ def create_app() -> FastAPI:
                 content={
                     "status": "unhealthy",
                     "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
 
     # Document processing endpoints
@@ -374,7 +375,7 @@ def create_app() -> FastAPI:
         embedding_provider: str = Form("huggingface"),
         store_vectors: bool = Form(True),
         vector_store_type: str = Form("memory"),
-        collection_name: Optional[str] = Form(None)
+        collection_name: Optional[str] = Form(None),
     ):
         """Upload and process a document."""
         try:
@@ -400,7 +401,7 @@ def create_app() -> FastAPI:
                 embedding_provider=embedding_provider,
                 store_vectors=store_vectors,
                 vector_store_type=vector_store_type,
-                collection_name=collection_name
+                collection_name=collection_name,
             )
 
             # Create task
@@ -410,17 +411,12 @@ def create_app() -> FastAPI:
                 status=ProcessingStatus.PENDING,
                 task_type="document_processing",
                 created_at=datetime.now(),
-                metadata={"filename": file.filename}
+                metadata={"filename": file.filename},
             )
             api_service.tasks[task_id] = task_info
 
             # Start background processing
-            background_tasks.add_task(
-                api_service.process_document,
-                file_content,
-                request,
-                task_id
-            )
+            background_tasks.add_task(api_service.process_document, file_content, request, task_id)
 
             # Return initial response
             return DocumentProcessingResponse(
@@ -428,7 +424,7 @@ def create_app() -> FastAPI:
                 status=ProcessingStatus.PENDING,
                 document_id="",  # Will be set during processing
                 filename=file.filename,
-                file_size=len(file_content)
+                file_size=len(file_content),
             )
 
         except Exception as e:
@@ -472,7 +468,9 @@ def create_app() -> FastAPI:
             store = await api_service.vector_store_manager.get_store(collection_name)
 
             if not store:
-                raise HTTPException(status_code=404, detail=f"Collection '{collection_name}' not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Collection '{collection_name}' not found"
+                )
 
             # Create search query
             search_query = SearchQuery(
@@ -485,11 +483,13 @@ def create_app() -> FastAPI:
                 vector_weight=request.vector_weight,
                 keyword_weight=request.keyword_weight,
                 include_metadata=request.include_metadata,
-                include_vectors=request.include_vectors
+                include_vectors=request.include_vectors,
             )
 
             # Add filters if provided
-            if any([request.document_ids, request.document_types, request.tags, request.date_range]):
+            if any(
+                [request.document_ids, request.document_types, request.tags, request.date_range]
+            ):
                 filters = SearchFilters()
 
                 if request.document_ids:
@@ -537,7 +537,7 @@ def create_app() -> FastAPI:
                     metadata=metadata if request.include_metadata else {},
                     vector=result.vector if request.include_vectors else None,
                     document_title=metadata.get("document_title"),
-                    chunk_index=metadata.get("chunk_index")
+                    chunk_index=metadata.get("chunk_index"),
                 )
                 search_results.append(search_result)
 
@@ -551,7 +551,7 @@ def create_app() -> FastAPI:
                 limit=request.limit,
                 has_more=results.has_more,
                 document_counts=document_counts,
-                type_counts=type_counts
+                type_counts=type_counts,
             )
 
         except Exception as e:
@@ -583,7 +583,7 @@ def create_app() -> FastAPI:
                 total_vectors=api_service.stats["total_vectors"],
                 cache_hit_rate=cache_stats.get("hit_rate") if cache_stats else None,
                 cache_size=cache_stats.get("size") if cache_stats else None,
-                uptime=uptime
+                uptime=uptime,
             )
 
         except Exception as e:
@@ -593,7 +593,7 @@ def create_app() -> FastAPI:
                 status="error",
                 document_processor_status="unknown",
                 vectorizer_status="unknown",
-                vector_store_status="unknown"
+                vector_store_status="unknown",
             )
 
     @app.get("/collections")
@@ -612,13 +612,10 @@ def create_app() -> FastAPI:
                         "type": store_type,
                         "total_vectors": stats.total_vectors,
                         "index_type": stats.index_type,
-                        "is_trained": stats.is_trained
+                        "is_trained": stats.is_trained,
                     }
 
-            return {
-                "collections": collection_info,
-                "total_collections": len(collections)
-            }
+            return {"collections": collection_info, "total_collections": len(collections)}
 
         except Exception as e:
             api_service.logger.error(f"Failed to list collections: {e}")

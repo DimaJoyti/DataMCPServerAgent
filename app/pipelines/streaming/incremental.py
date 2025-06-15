@@ -18,15 +18,19 @@ from typing import Any, Dict, List, Optional
 
 from app.core.logging import get_logger
 
+
 class UpdateStrategy(str, Enum):
     """Strategies for incremental updates."""
+
     IMMEDIATE = "immediate"  # Apply updates immediately
-    BATCHED = "batched"     # Batch updates for efficiency
+    BATCHED = "batched"  # Batch updates for efficiency
     SCHEDULED = "scheduled"  # Apply updates on schedule
-    ADAPTIVE = "adaptive"   # Adapt strategy based on load
+    ADAPTIVE = "adaptive"  # Adapt strategy based on load
+
 
 class UpdateType(str, Enum):
     """Types of incremental updates."""
+
     INSERT = "insert"
     UPDATE = "update"
     DELETE = "delete"
@@ -35,13 +39,16 @@ class UpdateType(str, Enum):
     BATCH_UPDATE = "batch_update"
     BATCH_DELETE = "batch_delete"
 
+
 class ConflictResolution(str, Enum):
     """Conflict resolution strategies."""
+
     LAST_WRITE_WINS = "last_write_wins"
     FIRST_WRITE_WINS = "first_write_wins"
     MERGE = "merge"
     MANUAL = "manual"
     VERSION_BASED = "version_based"
+
 
 @dataclass
 class IncrementalUpdate:
@@ -74,6 +81,7 @@ class IncrementalUpdate:
         if self.dependencies is None:
             self.dependencies = []
 
+
 class IndexManager:
     """Manages incremental updates to various indexes."""
 
@@ -103,8 +111,8 @@ class IndexManager:
                 "metadata": {
                     "created_at": time.time(),
                     "document_count": 0,
-                    "last_updated": time.time()
-                }
+                    "last_updated": time.time(),
+                },
             }
 
             self.logger.info(f"Created index: {index_name}")
@@ -167,7 +175,7 @@ class IndexManager:
             "metadata": update.metadata,
             "version": update.version or 1,
             "created_at": update.timestamp,
-            "updated_at": update.timestamp
+            "updated_at": update.timestamp,
         }
 
         index["metadata"]["document_count"] += 1
@@ -230,7 +238,7 @@ class IndexManager:
             "document_count": index["metadata"]["document_count"],
             "created_at": index["metadata"]["created_at"],
             "last_updated": index["metadata"]["last_updated"],
-            "schema": index["schema"]
+            "schema": index["schema"],
         }
 
     def get_all_stats(self) -> Dict[str, Any]:
@@ -238,8 +246,9 @@ class IndexManager:
         return {
             "indexes": {name: self.get_index_stats(name) for name in self.indexes.keys()},
             "pending_updates": len(self.pending_updates),
-            "applied_updates": len(self.applied_updates)
+            "applied_updates": len(self.applied_updates),
         }
+
 
 class IncrementalProcessor:
     """Processes incremental updates with batching and optimization."""
@@ -345,8 +354,8 @@ class IncrementalProcessor:
 
             # Check if we should flush the batch
             should_flush = (
-                len(self.batch_buffer) >= self.batch_size or
-                time.time() - self.last_batch_time >= self.batch_timeout
+                len(self.batch_buffer) >= self.batch_size
+                or time.time() - self.last_batch_time >= self.batch_timeout
             )
 
             if should_flush:
@@ -354,8 +363,7 @@ class IncrementalProcessor:
 
         except asyncio.TimeoutError:
             # Check timeout-based flush
-            if (self.batch_buffer and
-                time.time() - self.last_batch_time >= self.batch_timeout):
+            if self.batch_buffer and time.time() - self.last_batch_time >= self.batch_timeout:
                 await self._flush_batch()
 
     async def _process_scheduled(self) -> None:
@@ -438,5 +446,5 @@ class IncrementalProcessor:
             "queue_size": self.update_queue.qsize(),
             "batch_buffer_size": len(self.batch_buffer),
             "last_batch_time": self.last_batch_time,
-            "index_manager_stats": self.index_manager.get_all_stats()
+            "index_manager_stats": self.index_manager.get_all_stats(),
         }

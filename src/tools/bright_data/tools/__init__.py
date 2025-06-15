@@ -10,10 +10,10 @@ This module contains specialized tools for various use cases:
 - Sentiment analysis
 """
 
+from .advanced_osint import AdvancedOSINTTools
 from .competitive_intelligence import CompetitiveIntelligenceTools
 from .market_research import MarketResearchTools
 from .real_time_monitoring import RealTimeMonitoringTools
-from .advanced_osint import AdvancedOSINTTools
 
 __all__ = [
     "CompetitiveIntelligenceTools",

@@ -6,7 +6,7 @@ adaptive learning, and sophisticated tool selection.
 import asyncio
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -16,13 +16,16 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from src.agents.adaptive_learning import AdaptiveLearningSystem, UserPreferenceModel
-from src.tools.bright_data_tools import BrightDataToolkit
+from src.agents.enhanced_agent_architecture import (
+    EnhancedCoordinatorAgent,
+    create_enhanced_agent_architecture,
+)
+from src.agents.learning_capabilities import FeedbackCollector
 from src.memory.context_aware_memory import ContextManager, MemoryRetriever
-from src.agents.enhanced_agent_architecture import EnhancedCoordinatorAgent, create_enhanced_agent_architecture
+from src.memory.memory_persistence import MemoryDatabase
+from src.tools.bright_data_tools import BrightDataToolkit
 from src.tools.enhanced_tool_selection import EnhancedToolSelector, ToolPerformanceTracker
 from src.utils.error_handlers import format_error_for_user
-from src.agents.learning_capabilities import FeedbackCollector
-from src.memory.memory_persistence import MemoryDatabase
 
 load_dotenv()
 
@@ -37,6 +40,7 @@ server_params = StdioServerParameters(
     },
     args=["@brightdata/mcp"],
 )
+
 
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load both standard MCP tools and custom Bright Data tools.
@@ -63,6 +67,7 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
 
     return list(tool_dict.values())
 
+
 class AdvancedEnhancedAgent:
     """Advanced enhanced agent with context-aware memory and adaptive learning."""
 
@@ -72,7 +77,7 @@ class AdvancedEnhancedAgent:
         memory_db: MemoryDatabase,
         context_manager: ContextManager,
         adaptive_learning: AdaptiveLearningSystem,
-        preference_model: UserPreferenceModel
+        preference_model: UserPreferenceModel,
     ):
         """Initialize the advanced enhanced agent.
 
@@ -98,7 +103,7 @@ class AdvancedEnhancedAgent:
             "total_response_time": 0,
             "feedback_received": 0,
             "positive_feedback": 0,
-            "negative_feedback": 0
+            "negative_feedback": 0,
         }
 
         self.last_request = ""
@@ -138,7 +143,9 @@ class AdvancedEnhancedAgent:
             self.metrics["successful_responses"] += 1
             response_time = time.time() - start_time
             self.metrics["total_response_time"] += response_time
-            self.metrics["avg_response_time"] = self.metrics["total_response_time"] / self.metrics["requests_processed"]
+            self.metrics["avg_response_time"] = (
+                self.metrics["total_response_time"] / self.metrics["requests_processed"]
+            )
 
             # Save the response
             self.last_response = adapted_response
@@ -169,8 +176,26 @@ class AdvancedEnhancedAgent:
         self.metrics["feedback_received"] += 1
 
         # Determine if feedback is positive or negative (simple heuristic)
-        positive_words = ["good", "great", "excellent", "helpful", "thanks", "thank", "perfect", "awesome"]
-        negative_words = ["bad", "poor", "unhelpful", "wrong", "incorrect", "error", "mistake", "not"]
+        positive_words = [
+            "good",
+            "great",
+            "excellent",
+            "helpful",
+            "thanks",
+            "thank",
+            "perfect",
+            "awesome",
+        ]
+        negative_words = [
+            "bad",
+            "poor",
+            "unhelpful",
+            "wrong",
+            "incorrect",
+            "error",
+            "mistake",
+            "not",
+        ]
 
         feedback_lower = feedback.lower()
         is_positive = any(word in feedback_lower for word in positive_words)
@@ -182,7 +207,9 @@ class AdvancedEnhancedAgent:
             self.metrics["negative_feedback"] += 1
 
         # Collect feedback through the coordinator
-        await self.coordinator.collect_user_feedback(self.last_request, self.last_response, feedback)
+        await self.coordinator.collect_user_feedback(
+            self.last_request, self.last_response, feedback
+        )
 
     async def learn(self) -> Dict[str, Any]:
         """Trigger learning from collected feedback and performance data.
@@ -198,21 +225,38 @@ class AdvancedEnhancedAgent:
             "tool_performance": {},
             "response_metrics": {
                 "avg_response_time": self.metrics["avg_response_time"],
-                "success_rate": (self.metrics["successful_responses"] / max(1, self.metrics["requests_processed"])) * 100
+                "success_rate": (
+                    self.metrics["successful_responses"]
+                    / max(1, self.metrics["requests_processed"])
+                )
+                * 100,
             },
             "user_satisfaction": {
-                "feedback_rate": (self.metrics["feedback_received"] / max(1, self.metrics["requests_processed"])) * 100,
-                "positive_rate": (self.metrics["positive_feedback"] / max(1, self.metrics["feedback_received"])) * 100,
-                "negative_rate": (self.metrics["negative_feedback"] / max(1, self.metrics["feedback_received"])) * 100
-            }
+                "feedback_rate": (
+                    self.metrics["feedback_received"] / max(1, self.metrics["requests_processed"])
+                )
+                * 100,
+                "positive_rate": (
+                    self.metrics["positive_feedback"] / max(1, self.metrics["feedback_received"])
+                )
+                * 100,
+                "negative_rate": (
+                    self.metrics["negative_feedback"] / max(1, self.metrics["feedback_received"])
+                )
+                * 100,
+            },
         }
 
         # Get tool performance metrics
         for tool_name in self.coordinator.tool_selector.tool_map:
-            performance_metrics["tool_performance"][tool_name] = self.coordinator.performance_tracker.get_performance(tool_name)
+            performance_metrics["tool_performance"][tool_name] = (
+                self.coordinator.performance_tracker.get_performance(tool_name)
+            )
 
         # Develop learning strategies
-        strategies = await self.adaptive_learning.develop_learning_strategy(feedback, performance_metrics)
+        strategies = await self.adaptive_learning.develop_learning_strategy(
+            feedback, performance_metrics
+        )
 
         return strategies
 
@@ -240,10 +284,9 @@ class AdvancedEnhancedAgent:
         """
         return self.preference_model.get_formatted_preferences()
 
+
 async def create_advanced_enhanced_agent(
-    model: ChatAnthropic,
-    tools: List[BaseTool],
-    db_path: str = "agent_memory.db"
+    model: ChatAnthropic, tools: List[BaseTool], db_path: str = "agent_memory.db"
 ) -> AdvancedEnhancedAgent:
     """Create an advanced enhanced agent with context-aware memory and adaptive learning.
 
@@ -284,14 +327,11 @@ async def create_advanced_enhanced_agent(
 
     # Create advanced enhanced agent
     agent = AdvancedEnhancedAgent(
-        coordinator,
-        memory_db,
-        context_manager,
-        adaptive_learning,
-        preference_model
+        coordinator, memory_db, context_manager, adaptive_learning, preference_model
     )
 
     return agent
+
 
 async def chat_with_advanced_enhanced_agent():
     """Run the advanced enhanced agent with context-aware memory and adaptive learning."""
@@ -348,7 +388,9 @@ async def chat_with_advanced_enhanced_agent():
                     if "improvement_strategies" in strategies:
                         print("\nImprovement Strategies:")
                         for i, strategy in enumerate(strategies["improvement_strategies"], 1):
-                            print(f"{i}. {strategy.get('strategy', 'Unknown')} (Priority: {strategy.get('priority', 'medium')})")
+                            print(
+                                f"{i}. {strategy.get('strategy', 'Unknown')} (Priority: {strategy.get('priority', 'medium')})"
+                            )
                     continue
 
                 elif user_input.strip().lower() == "metrics":
@@ -360,9 +402,13 @@ async def chat_with_advanced_enhanced_agent():
                     print(f"Average Response Time: {metrics['avg_response_time']:.2f}s")
                     print(f"Feedback Received: {metrics['feedback_received']}")
 
-                    if metrics['feedback_received'] > 0:
-                        positive_rate = (metrics['positive_feedback'] / metrics['feedback_received']) * 100
-                        negative_rate = (metrics['negative_feedback'] / metrics['feedback_received']) * 100
+                    if metrics["feedback_received"] > 0:
+                        positive_rate = (
+                            metrics["positive_feedback"] / metrics["feedback_received"]
+                        ) * 100
+                        negative_rate = (
+                            metrics["negative_feedback"] / metrics["feedback_received"]
+                        ) * 100
                         print(f"Positive Feedback Rate: {positive_rate:.2f}%")
                         print(f"Negative Feedback Rate: {negative_rate:.2f}%")
                     continue
@@ -378,6 +424,7 @@ async def chat_with_advanced_enhanced_agent():
 
                 response = await agent.process_request(user_input)
                 print(f"Agent: {response}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_advanced_enhanced_agent())

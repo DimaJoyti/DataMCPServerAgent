@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from ..metadata.models import DocumentMetadata, DocumentType
 
+
 class ParsingConfig(BaseModel):
     """Configuration for document parsing."""
 
@@ -35,7 +36,10 @@ class ParsingConfig(BaseModel):
     max_file_size: int = Field(default=100 * 1024 * 1024, description="Maximum file size in bytes")
 
     # Custom options
-    custom_options: Dict[str, Any] = Field(default_factory=dict, description="Parser-specific options")
+    custom_options: Dict[str, Any] = Field(
+        default_factory=dict, description="Parser-specific options"
+    )
+
 
 class ParsedDocument(BaseModel):
     """Result of document parsing."""
@@ -77,6 +81,7 @@ class ParsedDocument(BaseModel):
         """Check if parsing had warnings."""
         return len(self.warnings) > 0
 
+
 class BaseParser(ABC):
     """Abstract base class for document parsers."""
 
@@ -115,7 +120,7 @@ class BaseParser(ABC):
             bool: True if parser can handle the file
         """
         path = Path(file_path)
-        extension = path.suffix.lower().lstrip('.')
+        extension = path.suffix.lower().lstrip(".")
         return extension in self.supported_extensions
 
     def parse_file(self, file_path: Union[str, Path]) -> ParsedDocument:
@@ -168,6 +173,7 @@ class BaseParser(ABC):
             parsing_time = (end_time - start_time).total_seconds()
 
             from ..metadata.extractor import MetadataExtractor
+
             extractor = MetadataExtractor()
             metadata = extractor.extract_from_file(path)
 
@@ -176,7 +182,7 @@ class BaseParser(ABC):
                 metadata=metadata,
                 parsing_time=parsing_time,
                 parser_name=self._parser_name,
-                parser_version=self._parser_version
+                parser_version=self._parser_version,
             )
             result.add_error(f"Parsing failed: {str(e)}")
 
@@ -187,7 +193,7 @@ class BaseParser(ABC):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Parse document content directly.
@@ -204,7 +210,9 @@ class BaseParser(ABC):
         start_time = datetime.now()
 
         try:
-            result = self._parse_content_impl(content, document_id, document_type, **metadata_kwargs)
+            result = self._parse_content_impl(
+                content, document_id, document_type, **metadata_kwargs
+            )
 
             # Calculate parsing time
             end_time = datetime.now()
@@ -223,12 +231,17 @@ class BaseParser(ABC):
             parsing_time = (end_time - start_time).total_seconds()
 
             from ..metadata.extractor import MetadataExtractor
+
             extractor = MetadataExtractor()
             metadata = extractor.extract_from_content(
-                str(content) if isinstance(content, str) else content.decode('utf-8', errors='ignore'),
+                (
+                    str(content)
+                    if isinstance(content, str)
+                    else content.decode("utf-8", errors="ignore")
+                ),
                 document_id,
                 document_type,
-                **metadata_kwargs
+                **metadata_kwargs,
             )
 
             result = ParsedDocument(
@@ -236,7 +249,7 @@ class BaseParser(ABC):
                 metadata=metadata,
                 parsing_time=parsing_time,
                 parser_name=self._parser_name,
-                parser_version=self._parser_version
+                parser_version=self._parser_version,
             )
             result.add_error(f"Parsing failed: {str(e)}")
 
@@ -261,7 +274,7 @@ class BaseParser(ABC):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Implementation-specific content parsing logic.
@@ -285,7 +298,8 @@ class BaseParser(ABC):
         if self.config.normalize_whitespace:
             # Normalize whitespace
             import re
-            text = re.sub(r'\s+', ' ', text)
+
+            text = re.sub(r"\s+", " ", text)
             text = text.strip()
 
         return text
@@ -293,15 +307,18 @@ class BaseParser(ABC):
     def _extract_links(self, content: str) -> List[Dict[str, str]]:
         """Extract links from content."""
         import re
+
         links = []
 
         # Extract markdown links
-        markdown_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
+        markdown_links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
         for text, url in markdown_links:
             links.append({"text": text, "url": url, "type": "markdown"})
 
         # Extract HTML links
-        html_links = re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>([^<]*)</a>', content, re.IGNORECASE)
+        html_links = re.findall(
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>([^<]*)</a>', content, re.IGNORECASE
+        )
         for url, text in html_links:
             links.append({"text": text, "url": url, "type": "html"})
 

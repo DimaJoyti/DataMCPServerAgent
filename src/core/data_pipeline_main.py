@@ -8,16 +8,14 @@ data processing workflows.
 
 import asyncio
 import logging
-import os
-import sys
-from typing import Dict, Any, Optional
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
-from dotenv import load_dotenv
 import structlog
+from dotenv import load_dotenv
 
-from ..data_pipeline.core.orchestrator import PipelineOrchestrator, OrchestratorConfig
-from ..data_pipeline.core.pipeline_models import PipelineConfig, TaskConfig, TaskType
+from ..data_pipeline.core.orchestrator import OrchestratorConfig, PipelineOrchestrator
+from ..data_pipeline.core.pipeline_models import PipelineConfig
 from ..data_pipeline.ingestion.batch.batch_ingestion import BatchIngestionEngine
 from ..data_pipeline.ingestion.streaming.stream_ingestion import StreamIngestionEngine
 from ..utils.error_handlers import format_error_for_user
@@ -27,8 +25,7 @@ load_dotenv()
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Configure structlog
@@ -42,7 +39,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -51,6 +48,7 @@ structlog.configure(
 )
 
 logger = structlog.get_logger("data_pipeline_main")
+
 
 class DataPipelineManager:
     """
@@ -85,10 +83,12 @@ class DataPipelineManager:
 
             # Initialize orchestrator
             orchestrator_config = OrchestratorConfig(
-                max_concurrent_pipelines=config.get("max_concurrent_pipelines", 10) if config else 10,
+                max_concurrent_pipelines=(
+                    config.get("max_concurrent_pipelines", 10) if config else 10
+                ),
                 max_concurrent_tasks=config.get("max_concurrent_tasks", 50) if config else 50,
                 enable_metrics=config.get("enable_metrics", True) if config else True,
-                enable_logging=config.get("enable_logging", True) if config else True
+                enable_logging=config.get("enable_logging", True) if config else True,
             )
 
             self.orchestrator = PipelineOrchestrator(config=orchestrator_config)
@@ -159,9 +159,7 @@ class DataPipelineManager:
             raise e
 
     async def trigger_pipeline(
-        self,
-        pipeline_id: str,
-        parameters: Optional[Dict[str, Any]] = None
+        self, pipeline_id: str, parameters: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Trigger a pipeline execution.
@@ -178,9 +176,7 @@ class DataPipelineManager:
 
         try:
             run_id = await self.orchestrator.trigger_pipeline(
-                pipeline_id=pipeline_id,
-                parameters=parameters,
-                triggered_by="user"
+                pipeline_id=pipeline_id, parameters=parameters, triggered_by="user"
             )
 
             logger.info("Pipeline triggered", pipeline_id=pipeline_id, run_id=run_id)
@@ -211,8 +207,12 @@ class DataPipelineManager:
                     "run_id": pipeline_run.run_id,
                     "pipeline_id": pipeline_run.pipeline_id,
                     "status": pipeline_run.status.value,
-                    "start_time": pipeline_run.start_time.isoformat() if pipeline_run.start_time else None,
-                    "end_time": pipeline_run.end_time.isoformat() if pipeline_run.end_time else None,
+                    "start_time": (
+                        pipeline_run.start_time.isoformat() if pipeline_run.start_time else None
+                    ),
+                    "end_time": (
+                        pipeline_run.end_time.isoformat() if pipeline_run.end_time else None
+                    ),
                     "duration": pipeline_run.duration,
                     "tasks": [
                         {
@@ -221,11 +221,11 @@ class DataPipelineManager:
                             "start_time": task.start_time.isoformat() if task.start_time else None,
                             "end_time": task.end_time.isoformat() if task.end_time else None,
                             "duration": task.duration,
-                            "error_message": task.error_message
+                            "error_message": task.error_message,
                         }
                         for task in pipeline_run.tasks
                     ],
-                    "error_message": pipeline_run.error_message
+                    "error_message": pipeline_run.error_message,
                 }
 
             return None
@@ -253,11 +253,15 @@ class DataPipelineManager:
                     "name": pipeline.config.name,
                     "description": pipeline.config.description,
                     "is_active": pipeline.is_active,
-                    "last_run_status": pipeline.last_run_status.value if pipeline.last_run_status else None,
-                    "last_run_time": pipeline.last_run_time.isoformat() if pipeline.last_run_time else None,
+                    "last_run_status": (
+                        pipeline.last_run_status.value if pipeline.last_run_status else None
+                    ),
+                    "last_run_time": (
+                        pipeline.last_run_time.isoformat() if pipeline.last_run_time else None
+                    ),
                     "total_runs": pipeline.total_runs,
                     "successful_runs": pipeline.successful_runs,
-                    "failed_runs": pipeline.failed_runs
+                    "failed_runs": pipeline.failed_runs,
                 }
                 for pipeline in pipelines
             ]
@@ -270,7 +274,7 @@ class DataPipelineManager:
         self,
         source_config: Dict[str, Any],
         destination_config: Dict[str, Any],
-        transformation_config: Optional[Dict[str, Any]] = None
+        transformation_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Run batch data ingestion.
@@ -292,7 +296,7 @@ class DataPipelineManager:
             metrics = await self.batch_engine.ingest_data(
                 source_config=source_config,
                 destination_config=destination_config,
-                transformation_config=transformation_config
+                transformation_config=transformation_config,
             )
 
             result = {
@@ -303,7 +307,7 @@ class DataPipelineManager:
                 "processing_time": metrics.processing_time,
                 "throughput_records_per_second": metrics.throughput_records_per_second,
                 "throughput_bytes_per_second": metrics.throughput_bytes_per_second,
-                "error_rate": metrics.error_rate
+                "error_rate": metrics.error_rate,
             }
 
             logger.info("Batch ingestion completed", **result)
@@ -327,8 +331,8 @@ class DataPipelineManager:
                 "components": {
                     "orchestrator": self.orchestrator is not None,
                     "batch_engine": self.batch_engine is not None,
-                    "stream_engine": self.stream_engine is not None
-                }
+                    "stream_engine": self.stream_engine is not None,
+                },
             }
 
             if self.orchestrator:
@@ -337,7 +341,7 @@ class DataPipelineManager:
 
                 status["orchestrator_stats"] = {
                     "active_pipelines": len(active_pipelines),
-                    "registered_pipelines": len(registered_pipelines)
+                    "registered_pipelines": len(registered_pipelines),
                 }
 
             return status
@@ -346,8 +350,10 @@ class DataPipelineManager:
             logger.error("Failed to get system status", error=str(e))
             raise e
 
+
 # Global manager instance
 pipeline_manager = DataPipelineManager()
+
 
 async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None):
     """
@@ -377,20 +383,22 @@ async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None
             try:
                 user_input = input("\nData Pipeline> ").strip()
 
-                if user_input.lower() in ['exit', 'quit']:
+                if user_input.lower() in ["exit", "quit"]:
                     break
-                elif user_input.lower() == 'help':
+                elif user_input.lower() == "help":
                     print("Available commands:")
                     print("- status, list, create, trigger, check, ingest, help, exit")
-                elif user_input.lower() == 'status':
+                elif user_input.lower() == "status":
                     status = await pipeline_manager.get_system_status()
                     print(f"System Status: {status}")
-                elif user_input.lower() == 'list':
+                elif user_input.lower() == "list":
                     pipelines = await pipeline_manager.list_pipelines()
                     print(f"Registered Pipelines: {len(pipelines)}")
                     for pipeline in pipelines:
-                        print(f"  - {pipeline['pipeline_id']}: {pipeline['name']} ({pipeline['last_run_status']})")
-                elif user_input.lower() == 'ingest':
+                        print(
+                            f"  - {pipeline['pipeline_id']}: {pipeline['name']} ({pipeline['last_run_status']})"
+                        )
+                elif user_input.lower() == "ingest":
                     # Example batch ingestion
                     print("Running example batch ingestion...")
                     # This would need actual source and destination configs
@@ -409,6 +417,7 @@ async def chat_with_data_pipeline_system(config: Optional[Dict[str, Any]] = None
         # Stop the system
         await pipeline_manager.stop()
         print("\nData pipeline system stopped. Goodbye!")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_data_pipeline_system())

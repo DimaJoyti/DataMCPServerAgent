@@ -11,16 +11,20 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+
 class CitationFormat(str, Enum):
     """Supported citation formats."""
+
     APA = "apa"
     MLA = "mla"
     CHICAGO = "chicago"
     HARVARD = "harvard"
     IEEE = "ieee"
 
+
 class SourceType(str, Enum):
     """Types of research sources."""
+
     WEB = "web"
     WIKIPEDIA = "wikipedia"
     ACADEMIC = "academic"
@@ -31,8 +35,10 @@ class SourceType(str, Enum):
     NEWS = "news"
     OTHER = "other"
 
+
 class Source(BaseModel):
     """A research source with detailed information."""
+
     title: str
     url: Optional[str] = None
     authors: Optional[List[str]] = None
@@ -97,9 +103,9 @@ class Source(BaseModel):
             return f"{author_text}. \"{self.title}.\" {self.publisher or ''}, {date}, {self.url}."
         elif self.source_type == SourceType.JOURNAL:
             date = self.publication_date.strftime("%Y") if self.publication_date else "n.d."
-            return f"{author_text}. \"{self.title}.\" {self.journal}, vol. {self.volume}, no. {self.issue}, {date}, pp. {self.pages}."
+            return f'{author_text}. "{self.title}." {self.journal}, vol. {self.volume}, no. {self.issue}, {date}, pp. {self.pages}.'
         else:
-            return f"{author_text}. \"{self.title}.\""
+            return f'{author_text}. "{self.title}."'
 
     def _format_chicago(self) -> str:
         """Format the source in Chicago style."""
@@ -141,10 +147,12 @@ class Source(BaseModel):
 
         year = self.publication_date.year if self.publication_date else "n.d."
 
-        return f"{author_text}, \"{self.title},\" {year}."
+        return f'{author_text}, "{self.title}," {year}.'
+
 
 class ResearchResult(BaseModel):
     """A research result with detailed information."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     topic: str
     summary: str
@@ -158,16 +166,20 @@ class ResearchResult(BaseModel):
         citations = [source.format_citation(format) for source in self.sources]
         return "\n\n".join(citations)
 
+
 class ResearchQuery(BaseModel):
     """A research query with its results."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     query: str
     results: List[ResearchResult] = []
     created_at: datetime = Field(default_factory=datetime.now)
     tags: List[str] = []
 
+
 class ResearchProject(BaseModel):
     """A research project containing multiple queries and results."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     name: str
     description: str = ""
@@ -191,36 +203,46 @@ class ResearchProject(BaseModel):
                 self.updated_at = datetime.now()
                 break
 
+
 class User(BaseModel):
     """A user of the Research Assistant."""
+
     id: str
     name: str
     email: Optional[str] = None
 
+
 class Permission(str, Enum):
     """Permission levels for shared research."""
+
     READ = "read"
     COMMENT = "comment"
     EDIT = "edit"
     ADMIN = "admin"
 
+
 class SharedResearch(BaseModel):
     """A shared research project with permissions."""
+
     project_id: str
     user_id: str
     permission: Permission = Permission.READ
     shared_at: datetime = Field(default_factory=datetime.now)
 
+
 class Comment(BaseModel):
     """A comment on a research result."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     user_id: str
     content: str
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
+
 class Annotation(BaseModel):
     """An annotation on a specific part of a research result."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     user_id: str
     content: str
@@ -228,35 +250,45 @@ class Annotation(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
+
 class ResearchResultWithComments(ResearchResult):
     """A research result with comments and annotations."""
+
     comments: List[Comment] = []
     annotations: List[Annotation] = []
 
+
 class ExportFormat(str, Enum):
     """Supported export formats."""
+
     PDF = "pdf"
     DOCX = "docx"
     MARKDOWN = "markdown"
     HTML = "html"
     PRESENTATION = "presentation"
 
+
 class VisualizationType(str, Enum):
     """Types of visualizations."""
+
     CHART = "chart"
     MIND_MAP = "mind_map"
     TIMELINE = "timeline"
     NETWORK = "network"
 
+
 class ChartType(str, Enum):
     """Types of charts."""
+
     BAR = "bar"
     LINE = "line"
     PIE = "pie"
     SCATTER = "scatter"
 
+
 class Visualization(BaseModel):
     """A visualization of research data."""
+
     id: str = Field(default_factory=lambda: datetime.now().strftime("%Y%m%d%H%M%S"))
     title: str
     description: str = ""
@@ -269,8 +301,10 @@ class Visualization(BaseModel):
         # This would be implemented by subclasses
         return f"Visualization: {self.title}"
 
+
 class EnhancedResearchResponse(BaseModel):
     """Enhanced structured response format for research results."""
+
     topic: str
     summary: str
     sources: List[Union[str, Source]]

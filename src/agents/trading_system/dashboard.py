@@ -9,26 +9,24 @@ import asyncio
 import json
 import logging
 import os
-import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
-import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dotenv import load_dotenv
 
-from .trading_system import AdvancedCryptoTradingSystem, TradeRecommendation, TradingSignal
+from .trading_system import AdvancedCryptoTradingSystem
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class Dashboard:
     """Dashboard for the Fetch.ai Advanced Crypto Trading System."""
@@ -37,7 +35,7 @@ class Dashboard:
         self,
         trading_system: Optional[AdvancedCryptoTradingSystem] = None,
         port: int = 8050,
-        debug: bool = False
+        debug: bool = False,
     ):
         """Initialize the dashboard.
 
@@ -51,17 +49,11 @@ class Dashboard:
         self.debug = debug
 
         # Initialize data storage
-        self.data = {
-            "recommendations": [],
-            "market_data": {},
-            "performance": {}
-        }
+        self.data = {"recommendations": [], "market_data": {}, "performance": {}}
 
         # Initialize dashboard
         self.app = dash.Dash(
-            __name__,
-            external_stylesheets=[dbc.themes.DARKLY],
-            title="Fetch.ai Trading Dashboard"
+            __name__, external_stylesheets=[dbc.themes.DARKLY], title="Fetch.ai Trading Dashboard"
         )
 
         # Set up layout
@@ -72,66 +64,92 @@ class Dashboard:
 
     def _setup_layout(self):
         """Set up the dashboard layout."""
-        self.app.layout = dbc.Container([
-            dbc.Row([
-                dbc.Col([
-                    html.H1("Fetch.ai Advanced Crypto Trading System", className="text-center my-4"),
-                    html.Hr()
-                ])
-            ]),
-
-            dbc.Row([
-                dbc.Col([
-                    html.H3("Trading Recommendations", className="text-center"),
-                    dcc.Graph(id="recommendations-chart"),
-                    html.Div(id="recommendations-table")
-                ], width=12)
-            ]),
-
-            dbc.Row([
-                dbc.Col([
-                    html.H3("Market Data", className="text-center"),
-                    dcc.Dropdown(
-                        id="symbol-dropdown",
-                        options=[
-                            {"label": "BTC/USD", "value": "BTC/USD"},
-                            {"label": "ETH/USD", "value": "ETH/USD"},
-                            {"label": "ADA/USD", "value": "ADA/USD"},
-                            {"label": "SOL/USD", "value": "SOL/USD"}
-                        ],
-                        value="BTC/USD",
-                        clearable=False
-                    ),
-                    dcc.Graph(id="price-chart")
-                ], width=6),
-
-                dbc.Col([
-                    html.H3("System Performance", className="text-center"),
-                    dcc.Graph(id="performance-chart"),
-                    html.Div(id="performance-stats")
-                ], width=6)
-            ]),
-
-            dbc.Row([
-                dbc.Col([
-                    html.H3("Agent Insights", className="text-center"),
-                    dbc.Tabs([
-                        dbc.Tab(label="Sentiment", tab_id="sentiment-tab"),
-                        dbc.Tab(label="Technical", tab_id="technical-tab"),
-                        dbc.Tab(label="Risk", tab_id="risk-tab"),
-                        dbc.Tab(label="Macro", tab_id="macro-tab"),
-                        dbc.Tab(label="Learning", tab_id="learning-tab")
-                    ], id="agent-tabs"),
-                    html.Div(id="agent-content")
-                ], width=12)
-            ]),
-
-            dcc.Interval(
-                id="interval-component",
-                interval=60 * 1000,  # 1 minute in milliseconds
-                n_intervals=0
-            )
-        ], fluid=True)
+        self.app.layout = dbc.Container(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H1(
+                                    "Fetch.ai Advanced Crypto Trading System",
+                                    className="text-center my-4",
+                                ),
+                                html.Hr(),
+                            ]
+                        )
+                    ]
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H3("Trading Recommendations", className="text-center"),
+                                dcc.Graph(id="recommendations-chart"),
+                                html.Div(id="recommendations-table"),
+                            ],
+                            width=12,
+                        )
+                    ]
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H3("Market Data", className="text-center"),
+                                dcc.Dropdown(
+                                    id="symbol-dropdown",
+                                    options=[
+                                        {"label": "BTC/USD", "value": "BTC/USD"},
+                                        {"label": "ETH/USD", "value": "ETH/USD"},
+                                        {"label": "ADA/USD", "value": "ADA/USD"},
+                                        {"label": "SOL/USD", "value": "SOL/USD"},
+                                    ],
+                                    value="BTC/USD",
+                                    clearable=False,
+                                ),
+                                dcc.Graph(id="price-chart"),
+                            ],
+                            width=6,
+                        ),
+                        dbc.Col(
+                            [
+                                html.H3("System Performance", className="text-center"),
+                                dcc.Graph(id="performance-chart"),
+                                html.Div(id="performance-stats"),
+                            ],
+                            width=6,
+                        ),
+                    ]
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H3("Agent Insights", className="text-center"),
+                                dbc.Tabs(
+                                    [
+                                        dbc.Tab(label="Sentiment", tab_id="sentiment-tab"),
+                                        dbc.Tab(label="Technical", tab_id="technical-tab"),
+                                        dbc.Tab(label="Risk", tab_id="risk-tab"),
+                                        dbc.Tab(label="Macro", tab_id="macro-tab"),
+                                        dbc.Tab(label="Learning", tab_id="learning-tab"),
+                                    ],
+                                    id="agent-tabs",
+                                ),
+                                html.Div(id="agent-content"),
+                            ],
+                            width=12,
+                        )
+                    ]
+                ),
+                dcc.Interval(
+                    id="interval-component",
+                    interval=60 * 1000,  # 1 minute in milliseconds
+                    n_intervals=0,
+                ),
+            ],
+            fluid=True,
+        )
 
     def _setup_callbacks(self):
         """Set up the dashboard callbacks."""
@@ -139,9 +157,9 @@ class Dashboard:
         @self.app.callback(
             [
                 Output("recommendations-chart", "figure"),
-                Output("recommendations-table", "children")
+                Output("recommendations-table", "children"),
             ],
-            [Input("interval-component", "n_intervals")]
+            [Input("interval-component", "n_intervals")],
         )
         def update_recommendations(n):
             """Update recommendations chart and table."""
@@ -149,7 +167,9 @@ class Dashboard:
             recommendations = self._load_recommendations()
 
             if not recommendations:
-                return self._empty_figure("No recommendations available"), html.Div("No recommendations available")
+                return self._empty_figure("No recommendations available"), html.Div(
+                    "No recommendations available"
+                )
 
             # Create figure
             fig = go.Figure()
@@ -162,17 +182,15 @@ class Dashboard:
                 buy_confidences = [r["confidence"] for r in buy_recs]
                 buy_sizes = [c * 20 for c in buy_confidences]
 
-                fig.add_trace(go.Scatter(
-                    x=buy_times,
-                    y=buy_prices,
-                    mode="markers",
-                    marker=dict(
-                        size=buy_sizes,
-                        color="green",
-                        symbol="triangle-up"
-                    ),
-                    name="Buy Signals"
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=buy_times,
+                        y=buy_prices,
+                        mode="markers",
+                        marker=dict(size=buy_sizes, color="green", symbol="triangle-up"),
+                        name="Buy Signals",
+                    )
+                )
 
             # Add sell signals
             sell_recs = [r for r in recommendations if r["signal"] == "sell"]
@@ -182,17 +200,15 @@ class Dashboard:
                 sell_confidences = [r["confidence"] for r in sell_recs]
                 sell_sizes = [c * 20 for c in sell_confidences]
 
-                fig.add_trace(go.Scatter(
-                    x=sell_times,
-                    y=sell_prices,
-                    mode="markers",
-                    marker=dict(
-                        size=sell_sizes,
-                        color="red",
-                        symbol="triangle-down"
-                    ),
-                    name="Sell Signals"
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=sell_times,
+                        y=sell_prices,
+                        mode="markers",
+                        marker=dict(size=sell_sizes, color="red", symbol="triangle-down"),
+                        name="Sell Signals",
+                    )
+                )
 
             # Update layout
             fig.update_layout(
@@ -200,43 +216,63 @@ class Dashboard:
                 xaxis_title="Time",
                 yaxis_title="Price",
                 template="plotly_dark",
-                height=400
+                height=400,
             )
 
             # Create table
-            table = dbc.Table([
-                html.Thead(html.Tr([
-                    html.Th("Time"),
-                    html.Th("Symbol"),
-                    html.Th("Signal"),
-                    html.Th("Strength"),
-                    html.Th("Entry Price"),
-                    html.Th("Stop Loss"),
-                    html.Th("Take Profit"),
-                    html.Th("Confidence")
-                ])),
-                html.Tbody([
-                    html.Tr([
-                        html.Td(datetime.fromisoformat(r["timestamp"]).strftime("%Y-%m-%d %H:%M")),
-                        html.Td(r["symbol"]),
-                        html.Td(r["signal"].upper(), style={"color": "green" if r["signal"] == "buy" else "red"}),
-                        html.Td(r["strength"]),
-                        html.Td(f"${r['entry_price']:.2f}"),
-                        html.Td(f"${r['stop_loss']:.2f}"),
-                        html.Td(f"${r['take_profit']:.2f}"),
-                        html.Td(f"{r['confidence']:.2f}")
-                    ]) for r in recommendations[:5]
-                ])
-            ], bordered=True, dark=True, hover=True, responsive=True, striped=True)
+            table = dbc.Table(
+                [
+                    html.Thead(
+                        html.Tr(
+                            [
+                                html.Th("Time"),
+                                html.Th("Symbol"),
+                                html.Th("Signal"),
+                                html.Th("Strength"),
+                                html.Th("Entry Price"),
+                                html.Th("Stop Loss"),
+                                html.Th("Take Profit"),
+                                html.Th("Confidence"),
+                            ]
+                        )
+                    ),
+                    html.Tbody(
+                        [
+                            html.Tr(
+                                [
+                                    html.Td(
+                                        datetime.fromisoformat(r["timestamp"]).strftime(
+                                            "%Y-%m-%d %H:%M"
+                                        )
+                                    ),
+                                    html.Td(r["symbol"]),
+                                    html.Td(
+                                        r["signal"].upper(),
+                                        style={"color": "green" if r["signal"] == "buy" else "red"},
+                                    ),
+                                    html.Td(r["strength"]),
+                                    html.Td(f"${r['entry_price']:.2f}"),
+                                    html.Td(f"${r['stop_loss']:.2f}"),
+                                    html.Td(f"${r['take_profit']:.2f}"),
+                                    html.Td(f"{r['confidence']:.2f}"),
+                                ]
+                            )
+                            for r in recommendations[:5]
+                        ]
+                    ),
+                ],
+                bordered=True,
+                dark=True,
+                hover=True,
+                responsive=True,
+                striped=True,
+            )
 
             return fig, table
 
         @self.app.callback(
             Output("price-chart", "figure"),
-            [
-                Input("interval-component", "n_intervals"),
-                Input("symbol-dropdown", "value")
-            ]
+            [Input("interval-component", "n_intervals"), Input("symbol-dropdown", "value")],
         )
         def update_price_chart(n, symbol):
             """Update price chart."""
@@ -253,12 +289,7 @@ class Dashboard:
             times = [datetime.fromisoformat(d["timestamp"]) for d in market_data]
             prices = [d["price"] for d in market_data]
 
-            fig.add_trace(go.Scatter(
-                x=times,
-                y=prices,
-                mode="lines",
-                name="Price"
-            ))
+            fig.add_trace(go.Scatter(x=times, y=prices, mode="lines", name="Price"))
 
             # Update layout
             fig.update_layout(
@@ -266,17 +297,14 @@ class Dashboard:
                 xaxis_title="Time",
                 yaxis_title="Price (USD)",
                 template="plotly_dark",
-                height=400
+                height=400,
             )
 
             return fig
 
         @self.app.callback(
-            [
-                Output("performance-chart", "figure"),
-                Output("performance-stats", "children")
-            ],
-            [Input("interval-component", "n_intervals")]
+            [Output("performance-chart", "figure"), Output("performance-stats", "children")],
+            [Input("interval-component", "n_intervals")],
         )
         def update_performance(n):
             """Update performance chart and stats."""
@@ -284,22 +312,24 @@ class Dashboard:
             performance = self._load_performance()
 
             if not performance:
-                return self._empty_figure("No performance data available"), html.Div("No performance data available")
+                return self._empty_figure("No performance data available"), html.Div(
+                    "No performance data available"
+                )
 
             # Create figure
             fig = go.Figure()
 
             # Add performance metrics
             if "accuracy_over_time" in performance:
-                times = [datetime.fromisoformat(d["timestamp"]) for d in performance["accuracy_over_time"]]
+                times = [
+                    datetime.fromisoformat(d["timestamp"])
+                    for d in performance["accuracy_over_time"]
+                ]
                 values = [d["value"] for d in performance["accuracy_over_time"]]
 
-                fig.add_trace(go.Scatter(
-                    x=times,
-                    y=values,
-                    mode="lines",
-                    name="Prediction Accuracy"
-                ))
+                fig.add_trace(
+                    go.Scatter(x=times, y=values, mode="lines", name="Prediction Accuracy")
+                )
 
             # Update layout
             fig.update_layout(
@@ -307,27 +337,30 @@ class Dashboard:
                 xaxis_title="Time",
                 yaxis_title="Accuracy",
                 template="plotly_dark",
-                height=400
+                height=400,
             )
 
             # Create stats
-            stats = dbc.Card([
-                dbc.CardHeader("Performance Statistics"),
-                dbc.CardBody([
-                    html.P(f"Total Recommendations: {performance.get('total_recommendations', 0)}"),
-                    html.P(f"Accuracy: {performance.get('accuracy', 0):.2f}"),
-                    html.P(f"Profit/Loss: {performance.get('profit_loss', 0):.2f}%")
-                ])
-            ])
+            stats = dbc.Card(
+                [
+                    dbc.CardHeader("Performance Statistics"),
+                    dbc.CardBody(
+                        [
+                            html.P(
+                                f"Total Recommendations: {performance.get('total_recommendations', 0)}"
+                            ),
+                            html.P(f"Accuracy: {performance.get('accuracy', 0):.2f}"),
+                            html.P(f"Profit/Loss: {performance.get('profit_loss', 0):.2f}%"),
+                        ]
+                    ),
+                ]
+            )
 
             return fig, stats
 
         @self.app.callback(
             Output("agent-content", "children"),
-            [
-                Input("agent-tabs", "active_tab"),
-                Input("interval-component", "n_intervals")
-            ]
+            [Input("agent-tabs", "active_tab"), Input("interval-component", "n_intervals")],
         )
         def update_agent_content(active_tab, n):
             """Update agent content."""
@@ -362,13 +395,10 @@ class Dashboard:
             x=0.5,
             y=0.5,
             showarrow=False,
-            font=dict(size=16)
+            font=dict(size=16),
         )
 
-        fig.update_layout(
-            template="plotly_dark",
-            height=400
-        )
+        fig.update_layout(template="plotly_dark", height=400)
 
         return fig
 
@@ -384,7 +414,7 @@ class Dashboard:
         else:
             # Try to load from file
             try:
-                with open("fetch_ai_recommendations.json", "r") as f:
+                with open("fetch_ai_recommendations.json") as f:
                     return json.load(f)
             except:
                 return []
@@ -409,11 +439,9 @@ class Dashboard:
             time = now - timedelta(minutes=i)
             price = 50000 - i * 10 + (i % 10) * 20  # Mock price data
 
-            data.append({
-                "timestamp": time.isoformat(),
-                "price": price,
-                "volume": 1000000 - i * 1000
-            })
+            data.append(
+                {"timestamp": time.isoformat(), "price": price, "volume": 1000000 - i * 1000}
+            )
 
         self.data["market_data"][symbol] = data
         return data
@@ -435,16 +463,13 @@ class Dashboard:
             time = now - timedelta(hours=i)
             accuracy = 0.7 + (i % 10) * 0.02  # Mock accuracy data
 
-            accuracy_over_time.append({
-                "timestamp": time.isoformat(),
-                "value": accuracy
-            })
+            accuracy_over_time.append({"timestamp": time.isoformat(), "value": accuracy})
 
         self.data["performance"] = {
             "total_recommendations": 50,
             "accuracy": 0.75,
             "profit_loss": 12.5,
-            "accuracy_over_time": accuracy_over_time
+            "accuracy_over_time": accuracy_over_time,
         }
 
         return self.data["performance"]
@@ -455,41 +480,51 @@ class Dashboard:
         Returns:
             Tab content
         """
-        return html.Div([
-            html.H4("Sentiment Analysis", className="text-center my-3"),
-            dcc.Graph(
-                figure=self._create_sentiment_chart()
-            ),
-            html.Div([
-                html.H5("Recent News", className="mt-3"),
-                html.Ul([
-                    html.Li([
-                        html.A(
-                            "Bitcoin price surges after positive regulatory news",
-                            href="#",
-                            className="text-info"
+        return html.Div(
+            [
+                html.H4("Sentiment Analysis", className="text-center my-3"),
+                dcc.Graph(figure=self._create_sentiment_chart()),
+                html.Div(
+                    [
+                        html.H5("Recent News", className="mt-3"),
+                        html.Ul(
+                            [
+                                html.Li(
+                                    [
+                                        html.A(
+                                            "Bitcoin price surges after positive regulatory news",
+                                            href="#",
+                                            className="text-info",
+                                        ),
+                                        html.Span(" - CryptoNews (Sentiment: Positive)"),
+                                    ]
+                                ),
+                                html.Li(
+                                    [
+                                        html.A(
+                                            "Ethereum upgrade delayed, developers cite security concerns",
+                                            href="#",
+                                            className="text-info",
+                                        ),
+                                        html.Span(" - CoinDesk (Sentiment: Negative)"),
+                                    ]
+                                ),
+                                html.Li(
+                                    [
+                                        html.A(
+                                            "Major bank announces crypto custody service",
+                                            href="#",
+                                            className="text-info",
+                                        ),
+                                        html.Span(" - Bloomberg (Sentiment: Positive)"),
+                                    ]
+                                ),
+                            ]
                         ),
-                        html.Span(" - CryptoNews (Sentiment: Positive)")
-                    ]),
-                    html.Li([
-                        html.A(
-                            "Ethereum upgrade delayed, developers cite security concerns",
-                            href="#",
-                            className="text-info"
-                        ),
-                        html.Span(" - CoinDesk (Sentiment: Negative)")
-                    ]),
-                    html.Li([
-                        html.A(
-                            "Major bank announces crypto custody service",
-                            href="#",
-                            className="text-info"
-                        ),
-                        html.Span(" - Bloomberg (Sentiment: Positive)")
-                    ])
-                ])
-            ])
-        ])
+                    ]
+                ),
+            ]
+        )
 
     def _create_sentiment_chart(self) -> go.Figure:
         """Create sentiment chart.
@@ -504,12 +539,9 @@ class Dashboard:
         times = [now - timedelta(days=i) for i in range(7)]
         sentiments = [0.6, 0.2, -0.3, 0.1, 0.5, 0.7, 0.4]  # Mock sentiment data
 
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=sentiments,
-            mode="lines+markers",
-            name="Sentiment Score"
-        ))
+        fig.add_trace(
+            go.Scatter(x=times, y=sentiments, mode="lines+markers", name="Sentiment Score")
+        )
 
         # Add zero line
         fig.add_shape(
@@ -518,11 +550,7 @@ class Dashboard:
             y0=0,
             x1=times[0],
             y1=0,
-            line=dict(
-                color="gray",
-                width=1,
-                dash="dash"
-            )
+            line=dict(color="gray", width=1, dash="dash"),
         )
 
         # Update layout
@@ -532,9 +560,7 @@ class Dashboard:
             yaxis_title="Sentiment Score (-1 to 1)",
             template="plotly_dark",
             height=400,
-            yaxis=dict(
-                range=[-1, 1]
-            )
+            yaxis=dict(range=[-1, 1]),
         )
 
         return fig
@@ -545,44 +571,68 @@ class Dashboard:
         Returns:
             Tab content
         """
-        return html.Div([
-            html.H4("Technical Analysis", className="text-center my-3"),
-            dcc.Graph(
-                figure=self._create_technical_chart()
-            ),
-            html.Div([
-                html.H5("Technical Indicators", className="mt-3"),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("RSI"),
-                            dbc.CardBody([
-                                html.H3("42.5", className="text-warning"),
-                                html.P("Neutral")
-                            ])
-                        ])
-                    ]),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("MACD"),
-                            dbc.CardBody([
-                                html.H3("-0.15", className="text-danger"),
-                                html.P("Bearish")
-                            ])
-                        ])
-                    ]),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("Bollinger Bands"),
-                            dbc.CardBody([
-                                html.H3("Lower Band", className="text-success"),
-                                html.P("Bullish")
-                            ])
-                        ])
-                    ])
-                ])
-            ])
-        ])
+        return html.Div(
+            [
+                html.H4("Technical Analysis", className="text-center my-3"),
+                dcc.Graph(figure=self._create_technical_chart()),
+                html.Div(
+                    [
+                        html.H5("Technical Indicators", className="mt-3"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("RSI"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3("42.5", className="text-warning"),
+                                                        html.P("Neutral"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("MACD"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3("-0.15", className="text-danger"),
+                                                        html.P("Bearish"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Bollinger Bands"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3(
+                                                            "Lower Band", className="text-success"
+                                                        ),
+                                                        html.P("Bullish"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        )
 
     def _create_technical_chart(self) -> go.Figure:
         """Create technical chart.
@@ -597,26 +647,16 @@ class Dashboard:
         times = [now - timedelta(hours=i) for i in range(24)]
         prices = [50000 - i * 10 + (i % 10) * 20 for i in range(24)]  # Mock price data
 
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=prices,
-            mode="lines",
-            name="Price"
-        ))
+        fig.add_trace(go.Scatter(x=times, y=prices, mode="lines", name="Price"))
 
         # Add moving average
-        ma = [sum(prices[max(0, i-5):i+1]) / min(i+1, 5) for i in range(len(prices))]
+        ma = [sum(prices[max(0, i - 5) : i + 1]) / min(i + 1, 5) for i in range(len(prices))]
 
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=ma,
-            mode="lines",
-            line=dict(
-                color="orange",
-                width=2
-            ),
-            name="5-period MA"
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=times, y=ma, mode="lines", line=dict(color="orange", width=2), name="5-period MA"
+            )
+        )
 
         # Update layout
         fig.update_layout(
@@ -624,7 +664,7 @@ class Dashboard:
             xaxis_title="Time",
             yaxis_title="Price (USD)",
             template="plotly_dark",
-            height=400
+            height=400,
         )
 
         return fig
@@ -635,43 +675,67 @@ class Dashboard:
         Returns:
             Tab content
         """
-        return html.Div([
-            html.H4("Risk Management", className="text-center my-3"),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Position Sizing"),
-                        dbc.CardBody([
-                            html.H3("0.25 BTC", className="text-info"),
-                            html.P("5% of account balance")
-                        ])
-                    ])
-                ]),
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Stop Loss"),
-                        dbc.CardBody([
-                            html.H3("$47,500", className="text-danger"),
-                            html.P("5% below entry")
-                        ])
-                    ])
-                ]),
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Take Profit"),
-                        dbc.CardBody([
-                            html.H3("$52,500", className="text-success"),
-                            html.P("5% above entry")
-                        ])
-                    ])
-                ])
-            ]),
-            html.Div([
-                html.H5("Risk Assessment", className="mt-3"),
-                dbc.Progress(value=65, color="warning", className="mb-3"),
-                html.P("Current Risk Level: Medium")
-            ])
-        ])
+        return html.Div(
+            [
+                html.H4("Risk Management", className="text-center my-3"),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader("Position Sizing"),
+                                        dbc.CardBody(
+                                            [
+                                                html.H3("0.25 BTC", className="text-info"),
+                                                html.P("5% of account balance"),
+                                            ]
+                                        ),
+                                    ]
+                                )
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader("Stop Loss"),
+                                        dbc.CardBody(
+                                            [
+                                                html.H3("$47,500", className="text-danger"),
+                                                html.P("5% below entry"),
+                                            ]
+                                        ),
+                                    ]
+                                )
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Card(
+                                    [
+                                        dbc.CardHeader("Take Profit"),
+                                        dbc.CardBody(
+                                            [
+                                                html.H3("$52,500", className="text-success"),
+                                                html.P("5% above entry"),
+                                            ]
+                                        ),
+                                    ]
+                                )
+                            ]
+                        ),
+                    ]
+                ),
+                html.Div(
+                    [
+                        html.H5("Risk Assessment", className="mt-3"),
+                        dbc.Progress(value=65, color="warning", className="mb-3"),
+                        html.P("Current Risk Level: Medium"),
+                    ]
+                ),
+            ]
+        )
 
     def _render_macro_tab(self) -> html.Div:
         """Render macro tab content.
@@ -679,43 +743,64 @@ class Dashboard:
         Returns:
             Tab content
         """
-        return html.Div([
-            html.H4("Macro Correlation Analysis", className="text-center my-3"),
-            dcc.Graph(
-                figure=self._create_correlation_chart()
-            ),
-            html.Div([
-                html.H5("Upcoming Economic Events", className="mt-3"),
-                dbc.Table([
-                    html.Thead(html.Tr([
-                        html.Th("Date"),
-                        html.Th("Event"),
-                        html.Th("Impact"),
-                        html.Th("Expected Crypto Impact")
-                    ])),
-                    html.Tbody([
-                        html.Tr([
-                            html.Td("2023-06-15"),
-                            html.Td("Federal Reserve Interest Rate Decision"),
-                            html.Td("High"),
-                            html.Td("Negative")
-                        ]),
-                        html.Tr([
-                            html.Td("2023-06-20"),
-                            html.Td("US CPI Data Release"),
-                            html.Td("Medium"),
-                            html.Td("Neutral")
-                        ]),
-                        html.Tr([
-                            html.Td("2023-06-25"),
-                            html.Td("ECB Monetary Policy Statement"),
-                            html.Td("Medium"),
-                            html.Td("Neutral")
-                        ])
-                    ])
-                ], bordered=True, dark=True, hover=True, responsive=True, striped=True)
-            ])
-        ])
+        return html.Div(
+            [
+                html.H4("Macro Correlation Analysis", className="text-center my-3"),
+                dcc.Graph(figure=self._create_correlation_chart()),
+                html.Div(
+                    [
+                        html.H5("Upcoming Economic Events", className="mt-3"),
+                        dbc.Table(
+                            [
+                                html.Thead(
+                                    html.Tr(
+                                        [
+                                            html.Th("Date"),
+                                            html.Th("Event"),
+                                            html.Th("Impact"),
+                                            html.Th("Expected Crypto Impact"),
+                                        ]
+                                    )
+                                ),
+                                html.Tbody(
+                                    [
+                                        html.Tr(
+                                            [
+                                                html.Td("2023-06-15"),
+                                                html.Td("Federal Reserve Interest Rate Decision"),
+                                                html.Td("High"),
+                                                html.Td("Negative"),
+                                            ]
+                                        ),
+                                        html.Tr(
+                                            [
+                                                html.Td("2023-06-20"),
+                                                html.Td("US CPI Data Release"),
+                                                html.Td("Medium"),
+                                                html.Td("Neutral"),
+                                            ]
+                                        ),
+                                        html.Tr(
+                                            [
+                                                html.Td("2023-06-25"),
+                                                html.Td("ECB Monetary Policy Statement"),
+                                                html.Td("Medium"),
+                                                html.Td("Neutral"),
+                                            ]
+                                        ),
+                                    ]
+                                ),
+                            ],
+                            bordered=True,
+                            dark=True,
+                            hover=True,
+                            responsive=True,
+                            striped=True,
+                        ),
+                    ]
+                ),
+            ]
+        )
 
     def _create_correlation_chart(self) -> go.Figure:
         """Create correlation chart.
@@ -730,11 +815,13 @@ class Dashboard:
         correlations = [0.65, -0.45, -0.7, 0.2, -0.3]  # Mock correlation data
 
         # Create bar chart
-        fig.add_trace(go.Bar(
-            x=assets,
-            y=correlations,
-            marker_color=["green" if c > 0 else "red" for c in correlations]
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=assets,
+                y=correlations,
+                marker_color=["green" if c > 0 else "red" for c in correlations],
+            )
+        )
 
         # Add zero line
         fig.add_shape(
@@ -743,11 +830,7 @@ class Dashboard:
             y0=0,
             x1=len(assets) - 0.5,
             y1=0,
-            line=dict(
-                color="gray",
-                width=1,
-                dash="dash"
-            )
+            line=dict(color="gray", width=1, dash="dash"),
         )
 
         # Update layout
@@ -757,9 +840,7 @@ class Dashboard:
             yaxis_title="Correlation Coefficient (-1 to 1)",
             template="plotly_dark",
             height=400,
-            yaxis=dict(
-                range=[-1, 1]
-            )
+            yaxis=dict(range=[-1, 1]),
         )
 
         return fig
@@ -770,44 +851,66 @@ class Dashboard:
         Returns:
             Tab content
         """
-        return html.Div([
-            html.H4("Learning Optimization", className="text-center my-3"),
-            dcc.Graph(
-                figure=self._create_learning_chart()
-            ),
-            html.Div([
-                html.H5("Model Performance", className="mt-3"),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("Price Direction Model"),
-                            dbc.CardBody([
-                                html.H3("75.2%", className="text-success"),
-                                html.P("Accuracy")
-                            ])
-                        ])
-                    ]),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("Volatility Model"),
-                            dbc.CardBody([
-                                html.H3("68.7%", className="text-warning"),
-                                html.P("Accuracy")
-                            ])
-                        ])
-                    ]),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader("Sentiment Impact Model"),
-                            dbc.CardBody([
-                                html.H3("72.1%", className="text-info"),
-                                html.P("Accuracy")
-                            ])
-                        ])
-                    ])
-                ])
-            ])
-        ])
+        return html.Div(
+            [
+                html.H4("Learning Optimization", className="text-center my-3"),
+                dcc.Graph(figure=self._create_learning_chart()),
+                html.Div(
+                    [
+                        html.H5("Model Performance", className="mt-3"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Price Direction Model"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3("75.2%", className="text-success"),
+                                                        html.P("Accuracy"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Volatility Model"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3("68.7%", className="text-warning"),
+                                                        html.P("Accuracy"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Sentiment Impact Model"),
+                                                dbc.CardBody(
+                                                    [
+                                                        html.H3("72.1%", className="text-info"),
+                                                        html.P("Accuracy"),
+                                                    ]
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                ),
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        )
 
     def _create_learning_chart(self) -> go.Figure:
         """Create learning chart.
@@ -822,12 +925,7 @@ class Dashboard:
         times = [now - timedelta(days=i) for i in range(10)]
         accuracy = [0.65, 0.67, 0.68, 0.7, 0.69, 0.72, 0.73, 0.74, 0.75, 0.75]  # Mock accuracy data
 
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=accuracy,
-            mode="lines+markers",
-            name="Model Accuracy"
-        ))
+        fig.add_trace(go.Scatter(x=times, y=accuracy, mode="lines+markers", name="Model Accuracy"))
 
         # Update layout
         fig.update_layout(
@@ -836,9 +934,7 @@ class Dashboard:
             yaxis_title="Accuracy",
             template="plotly_dark",
             height=400,
-            yaxis=dict(
-                range=[0.6, 0.8]
-            )
+            yaxis=dict(range=[0.6, 0.8]),
         )
 
         return fig
@@ -846,6 +942,7 @@ class Dashboard:
     def run(self):
         """Run the dashboard."""
         self.app.run_server(debug=self.debug, port=self.port)
+
 
 async def main():
     """Main entry point."""
@@ -856,8 +953,8 @@ async def main():
     trading_system = AdvancedCryptoTradingSystem(
         name="dashboard_trading_system",
         exchange_id="binance",
-        api_key=os.getenv('EXCHANGE_API_KEY'),
-        api_secret=os.getenv('EXCHANGE_API_SECRET')
+        api_key=os.getenv("EXCHANGE_API_KEY"),
+        api_secret=os.getenv("EXCHANGE_API_SECRET"),
     )
 
     # Create dashboard
@@ -865,6 +962,7 @@ async def main():
 
     # Run dashboard
     dashboard.run()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -9,6 +9,7 @@ from app.domain.models.deployment import DeploymentConfig, Environment
 
 logger = get_logger(__name__)
 
+
 class DeploymentService(DomainService, LoggerMixin):
     """Deployment configuration service."""
 

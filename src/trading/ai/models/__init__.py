@@ -9,11 +9,7 @@ Advanced machine learning models for trading applications:
 """
 
 from .price_prediction import PricePredictionModel
-from .sentiment_analysis import SentimentAnalyzer
 from .reinforcement_learning import RLTradingAgent
+from .sentiment_analysis import SentimentAnalyzer
 
-__all__ = [
-    'PricePredictionModel',
-    'SentimentAnalyzer',
-    'RLTradingAgent'
-]
+__all__ = ["PricePredictionModel", "SentimentAnalyzer", "RLTradingAgent"]

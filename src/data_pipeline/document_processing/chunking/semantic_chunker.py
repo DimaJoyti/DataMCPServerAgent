@@ -2,11 +2,11 @@
 Semantic chunker implementation that uses embeddings for intelligent text splitting.
 """
 
-import logging
-from typing import List, Optional
+from typing import List
 
-from .base_chunker import BaseChunker, TextChunk
 from ..metadata.models import DocumentMetadata
+from .base_chunker import BaseChunker, TextChunk
+
 
 class SemanticChunker(BaseChunker):
     """Semantic chunker that uses embeddings to create semantically coherent chunks."""
@@ -23,10 +23,7 @@ class SemanticChunker(BaseChunker):
             )
 
     def chunk_text(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata,
-        **kwargs
+        self, text: str, document_metadata: DocumentMetadata, **kwargs
     ) -> List[TextChunk]:
         """
         Chunk text using semantic similarity.
@@ -80,7 +77,7 @@ class SemanticChunker(BaseChunker):
         import re
 
         # Simple sentence splitting - could be improved with NLP libraries
-        sentence_endings = r'[.!?]+\s+'
+        sentence_endings = r"[.!?]+\s+"
         sentences = re.split(sentence_endings, text)
 
         # Clean and filter sentences
@@ -93,9 +90,7 @@ class SemanticChunker(BaseChunker):
         return cleaned_sentences
 
     def _group_sentences_semantically(
-        self,
-        sentences: List[str],
-        document_metadata: DocumentMetadata
+        self, sentences: List[str], document_metadata: DocumentMetadata
     ) -> List[TextChunk]:
         """
         Group sentences into semantically coherent chunks.
@@ -116,14 +111,14 @@ class SemanticChunker(BaseChunker):
             sentence_length = len(sentence)
 
             # Check if adding this sentence would exceed chunk size
-            if (current_chunk_length + sentence_length > self.config.chunk_size and
-                current_chunk_sentences):
+            if (
+                current_chunk_length + sentence_length > self.config.chunk_size
+                and current_chunk_sentences
+            ):
 
                 # Create chunk from current sentences
                 chunk = self._create_chunk_from_sentences(
-                    current_chunk_sentences,
-                    chunk_index,
-                    document_metadata
+                    current_chunk_sentences, chunk_index, document_metadata
                 )
                 chunks.append(chunk)
                 chunk_index += 1
@@ -132,8 +127,7 @@ class SemanticChunker(BaseChunker):
                 if self.config.chunk_overlap > 0:
                     # Keep last few sentences for overlap
                     overlap_sentences = self._get_overlap_sentences(
-                        current_chunk_sentences,
-                        self.config.chunk_overlap
+                        current_chunk_sentences, self.config.chunk_overlap
                     )
                     current_chunk_sentences = overlap_sentences
                     current_chunk_length = sum(len(s) for s in overlap_sentences)
@@ -148,19 +142,14 @@ class SemanticChunker(BaseChunker):
         # Create final chunk if there are remaining sentences
         if current_chunk_sentences:
             chunk = self._create_chunk_from_sentences(
-                current_chunk_sentences,
-                chunk_index,
-                document_metadata
+                current_chunk_sentences, chunk_index, document_metadata
             )
             chunks.append(chunk)
 
         return chunks
 
     def _create_chunk_from_sentences(
-        self,
-        sentences: List[str],
-        chunk_index: int,
-        document_metadata: DocumentMetadata
+        self, sentences: List[str], chunk_index: int, document_metadata: DocumentMetadata
     ) -> TextChunk:
         """
         Create a text chunk from sentences.
@@ -174,9 +163,9 @@ class SemanticChunker(BaseChunker):
             TextChunk: Created text chunk
         """
         # Join sentences with appropriate spacing
-        chunk_text = '. '.join(sentences)
-        if not chunk_text.endswith('.'):
-            chunk_text += '.'
+        chunk_text = ". ".join(sentences)
+        if not chunk_text.endswith("."):
+            chunk_text += "."
 
         # For now, we don't have exact character positions
         # In a full implementation, we would track these
@@ -190,7 +179,7 @@ class SemanticChunker(BaseChunker):
             end_char=end_char,
             document_metadata=document_metadata,
             chunking_method="semantic",
-            sentence_count=len(sentences)
+            sentence_count=len(sentences),
         )
 
     def _get_overlap_sentences(self, sentences: List[str], overlap_size: int) -> List[str]:

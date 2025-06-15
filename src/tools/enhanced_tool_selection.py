@@ -5,15 +5,15 @@ This module provides advanced tool selection algorithms with historical performa
 
 import json
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import BaseTool
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class ToolPerformanceTracker:
     """Tracker for tool performance metrics."""
@@ -68,6 +68,7 @@ class ToolPerformanceTracker:
         """
         return self.db.get_tool_performance(tool_name)
 
+
 class EnhancedToolSelector:
     """Enhanced tool selector with learning capabilities."""
 
@@ -76,7 +77,7 @@ class EnhancedToolSelector:
         model: ChatAnthropic,
         tools: List[BaseTool],
         db: MemoryDatabase,
-        performance_tracker: ToolPerformanceTracker
+        performance_tracker: ToolPerformanceTracker,
     ):
         """Initialize the enhanced tool selector.
 
@@ -93,8 +94,10 @@ class EnhancedToolSelector:
         self.performance_tracker = performance_tracker
 
         # Create the tool selection prompt
-        self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an advanced tool selection agent responsible for choosing the most appropriate tools for a given task.
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an advanced tool selection agent responsible for choosing the most appropriate tools for a given task.
 Your job is to analyze the user's request and determine which tools would be most effective for completing it.
 
 For each request, you should:
@@ -115,9 +118,11 @@ Be strategic in your selection - choose tools that:
 - Complement each other and cover all aspects of the task
 - Have reasonable execution times
 - Are specialized for the specific domain of the task
-"""),
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessage(content="""
+"""
+                ),
+                MessagesPlaceholder(variable_name="history"),
+                HumanMessage(
+                    content="""
 User request: {request}
 
 Available tools:
@@ -127,12 +132,16 @@ Tool performance metrics:
 {tool_performance}
 
 Select the most appropriate tools for this task.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Create the learning feedback prompt
-        self.feedback_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a tool selection improvement agent responsible for learning from past tool usage.
+        self.feedback_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a tool selection improvement agent responsible for learning from past tool usage.
 Your job is to analyze the results of tool executions and provide feedback to improve future tool selection.
 
 For each tool execution, you should:
@@ -147,8 +156,10 @@ Respond with a JSON object containing:
 - "suggestions": Array of suggestions for improvement
 - "confidence": Confidence score (0-100)
 - "learning_points": Key learning points from this execution
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Original request: {request}
 Selected tool: {tool_name}
 Tool arguments: {tool_args}
@@ -157,13 +168,13 @@ Execution time: {execution_time} seconds
 Success: {success}
 
 Provide feedback on this tool execution.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def select_tools(
-        self,
-        request: str,
-        history: Optional[List[Dict[str, str]]] = None
+        self, request: str, history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
         """Select the most appropriate tools for a request.
 
@@ -175,21 +186,21 @@ Provide feedback on this tool execution.
             Dictionary with selected tools, reasoning, and execution order
         """
         # Format tool descriptions
-        tool_descriptions = "\n\n".join([
-            f"- {tool.name}: {tool.description}" for tool in self.tools
-        ])
+        tool_descriptions = "\n\n".join(
+            [f"- {tool.name}: {tool.description}" for tool in self.tools]
+        )
 
         # Get performance metrics for each tool
-        tool_performance = "\n\n".join([
-            self._format_tool_performance(tool.name) for tool in self.tools
-        ])
+        tool_performance = "\n\n".join(
+            [self._format_tool_performance(tool.name) for tool in self.tools]
+        )
 
         # Prepare the input for the prompt
         input_values = {
             "request": request,
             "tool_descriptions": tool_descriptions,
             "tool_performance": tool_performance,
-            "history": history or []
+            "history": history or [],
         }
 
         # Get the tool selection from the model
@@ -200,7 +211,9 @@ Provide feedback on this tool execution.
         try:
             # Try to extract JSON from the response
             content = response.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -256,7 +269,7 @@ Provide feedback on this tool execution.
             "selected_tools": selected_tools,
             "reasoning": f"Error parsing tool selection: {error_message}. Using tools with highest success rates.",
             "execution_order": selected_tools,
-            "fallback_tools": fallback_tools
+            "fallback_tools": fallback_tools,
         }
 
     def _get_top_tools_by_success_rate(self, n: int = 3) -> List[str]:
@@ -296,10 +309,12 @@ Provide feedback on this tool execution.
         if metrics["total_uses"] == 0:
             return f"{tool_name}: No usage data available"
 
-        return f"{tool_name}:\n" \
-               f"  - Success rate: {metrics['success_rate']:.2f}%\n" \
-               f"  - Total uses: {metrics['total_uses']}\n" \
-               f"  - Avg execution time: {metrics['avg_execution_time']:.2f}s"
+        return (
+            f"{tool_name}:\n"
+            f"  - Success rate: {metrics['success_rate']:.2f}%\n"
+            f"  - Total uses: {metrics['total_uses']}\n"
+            f"  - Avg execution time: {metrics['avg_execution_time']:.2f}s"
+        )
 
     async def provide_execution_feedback(
         self,
@@ -308,7 +323,7 @@ Provide feedback on this tool execution.
         tool_args: Dict[str, Any],
         tool_result: Any,
         execution_time: float,
-        success: bool
+        success: bool,
     ) -> Dict[str, Any]:
         """Provide feedback on a tool execution to improve future selection.
 
@@ -330,7 +345,7 @@ Provide feedback on this tool execution.
             "tool_args": json.dumps(tool_args),
             "tool_result": str(tool_result)[:500],  # Limit result size
             "execution_time": execution_time,
-            "success": success
+            "success": success,
         }
 
         # Get the feedback from the model
@@ -341,7 +356,9 @@ Provide feedback on this tool execution.
         try:
             # Try to extract JSON from the response
             content = response.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -361,8 +378,8 @@ Provide feedback on this tool execution.
                     "request": request,
                     "tool_name": tool_name,
                     "success": success,
-                    "feedback": feedback
-                }
+                    "feedback": feedback,
+                },
             )
 
             return feedback
@@ -373,7 +390,7 @@ Provide feedback on this tool execution.
                 "issues": ["Error parsing feedback"],
                 "suggestions": ["Improve feedback parsing"],
                 "confidence": 50,
-                "learning_points": [f"Error in feedback generation: {str(e)}"]
+                "learning_points": [f"Error in feedback generation: {str(e)}"],
             }
 
             # Save the default feedback to the database
@@ -385,8 +402,8 @@ Provide feedback on this tool execution.
                     "tool_name": tool_name,
                     "success": success,
                     "feedback": default_feedback,
-                    "error": str(e)
-                }
+                    "error": str(e),
+                },
             )
 
             return default_feedback

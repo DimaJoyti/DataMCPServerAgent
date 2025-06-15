@@ -1,11 +1,10 @@
 """
 Memory persistence module for DataMCPServerAgent.
-This module provides database integration for persisting agent memory between sessions.
+This module provides async database integration for persisting agent memory between sessions.
 """
 
 import json
 import os
-import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
@@ -13,12 +12,18 @@ from typing import Any, Dict, List, Optional
 
 try:
     import aiofiles
+    import aiosqlite
 except ImportError:
-    print("Warning: aiofiles package not found. Installing...")
+    print("Warning: aiosqlite and aiofiles packages not found. Installing...")
     import subprocess
 
-    subprocess.check_call(["pip", "install", "aiofiles"])
+    subprocess.check_call(["pip", "install", "aiosqlite", "aiofiles"])
     import aiofiles
+    import aiosqlite
+
+# Legacy import for backward compatibility
+import sqlite3
+
 
 class MemoryDatabase:
     """Database for persisting agent memory."""
@@ -30,276 +35,328 @@ class MemoryDatabase:
             db_path: Path to the SQLite database file
         """
         self.db_path = db_path
-        self._initialize_db()
+        self._initialized = False
 
-    def _initialize_db(self) -> None:
+    async def _initialize_db(self) -> None:
         """Initialize the database schema if it doesn't exist."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        if self._initialized:
+            return
 
-        # Create conversation history table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS conversation_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+        async with aiosqlite.connect(self.db_path) as conn:
+            # Create conversation history table
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS conversation_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
+            
+            # Add indexes for conversation history performance
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_conversation_timestamp ON conversation_history(timestamp)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_conversation_role ON conversation_history(role)")
 
-        # Create tool usage history table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tool_usage_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tool_name TEXT NOT NULL,
-            args TEXT NOT NULL,
-            result TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Create tool usage history table
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS tool_usage_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tool_name TEXT NOT NULL,
+                args TEXT NOT NULL,
+                result TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
+            
+            # Add indexes for tool usage performance
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_usage_name ON tool_usage_history(tool_name)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_usage_timestamp ON tool_usage_history(timestamp)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_usage_name_timestamp ON tool_usage_history(tool_name, timestamp)")
 
-        # Create entity memory table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS entity_memory (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entity_type TEXT NOT NULL,
-            entity_id TEXT NOT NULL,
-            data TEXT NOT NULL,
-            last_updated REAL NOT NULL,
-            UNIQUE(entity_type, entity_id)
-        )
-        """)
+            # Create entity memory table
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS entity_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                data TEXT NOT NULL,
+                last_updated REAL NOT NULL,
+                UNIQUE(entity_type, entity_id)
+            )
+            """
+            )
+            
+            # Add indexes for entity memory performance
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_entity_type ON entity_memory(entity_type)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_entity_type_id ON entity_memory(entity_type, entity_id)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_entity_last_updated ON entity_memory(last_updated)")
 
-        # Create reinforcement learning tables
+            # Create reinforcement learning tables
 
-        # Q-table for Q-learning
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS q_tables (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            q_table TEXT NOT NULL,
-            last_updated REAL NOT NULL,
-            UNIQUE(agent_name)
-        )
-        """)
+            # Q-table for Q-learning
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS q_tables (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                q_table TEXT NOT NULL,
+                last_updated REAL NOT NULL,
+                UNIQUE(agent_name)
+            )
+            """
+            )
 
-        # Policy parameters for policy gradient
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS policy_params (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            policy_params TEXT NOT NULL,
-            last_updated REAL NOT NULL,
-            UNIQUE(agent_name)
-        )
-        """)
+            # Policy parameters for policy gradient
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS policy_params (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                policy_params TEXT NOT NULL,
+                last_updated REAL NOT NULL,
+                UNIQUE(agent_name)
+            )
+            """
+            )
 
-        # Deep RL weights
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS drl_weights (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            weights TEXT NOT NULL,
-            last_updated REAL NOT NULL,
-            UNIQUE(agent_name)
-        )
-        """)
+            # Deep RL weights
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS drl_weights (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                weights TEXT NOT NULL,
+                last_updated REAL NOT NULL,
+                UNIQUE(agent_name)
+            )
+            """
+            )
 
-        # Multi-objective Q-tables
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mo_q_tables (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            objective TEXT NOT NULL,
-            q_table TEXT NOT NULL,
-            last_updated REAL NOT NULL,
-            UNIQUE(agent_name, objective)
-        )
-        """)
+            # Multi-objective Q-tables
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS mo_q_tables (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                objective TEXT NOT NULL,
+                q_table TEXT NOT NULL,
+                last_updated REAL NOT NULL,
+                UNIQUE(agent_name, objective)
+            )
+            """
+            )
 
-        # Agent rewards
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS agent_rewards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            reward REAL NOT NULL,
-            reward_components TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Agent rewards
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS agent_rewards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                reward REAL NOT NULL,
+                reward_components TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Multi-objective agent rewards
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS agent_mo_rewards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            total_reward REAL NOT NULL,
-            objective_rewards TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Multi-objective agent rewards
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS agent_mo_rewards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                total_reward REAL NOT NULL,
+                objective_rewards TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Agent decisions
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS agent_decisions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            state TEXT NOT NULL,
-            selected_action TEXT NOT NULL,
-            q_values TEXT NOT NULL,
-            reward TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Agent decisions
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS agent_decisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                state TEXT NOT NULL,
+                selected_action TEXT NOT NULL,
+                q_values TEXT NOT NULL,
+                reward TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Agent interactions for batch learning
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS agent_interactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            request TEXT NOT NULL,
-            response TEXT NOT NULL,
-            feedback TEXT,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Agent interactions for batch learning
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS agent_interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                request TEXT NOT NULL,
+                response TEXT NOT NULL,
+                feedback TEXT,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Create tool performance table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tool_performance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tool_name TEXT NOT NULL,
-            success INTEGER NOT NULL,
-            execution_time REAL NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Create tool performance table
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS tool_performance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tool_name TEXT NOT NULL,
+                success INTEGER NOT NULL,
+                execution_time REAL NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
+            
+            # Add indexes for tool performance analytics
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_performance_name ON tool_performance(tool_name)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_performance_timestamp ON tool_performance(timestamp)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_tool_performance_name_success ON tool_performance(tool_name, success)")
 
-        # Create learning feedback table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS learning_feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_name TEXT NOT NULL,
-            feedback_type TEXT NOT NULL,
-            feedback_data TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Create learning feedback table
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS learning_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_name TEXT NOT NULL,
+                feedback_type TEXT NOT NULL,
+                feedback_data TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Create advanced reasoning tables
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reasoning_chains (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chain_id TEXT NOT NULL UNIQUE,
-            goal TEXT NOT NULL,
-            initial_context TEXT NOT NULL,
-            start_time REAL NOT NULL
-        )
-        """)
+            # Create advanced reasoning tables
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS reasoning_chains (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chain_id TEXT NOT NULL UNIQUE,
+                goal TEXT NOT NULL,
+                initial_context TEXT NOT NULL,
+                start_time REAL NOT NULL
+            )
+            """
+            )
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reasoning_steps (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chain_id TEXT NOT NULL,
-            step_id TEXT NOT NULL,
-            step_type TEXT NOT NULL,
-            content TEXT NOT NULL,
-            confidence REAL NOT NULL,
-            dependencies TEXT NOT NULL,
-            timestamp REAL NOT NULL,
-            evidence TEXT NOT NULL,
-            alternatives TEXT NOT NULL,
-            FOREIGN KEY (chain_id) REFERENCES reasoning_chains (chain_id)
-        )
-        """)
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS reasoning_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chain_id TEXT NOT NULL,
+                step_id TEXT NOT NULL,
+                step_type TEXT NOT NULL,
+                content TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                dependencies TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                evidence TEXT NOT NULL,
+                alternatives TEXT NOT NULL,
+                FOREIGN KEY (chain_id) REFERENCES reasoning_chains (chain_id)
+            )
+            """
+            )
 
-        # Create planning tables
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS plans (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            plan_id TEXT NOT NULL UNIQUE,
-            goal TEXT NOT NULL,
-            actions TEXT NOT NULL,
-            initial_state TEXT NOT NULL,
-            goal_state TEXT NOT NULL,
-            metadata TEXT NOT NULL,
-            created_at REAL NOT NULL
-        )
-        """)
+            # Create planning tables
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id TEXT NOT NULL UNIQUE,
+                goal TEXT NOT NULL,
+                actions TEXT NOT NULL,
+                initial_state TEXT NOT NULL,
+                goal_state TEXT NOT NULL,
+                metadata TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )
+            """
+            )
 
-        # Create meta-reasoning tables
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS meta_decisions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            decision_id TEXT NOT NULL UNIQUE,
-            strategy TEXT NOT NULL,
-            decision TEXT NOT NULL,
-            rationale TEXT NOT NULL,
-            confidence REAL NOT NULL,
-            expected_impact TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Create meta-reasoning tables
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS meta_decisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                decision_id TEXT NOT NULL UNIQUE,
+                strategy TEXT NOT NULL,
+                decision TEXT NOT NULL,
+                rationale TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                expected_impact TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        # Create reflection tables
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reflection_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL UNIQUE,
-            trigger_event TEXT NOT NULL,
-            focus_areas TEXT NOT NULL,
-            insights TEXT NOT NULL,
-            conclusions TEXT NOT NULL,
-            improvement_plan TEXT NOT NULL,
-            metadata TEXT NOT NULL,
-            timestamp REAL NOT NULL
-        )
-        """)
+            # Create reflection tables
+            await conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS reflection_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT NOT NULL UNIQUE,
+                trigger_event TEXT NOT NULL,
+                focus_areas TEXT NOT NULL,
+                insights TEXT NOT NULL,
+                conclusions TEXT NOT NULL,
+                improvement_plan TEXT NOT NULL,
+                metadata TEXT NOT NULL,
+                timestamp REAL NOT NULL
+            )
+            """
+            )
 
-        conn.commit()
-        conn.close()
+            await conn.commit()
 
-    def save_conversation_history(self, messages: List[Dict[str, str]]) -> None:
+        self._initialized = True
+
+    async def save_conversation_history(self, messages: List[Dict[str, str]]) -> None:
         """Save conversation history to the database.
 
         Args:
             messages: List of messages to save
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        # Clear existing history
-        cursor.execute("DELETE FROM conversation_history")
+        async with aiosqlite.connect(self.db_path) as conn:
+            # Clear existing history
+            await conn.execute("DELETE FROM conversation_history")
 
-        # Insert new history
-        for message in messages:
-            cursor.execute(
-                "INSERT INTO conversation_history (role, content, timestamp) VALUES (?, ?, ?)",
-                (message["role"], message["content"], time.time()),
-            )
+            # Insert new history
+            for message in messages:
+                await conn.execute(
+                    "INSERT INTO conversation_history (role, content, timestamp) VALUES (?, ?, ?)",
+                    (message["role"], message["content"], time.time()),
+                )
 
-        conn.commit()
-        conn.close()
+            await conn.commit()
 
-    def load_conversation_history(self) -> List[Dict[str, str]]:
+    async def load_conversation_history(self) -> List[Dict[str, str]]:
         """Load conversation history from the database.
 
         Returns:
             List of messages
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute("SELECT role, content FROM conversation_history ORDER BY id")
-        rows = cursor.fetchall()
-
-        conn.close()
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute("SELECT role, content FROM conversation_history ORDER BY id")
+            rows = await cursor.fetchall()
 
         return [{"role": role, "content": content} for role, content in rows]
 
-    def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to the database.
 
         Args:
@@ -307,20 +364,16 @@ class MemoryDatabase:
             args: Arguments passed to the tool
             result: Result returned by the tool
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "INSERT INTO tool_usage_history (tool_name, args, result, timestamp) VALUES (?, ?, ?, ?)",
-            (tool_name, json.dumps(args), json.dumps(str(result)), time.time()),
-        )
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                "INSERT INTO tool_usage_history (tool_name, args, result, timestamp) VALUES (?, ?, ?, ?)",
+                (tool_name, json.dumps(args), json.dumps(str(result)), time.time()),
+            )
+            await conn.commit()
 
-        conn.commit()
-        conn.close()
-
-    def load_tool_usage(
-        self, tool_name: Optional[str] = None
-    ) -> Dict[str, List[Dict[str, Any]]]:
+    async def load_tool_usage(self, tool_name: Optional[str] = None) -> Dict[str, List[Dict[str, Any]]]:
         """Load tool usage history from the database.
 
         Args:
@@ -329,21 +382,20 @@ class MemoryDatabase:
         Returns:
             Tool usage history
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        if tool_name:
-            cursor.execute(
-                "SELECT tool_name, args, result, timestamp FROM tool_usage_history WHERE tool_name = ? ORDER BY timestamp",
-                (tool_name,),
-            )
-        else:
-            cursor.execute(
-                "SELECT tool_name, args, result, timestamp FROM tool_usage_history ORDER BY timestamp"
-            )
+        async with aiosqlite.connect(self.db_path) as conn:
+            if tool_name:
+                cursor = await conn.execute(
+                    "SELECT tool_name, args, result, timestamp FROM tool_usage_history WHERE tool_name = ? ORDER BY timestamp",
+                    (tool_name,),
+                )
+            else:
+                cursor = await conn.execute(
+                    "SELECT tool_name, args, result, timestamp FROM tool_usage_history ORDER BY timestamp"
+                )
 
-        rows = cursor.fetchall()
-        conn.close()
+            rows = await cursor.fetchall()
 
         result = {}
         for tool, args, res, timestamp in rows:
@@ -360,9 +412,7 @@ class MemoryDatabase:
 
         return result
 
-    def save_entity(
-        self, entity_type: str, entity_id: str, data: Dict[str, Any]
-    ) -> None:
+    async def save_entity(self, entity_type: str, entity_id: str, data: Dict[str, Any]) -> None:
         """Save an entity to the database.
 
         Args:
@@ -370,22 +420,20 @@ class MemoryDatabase:
             entity_id: Entity identifier
             data: Entity data
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO entity_memory
-            (entity_type, entity_id, data, last_updated)
-            VALUES (?, ?, ?, ?)
-            """,
-            (entity_type, entity_id, json.dumps(data), time.time()),
-        )
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                """
+                INSERT OR REPLACE INTO entity_memory
+                (entity_type, entity_id, data, last_updated)
+                VALUES (?, ?, ?, ?)
+                """,
+                (entity_type, entity_id, json.dumps(data), time.time()),
+            )
+            await conn.commit()
 
-        conn.commit()
-        conn.close()
-
-    def load_entity(self, entity_type: str, entity_id: str) -> Optional[Dict[str, Any]]:
+    async def load_entity(self, entity_type: str, entity_id: str) -> Optional[Dict[str, Any]]:
         """Load an entity from the database.
 
         Args:
@@ -395,22 +443,20 @@ class MemoryDatabase:
         Returns:
             Entity data or None if not found
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "SELECT data FROM entity_memory WHERE entity_type = ? AND entity_id = ?",
-            (entity_type, entity_id),
-        )
-
-        row = cursor.fetchone()
-        conn.close()
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                "SELECT data FROM entity_memory WHERE entity_type = ? AND entity_id = ?",
+                (entity_type, entity_id),
+            )
+            row = await cursor.fetchone()
 
         if row:
             return json.loads(row[0])
         return None
 
-    def load_entities_by_type(self, entity_type: str) -> Dict[str, Dict[str, Any]]:
+    async def load_entities_by_type(self, entity_type: str) -> Dict[str, Dict[str, Any]]:
         """Load all entities of a specific type from the database.
 
         Args:
@@ -419,22 +465,18 @@ class MemoryDatabase:
         Returns:
             Dictionary of entities by ID
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "SELECT entity_id, data FROM entity_memory WHERE entity_type = ?",
-            (entity_type,),
-        )
-
-        rows = cursor.fetchall()
-        conn.close()
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                "SELECT entity_id, data FROM entity_memory WHERE entity_type = ?",
+                (entity_type,),
+            )
+            rows = await cursor.fetchall()
 
         return {entity_id: json.loads(data) for entity_id, data in rows}
 
-    def save_tool_performance(
-        self, tool_name: str, success: bool, execution_time: float
-    ) -> None:
+    async def save_tool_performance(self, tool_name: str, success: bool, execution_time: float) -> None:
         """Save tool performance metrics to the database.
 
         Args:
@@ -442,18 +484,16 @@ class MemoryDatabase:
             success: Whether the tool execution was successful
             execution_time: Time taken to execute the tool in seconds
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "INSERT INTO tool_performance (tool_name, success, execution_time, timestamp) VALUES (?, ?, ?, ?)",
-            (tool_name, 1 if success else 0, execution_time, time.time()),
-        )
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                "INSERT INTO tool_performance (tool_name, success, execution_time, timestamp) VALUES (?, ?, ?, ?)",
+                (tool_name, 1 if success else 0, execution_time, time.time()),
+            )
+            await conn.commit()
 
-        conn.commit()
-        conn.close()
-
-    def get_tool_performance(self, tool_name: str) -> Dict[str, Any]:
+    async def get_tool_performance(self, tool_name: str) -> Dict[str, Any]:
         """Get performance metrics for a tool.
 
         Args:
@@ -462,25 +502,23 @@ class MemoryDatabase:
         Returns:
             Performance metrics
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            """
-            SELECT
-                COUNT(*) as total_uses,
-                SUM(success) as successful_uses,
-                AVG(execution_time) as avg_execution_time,
-                MIN(execution_time) as min_execution_time,
-                MAX(execution_time) as max_execution_time
-            FROM tool_performance
-            WHERE tool_name = ?
-            """,
-            (tool_name,),
-        )
-
-        row = cursor.fetchone()
-        conn.close()
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT
+                    COUNT(*) as total_uses,
+                    SUM(success) as successful_uses,
+                    AVG(execution_time) as avg_execution_time,
+                    MIN(execution_time) as min_execution_time,
+                    MAX(execution_time) as max_execution_time
+                FROM tool_performance
+                WHERE tool_name = ?
+                """,
+                (tool_name,),
+            )
+            row = await cursor.fetchone()
 
         if row:
             total_uses, successful_uses, avg_time, min_time, max_time = row
@@ -508,7 +546,7 @@ class MemoryDatabase:
             "max_execution_time": 0,
         }
 
-    def save_learning_feedback(
+    async def save_learning_feedback(
         self, agent_name: str, feedback_type: str, feedback_data: Dict[str, Any]
     ) -> None:
         """Save learning feedback to the database.
@@ -518,18 +556,16 @@ class MemoryDatabase:
             feedback_type: Type of feedback (e.g., 'user_feedback', 'self_evaluation')
             feedback_data: Feedback data
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "INSERT INTO learning_feedback (agent_name, feedback_type, feedback_data, timestamp) VALUES (?, ?, ?, ?)",
-            (agent_name, feedback_type, json.dumps(feedback_data), time.time()),
-        )
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                "INSERT INTO learning_feedback (agent_name, feedback_type, feedback_data, timestamp) VALUES (?, ?, ?, ?)",
+                (agent_name, feedback_type, json.dumps(feedback_data), time.time()),
+            )
+            await conn.commit()
 
-        conn.commit()
-        conn.close()
-
-    def get_learning_feedback(
+    async def get_learning_feedback(
         self, agent_name: Optional[str] = None, feedback_type: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get learning feedback from the database.
@@ -541,31 +577,30 @@ class MemoryDatabase:
         Returns:
             List of feedback entries
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        query = "SELECT agent_name, feedback_type, feedback_data, timestamp FROM learning_feedback"
-        params = []
+        async with aiosqlite.connect(self.db_path) as conn:
+            query = "SELECT agent_name, feedback_type, feedback_data, timestamp FROM learning_feedback"
+            params = []
 
-        if agent_name or feedback_type:
-            query += " WHERE"
+            if agent_name or feedback_type:
+                query += " WHERE"
 
-            if agent_name:
-                query += " agent_name = ?"
-                params.append(agent_name)
+                if agent_name:
+                    query += " agent_name = ?"
+                    params.append(agent_name)
+
+                    if feedback_type:
+                        query += " AND"
 
                 if feedback_type:
-                    query += " AND"
+                    query += " feedback_type = ?"
+                    params.append(feedback_type)
 
-            if feedback_type:
-                query += " feedback_type = ?"
-                params.append(feedback_type)
+            query += " ORDER BY timestamp DESC"
 
-        query += " ORDER BY timestamp DESC"
-
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
+            cursor = await conn.execute(query, params)
+            rows = await cursor.fetchall()
 
         return [
             {
@@ -577,31 +612,27 @@ class MemoryDatabase:
             for agent_name, feedback_type, feedback_data, timestamp in rows
         ]
 
-    def save_q_table(
-        self, agent_name: str, q_table: Dict[str, Dict[str, float]]
-    ) -> None:
+    async def save_q_table(self, agent_name: str, q_table: Dict[str, Dict[str, float]]) -> None:
         """Save a Q-table to the database.
 
         Args:
             agent_name: Name of the agent
             q_table: Q-table to save
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO q_tables
-            (agent_name, q_table, last_updated)
-            VALUES (?, ?, ?)
-            """,
-            (agent_name, json.dumps(q_table), time.time()),
-        )
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                """
+                INSERT OR REPLACE INTO q_tables
+                (agent_name, q_table, last_updated)
+                VALUES (?, ?, ?)
+                """,
+                (agent_name, json.dumps(q_table), time.time()),
+            )
+            await conn.commit()
 
-        conn.commit()
-        conn.close()
-
-    def get_q_table(self, agent_name: str) -> Optional[Dict[str, Dict[str, float]]]:
+    async def get_q_table(self, agent_name: str) -> Optional[Dict[str, Dict[str, float]]]:
         """Get a Q-table from the database.
 
         Args:
@@ -610,16 +641,14 @@ class MemoryDatabase:
         Returns:
             Q-table or None if not found
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        await self._initialize_db()
 
-        cursor.execute(
-            "SELECT q_table FROM q_tables WHERE agent_name = ?",
-            (agent_name,),
-        )
-
-        row = cursor.fetchone()
-        conn.close()
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                "SELECT q_table FROM q_tables WHERE agent_name = ?",
+                (agent_name,),
+            )
+            row = await cursor.fetchone()
 
         if row:
             return json.loads(row[0])
@@ -646,9 +675,7 @@ class MemoryDatabase:
         conn.commit()
         conn.close()
 
-    def get_agent_rewards(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_agent_rewards(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get agent rewards from the database.
 
         Args:
@@ -678,9 +705,7 @@ class MemoryDatabase:
             for reward, reward_components, timestamp in rows
         ]
 
-    def save_tool_selection(
-        self, query: str, selected_tools: List[Dict[str, Any]]
-    ) -> None:
+    def save_tool_selection(self, query: str, selected_tools: List[Dict[str, Any]]) -> None:
         """Save tool selection to the database.
 
         Args:
@@ -733,9 +758,7 @@ class MemoryDatabase:
 
         return [row[0] for row in rows]
 
-    def save_q_table(
-        self, agent_name: str, q_table: Dict[str, Dict[str, float]]
-    ) -> None:
+    def save_q_table(self, agent_name: str, q_table: Dict[str, Dict[str, float]]) -> None:
         """Save Q-table to the database.
 
         Args:
@@ -781,9 +804,7 @@ class MemoryDatabase:
             return json.loads(row[0])
         return None
 
-    def save_policy_params(
-        self, agent_name: str, policy_params: Dict[str, List[float]]
-    ) -> None:
+    def save_policy_params(self, agent_name: str, policy_params: Dict[str, List[float]]) -> None:
         """Save policy parameters to the database.
 
         Args:
@@ -850,9 +871,7 @@ class MemoryDatabase:
         conn.commit()
         conn.close()
 
-    def get_agent_rewards(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_agent_rewards(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get agent rewards from the database.
 
         Args:
@@ -908,9 +927,7 @@ class MemoryDatabase:
         conn.commit()
         conn.close()
 
-    def get_agent_interactions(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_agent_interactions(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get agent interactions from the database.
 
         Args:
@@ -955,15 +972,11 @@ class MemoryDatabase:
         conversation_count = cursor.fetchone()[0]
 
         # Get tool usage counts
-        cursor.execute(
-            "SELECT tool_name, COUNT(*) FROM tool_usage_history GROUP BY tool_name"
-        )
+        cursor.execute("SELECT tool_name, COUNT(*) FROM tool_usage_history GROUP BY tool_name")
         tool_usage = cursor.fetchall()
 
         # Get entity counts by type
-        cursor.execute(
-            "SELECT entity_type, COUNT(*) FROM entity_memory GROUP BY entity_type"
-        )
+        cursor.execute("SELECT entity_type, COUNT(*) FROM entity_memory GROUP BY entity_type")
         entity_counts = cursor.fetchall()
 
         # Get feedback counts
@@ -1021,6 +1034,7 @@ class MemoryDatabase:
 
         return summary
 
+
 class FileBackedMemoryDatabase:
     """File-backed database for persisting agent memory."""
 
@@ -1068,13 +1082,11 @@ class FileBackedMemoryDatabase:
         if not history_file.exists():
             return []
 
-        async with aiofiles.open(history_file, "r") as f:
+        async with aiofiles.open(history_file) as f:
             content = await f.read()
             return json.loads(content)
 
-    async def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to files.
 
         Args:
@@ -1123,7 +1135,7 @@ class FileBackedMemoryDatabase:
             result[tool_name] = []
 
             for usage_file in tool_dir.glob("*.json"):
-                async with aiofiles.open(usage_file, "r") as f:
+                async with aiofiles.open(usage_file) as f:
                     content = await f.read()
                     usage_data = json.loads(content)
                     result[tool_name].append(
@@ -1146,7 +1158,7 @@ class FileBackedMemoryDatabase:
                     result[tool] = []
 
                     for usage_file in tool_dir.glob("*.json"):
-                        async with aiofiles.open(usage_file, "r") as f:
+                        async with aiofiles.open(usage_file) as f:
                             content = await f.read()
                             usage_data = json.loads(content)
                             result[tool].append(
@@ -1198,7 +1210,7 @@ class FileBackedMemoryDatabase:
         # Conversation summary
         history_file = self.base_dir / "conversation" / "history.json"
         if history_file.exists():
-            async with aiofiles.open(history_file, "r") as f:
+            async with aiofiles.open(history_file) as f:
                 content = await f.read()
                 messages = json.loads(content)
                 summary += "### Conversation History\n"
@@ -1240,7 +1252,7 @@ class FileBackedMemoryDatabase:
         if learning_dir.exists():
             feedback_types = {}
             for feedback_file in learning_dir.glob("*.json"):
-                async with aiofiles.open(feedback_file, "r") as f:
+                async with aiofiles.open(feedback_file) as f:
                     content = await f.read()
                     feedback_data = json.loads(content)
                     feedback_type = feedback_data.get("feedback_type", "unknown")
@@ -1278,8 +1290,8 @@ class FileBackedMemoryDatabase:
                 chain_id,
                 chain_data["goal"],
                 json.dumps(chain_data["initial_context"]),
-                chain_data["start_time"]
-            )
+                chain_data["start_time"],
+            ),
         )
 
         conn.commit()
@@ -1310,8 +1322,8 @@ class FileBackedMemoryDatabase:
                 json.dumps(step_data["dependencies"]),
                 step_data["timestamp"],
                 json.dumps(step_data["evidence"]),
-                json.dumps(step_data["alternatives"])
-            )
+                json.dumps(step_data["alternatives"]),
+            ),
         )
 
         conn.commit()
@@ -1341,8 +1353,8 @@ class FileBackedMemoryDatabase:
                 json.dumps(plan_data["initial_state"]),
                 json.dumps(plan_data["goal_state"]),
                 json.dumps(plan_data["metadata"]),
-                time.time()
-            )
+                time.time(),
+            ),
         )
 
         conn.commit()
@@ -1371,8 +1383,8 @@ class FileBackedMemoryDatabase:
                 decision_data["rationale"],
                 decision_data["confidence"],
                 json.dumps(decision_data["expected_impact"]),
-                decision_data["timestamp"]
-            )
+                decision_data["timestamp"],
+            ),
         )
 
         conn.commit()
@@ -1403,8 +1415,8 @@ class FileBackedMemoryDatabase:
                 json.dumps(session_data["conclusions"]),
                 json.dumps(session_data["improvement_plan"]),
                 json.dumps(session_data["metadata"]),
-                time.time()
-            )
+                time.time(),
+            ),
         )
 
         conn.commit()
@@ -1462,17 +1474,13 @@ class FileBackedMemoryDatabase:
             ORDER BY timestamp DESC
             LIMIT ?
             """,
-            (agent_name, limit)
+            (agent_name, limit),
         )
 
         rows = cursor.fetchall()
         conn.close()
 
         return [
-            {
-                "reward": reward,
-                "reward_components": json.loads(components),
-                "timestamp": timestamp
-            }
+            {"reward": reward, "reward_components": json.loads(components), "timestamp": timestamp}
             for reward, components, timestamp in rows
         ]

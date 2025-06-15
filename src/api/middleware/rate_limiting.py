@@ -3,13 +3,14 @@ Rate limiting middleware for the API.
 """
 
 import time
-from typing import Dict, Callable
+from typing import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from ..config import config
+
 
 class RateLimitingMiddleware(BaseHTTPMiddleware):
     """Middleware for rate limiting."""

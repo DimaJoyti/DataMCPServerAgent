@@ -5,8 +5,7 @@ problem-solving and knowledge sharing between agents.
 """
 
 import asyncio
-import os
-from typing import Dict, List
+from typing import List
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -20,25 +19,19 @@ from src.agents.enhanced_agent_architecture import (
     EnhancedToolSelector,
     FeedbackCollector,
     LearningAgent,
-    ToolPerformanceTracker
+    ToolPerformanceTracker,
 )
 from src.agents.multi_agent_learning import (
     CollaborativeLearningSystem,
     KnowledgeTransferAgent,
-    MultiAgentLearningSystem,
-    create_multi_agent_learning_system
+    create_multi_agent_learning_system,
 )
-from src.memory.collaborative_knowledge import (
-    CollaborativeKnowledgeBase,
-    create_collaborative_knowledge_base
-)
+from src.memory.collaborative_knowledge import create_collaborative_knowledge_base
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.bright_data_tools import BrightDataToolkit
 from src.utils.agent_metrics import (
-    AgentPerformanceTracker,
-    MultiAgentPerformanceAnalyzer,
     create_agent_performance_tracker,
-    create_multi_agent_performance_analyzer
+    create_multi_agent_performance_analyzer,
 )
 
 load_dotenv()
@@ -49,8 +42,9 @@ server_params = StdioServerParameters(
     model_name="claude-3-5-sonnet-20240620",
     model_provider="anthropic",
     user_id="user-123",
-    conversation_id="conv-456"
+    conversation_id="conv-456",
 )
+
 
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load all available tools.
@@ -73,14 +67,12 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
 
     return all_tools
 
+
 class MultiAgentLearningCoordinator:
     """Coordinator for multi-agent learning system."""
 
     def __init__(
-        self,
-        model: ChatAnthropic,
-        tools: List[BaseTool],
-        db_path: str = "multi_agent_memory.db"
+        self, model: ChatAnthropic, tools: List[BaseTool], db_path: str = "multi_agent_memory.db"
     ):
         """Initialize the multi-agent learning coordinator.
 
@@ -108,9 +100,7 @@ class MultiAgentLearningCoordinator:
         self.tool_tracker = ToolPerformanceTracker(self.memory_db)
 
         # Initialize enhanced tool selector
-        self.tool_selector = EnhancedToolSelector(
-            model, tools, self.memory_db, self.tool_tracker
-        )
+        self.tool_selector = EnhancedToolSelector(model, tools, self.memory_db, self.tool_tracker)
 
         # Initialize feedback collector
         self.feedback_collector = FeedbackCollector(model, self.memory_db)
@@ -188,7 +178,7 @@ class MultiAgentLearningCoordinator:
                 await self.feedback_collector.perform_self_evaluation(
                     request,
                     result["response"] if result["success"] else result["error"],
-                    agent_name
+                    agent_name,
                 )
 
             agent_results[agent_name] = result
@@ -202,7 +192,7 @@ class MultiAgentLearningCoordinator:
         self.performance_tracker.record_collaborative_metric(
             "success_rate",
             1.0 if all(result["success"] for result in agent_results.values()) else 0.0,
-            list(selected_sub_agents)
+            list(selected_sub_agents),
         )
 
         # Execute learning cycle periodically
@@ -216,6 +206,7 @@ class MultiAgentLearningCoordinator:
         self.memory_db.increment_counter("request_counter")
 
         return collaborative_result["collaborative_solution"]
+
 
 async def chat_with_multi_agent_learning_system():
     """Run the multi-agent learning system."""
@@ -244,6 +235,8 @@ async def chat_with_multi_agent_learning_system():
                         error_message = f"Error processing request: {str(e)}"
                         await session.send_message(error_message)
 
+
 if __name__ == "__main__":
     import time
+
     asyncio.run(chat_with_multi_agent_learning_system())

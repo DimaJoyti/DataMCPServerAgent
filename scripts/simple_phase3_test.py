@@ -22,10 +22,10 @@ def test_imports():
 
         # Test integrated agents
         from src.agents.semantic.integrated_agents import (
+            IntegratedSemanticCoordinator,
             MultimodalSemanticAgent,
             RAGSemanticAgent,
             StreamingSemanticAgent,
-            IntegratedSemanticCoordinator,
         )
         print("✅ Integrated agents imported")
 

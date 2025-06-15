@@ -5,13 +5,13 @@ Provides common functionality for all domain entities and value objects.
 
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import field
 from datetime import datetime, timezone
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
 T = TypeVar("T")
+
 
 class BaseValueObject(BaseModel):
     """Base class for value objects."""
@@ -24,6 +24,7 @@ class BaseValueObject(BaseModel):
             datetime: lambda v: v.isoformat(),
             uuid.UUID: lambda v: str(v),
         }
+
 
 class BaseEntity(BaseModel):
     """Base class for domain entities."""
@@ -73,6 +74,7 @@ class BaseEntity(BaseModel):
         self.version += 1
         self.updated_at = datetime.now(timezone.utc)
 
+
 class DomainEvent(BaseValueObject):
     """Base class for domain events."""
 
@@ -97,6 +99,7 @@ class DomainEvent(BaseValueObject):
             return cls.__name__
         return v
 
+
 class AggregateRoot(BaseEntity):
     """Base class for aggregate roots."""
 
@@ -110,6 +113,7 @@ class AggregateRoot(BaseEntity):
         if hasattr(self, handler_name):
             handler = getattr(self, handler_name)
             handler(event)
+
 
 class Repository(ABC, Generic[T]):
     """Abstract base repository interface."""
@@ -139,6 +143,7 @@ class Repository(ABC, Generic[T]):
         """Count entities with filters."""
         pass
 
+
 class DomainService(ABC):
     """Base class for domain services."""
 
@@ -154,6 +159,7 @@ class DomainService(ABC):
         if name not in self._repositories:
             # For now, return a mock repository to allow testing
             from app.infrastructure.repositories.base import InMemoryRepository
+
             return InMemoryRepository()
         return self._repositories[name]
 
@@ -162,6 +168,7 @@ class DomainService(ABC):
         # For now, just log the event
         # In a real implementation, this would publish to an event bus
         print(f"📢 Domain Event: {event.event_type} - {event.aggregate_id}")
+
 
 class Specification(ABC, Generic[T]):
     """Base specification pattern implementation."""
@@ -183,6 +190,7 @@ class Specification(ABC, Generic[T]):
         """Negate this specification."""
         return NotSpecification(self)
 
+
 class AndSpecification(Specification[T]):
     """AND combination of specifications."""
 
@@ -192,6 +200,7 @@ class AndSpecification(Specification[T]):
 
     def is_satisfied_by(self, entity: T) -> bool:
         return self.left.is_satisfied_by(entity) and self.right.is_satisfied_by(entity)
+
 
 class OrSpecification(Specification[T]):
     """OR combination of specifications."""
@@ -203,6 +212,7 @@ class OrSpecification(Specification[T]):
     def is_satisfied_by(self, entity: T) -> bool:
         return self.left.is_satisfied_by(entity) or self.right.is_satisfied_by(entity)
 
+
 class NotSpecification(Specification[T]):
     """NOT negation of specification."""
 
@@ -211,6 +221,7 @@ class NotSpecification(Specification[T]):
 
     def is_satisfied_by(self, entity: T) -> bool:
         return not self.spec.is_satisfied_by(entity)
+
 
 class DomainError(Exception):
     """Base class for domain errors."""
@@ -221,20 +232,24 @@ class DomainError(Exception):
         self.error_code = error_code or self.__class__.__name__
         self.details = details or {}
 
+
 class ValidationError(DomainError):
     """Domain validation error."""
 
     pass
+
 
 class BusinessRuleError(DomainError):
     """Business rule violation error."""
 
     pass
 
+
 class ConcurrencyError(DomainError):
     """Concurrency/optimistic locking error."""
 
     pass
+
 
 class EntityNotFoundError(DomainError):
     """Entity not found error."""

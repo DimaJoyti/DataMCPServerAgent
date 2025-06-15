@@ -11,6 +11,7 @@ from pydantic import Field, field_validator
 
 from .base import AggregateRoot, BaseValueObject, DomainEvent, ValidationError
 
+
 class AgentType(str, Enum):
     """Types of agents in the system."""
 
@@ -23,6 +24,7 @@ class AgentType(str, Enum):
     ORCHESTRATOR = "orchestrator"
     CUSTOM = "custom"
 
+
 class AgentStatus(str, Enum):
     """Agent operational status."""
 
@@ -34,6 +36,7 @@ class AgentStatus(str, Enum):
     MAINTENANCE = "maintenance"
     ERROR = "error"
     TERMINATED = "terminated"
+
 
 class AgentCapability(BaseValueObject):
     """Represents a capability that an agent possesses."""
@@ -50,6 +53,7 @@ class AgentCapability(BaseValueObject):
         if not v or not v.strip():
             raise ValidationError("Capability name cannot be empty")
         return v.strip().lower()
+
 
 class AgentConfiguration(BaseValueObject):
     """Agent configuration settings."""
@@ -77,6 +81,7 @@ class AgentConfiguration(BaseValueObject):
         if v <= 0:
             raise ValidationError("Timeout must be positive")
         return v
+
 
 class AgentMetrics(BaseValueObject):
     """Agent performance metrics."""
@@ -116,6 +121,7 @@ class AgentMetrics(BaseValueObject):
 
         return True
 
+
 class AgentCreatedEvent(DomainEvent):
     """Event raised when an agent is created."""
 
@@ -130,6 +136,7 @@ class AgentCreatedEvent(DomainEvent):
                 "name": name,
             },
         )
+
 
 class AgentStatusChangedEvent(DomainEvent):
     """Event raised when agent status changes."""
@@ -148,6 +155,7 @@ class AgentStatusChangedEvent(DomainEvent):
             },
         )
 
+
 class AgentScaledEvent(DomainEvent):
     """Event raised when agent is scaled."""
 
@@ -162,6 +170,7 @@ class AgentScaledEvent(DomainEvent):
                 "new_instances": new_instances,
             },
         )
+
 
 class Agent(AggregateRoot):
     """Agent aggregate root."""

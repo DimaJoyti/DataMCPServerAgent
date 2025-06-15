@@ -6,9 +6,10 @@ This module extends the advanced memory persistence with support for hierarchica
 import json
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from src.memory.advanced_memory_persistence import AdvancedMemoryDatabase
+
 
 class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
     """Extended database for persisting hierarchical agent memory."""
@@ -28,7 +29,8 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
         cursor = conn.cursor()
 
         # Options table for storing temporally extended actions
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS options (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -40,10 +42,12 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
             last_updated REAL NOT NULL,
             UNIQUE(agent_name, option_id)
         )
-        """)
+        """
+        )
 
         # Hierarchical Q-tables for storing Q-values at different levels
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS hierarchical_q_tables (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -52,10 +56,12 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
             last_updated REAL NOT NULL,
             UNIQUE(agent_name, level)
         )
-        """)
+        """
+        )
 
         # Subtask history for tracking subtask performance
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS subtask_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -70,10 +76,12 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
             end_time REAL NOT NULL,
             metadata TEXT
         )
-        """)
+        """
+        )
 
         # Task decomposition history
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS task_decomposition (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -83,7 +91,8 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
             subtasks TEXT NOT NULL,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -130,9 +139,7 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
         conn.commit()
         conn.close()
 
-    def get_option(
-        self, agent_name: str, option_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_option(self, agent_name: str, option_id: str) -> Optional[Dict[str, Any]]:
         """Get an option from the database.
 
         Args:
@@ -415,9 +422,7 @@ class HierarchicalMemoryDatabase(AdvancedMemoryDatabase):
         conn.commit()
         conn.close()
 
-    def get_task_decomposition(
-        self, agent_name: str, task_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_task_decomposition(self, agent_name: str, task_id: str) -> Optional[Dict[str, Any]]:
         """Get task decomposition from the database.
 
         Args:

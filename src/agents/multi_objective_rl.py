@@ -6,16 +6,15 @@ and balance different goals in decision making.
 
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
-import numpy as np
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.tools import BaseTool
 
 from src.agents.reinforcement_learning import RewardSystem
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class MultiObjectiveRewardSystem(RewardSystem):
     """System for calculating rewards based on multiple objectives."""
@@ -66,8 +65,7 @@ class MultiObjectiveRewardSystem(RewardSystem):
 
         # Calculate weighted sum for total reward
         total_reward = sum(
-            self.objective_weights[obj] * reward
-            for obj, reward in objective_rewards.items()
+            self.objective_weights[obj] * reward for obj, reward in objective_rewards.items()
         )
 
         # Store the rewards in history
@@ -83,9 +81,7 @@ class MultiObjectiveRewardSystem(RewardSystem):
         )
 
         # Store the rewards in the database
-        self.db.save_agent_multi_objective_reward(
-            agent_name, total_reward, objective_rewards
-        )
+        self.db.save_agent_multi_objective_reward(agent_name, total_reward, objective_rewards)
 
         # Return both total reward and objective rewards
         return {"total": total_reward, **objective_rewards}
@@ -121,12 +117,8 @@ class MultiObjectiveRewardSystem(RewardSystem):
             "negative": ["incorrect", "inaccurate", "wrong", "false", "mistake", "error"],
         }
 
-        positive_count = sum(
-            1 for word in accuracy_keywords["positive"] if word in feedback_text
-        )
-        negative_count = sum(
-            1 for word in accuracy_keywords["negative"] if word in feedback_text
-        )
+        positive_count = sum(1 for word in accuracy_keywords["positive"] if word in feedback_text)
+        negative_count = sum(1 for word in accuracy_keywords["negative"] if word in feedback_text)
 
         # Calculate accuracy score
         if positive_count + negative_count > 0:
@@ -155,13 +147,10 @@ class MultiObjectiveRewardSystem(RewardSystem):
             total_weight = sum(self.objective_weights.values())
             if total_weight > 0:
                 self.objective_weights = {
-                    obj: weight / total_weight
-                    for obj, weight in self.objective_weights.items()
+                    obj: weight / total_weight for obj, weight in self.objective_weights.items()
                 }
 
-    def get_objective_rewards(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_objective_rewards(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent objective rewards for an agent.
 
         Args:
@@ -179,6 +168,7 @@ class MultiObjectiveRewardSystem(RewardSystem):
             )[:limit]
 
         return []
+
 
 class MOQLearningAgent:
     """Agent that learns using multi-objective Q-learning algorithm."""
@@ -222,9 +212,7 @@ class MOQLearningAgent:
         self.exploration_rate = exploration_rate
 
         # Initialize Q-tables for each objective
-        self.q_tables = self.db.get_mo_q_tables(name) or {
-            objective: {} for objective in objectives
-        }
+        self.q_tables = self.db.get_mo_q_tables(name) or {objective: {} for objective in objectives}
 
     def select_action(self, state: str) -> str:
         """Select an action using scalarized Q-values.
@@ -254,9 +242,7 @@ class MOQLearningAgent:
         # Initialize state in Q-tables if not present
         for objective in self.objectives:
             if state not in self.q_tables[objective]:
-                self.q_tables[objective][state] = {
-                    action: 0.0 for action in self.actions
-                }
+                self.q_tables[objective][state] = dict.fromkeys(self.actions, 0.0)
 
         # Calculate scalarized Q-values
         scalarized_q_values = {}
@@ -285,13 +271,9 @@ class MOQLearningAgent:
         # Initialize states in Q-tables if not present
         for objective in self.objectives:
             if state not in self.q_tables[objective]:
-                self.q_tables[objective][state] = {
-                    action: 0.0 for action in self.actions
-                }
+                self.q_tables[objective][state] = dict.fromkeys(self.actions, 0.0)
             if next_state not in self.q_tables[objective]:
-                self.q_tables[objective][next_state] = {
-                    action: 0.0 for action in self.actions
-                }
+                self.q_tables[objective][next_state] = dict.fromkeys(self.actions, 0.0)
 
         # Update Q-values for each objective
         for objective in self.objectives:
@@ -312,6 +294,7 @@ class MOQLearningAgent:
 
         # Save Q-tables to database
         self.db.save_mo_q_tables(self.name, self.q_tables)
+
 
 class MultiObjectiveRLCoordinatorAgent:
     """Coordinator agent that uses multi-objective reinforcement learning for decision making."""
@@ -400,9 +383,7 @@ Extract a state identifier for this request.
         history = context.get("history", [])
 
         # Format history
-        formatted_history = "\n".join(
-            [f"{msg['role']}: {msg['content']}" for msg in history[-3:]]
-        )
+        formatted_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]])
 
         # Prepare the input for the state extraction prompt
         input_values = {"request": request, "history": formatted_history}
@@ -414,9 +395,7 @@ Extract a state identifier for this request.
         # Return the state identifier
         return response.content.strip()
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a user request using multi-objective reinforcement learning for agent selection.
 
         Args:
@@ -452,9 +431,7 @@ Extract a state identifier for this request.
         performance_metrics = {
             "success_rate": 1.0 if result["success"] else 0.0,
             "response_time": duration,
-            "tool_usage": len(result.get("tool_calls", []))
-            if "tool_calls" in result
-            else 0,
+            "tool_usage": len(result.get("tool_calls", [])) if "tool_calls" in result else 0,
             "accuracy": result.get("accuracy", 0.5),  # Default to neutral
         }
 
@@ -476,9 +453,7 @@ Extract a state identifier for this request.
                 {"role": "user", "content": request},
                 {
                     "role": "assistant",
-                    "content": result["response"]
-                    if result["success"]
-                    else result["error"],
+                    "content": result["response"] if result["success"] else result["error"],
                 },
             ],
         }
@@ -494,6 +469,7 @@ Extract a state identifier for this request.
             "rewards": rewards,
             "performance_metrics": performance_metrics,
         }
+
 
 # Factory function to create multi-objective RL-based agent architecture
 async def create_multi_objective_rl_agent_architecture(

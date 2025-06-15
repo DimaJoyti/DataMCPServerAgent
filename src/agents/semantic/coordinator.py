@@ -10,16 +10,16 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from .base_semantic_agent import BaseSemanticAgent, SemanticContext
 from .communication import (
     AgentCommunicationHub,
-    AgentMessage,
     MessageBus,
     MessageHandler,
     MessageType,
 )
+
 
 @dataclass
 class TaskAssignment:
@@ -34,6 +34,7 @@ class TaskAssignment:
     status: str = "assigned"  # assigned, running, completed, failed
     result: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class AgentCapability:
     """Agent capability description."""
@@ -43,6 +44,7 @@ class AgentCapability:
     specialization_areas: List[str] = field(default_factory=list)
     performance_history: List[float] = field(default_factory=list)
     last_updated: datetime = field(default_factory=datetime.now)
+
 
 class SemanticCoordinator:
     """
@@ -127,11 +129,13 @@ class SemanticCoordinator:
         # Initialize capabilities
         capabilities = []
         for capability_name in agent.config.capabilities:
-            capabilities.append(AgentCapability(
-                capability_name=capability_name,
-                proficiency_score=0.8,  # Default score
-                specialization_areas=agent.config.tools,
-            ))
+            capabilities.append(
+                AgentCapability(
+                    capability_name=capability_name,
+                    proficiency_score=0.8,  # Default score
+                    specialization_areas=agent.config.tools,
+                )
+            )
 
         self.agent_capabilities[agent_id] = capabilities
 
@@ -148,10 +152,7 @@ class SemanticCoordinator:
         """Unregister an agent from the coordinator."""
         if agent_id in self.registered_agents:
             # Cancel agent's active tasks
-            agent_tasks = [
-                task for task in self.active_tasks.values()
-                if task.agent_id == agent_id
-            ]
+            agent_tasks = [task for task in self.active_tasks.values() if task.agent_id == agent_id]
 
             for task in agent_tasks:
                 await self.cancel_task(task.task_id)
@@ -310,9 +311,7 @@ class SemanticCoordinator:
             subtask_results.append(result)
 
         # Combine results
-        combined_result = await self._combine_subtask_results(
-            task_description, subtask_results
-        )
+        combined_result = await self._combine_subtask_results(task_description, subtask_results)
 
         return {
             "success": all(r.get("success", False) for r in subtask_results),
@@ -337,9 +336,7 @@ class SemanticCoordinator:
                 continue
 
             # Calculate capability score
-            capability_score = self._calculate_capability_score(
-                agent_id, required_capabilities
-            )
+            capability_score = self._calculate_capability_score(agent_id, required_capabilities)
 
             # Calculate workload penalty
             workload_penalty = self.agent_workloads[agent_id] * 0.2
@@ -422,10 +419,12 @@ class SemanticCoordinator:
 
         subtasks = []
         for capability in required_capabilities:
-            subtasks.append({
-                "description": f"Handle {capability} aspect of: {task_description}",
-                "capabilities": [capability],
-            })
+            subtasks.append(
+                {
+                    "description": f"Handle {capability} aspect of: {task_description}",
+                    "capabilities": [capability],
+                }
+            )
 
         return subtasks
 
@@ -516,7 +515,8 @@ class SemanticCoordinator:
         cutoff_time = datetime.now() - self.performance_window
 
         recent_tasks = [
-            task for task in self.completed_tasks
+            task
+            for task in self.completed_tasks
             if task.agent_id == agent_id and task.assigned_at > cutoff_time
         ]
 

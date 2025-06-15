@@ -12,19 +12,20 @@ This example demonstrates the advanced features of the enhanced Bright Data inte
 
 import asyncio
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import enhanced Bright Data components
+from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache, RedisCache
 from src.tools.bright_data.core.config import BrightDataConfig
 from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
-from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache, RedisCache
-from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
 from src.tools.bright_data.core.error_handler import BrightDataErrorHandler
+from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
 from src.tools.bright_data.tools.competitive_intelligence import CompetitiveIntelligenceTools
+
 
 async def setup_enhanced_bright_data_system() -> Dict[str, Any]:
     """Setup the enhanced Bright Data system with all components"""

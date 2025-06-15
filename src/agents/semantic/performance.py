@@ -5,17 +5,16 @@ Provides performance monitoring, optimization, and scalability features
 for semantic agents and the coordination system.
 """
 
-import asyncio
 import logging
 import time
 import uuid
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
-from collections import defaultdict, deque
+from typing import Any, Dict, List, Optional
 
 import psutil
-from pydantic import BaseModel, Field
+
 
 @dataclass
 class PerformanceMetrics:
@@ -31,6 +30,7 @@ class PerformanceMetrics:
     memory_usage_mb: Optional[float] = None
     cpu_usage_percent: Optional[float] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class PerformanceTracker:
     """
@@ -123,8 +123,7 @@ class PerformanceTracker:
 
         # Filter metrics for this agent and time window
         agent_metrics = [
-            m for m in self.metrics_history
-            if m.agent_id == agent_id and m.start_time > cutoff_time
+            m for m in self.metrics_history if m.agent_id == agent_id and m.start_time > cutoff_time
         ]
 
         if not agent_metrics:
@@ -176,7 +175,7 @@ class PerformanceTracker:
         # System resource usage
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         # Active operations
         active_ops_by_agent = defaultdict(int)
@@ -185,8 +184,7 @@ class PerformanceTracker:
 
         # Recent performance trends
         recent_metrics = [
-            m for m in self.metrics_history
-            if m.start_time > datetime.now() - timedelta(minutes=5)
+            m for m in self.metrics_history if m.start_time > datetime.now() - timedelta(minutes=5)
         ]
 
         recent_success_rate = 0
@@ -219,7 +217,8 @@ class PerformanceTracker:
 
         # Check for slow operations
         recent_metrics = [
-            m for m in self.metrics_history
+            m
+            for m in self.metrics_history
             if m.start_time > datetime.now() - timedelta(hours=1) and m.duration_ms is not None
         ]
 
@@ -239,13 +238,15 @@ class PerformanceTracker:
                     slow_agents[op.agent_id] += 1
                     slow_operation_types[op.operation_type] += 1
 
-                bottlenecks.append({
-                    "type": "slow_operations",
-                    "description": f"Found {len(slow_operations)} slow operations",
-                    "threshold_ms": slow_threshold,
-                    "affected_agents": dict(slow_agents),
-                    "affected_operation_types": dict(slow_operation_types),
-                })
+                bottlenecks.append(
+                    {
+                        "type": "slow_operations",
+                        "description": f"Found {len(slow_operations)} slow operations",
+                        "threshold_ms": slow_threshold,
+                        "affected_agents": dict(slow_agents),
+                        "affected_operation_types": dict(slow_operation_types),
+                    }
+                )
 
         # Check for high failure rates
         failed_metrics = [m for m in recent_metrics if not m.success]
@@ -259,31 +260,37 @@ class PerformanceTracker:
                     failed_agents[op.agent_id] += 1
                     failed_operation_types[op.operation_type] += 1
 
-                bottlenecks.append({
-                    "type": "high_failure_rate",
-                    "description": f"High failure rate: {failure_rate:.2%}",
-                    "failure_rate": failure_rate,
-                    "affected_agents": dict(failed_agents),
-                    "affected_operation_types": dict(failed_operation_types),
-                })
+                bottlenecks.append(
+                    {
+                        "type": "high_failure_rate",
+                        "description": f"High failure rate: {failure_rate:.2%}",
+                        "failure_rate": failure_rate,
+                        "affected_agents": dict(failed_agents),
+                        "affected_operation_types": dict(failed_operation_types),
+                    }
+                )
 
         # Check system resources
         system_perf = self.get_system_performance()
         resources = system_perf["system_resources"]
 
         if resources["cpu_percent"] > 80:
-            bottlenecks.append({
-                "type": "high_cpu_usage",
-                "description": f"High CPU usage: {resources['cpu_percent']:.1f}%",
-                "cpu_percent": resources["cpu_percent"],
-            })
+            bottlenecks.append(
+                {
+                    "type": "high_cpu_usage",
+                    "description": f"High CPU usage: {resources['cpu_percent']:.1f}%",
+                    "cpu_percent": resources["cpu_percent"],
+                }
+            )
 
         if resources["memory_percent"] > 80:
-            bottlenecks.append({
-                "type": "high_memory_usage",
-                "description": f"High memory usage: {resources['memory_percent']:.1f}%",
-                "memory_percent": resources["memory_percent"],
-            })
+            bottlenecks.append(
+                {
+                    "type": "high_memory_usage",
+                    "description": f"High memory usage: {resources['memory_percent']:.1f}%",
+                    "memory_percent": resources["memory_percent"],
+                }
+            )
 
         return bottlenecks
 
@@ -294,67 +301,77 @@ class PerformanceTracker:
 
         for bottleneck in bottlenecks:
             if bottleneck["type"] == "slow_operations":
-                recommendations.append({
-                    "type": "performance_optimization",
-                    "priority": "high",
-                    "description": "Optimize slow operations",
-                    "actions": [
-                        "Review and optimize slow operation types",
-                        "Consider caching for frequently accessed data",
-                        "Implement parallel processing where possible",
-                    ],
-                    "affected_components": bottleneck["affected_operation_types"],
-                })
+                recommendations.append(
+                    {
+                        "type": "performance_optimization",
+                        "priority": "high",
+                        "description": "Optimize slow operations",
+                        "actions": [
+                            "Review and optimize slow operation types",
+                            "Consider caching for frequently accessed data",
+                            "Implement parallel processing where possible",
+                        ],
+                        "affected_components": bottleneck["affected_operation_types"],
+                    }
+                )
 
             elif bottleneck["type"] == "high_failure_rate":
-                recommendations.append({
-                    "type": "reliability_improvement",
-                    "priority": "critical",
-                    "description": "Reduce failure rate",
-                    "actions": [
-                        "Implement better error handling",
-                        "Add retry mechanisms",
-                        "Review and fix failing operations",
-                    ],
-                    "affected_components": bottleneck["affected_agents"],
-                })
+                recommendations.append(
+                    {
+                        "type": "reliability_improvement",
+                        "priority": "critical",
+                        "description": "Reduce failure rate",
+                        "actions": [
+                            "Implement better error handling",
+                            "Add retry mechanisms",
+                            "Review and fix failing operations",
+                        ],
+                        "affected_components": bottleneck["affected_agents"],
+                    }
+                )
 
             elif bottleneck["type"] == "high_cpu_usage":
-                recommendations.append({
-                    "type": "resource_optimization",
-                    "priority": "medium",
-                    "description": "Reduce CPU usage",
-                    "actions": [
-                        "Implement CPU-intensive operation queuing",
-                        "Consider horizontal scaling",
-                        "Optimize algorithms and data structures",
-                    ],
-                })
+                recommendations.append(
+                    {
+                        "type": "resource_optimization",
+                        "priority": "medium",
+                        "description": "Reduce CPU usage",
+                        "actions": [
+                            "Implement CPU-intensive operation queuing",
+                            "Consider horizontal scaling",
+                            "Optimize algorithms and data structures",
+                        ],
+                    }
+                )
 
             elif bottleneck["type"] == "high_memory_usage":
-                recommendations.append({
-                    "type": "memory_optimization",
-                    "priority": "medium",
-                    "description": "Reduce memory usage",
-                    "actions": [
-                        "Implement memory cleanup routines",
-                        "Optimize data structures",
-                        "Consider memory-efficient algorithms",
-                    ],
-                })
+                recommendations.append(
+                    {
+                        "type": "memory_optimization",
+                        "priority": "medium",
+                        "description": "Reduce memory usage",
+                        "actions": [
+                            "Implement memory cleanup routines",
+                            "Optimize data structures",
+                            "Consider memory-efficient algorithms",
+                        ],
+                    }
+                )
 
         # General recommendations
         if not bottlenecks:
-            recommendations.append({
-                "type": "general_optimization",
-                "priority": "low",
-                "description": "System performing well",
-                "actions": [
-                    "Continue monitoring performance",
-                    "Consider proactive scaling",
-                    "Implement performance testing",
-                ],
-            })
+            recommendations.append(
+                {
+                    "type": "general_optimization",
+                    "priority": "low",
+                    "description": "System performing well",
+                    "actions": [
+                        "Continue monitoring performance",
+                        "Consider proactive scaling",
+                        "Implement performance testing",
+                    ],
+                }
+            )
 
         return recommendations
 
@@ -390,7 +407,7 @@ class PerformanceTracker:
         # Filter out old metrics
         self.metrics_history = deque(
             (m for m in self.metrics_history if m.start_time > cutoff_time),
-            maxlen=self.max_metrics_history
+            maxlen=self.max_metrics_history,
         )
 
         cleared_count = original_count - len(self.metrics_history)
@@ -399,6 +416,7 @@ class PerformanceTracker:
             self.logger.info(f"Cleared {cleared_count} old metrics")
 
         return cleared_count
+
 
 class CacheManager:
     """

@@ -18,28 +18,35 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
+
 class SearchType(str, Enum):
     """Types of search strategies."""
+
     VECTOR = "vector"
     KEYWORD = "keyword"
     SEMANTIC = "semantic"
     HYBRID = "hybrid"
 
+
 class FusionStrategy(str, Enum):
     """Result fusion strategies."""
+
     RRF = "reciprocal_rank_fusion"  # Reciprocal Rank Fusion
     WEIGHTED = "weighted_average"
     BORDA = "borda_count"
     CONDORCET = "condorcet"
 
+
 @dataclass
 class SearchFilters:
     """Filters for search queries."""
+
     content_types: Optional[List[str]] = None
     date_range: Optional[Tuple[str, str]] = None
     metadata_filters: Optional[Dict[str, Any]] = None
     min_score: Optional[float] = None
     max_results: Optional[int] = None
+
 
 class SearchQuery(BaseModel):
     """Search query with multiple search strategies."""
@@ -49,7 +56,9 @@ class SearchQuery(BaseModel):
     vector: Optional[List[float]] = Field(None, description="Query vector embedding")
 
     # Search configuration
-    search_types: List[SearchType] = Field(default=[SearchType.HYBRID], description="Search strategies to use")
+    search_types: List[SearchType] = Field(
+        default=[SearchType.HYBRID], description="Search strategies to use"
+    )
     top_k: int = Field(default=10, description="Number of results to return")
 
     # Weights for fusion
@@ -59,12 +68,15 @@ class SearchQuery(BaseModel):
 
     # Filters and options
     filters: Optional[SearchFilters] = Field(None, description="Search filters")
-    fusion_strategy: FusionStrategy = Field(default=FusionStrategy.RRF, description="Result fusion strategy")
+    fusion_strategy: FusionStrategy = Field(
+        default=FusionStrategy.RRF, description="Result fusion strategy"
+    )
 
     # Advanced options
     enable_expansion: bool = Field(default=True, description="Enable query expansion")
     enable_reranking: bool = Field(default=True, description="Enable result reranking")
     context: Optional[str] = Field(None, description="Additional context for search")
+
 
 class SearchResult(BaseModel):
     """Individual search result."""
@@ -92,6 +104,7 @@ class SearchResult(BaseModel):
     created_at: Optional[str] = Field(None, description="Creation timestamp")
     updated_at: Optional[str] = Field(None, description="Update timestamp")
 
+
 class RankedResults(BaseModel):
     """Ranked search results with metadata."""
 
@@ -109,7 +122,10 @@ class RankedResults(BaseModel):
 
     # Quality metrics
     avg_score: float = Field(..., description="Average relevance score")
-    score_distribution: Dict[str, float] = Field(default_factory=dict, description="Score distribution stats")
+    score_distribution: Dict[str, float] = Field(
+        default_factory=dict, description="Score distribution stats"
+    )
+
 
 class VectorSearchEngine:
     """Vector similarity search engine."""
@@ -117,8 +133,9 @@ class VectorSearchEngine:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    async def search(self, query_vector: List[float], top_k: int = 10,
-                    filters: Optional[SearchFilters] = None) -> List[SearchResult]:
+    async def search(
+        self, query_vector: List[float], top_k: int = 10, filters: Optional[SearchFilters] = None
+    ) -> List[SearchResult]:
         """Perform vector similarity search."""
         # Placeholder implementation
         # In production, integrate with actual vector stores like:
@@ -134,12 +151,13 @@ class VectorSearchEngine:
                 title=f"Document {i}",
                 score=score,
                 vector_score=score,
-                metadata={"search_type": "vector"}
+                metadata={"search_type": "vector"},
             )
             results.append(result)
 
         self.logger.debug(f"Vector search returned {len(results)} results")
         return results
+
 
 class KeywordSearchEngine:
     """Keyword-based search engine."""
@@ -147,8 +165,9 @@ class KeywordSearchEngine:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    async def search(self, query_text: str, top_k: int = 10,
-                    filters: Optional[SearchFilters] = None) -> List[SearchResult]:
+    async def search(
+        self, query_text: str, top_k: int = 10, filters: Optional[SearchFilters] = None
+    ) -> List[SearchResult]:
         """Perform keyword search."""
         # Placeholder implementation
         # In production, integrate with search engines like:
@@ -169,12 +188,13 @@ class KeywordSearchEngine:
                 score=score,
                 keyword_score=score,
                 metadata={"search_type": "keyword", "matched_keywords": keywords[:2]},
-                highlights=[f"<mark>{kw}</mark>" for kw in keywords[:2]]
+                highlights=[f"<mark>{kw}</mark>" for kw in keywords[:2]],
             )
             results.append(result)
 
         self.logger.debug(f"Keyword search returned {len(results)} results")
         return results
+
 
 class SemanticSearchEngine:
     """Semantic search with contextual understanding."""
@@ -182,8 +202,13 @@ class SemanticSearchEngine:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    async def search(self, query_text: str, context: Optional[str] = None,
-                    top_k: int = 10, filters: Optional[SearchFilters] = None) -> List[SearchResult]:
+    async def search(
+        self,
+        query_text: str,
+        context: Optional[str] = None,
+        top_k: int = 10,
+        filters: Optional[SearchFilters] = None,
+    ) -> List[SearchResult]:
         """Perform semantic search."""
         # Placeholder implementation
         # In production, use advanced semantic models like:
@@ -205,13 +230,14 @@ class SemanticSearchEngine:
                 metadata={
                     "search_type": "semantic",
                     "context_used": bool(context),
-                    "semantic_concepts": ["concept1", "concept2"]
-                }
+                    "semantic_concepts": ["concept1", "concept2"],
+                },
             )
             results.append(result)
 
         self.logger.debug(f"Semantic search returned {len(results)} results")
         return results
+
 
 class ResultFusion:
     """Handles fusion of results from multiple search strategies."""
@@ -219,8 +245,9 @@ class ResultFusion:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    async def fuse_results(self, result_sets: Dict[SearchType, List[SearchResult]],
-                          query: SearchQuery) -> List[SearchResult]:
+    async def fuse_results(
+        self, result_sets: Dict[SearchType, List[SearchResult]], query: SearchQuery
+    ) -> List[SearchResult]:
         """Fuse results from multiple search strategies."""
 
         if query.fusion_strategy == FusionStrategy.RRF:
@@ -233,8 +260,9 @@ class ResultFusion:
             # Default to RRF
             return await self._reciprocal_rank_fusion(result_sets, query)
 
-    async def _reciprocal_rank_fusion(self, result_sets: Dict[SearchType, List[SearchResult]],
-                                     query: SearchQuery) -> List[SearchResult]:
+    async def _reciprocal_rank_fusion(
+        self, result_sets: Dict[SearchType, List[SearchResult]], query: SearchQuery
+    ) -> List[SearchResult]:
         """Reciprocal Rank Fusion algorithm."""
         k = 60  # RRF parameter
         doc_scores = {}
@@ -243,7 +271,7 @@ class ResultFusion:
         weights = {
             SearchType.VECTOR: query.vector_weight,
             SearchType.KEYWORD: query.keyword_weight,
-            SearchType.SEMANTIC: query.semantic_weight
+            SearchType.SEMANTIC: query.semantic_weight,
         }
 
         for search_type, results in result_sets.items():
@@ -253,11 +281,7 @@ class ResultFusion:
                 doc_key = f"{result.document_id}_{result.chunk_id or ''}"
 
                 if doc_key not in doc_scores:
-                    doc_scores[doc_key] = {
-                        "result": result,
-                        "score": 0.0,
-                        "search_types": []
-                    }
+                    doc_scores[doc_key] = {"result": result, "score": 0.0, "search_types": []}
 
                 # RRF score calculation
                 rrf_score = weight / (k + rank)
@@ -268,7 +292,7 @@ class ResultFusion:
         sorted_docs = sorted(doc_scores.items(), key=lambda x: x[1]["score"], reverse=True)
 
         fused_results = []
-        for doc_key, doc_data in sorted_docs[:query.top_k]:
+        for doc_key, doc_data in sorted_docs[: query.top_k]:
             result = doc_data["result"]
             result.score = doc_data["score"]
             result.metadata["fusion_score"] = doc_data["score"]
@@ -278,15 +302,16 @@ class ResultFusion:
         self.logger.debug(f"RRF fusion produced {len(fused_results)} results")
         return fused_results
 
-    async def _weighted_fusion(self, result_sets: Dict[SearchType, List[SearchResult]],
-                              query: SearchQuery) -> List[SearchResult]:
+    async def _weighted_fusion(
+        self, result_sets: Dict[SearchType, List[SearchResult]], query: SearchQuery
+    ) -> List[SearchResult]:
         """Weighted average fusion."""
         doc_scores = {}
 
         weights = {
             SearchType.VECTOR: query.vector_weight,
             SearchType.KEYWORD: query.keyword_weight,
-            SearchType.SEMANTIC: query.semantic_weight
+            SearchType.SEMANTIC: query.semantic_weight,
         }
 
         for search_type, results in result_sets.items():
@@ -296,11 +321,7 @@ class ResultFusion:
                 doc_key = f"{result.document_id}_{result.chunk_id or ''}"
 
                 if doc_key not in doc_scores:
-                    doc_scores[doc_key] = {
-                        "result": result,
-                        "weighted_scores": [],
-                        "weights": []
-                    }
+                    doc_scores[doc_key] = {"result": result, "weighted_scores": [], "weights": []}
 
                 doc_scores[doc_key]["weighted_scores"].append(result.score * weight)
                 doc_scores[doc_key]["weights"].append(weight)
@@ -315,7 +336,7 @@ class ResultFusion:
         sorted_docs = sorted(doc_scores.items(), key=lambda x: x[1]["final_score"], reverse=True)
 
         fused_results = []
-        for doc_key, doc_data in sorted_docs[:query.top_k]:
+        for doc_key, doc_data in sorted_docs[: query.top_k]:
             result = doc_data["result"]
             result.score = doc_data["final_score"]
             result.metadata["fusion_score"] = doc_data["final_score"]
@@ -323,8 +344,9 @@ class ResultFusion:
 
         return fused_results
 
-    async def _borda_count_fusion(self, result_sets: Dict[SearchType, List[SearchResult]],
-                                 query: SearchQuery) -> List[SearchResult]:
+    async def _borda_count_fusion(
+        self, result_sets: Dict[SearchType, List[SearchResult]], query: SearchQuery
+    ) -> List[SearchResult]:
         """Borda count fusion method."""
         doc_scores = {}
 
@@ -335,10 +357,7 @@ class ResultFusion:
                 doc_key = f"{result.document_id}_{result.chunk_id or ''}"
 
                 if doc_key not in doc_scores:
-                    doc_scores[doc_key] = {
-                        "result": result,
-                        "borda_score": 0
-                    }
+                    doc_scores[doc_key] = {"result": result, "borda_score": 0}
 
                 # Borda count: higher rank = higher score
                 borda_points = max_rank - rank
@@ -348,13 +367,14 @@ class ResultFusion:
         sorted_docs = sorted(doc_scores.items(), key=lambda x: x[1]["borda_score"], reverse=True)
 
         fused_results = []
-        for doc_key, doc_data in sorted_docs[:query.top_k]:
+        for doc_key, doc_data in sorted_docs[: query.top_k]:
             result = doc_data["result"]
             result.score = doc_data["borda_score"]
             result.metadata["borda_score"] = doc_data["borda_score"]
             fused_results.append(result)
 
         return fused_results
+
 
 class HybridSearchEngine:
     """Main hybrid search engine coordinating all search strategies."""
@@ -400,8 +420,7 @@ class HybridSearchEngine:
         search_results = {}
         if search_tasks:
             completed_searches = await asyncio.gather(
-                *search_tasks.values(),
-                return_exceptions=True
+                *search_tasks.values(), return_exceptions=True
             )
 
             for (search_type, _), result in zip(search_tasks.items(), completed_searches):
@@ -435,11 +454,13 @@ class HybridSearchEngine:
             score_distribution={
                 "min": min([r.score for r in final_results]) if final_results else 0.0,
                 "max": max([r.score for r in final_results]) if final_results else 0.0,
-                "avg": avg_score
-            }
+                "avg": avg_score,
+            },
         )
 
-        self.logger.info(f"Hybrid search completed in {search_time_ms:.2f}ms, "
-                        f"returned {len(final_results)} results")
+        self.logger.info(
+            f"Hybrid search completed in {search_time_ms:.2f}ms, "
+            f"returned {len(final_results)} results"
+        )
 
         return ranked_results

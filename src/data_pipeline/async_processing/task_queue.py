@@ -4,17 +4,16 @@ Task queue system for distributed document processing.
 
 import asyncio
 import logging
-import time
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable
-from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
 
-from pydantic import BaseModel
 
 class TaskStatus(str, Enum):
     """Task status enumeration."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -22,12 +21,15 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
     RETRYING = "retrying"
 
+
 class TaskPriority(int, Enum):
     """Task priority levels."""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
     URGENT = 4
+
 
 @dataclass
 class Task:
@@ -84,22 +86,23 @@ class Task:
     def to_dict(self) -> Dict[str, Any]:
         """Convert task to dictionary."""
         return {
-            'id': self.id,
-            'name': self.name,
-            'priority': self.priority.value,
-            'status': self.status.value,
-            'created_at': self.created_at.isoformat(),
-            'started_at': self.started_at.isoformat() if self.started_at else None,
-            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-            'max_retries': self.max_retries,
-            'retry_count': self.retry_count,
-            'progress': self.progress,
-            'progress_message': self.progress_message,
-            'error': self.error,
-            'execution_time': self.execution_time,
-            'total_time': self.total_time,
-            'metadata': self.metadata
+            "id": self.id,
+            "name": self.name,
+            "priority": self.priority.value,
+            "status": self.status.value,
+            "created_at": self.created_at.isoformat(),
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "max_retries": self.max_retries,
+            "retry_count": self.retry_count,
+            "progress": self.progress,
+            "progress_message": self.progress_message,
+            "error": self.error,
+            "execution_time": self.execution_time,
+            "total_time": self.total_time,
+            "metadata": self.metadata,
         }
+
 
 class TaskQueue:
     """Asynchronous task queue with priority support."""
@@ -223,24 +226,22 @@ class TaskQueue:
         avg_execution_time = sum(execution_times) / len(execution_times) if execution_times else 0
 
         return {
-            'queue_size': self.qsize(),
-            'pending_tasks': len(pending_tasks),
-            'running_tasks': len(running_tasks),
-            'completed_tasks': len(completed_tasks),
-            'total_tasks': len(self._tasks) + len(self._completed_tasks),
-            'average_execution_time': avg_execution_time,
-            'is_empty': self.empty(),
-            'is_full': self.full()
+            "queue_size": self.qsize(),
+            "pending_tasks": len(pending_tasks),
+            "running_tasks": len(running_tasks),
+            "completed_tasks": len(completed_tasks),
+            "total_tasks": len(self._tasks) + len(self._completed_tasks),
+            "average_execution_time": avg_execution_time,
+            "is_empty": self.empty(),
+            "is_full": self.full(),
         }
+
 
 class TaskManager:
     """Task manager for coordinating task execution."""
 
     def __init__(
-        self,
-        max_workers: int = 4,
-        queue_maxsize: int = 0,
-        cleanup_interval: int = 3600  # 1 hour
+        self, max_workers: int = 4, queue_maxsize: int = 0, cleanup_interval: int = 3600  # 1 hour
     ):
         """
         Initialize task manager.
@@ -263,10 +264,10 @@ class TaskManager:
 
         # Statistics
         self.stats = {
-            'tasks_processed': 0,
-            'tasks_failed': 0,
-            'total_execution_time': 0.0,
-            'start_time': None
+            "tasks_processed": 0,
+            "tasks_failed": 0,
+            "total_execution_time": 0.0,
+            "start_time": None,
         }
 
     async def start(self) -> None:
@@ -275,7 +276,7 @@ class TaskManager:
             return
 
         self.running = True
-        self.stats['start_time'] = datetime.now()
+        self.stats["start_time"] = datetime.now()
 
         # Start workers
         for i in range(self.max_workers):
@@ -313,7 +314,7 @@ class TaskManager:
         priority: TaskPriority = TaskPriority.NORMAL,
         max_retries: int = 3,
         metadata: Optional[Dict[str, Any]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Submit a task for execution.
@@ -337,7 +338,7 @@ class TaskManager:
             kwargs=kwargs,
             priority=priority,
             max_retries=max_retries,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         await self.queue.put(task)
@@ -425,9 +426,9 @@ class TaskManager:
                 task.completed_at = datetime.now()
                 task.progress = 100.0
 
-                self.stats['tasks_processed'] += 1
+                self.stats["tasks_processed"] += 1
                 if task.execution_time:
-                    self.stats['total_execution_time'] += task.execution_time
+                    self.stats["total_execution_time"] += task.execution_time
 
                 self.logger.info(f"Task {task.id} completed successfully")
 
@@ -439,7 +440,9 @@ class TaskManager:
                 if task.retry_count <= task.max_retries:
                     # Retry task
                     task.status = TaskStatus.RETRYING
-                    self.logger.warning(f"Task {task.id} failed, retrying ({task.retry_count}/{task.max_retries}): {e}")
+                    self.logger.warning(
+                        f"Task {task.id} failed, retrying ({task.retry_count}/{task.max_retries}): {e}"
+                    )
 
                     # Add delay before retry
                     await asyncio.sleep(task.retry_delay * task.retry_count)
@@ -456,9 +459,11 @@ class TaskManager:
                     task.status = TaskStatus.FAILED
                     task.completed_at = datetime.now()
 
-                    self.stats['tasks_failed'] += 1
+                    self.stats["tasks_failed"] += 1
 
-                    self.logger.error(f"Task {task.id} failed after {task.retry_count} retries: {e}")
+                    self.logger.error(
+                        f"Task {task.id} failed after {task.retry_count} retries: {e}"
+                    )
 
             finally:
                 self.queue.task_done(task)
@@ -491,21 +496,29 @@ class TaskManager:
         queue_stats = self.queue.get_stats()
 
         uptime = 0.0
-        if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+        if self.stats["start_time"]:
+            uptime = (datetime.now() - self.stats["start_time"]).total_seconds()
 
         avg_execution_time = 0.0
-        if self.stats['tasks_processed'] > 0:
-            avg_execution_time = self.stats['total_execution_time'] / self.stats['tasks_processed']
+        if self.stats["tasks_processed"] > 0:
+            avg_execution_time = self.stats["total_execution_time"] / self.stats["tasks_processed"]
 
         return {
             **queue_stats,
-            'workers': len(self.workers),
-            'max_workers': self.max_workers,
-            'is_running': self.running,
-            'uptime': uptime,
-            'tasks_processed': self.stats['tasks_processed'],
-            'tasks_failed': self.stats['tasks_failed'],
-            'average_execution_time': avg_execution_time,
-            'success_rate': (self.stats['tasks_processed'] / (self.stats['tasks_processed'] + self.stats['tasks_failed'])) * 100 if (self.stats['tasks_processed'] + self.stats['tasks_failed']) > 0 else 0
+            "workers": len(self.workers),
+            "max_workers": self.max_workers,
+            "is_running": self.running,
+            "uptime": uptime,
+            "tasks_processed": self.stats["tasks_processed"],
+            "tasks_failed": self.stats["tasks_failed"],
+            "average_execution_time": avg_execution_time,
+            "success_rate": (
+                (
+                    self.stats["tasks_processed"]
+                    / (self.stats["tasks_processed"] + self.stats["tasks_failed"])
+                )
+                * 100
+                if (self.stats["tasks_processed"] + self.stats["tasks_failed"]) > 0
+                else 0
+            ),
         }

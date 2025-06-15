@@ -19,11 +19,12 @@ from mcp.client.stdio import stdio_client
 
 from src.agents.crypto_portfolio_agent import CryptoPortfolioAgent
 from src.memory.memory_persistence import MemoryDatabase
-from src.utils.error_recovery import ErrorRecoverySystem
 from src.utils.env_config import load_dotenv
+from src.utils.error_recovery import ErrorRecoverySystem
 
 # Load environment variables
 load_dotenv()
+
 
 class CryptoPortfolioSystem:
     """Main system for cryptocurrency portfolio management."""
@@ -47,9 +48,7 @@ class CryptoPortfolioSystem:
             # Initialize language model
             print("🧠 Initializing AI model...")
             self.model = ChatAnthropic(
-                model="claude-3-sonnet-20240229",
-                temperature=0.1,
-                max_tokens=4000
+                model="claude-3-sonnet-20240229", temperature=0.1, max_tokens=4000
             )
 
             # Initialize MCP session for Bright Data tools
@@ -57,7 +56,7 @@ class CryptoPortfolioSystem:
             server_params = StdioServerParameters(
                 command="npx",
                 args=["-y", "@brightdata/mcp-server-bright-data"],
-                env=dict(os.environ)
+                env=dict(os.environ),
             )
 
             async with stdio_client(server_params) as (read, write):
@@ -70,10 +69,7 @@ class CryptoPortfolioSystem:
                     # Initialize crypto portfolio agent
                     print("💰 Setting up crypto portfolio agent...")
                     self.agent = CryptoPortfolioAgent(
-                        model=self.model,
-                        session=session,
-                        db=self.db,
-                        error_recovery=error_recovery
+                        model=self.model, session=session, db=self.db, error_recovery=error_recovery
                     )
 
                     await self.agent.initialize()
@@ -112,22 +108,22 @@ class CryptoPortfolioSystem:
                 if not user_input:
                     continue
 
-                if user_input.lower() in ['quit', 'exit', 'bye']:
+                if user_input.lower() in ["quit", "exit", "bye"]:
                     print("👋 Thank you for using Crypto Portfolio Management System!")
                     break
 
                 # Handle special commands
-                if user_input.lower() == 'analyze':
+                if user_input.lower() == "analyze":
                     await self.handle_analyze_command()
-                elif user_input.lower().startswith('monitor'):
+                elif user_input.lower().startswith("monitor"):
                     await self.handle_monitor_command(user_input)
-                elif user_input.lower().startswith('news'):
+                elif user_input.lower().startswith("news"):
                     await self.handle_news_command(user_input)
-                elif user_input.lower().startswith('report'):
+                elif user_input.lower().startswith("report"):
                     await self.handle_report_command(user_input)
-                elif user_input.lower() == 'settings':
+                elif user_input.lower() == "settings":
                     await self.handle_settings_command()
-                elif user_input.lower() == 'help':
+                elif user_input.lower() == "help":
                     await self.handle_help_command()
                 else:
                     # General chat with agent
@@ -159,15 +155,17 @@ class CryptoPortfolioSystem:
             print(f"📊 Total P&L: ${analysis['total_pnl']:+,.2f}")
             print(f"🏦 Number of Positions: {len(analysis['positions'])}")
 
-            if analysis['positions']:
+            if analysis["positions"]:
                 print("\n📋 Position Details:")
-                for pos in analysis['positions']:
-                    emoji = "📈" if pos.get('pnl', 0) >= 0 else "📉"
-                    print(f"  {emoji} {pos['symbol']}: ${pos.get('current_value', 0):,.2f} (P&L: ${pos.get('pnl', 0):+,.2f})")
+                for pos in analysis["positions"]:
+                    emoji = "📈" if pos.get("pnl", 0) >= 0 else "📉"
+                    print(
+                        f"  {emoji} {pos['symbol']}: ${pos.get('current_value', 0):,.2f} (P&L: ${pos.get('pnl', 0):+,.2f})"
+                    )
 
-            if analysis['recommendations']:
+            if analysis["recommendations"]:
                 print("\n💡 Recommendations:")
-                for rec in analysis['recommendations']:
+                for rec in analysis["recommendations"]:
                     print(f"  • {rec}")
 
         except Exception as e:
@@ -176,7 +174,7 @@ class CryptoPortfolioSystem:
     async def handle_monitor_command(self, user_input: str):
         """Handle market monitoring command."""
         parts = user_input.split()
-        symbols = parts[1:] if len(parts) > 1 else ['BTCUSD', 'ETHUSD', 'ADAUSD']
+        symbols = parts[1:] if len(parts) > 1 else ["BTCUSD", "ETHUSD", "ADAUSD"]
 
         print(f"\n📈 Monitoring markets for: {', '.join(symbols)}")
 
@@ -193,14 +191,14 @@ class CryptoPortfolioSystem:
 
             for symbol in symbols:
                 print(f"\n💰 {symbol}:")
-                if symbol in market_data.get('price_data', {}):
-                    print(f"  📊 Price Data: Available")
-                if symbol in market_data.get('technical_signals', {}):
-                    print(f"  📈 Technical Analysis: Available")
+                if symbol in market_data.get("price_data", {}):
+                    print("  📊 Price Data: Available")
+                if symbol in market_data.get("technical_signals", {}):
+                    print("  📈 Technical Analysis: Available")
 
-            if market_data.get('alerts'):
+            if market_data.get("alerts"):
                 print("\n🚨 Active Alerts:")
-                for alert in market_data['alerts']:
+                for alert in market_data["alerts"]:
                     print(f"  ⚠️ {alert}")
 
         except Exception as e:
@@ -209,13 +207,15 @@ class CryptoPortfolioSystem:
     async def handle_news_command(self, user_input: str):
         """Handle crypto news command."""
         parts = user_input.split()
-        symbol = parts[1] if len(parts) > 1 else 'BTCUSD'
+        symbol = parts[1] if len(parts) > 1 else "BTCUSD"
 
         print(f"\n📰 Fetching latest news for {symbol}...")
 
         try:
             # Use TradingView news tool
-            news_tool = next(tool for tool in self.agent.tools if tool.name == "tradingview_crypto_news")
+            news_tool = next(
+                tool for tool in self.agent.tools if tool.name == "tradingview_crypto_news"
+            )
             news_result = await news_tool.invoke({"symbol": symbol, "limit": 5})
 
             print("\n" + "=" * 50)
@@ -229,9 +229,9 @@ class CryptoPortfolioSystem:
     async def handle_report_command(self, user_input: str):
         """Handle report generation command."""
         parts = user_input.split()
-        report_type = parts[1] if len(parts) > 1 else 'daily'
+        report_type = parts[1] if len(parts) > 1 else "daily"
 
-        if report_type not in ['daily', 'weekly', 'monthly']:
+        if report_type not in ["daily", "weekly", "monthly"]:
             print("❌ Invalid report type. Use 'daily', 'weekly', or 'monthly'.")
             return
 
@@ -296,10 +296,12 @@ For more detailed information, visit our documentation.
 """
         print(help_text)
 
+
 async def main():
     """Main entry point for the crypto portfolio system."""
     system = CryptoPortfolioSystem()
     await system.initialize()
+
 
 if __name__ == "__main__":
     try:

@@ -5,30 +5,27 @@ This module provides more sophisticated machine learning models for prediction
 and continuous improvement.
 """
 
-import asyncio
-import json
 import logging
 import os
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import numpy as np
-import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from uagents import Agent, Context, Model, Protocol
+from sklearn.preprocessing import StandardScaler
+from uagents import Model
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class ModelType(str, Enum):
     """Types of machine learning models."""
@@ -37,6 +34,7 @@ class ModelType(str, Enum):
     GRADIENT_BOOSTING = "gradient_boosting"
     NEURAL_NETWORK = "neural_network"
     ENSEMBLE = "ensemble"
+
 
 class PredictionTarget(str, Enum):
     """Prediction targets."""
@@ -48,6 +46,7 @@ class PredictionTarget(str, Enum):
     OPTIMAL_ENTRY = "optimal_entry"
     OPTIMAL_EXIT = "optimal_exit"
 
+
 class ModelConfig(Model):
     """Model for machine learning model configuration."""
 
@@ -56,6 +55,7 @@ class ModelConfig(Model):
     hyperparameters: Dict[str, Any] = {}
     feature_engineering: Dict[str, Any] = {}
     preprocessing: Dict[str, Any] = {}
+
 
 class TrainingResult(Model):
     """Model for training results."""
@@ -70,6 +70,7 @@ class TrainingResult(Model):
     sample_size: int
     timestamp: str
 
+
 class AdvancedMLModel:
     """Base class for advanced machine learning models."""
 
@@ -78,7 +79,7 @@ class AdvancedMLModel:
         model_type: ModelType,
         target: PredictionTarget,
         config: Optional[ModelConfig] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the advanced ML model.
 
@@ -90,10 +91,7 @@ class AdvancedMLModel:
         """
         self.model_type = model_type
         self.target = target
-        self.config = config or ModelConfig(
-            model_type=model_type,
-            target=target
-        )
+        self.config = config or ModelConfig(model_type=model_type, target=target)
         self.logger = logger or logging.getLogger(f"{model_type}_{target}")
 
         # Initialize model
@@ -114,14 +112,14 @@ class AdvancedMLModel:
                 n_estimators=self.config.hyperparameters.get("n_estimators", 100),
                 max_depth=self.config.hyperparameters.get("max_depth", None),
                 min_samples_split=self.config.hyperparameters.get("min_samples_split", 2),
-                random_state=42
+                random_state=42,
             )
         elif self.model_type == ModelType.GRADIENT_BOOSTING:
             return GradientBoostingClassifier(
                 n_estimators=self.config.hyperparameters.get("n_estimators", 100),
                 learning_rate=self.config.hyperparameters.get("learning_rate", 0.1),
                 max_depth=self.config.hyperparameters.get("max_depth", 3),
-                random_state=42
+                random_state=42,
             )
         elif self.model_type == ModelType.NEURAL_NETWORK:
             return MLPClassifier(
@@ -131,38 +129,38 @@ class AdvancedMLModel:
                 alpha=self.config.hyperparameters.get("alpha", 0.0001),
                 learning_rate=self.config.hyperparameters.get("learning_rate", "constant"),
                 max_iter=self.config.hyperparameters.get("max_iter", 200),
-                random_state=42
+                random_state=42,
             )
         elif self.model_type == ModelType.ENSEMBLE:
             # Create an ensemble of models
             models = []
 
             # Add Random Forest
-            models.append(RandomForestClassifier(
-                n_estimators=100,
-                max_depth=None,
-                min_samples_split=2,
-                random_state=42
-            ))
+            models.append(
+                RandomForestClassifier(
+                    n_estimators=100, max_depth=None, min_samples_split=2, random_state=42
+                )
+            )
 
             # Add Gradient Boosting
-            models.append(GradientBoostingClassifier(
-                n_estimators=100,
-                learning_rate=0.1,
-                max_depth=3,
-                random_state=42
-            ))
+            models.append(
+                GradientBoostingClassifier(
+                    n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42
+                )
+            )
 
             # Add Neural Network
-            models.append(MLPClassifier(
-                hidden_layer_sizes=(100,),
-                activation="relu",
-                solver="adam",
-                alpha=0.0001,
-                learning_rate="constant",
-                max_iter=200,
-                random_state=42
-            ))
+            models.append(
+                MLPClassifier(
+                    hidden_layer_sizes=(100,),
+                    activation="relu",
+                    solver="adam",
+                    alpha=0.0001,
+                    learning_rate="constant",
+                    max_iter=200,
+                    random_state=42,
+                )
+            )
 
             return models
         else:
@@ -213,9 +211,9 @@ class AdvancedMLModel:
 
         # Calculate metrics
         accuracy = accuracy_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred, average='weighted')
-        recall = recall_score(y_test, y_pred, average='weighted')
-        f1 = f1_score(y_test, y_pred, average='weighted')
+        precision = precision_score(y_test, y_pred, average="weighted")
+        recall = recall_score(y_test, y_pred, average="weighted")
+        f1 = f1_score(y_test, y_pred, average="weighted")
 
         # Calculate training time
         training_time = (datetime.now() - start_time).total_seconds()
@@ -230,7 +228,7 @@ class AdvancedMLModel:
             f1_score=f1,
             training_time=training_time,
             sample_size=len(X),
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
         self.logger.info(
@@ -306,12 +304,15 @@ class AdvancedMLModel:
             path: Path to save to
         """
         with open(path, "wb") as f:
-            pickle.dump({
-                "model": self.model,
-                "feature_scaler": self.feature_scaler,
-                "target_scaler": self.target_scaler,
-                "config": self.config.dict()
-            }, f)
+            pickle.dump(
+                {
+                    "model": self.model,
+                    "feature_scaler": self.feature_scaler,
+                    "target_scaler": self.target_scaler,
+                    "config": self.config.dict(),
+                },
+                f,
+            )
 
     @classmethod
     def load(cls, path: str) -> "AdvancedMLModel":
@@ -330,11 +331,7 @@ class AdvancedMLModel:
         config = ModelConfig(**data["config"])
 
         # Create model
-        model = cls(
-            model_type=config.model_type,
-            target=config.target,
-            config=config
-        )
+        model = cls(model_type=config.model_type, target=config.target, config=config)
 
         # Load model and preprocessors
         model.model = data["model"]
@@ -343,14 +340,11 @@ class AdvancedMLModel:
 
         return model
 
+
 class ModelManager:
     """Manager for advanced machine learning models."""
 
-    def __init__(
-        self,
-        models_dir: str = "models",
-        logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, models_dir: str = "models", logger: Optional[logging.Logger] = None):
         """Initialize the model manager.
 
         Args:
@@ -367,10 +361,7 @@ class ModelManager:
         self.models = {}
 
     def get_model(
-        self,
-        model_type: ModelType,
-        target: PredictionTarget,
-        config: Optional[ModelConfig] = None
+        self, model_type: ModelType, target: PredictionTarget, config: Optional[ModelConfig] = None
     ) -> AdvancedMLModel:
         """Get a model.
 
@@ -394,18 +385,12 @@ class ModelManager:
                 # Create new model
                 self.logger.info(f"Creating new {model_type} model for {target}")
                 self.models[model_key] = AdvancedMLModel(
-                    model_type=model_type,
-                    target=target,
-                    config=config
+                    model_type=model_type, target=target, config=config
                 )
 
         return self.models[model_key]
 
-    def save_model(
-        self,
-        model_type: ModelType,
-        target: PredictionTarget
-    ):
+    def save_model(self, model_type: ModelType, target: PredictionTarget):
         """Save a model to a file.
 
         Args:
@@ -428,6 +413,7 @@ class ModelManager:
             self.logger.info(f"Saving model to {model_path}")
             model.save(model_path)
 
+
 # Example usage
 if __name__ == "__main__":
     # Create model manager
@@ -435,8 +421,7 @@ if __name__ == "__main__":
 
     # Create model
     model = manager.get_model(
-        model_type=ModelType.ENSEMBLE,
-        target=PredictionTarget.PRICE_DIRECTION
+        model_type=ModelType.ENSEMBLE, target=PredictionTarget.PRICE_DIRECTION
     )
 
     # Generate random data for demonstration
@@ -456,7 +441,4 @@ if __name__ == "__main__":
     print(f"Probabilities: {probabilities}")
 
     # Save model
-    manager.save_model(
-        model_type=ModelType.ENSEMBLE,
-        target=PredictionTarget.PRICE_DIRECTION
-    )
+    manager.save_model(model_type=ModelType.ENSEMBLE, target=PredictionTarget.PRICE_DIRECTION)

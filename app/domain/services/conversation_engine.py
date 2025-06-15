@@ -3,10 +3,8 @@ Conversation Engine - Core service for real-time conversation processing.
 Handles message processing, AI response generation, and conversation management.
 """
 
-import asyncio
-import json
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from app.core.logging import LoggerMixin, get_logger
@@ -279,7 +277,7 @@ class ConversationEngine(DomainService, LoggerMixin):
     def _build_system_prompt(self, personality, agent_name: str) -> str:
         """Build system prompt for AI."""
         traits_str = ", ".join(personality.traits)
-        
+
         return f"""You are {agent_name}, an AI assistant with the following characteristics:
         
 Personality Traits: {traits_str}
@@ -313,7 +311,9 @@ Be helpful, accurate, and maintain the specified tone and style.
                 prompt += f"- {item['title']}: {item['content'][:200]}...\n"
             prompt += "\n"
 
-        prompt += "Please respond appropriately based on your personality and the available information."
+        prompt += (
+            "Please respond appropriately based on your personality and the available information."
+        )
 
         return prompt
 
@@ -373,7 +373,10 @@ Be helpful, accurate, and maintain the specified tone and style.
         )
 
     async def _check_escalation_triggers(
-        self, message: ConversationMessage, conversation: LiveConversation, analysis: MessageAnalysis
+        self,
+        message: ConversationMessage,
+        conversation: LiveConversation,
+        analysis: MessageAnalysis,
     ) -> None:
         """Check if message triggers escalation."""
         escalation_triggers = []
@@ -385,7 +388,7 @@ Be helpful, accurate, and maintain the specified tone and style.
         # Check for specific keywords
         agent_repo = self.get_repository("brand_agent")
         agent = await agent_repo.get_by_id(conversation.brand_agent_id)
-        
+
         if agent and agent.configuration.escalation_triggers:
             content_lower = message.content.lower()
             for trigger in agent.configuration.escalation_triggers:
@@ -396,7 +399,10 @@ Be helpful, accurate, and maintain the specified tone and style.
         conversation.metrics.escalation_triggers.extend(escalation_triggers)
 
     async def _update_conversation_metrics(
-        self, conversation: LiveConversation, message: ConversationMessage, analysis: MessageAnalysis
+        self,
+        conversation: LiveConversation,
+        message: ConversationMessage,
+        analysis: MessageAnalysis,
     ) -> None:
         """Update conversation metrics."""
         if analysis.sentiment:
@@ -409,7 +415,7 @@ Be helpful, accurate, and maintain the specified tone and style.
                 SentimentType.FRUSTRATED: 0.2,
                 SentimentType.NEGATIVE: 0.0,
             }.get(analysis.sentiment, 0.5)
-            
+
             conversation.metrics.sentiment_scores.append(sentiment_score)
 
     async def _get_active_conversation(self, conversation_id: str) -> Optional[LiveConversation]:
@@ -420,27 +426,33 @@ Be helpful, accurate, and maintain the specified tone and style.
         # Try to load from repository
         conversation_repo = self.get_repository("live_conversation")
         conversation = await conversation_repo.get_by_id(conversation_id)
-        
+
         if conversation and conversation.is_active():
             self._active_conversations[conversation_id] = conversation
             return conversation
 
         return None
 
-    async def _get_recent_messages(self, conversation_id: str, limit: int = 10) -> List[ConversationMessage]:
+    async def _get_recent_messages(
+        self, conversation_id: str, limit: int = 10
+    ) -> List[ConversationMessage]:
         """Get recent messages from conversation."""
         message_repo = self.get_repository("conversation_message")
         # This would be implemented based on your repository pattern
         # For now, return empty list
         return []
 
-    async def _get_relevant_knowledge(self, query: str, knowledge_ids: List[str]) -> List[Dict[str, Any]]:
+    async def _get_relevant_knowledge(
+        self, query: str, knowledge_ids: List[str]
+    ) -> List[Dict[str, Any]]:
         """Get relevant knowledge items for the query."""
         # This would integrate with your RAG system
         # For now, return empty list
         return []
 
-    async def _send_welcome_message(self, conversation: LiveConversation, agent: BrandAgent) -> None:
+    async def _send_welcome_message(
+        self, conversation: LiveConversation, agent: BrandAgent
+    ) -> None:
         """Send welcome message when conversation starts."""
         welcome_text = agent.configuration.auto_responses.get(
             "greeting", f"Hello! I'm {agent.name}. How can I help you today?"
@@ -460,7 +472,10 @@ Be helpful, accurate, and maintain the specified tone and style.
         conversation.add_message(saved_message.id)
 
     async def end_conversation(
-        self, conversation_id: str, reason: str = "user_ended", user_satisfaction: Optional[int] = None
+        self,
+        conversation_id: str,
+        reason: str = "user_ended",
+        user_satisfaction: Optional[int] = None,
     ) -> LiveConversation:
         """End a conversation."""
         conversation = await self._get_active_conversation(conversation_id)

@@ -14,6 +14,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class RewardSystem:
     """System for calculating rewards based on agent performance and feedback."""
 
@@ -138,12 +139,8 @@ class RewardSystem:
             "not",
         ]
 
-        positive_count = sum(
-            1 for word in positive_words if word in feedback_text.lower()
-        )
-        negative_count = sum(
-            1 for word in negative_words if word in feedback_text.lower()
-        )
+        positive_count = sum(1 for word in positive_words if word in feedback_text.lower())
+        negative_count = sum(1 for word in negative_words if word in feedback_text.lower())
 
         # Calculate sentiment score
         if positive_count + negative_count > 0:
@@ -203,9 +200,7 @@ class RewardSystem:
         # Default to neutral
         return 0.5
 
-    def get_agent_rewards(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_agent_rewards(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent rewards for an agent.
 
         Args:
@@ -223,6 +218,7 @@ class RewardSystem:
             )[:limit]
 
         return []
+
 
 class QLearningAgent:
     """Agent that learns using Q-learning algorithm."""
@@ -292,15 +288,13 @@ class QLearningAgent:
         """
         # If state not in Q-table, initialize it
         if state not in self.q_table:
-            self.q_table[state] = {action: 0.0 for action in self.actions}
+            self.q_table[state] = dict.fromkeys(self.actions, 0.0)
 
         # Get action with highest Q-value
         state_actions = self.q_table[state]
         return max(state_actions, key=state_actions.get)
 
-    def update_q_value(
-        self, state: str, action: str, reward: float, next_state: str
-    ) -> None:
+    def update_q_value(self, state: str, action: str, reward: float, next_state: str) -> None:
         """Update Q-value using Q-learning update rule.
 
         Args:
@@ -311,11 +305,11 @@ class QLearningAgent:
         """
         # If state not in Q-table, initialize it
         if state not in self.q_table:
-            self.q_table[state] = {action: 0.0 for action in self.actions}
+            self.q_table[state] = dict.fromkeys(self.actions, 0.0)
 
         # If next_state not in Q-table, initialize it
         if next_state not in self.q_table:
-            self.q_table[next_state] = {action: 0.0 for action in self.actions}
+            self.q_table[next_state] = dict.fromkeys(self.actions, 0.0)
 
         # Get current Q-value
         current_q = self.q_table[state].get(action, 0.0)
@@ -333,6 +327,7 @@ class QLearningAgent:
 
         # Save Q-table to database
         self.db.save_q_table(self.name, self.q_table)
+
 
 class PolicyGradientAgent:
     """Agent that learns using policy gradient algorithm."""
@@ -367,9 +362,7 @@ class PolicyGradientAgent:
         self.learning_rate = learning_rate
 
         # Initialize policy parameters
-        self.policy_params = (
-            self.db.get_policy_params(name) or self._initialize_policy_params()
-        )
+        self.policy_params = self.db.get_policy_params(name) or self._initialize_policy_params()
 
         # Initialize episode history
         self.episode_history = []
@@ -382,9 +375,7 @@ class PolicyGradientAgent:
         """
         # Initialize with small random values
         return {
-            action: [
-                random.uniform(-0.1, 0.1) for _ in range(10)
-            ]  # Assuming 10 state features
+            action: [random.uniform(-0.1, 0.1) for _ in range(10)]  # Assuming 10 state features
             for action in self.actions
         }
 
@@ -403,9 +394,7 @@ class PolicyGradientAgent:
         # Sample action based on probabilities
         return self._sample_action(action_probs)
 
-    def _calculate_action_probabilities(
-        self, state_features: List[float]
-    ) -> Dict[str, float]:
+    def _calculate_action_probabilities(self, state_features: List[float]) -> Dict[str, float]:
         """Calculate action probabilities using softmax.
 
         Args:
@@ -418,9 +407,7 @@ class PolicyGradientAgent:
         action_values = {}
         for action in self.actions:
             # Dot product of state features and policy parameters
-            value = sum(
-                f * p for f, p in zip(state_features, self.policy_params[action])
-            )
+            value = sum(f * p for f, p in zip(state_features, self.policy_params[action]))
             action_values[action] = value
 
         # Apply softmax
@@ -444,9 +431,7 @@ class PolicyGradientAgent:
 
         return np.random.choice(actions, p=probs)
 
-    def record_step(
-        self, state_features: List[float], action: str, reward: float
-    ) -> None:
+    def record_step(self, state_features: List[float], action: str, reward: float) -> None:
         """Record a step in the episode history.
 
         Args:
@@ -494,10 +479,7 @@ class PolicyGradientAgent:
                 for other_action in self.actions:
                     if other_action != action:
                         self.policy_params[other_action][j] -= (
-                            self.learning_rate
-                            * G
-                            * feature
-                            * action_probs[other_action]
+                            self.learning_rate * G * feature * action_probs[other_action]
                         )
 
         # Save policy parameters to database
@@ -505,6 +487,7 @@ class PolicyGradientAgent:
 
         # Clear episode history
         self.episode_history = []
+
 
 class RLCoordinatorAgent:
     """Coordinator agent that uses reinforcement learning for decision making."""
@@ -601,9 +584,7 @@ Extract a state identifier for this request.
         history = context.get("history", [])
 
         # Format history
-        formatted_history = "\n".join(
-            [f"{msg['role']}: {msg['content']}" for msg in history[-3:]]
-        )
+        formatted_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]])
 
         # Prepare the input for the state extraction prompt
         input_values = {"request": request, "history": formatted_history}
@@ -646,9 +627,7 @@ Extract a state identifier for this request.
 
         return features
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a user request using reinforcement learning for agent selection.
 
         Args:
@@ -688,9 +667,7 @@ Extract a state identifier for this request.
         performance_metrics = {
             "success_rate": 1.0 if result["success"] else 0.0,
             "response_time": duration,
-            "tool_usage": len(result.get("tool_calls", []))
-            if "tool_calls" in result
-            else 0,
+            "tool_usage": len(result.get("tool_calls", [])) if "tool_calls" in result else 0,
         }
 
         # Calculate reward
@@ -713,9 +690,7 @@ Extract a state identifier for this request.
                     {"role": "user", "content": request},
                     {
                         "role": "assistant",
-                        "content": result["response"]
-                        if result["success"]
-                        else result["error"],
+                        "content": result["response"] if result["success"] else result["error"],
                     },
                 ],
             }
@@ -735,9 +710,7 @@ Extract a state identifier for this request.
             "performance_metrics": performance_metrics,
         }
 
-    async def update_from_feedback(
-        self, request: str, response: str, feedback: str
-    ) -> None:
+    async def update_from_feedback(self, request: str, response: str, feedback: str) -> None:
         """Update the RL agent based on user feedback.
 
         Args:
@@ -808,6 +781,7 @@ Extract a state identifier for this request.
             "status": "Learning completed",
             "interactions_processed": len(interactions),
         }
+
 
 # Factory function to create RL-based agent architecture
 async def create_rl_agent_architecture(

@@ -38,6 +38,7 @@ from app.infrastructure.monitoring.metrics import MetricsManager
 
 logger = get_logger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -92,6 +93,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"💥 Error during shutdown: {e}", exc_info=True)
 
+
 def create_api_server(settings: Settings = None) -> FastAPI:
     """Create and configure FastAPI application."""
 
@@ -132,6 +134,7 @@ def create_api_server(settings: Settings = None) -> FastAPI:
     logger.info("🏗️ FastAPI application created and configured")
 
     return app
+
 
 def _setup_middleware(app: FastAPI, settings: Settings) -> None:
     """Setup application middleware."""
@@ -244,6 +247,7 @@ def _setup_middleware(app: FastAPI, settings: Settings) -> None:
 
         return response
 
+
 def _setup_routes(app: FastAPI, settings: Settings) -> None:
     """Setup application routes."""
 
@@ -300,6 +304,7 @@ def _setup_routes(app: FastAPI, settings: Settings) -> None:
     # Include API v1 router
     app.include_router(api_v1_router, prefix="/api/v1", tags=["API v1"])
 
+
 def _setup_exception_handlers(app: FastAPI, settings: Settings) -> None:
     """Setup global exception handlers."""
 
@@ -352,6 +357,7 @@ def _setup_exception_handlers(app: FastAPI, settings: Settings) -> None:
                     "suggestions": ["Try again later", "Contact support if the problem persists"],
                 },
             )
+
 
 def _setup_custom_docs(app: FastAPI, settings: Settings) -> None:
     """Setup custom API documentation."""

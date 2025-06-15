@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field
 from app.api.dependencies import get_agent_scaling_service, get_agent_service, get_current_user
 from app.api.models.requests import PaginationParams
 from app.api.models.responses import PaginatedResponse, SuccessResponse
-from app.core.logging import get_logger
+from app.core.dependencies import get_logger, get_config
+from src.core.dependency_injection import ILogger, IConfiguration
 from app.domain.models.agent import (
     AgentCapability,
     AgentConfiguration,
@@ -21,6 +22,7 @@ from app.domain.services.agent_service import AgentScalingService, AgentService
 
 logger = get_logger(__name__)
 router = APIRouter()
+
 
 # Request models
 class CreateAgentRequest(BaseModel):
@@ -33,6 +35,7 @@ class CreateAgentRequest(BaseModel):
         default=None, description="Agent configuration"
     )
 
+
 class UpdateAgentRequest(BaseModel):
     """Request model for updating an agent."""
 
@@ -42,15 +45,18 @@ class UpdateAgentRequest(BaseModel):
         default=None, description="Agent configuration"
     )
 
+
 class ScaleAgentRequest(BaseModel):
     """Request model for scaling an agent."""
 
     target_instances: int = Field(description="Target number of instances", ge=0, le=10)
 
+
 class AddCapabilityRequest(BaseModel):
     """Request model for adding a capability to an agent."""
 
     capability: AgentCapability = Field(description="Capability to add")
+
 
 # Response models
 class AgentResponse(BaseModel):
@@ -72,6 +78,7 @@ class AgentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AgentMetricsResponse(BaseModel):
     """Response model for agent metrics."""
 
@@ -86,6 +93,7 @@ class AgentMetricsResponse(BaseModel):
     is_healthy: bool
     last_heartbeat: Optional[str]
 
+
 class ScalingRecommendationResponse(BaseModel):
     """Response model for scaling recommendations."""
 
@@ -97,15 +105,20 @@ class ScalingRecommendationResponse(BaseModel):
     reason: str
     priority: str
 
+
 # Endpoints
 @router.post("/", response_model=AgentResponse)
 async def create_agent(
     request: CreateAgentRequest,
     agent_service: AgentService = Depends(get_agent_service),
+    logger: ILogger = Depends(get_logger),
+    config: IConfiguration = Depends(get_config),
     current_user=Depends(get_current_user),
 ):
-    """Create a new agent."""
+    """Create a new agent with dependency injection."""
     logger.info(f"Creating agent: {request.name}")
+    app_name = config.get("app_name", "DataMCPServerAgent")
+    logger.info(f"Agent creation requested in {app_name}")
 
     agent = await agent_service.create_agent(
         name=request.name,
@@ -115,6 +128,7 @@ async def create_agent(
     )
 
     return AgentResponse.from_orm(agent)
+
 
 @router.get("/", response_model=PaginatedResponse[AgentResponse])
 async def list_agents(
@@ -145,6 +159,7 @@ async def list_agents(
         pages=(total + pagination.size - 1) // pagination.size,
     )
 
+
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get_agent(
     agent_id: str,
@@ -158,6 +173,7 @@ async def get_agent(
         raise HTTPException(status_code=404, detail="Agent not found")
 
     return AgentResponse.from_orm(agent)
+
 
 @router.put("/{agent_id}", response_model=AgentResponse)
 async def update_agent(
@@ -184,6 +200,7 @@ async def update_agent(
     updated_agent = await agent_repo.save(agent)
     return AgentResponse.from_orm(updated_agent)
 
+
 @router.delete("/{agent_id}", response_model=SuccessResponse)
 async def delete_agent(
     agent_id: str,
@@ -198,6 +215,7 @@ async def delete_agent(
 
     return SuccessResponse(message="Agent deleted successfully")
 
+
 @router.post("/{agent_id}/scale", response_model=AgentResponse)
 async def scale_agent(
     agent_id: str,
@@ -210,6 +228,7 @@ async def scale_agent(
 
     agent = await scaling_service.scale_agent(agent_id, request.target_instances)
     return AgentResponse.from_orm(agent)
+
 
 @router.get("/{agent_id}/metrics", response_model=AgentMetricsResponse)
 async def get_agent_metrics(
@@ -238,6 +257,7 @@ async def get_agent_metrics(
         ),
     )
 
+
 @router.post("/{agent_id}/capabilities", response_model=AgentResponse)
 async def add_capability(
     agent_id: str,
@@ -256,6 +276,7 @@ async def add_capability(
     updated_agent = await agent_repo.save(agent)
 
     return AgentResponse.from_orm(updated_agent)
+
 
 @router.delete("/{agent_id}/capabilities/{capability_name}", response_model=AgentResponse)
 async def remove_capability(
@@ -278,6 +299,7 @@ async def remove_capability(
     updated_agent = await agent_repo.save(agent)
     return AgentResponse.from_orm(updated_agent)
 
+
 @router.post("/auto-scale", response_model=List[AgentResponse])
 async def auto_scale_agents(
     background_tasks: BackgroundTasks,
@@ -291,6 +313,7 @@ async def auto_scale_agents(
     background_tasks.add_task(scaling_service.auto_scale_agents)
 
     return SuccessResponse(message="Auto-scaling triggered")
+
 
 @router.get("/scaling/recommendations", response_model=List[ScalingRecommendationResponse])
 async def get_scaling_recommendations(

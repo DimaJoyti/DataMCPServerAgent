@@ -23,6 +23,7 @@ from src.models.research_models import (
     User,
 )
 
+
 class ResearchProjectManager:
     """Manager for research projects."""
 
@@ -50,7 +51,7 @@ class ResearchProjectManager:
             # Check if the projects file exists
             projects_file = os.path.join(self.data_dir, "projects.json")
             if os.path.exists(projects_file):
-                with open(projects_file, "r", encoding="utf-8") as f:
+                with open(projects_file, encoding="utf-8") as f:
                     projects_data = json.load(f)
 
                 # Convert the data to ResearchProject objects
@@ -61,7 +62,7 @@ class ResearchProjectManager:
             # Check if the users file exists
             users_file = os.path.join(self.data_dir, "users.json")
             if os.path.exists(users_file):
-                with open(users_file, "r", encoding="utf-8") as f:
+                with open(users_file, encoding="utf-8") as f:
                     users_data = json.load(f)
 
                 # Convert the data to User objects
@@ -72,7 +73,7 @@ class ResearchProjectManager:
             # Check if the shared research file exists
             shared_file = os.path.join(self.data_dir, "shared.json")
             if os.path.exists(shared_file):
-                with open(shared_file, "r", encoding="utf-8") as f:
+                with open(shared_file, encoding="utf-8") as f:
                     shared_data = json.load(f)
 
                 # Convert the data to SharedResearch objects
@@ -105,7 +106,9 @@ class ResearchProjectManager:
         except Exception as e:
             print(f"Error saving projects: {str(e)}")
 
-    def create_project(self, name: str, description: str = "", tags: List[str] = None) -> ResearchProject:
+    def create_project(
+        self, name: str, description: str = "", tags: List[str] = None
+    ) -> ResearchProject:
         """
         Create a new research project.
 
@@ -118,11 +121,7 @@ class ResearchProjectManager:
             ResearchProject object
         """
         # Create a new project
-        project = ResearchProject(
-            name=name,
-            description=description,
-            tags=tags or []
-        )
+        project = ResearchProject(name=name, description=description, tags=tags or [])
 
         # Add the project to the dictionary
         self.projects[project.id] = project
@@ -153,7 +152,9 @@ class ResearchProjectManager:
         """
         return list(self.projects.values())
 
-    def update_project(self, project_id: str, name: str = None, description: str = None, tags: List[str] = None) -> Optional[ResearchProject]:
+    def update_project(
+        self, project_id: str, name: str = None, description: str = None, tags: List[str] = None
+    ) -> Optional[ResearchProject]:
         """
         Update a research project.
 
@@ -205,14 +206,18 @@ class ResearchProjectManager:
         del self.projects[project_id]
 
         # Delete any shared research for this project
-        self.shared_research = [item for item in self.shared_research if item.project_id != project_id]
+        self.shared_research = [
+            item for item in self.shared_research if item.project_id != project_id
+        ]
 
         # Save the projects
         self._save_projects()
 
         return True
 
-    def add_query(self, project_id: str, query: str, tags: List[str] = None) -> Optional[ResearchQuery]:
+    def add_query(
+        self, project_id: str, query: str, tags: List[str] = None
+    ) -> Optional[ResearchQuery]:
         """
         Add a query to a research project.
 
@@ -230,10 +235,7 @@ class ResearchProjectManager:
             return None
 
         # Create a new query
-        research_query = ResearchQuery(
-            query=query,
-            tags=tags or []
-        )
+        research_query = ResearchQuery(query=query, tags=tags or [])
 
         # Add the query to the project
         project.queries.append(research_query)
@@ -307,7 +309,9 @@ class ResearchProjectManager:
 
         return True
 
-    def get_result(self, project_id: str, query_id: str, result_id: str) -> Optional[ResearchResult]:
+    def get_result(
+        self, project_id: str, query_id: str, result_id: str
+    ) -> Optional[ResearchResult]:
         """
         Get a result from a query in a research project.
 
@@ -344,11 +348,7 @@ class ResearchProjectManager:
         """
         # Create a new user
         user_id = f"user_{len(self.users) + 1}"
-        user = User(
-            id=user_id,
-            name=name,
-            email=email
-        )
+        user = User(id=user_id, name=name, email=email)
 
         # Add the user to the dictionary
         self.users[user.id] = user
@@ -370,7 +370,9 @@ class ResearchProjectManager:
         """
         return self.users.get(user_id)
 
-    def share_project(self, project_id: str, user_id: str, permission: Permission = Permission.READ) -> Optional[SharedResearch]:
+    def share_project(
+        self, project_id: str, user_id: str, permission: Permission = Permission.READ
+    ) -> Optional[SharedResearch]:
         """
         Share a project with a user.
 
@@ -387,11 +389,7 @@ class ResearchProjectManager:
             return None
 
         # Create a new shared research item
-        shared_item = SharedResearch(
-            project_id=project_id,
-            user_id=user_id,
-            permission=permission
-        )
+        shared_item = SharedResearch(project_id=project_id, user_id=user_id, permission=permission)
 
         # Add the shared item to the list
         self.shared_research.append(shared_item)
@@ -417,14 +415,15 @@ class ResearchProjectManager:
             if shared_item.user_id == user_id:
                 project = self.get_project(shared_item.project_id)
                 if project:
-                    shared_projects.append({
-                        "project": project,
-                        "permission": shared_item.permission
-                    })
+                    shared_projects.append(
+                        {"project": project, "permission": shared_item.permission}
+                    )
 
         return shared_projects
 
-    def add_comment(self, project_id: str, query_id: str, result_id: str, user_id: str, content: str) -> Optional[Comment]:
+    def add_comment(
+        self, project_id: str, query_id: str, result_id: str, user_id: str, content: str
+    ) -> Optional[Comment]:
         """
         Add a comment to a research result.
 
@@ -461,10 +460,7 @@ class ResearchProjectManager:
             result = result_with_comments
 
         # Create a new comment
-        comment = Comment(
-            user_id=user_id,
-            content=content
-        )
+        comment = Comment(user_id=user_id, content=content)
 
         # Add the comment to the result
         result.comments.append(comment)
@@ -478,7 +474,15 @@ class ResearchProjectManager:
 
         return comment
 
-    def add_annotation(self, project_id: str, query_id: str, result_id: str, user_id: str, content: str, target_text: str) -> Optional[Annotation]:
+    def add_annotation(
+        self,
+        project_id: str,
+        query_id: str,
+        result_id: str,
+        user_id: str,
+        content: str,
+        target_text: str,
+    ) -> Optional[Annotation]:
         """
         Add an annotation to a research result.
 
@@ -516,11 +520,7 @@ class ResearchProjectManager:
             result = result_with_comments
 
         # Create a new annotation
-        annotation = Annotation(
-            user_id=user_id,
-            content=content,
-            target_text=target_text
-        )
+        annotation = Annotation(user_id=user_id, content=content, target_text=target_text)
 
         # Add the annotation to the result
         result.annotations.append(annotation)
@@ -583,44 +583,47 @@ class ResearchProjectManager:
                 for result in research_query.results:
                     # Check if the query matches the result topic or summary
                     if query in result.topic.lower() or query in result.summary.lower():
-                        matching_results.append({
-                            "project": project,
-                            "query": research_query,
-                            "result": result
-                        })
+                        matching_results.append(
+                            {"project": project, "query": research_query, "result": result}
+                        )
                         continue
 
                     # Check if the query matches any tags
                     if any(query in tag.lower() for tag in result.tags):
-                        matching_results.append({
-                            "project": project,
-                            "query": research_query,
-                            "result": result
-                        })
+                        matching_results.append(
+                            {"project": project, "query": research_query, "result": result}
+                        )
                         continue
 
                     # Check if the query matches any sources
-                    if any(isinstance(source, str) and query in source.lower() for source in result.sources):
-                        matching_results.append({
-                            "project": project,
-                            "query": research_query,
-                            "result": result
-                        })
+                    if any(
+                        isinstance(source, str) and query in source.lower()
+                        for source in result.sources
+                    ):
+                        matching_results.append(
+                            {"project": project, "query": research_query, "result": result}
+                        )
                         continue
 
                     # Check if the query matches any Source objects
-                    if any(isinstance(source, Source) and (
-                        query in source.title.lower() or
-                        (source.authors and any(query in author.lower() for author in source.authors))
-                    ) for source in result.sources):
-                        matching_results.append({
-                            "project": project,
-                            "query": research_query,
-                            "result": result
-                        })
+                    if any(
+                        isinstance(source, Source)
+                        and (
+                            query in source.title.lower()
+                            or (
+                                source.authors
+                                and any(query in author.lower() for author in source.authors)
+                            )
+                        )
+                        for source in result.sources
+                    ):
+                        matching_results.append(
+                            {"project": project, "query": research_query, "result": result}
+                        )
                         continue
 
         return matching_results
+
 
 # Create a singleton instance
 research_project_manager = ResearchProjectManager()

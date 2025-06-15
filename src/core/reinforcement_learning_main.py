@@ -6,7 +6,7 @@ with advanced decision-making capabilities.
 
 import asyncio
 import os
-from typing import List, Union
+from typing import Any, List, Union
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -19,11 +19,21 @@ from src.agents.advanced_rl_decision_making import (
     AdvancedRLCoordinatorAgent,
     create_advanced_rl_agent_architecture,
 )
+from src.agents.advanced_rl_techniques import RainbowDQNAgent
 from src.agents.agent_architecture import create_specialized_sub_agents
+from src.agents.curriculum_learning import create_curriculum_learning_agent
+from src.agents.distributed_rl import create_distributed_rl_system
+from src.agents.explainable_rl import create_explainable_rl_agent
 from src.agents.hierarchical_rl import (
     HierarchicalRLCoordinatorAgent,
     create_hierarchical_rl_agent_architecture,
 )
+from src.agents.meta_learning_rl import MAMLAgent
+from src.agents.modern_deep_rl import (
+    ModernDeepRLCoordinatorAgent,
+    create_modern_deep_rl_agent_architecture,
+)
+from src.agents.multi_agent_rl import create_multi_agent_rl_architecture
 from src.agents.multi_objective_rl import (
     MultiObjectiveRLCoordinatorAgent,
     create_multi_objective_rl_agent_architecture,
@@ -32,6 +42,7 @@ from src.agents.reinforcement_learning import (
     RLCoordinatorAgent,
     create_rl_agent_architecture,
 )
+from src.agents.safe_rl import ResourceUsageConstraint, ResponseTimeConstraint, create_safe_rl_agent
 from src.memory.advanced_memory_persistence import (
     AdvancedMemoryDatabase as MemoryDatabase,
 )
@@ -58,19 +69,24 @@ decision_explainer = DecisionExplainer(
 # Initialize policy explainer
 policy_explainer = PolicyExplainer(model=model, db=db)
 
-async def setup_rl_agent(
-    mcp_tools: List[BaseTool], rl_mode: str = "auto"
-) -> Union[
+
+async def setup_rl_agent(mcp_tools: List[BaseTool], rl_mode: str = "auto") -> Union[
     RLCoordinatorAgent,
     AdvancedRLCoordinatorAgent,
     MultiObjectiveRLCoordinatorAgent,
     HierarchicalRLCoordinatorAgent,
+    ModernDeepRLCoordinatorAgent,
+    RainbowDQNAgent,
+    Any,  # For new agent types
 ]:
     """Set up the reinforcement learning agent.
 
     Args:
         mcp_tools: List of MCP tools
-        rl_mode: RL mode to use ("basic", "advanced", "multi_objective", or "auto")
+        rl_mode: RL mode to use ("basic", "advanced", "multi_objective",
+                "hierarchical", "modern_deep", "rainbow", "multi_agent",
+                "curriculum", "meta_learning", "distributed", "safe",
+                "explainable", or "auto")
 
     Returns:
         RL coordinator agent
@@ -118,10 +134,194 @@ async def setup_rl_agent(
             sub_agents=sub_agents,
             tools=mcp_tools,
         )
+    elif rl_mode == "modern_deep":
+        # Create modern deep RL coordinator agent
+        rl_algorithm = os.getenv("RL_ALGORITHM", "dqn")
+        rl_coordinator = await create_modern_deep_rl_agent_architecture(
+            model=model,
+            db=db,
+            sub_agents=sub_agents,
+            tools=mcp_tools,
+            rl_algorithm=rl_algorithm,
+            double_dqn=os.getenv("DQN_DOUBLE", "true").lower() == "true",
+            dueling=os.getenv("DQN_DUELING", "true").lower() == "true",
+            prioritized_replay=os.getenv("DQN_PRIORITIZED_REPLAY", "true").lower() == "true",
+        )
+    elif rl_mode == "rainbow":
+        # Create Rainbow DQN agent
+        from src.agents.reinforcement_learning import RewardSystem
+        reward_system = RewardSystem(db)
+
+        rl_coordinator = RainbowDQNAgent(
+            name="rainbow_dqn_coordinator",
+            model=model,
+            db=db,
+            reward_system=reward_system,
+            state_dim=int(os.getenv("RAINBOW_STATE_DIM", "512")),
+            action_dim=len(sub_agents) + len(mcp_tools),
+            multi_step=int(os.getenv("RAINBOW_MULTI_STEP", "3")),
+            num_atoms=int(os.getenv("RAINBOW_NUM_ATOMS", "51")),
+            v_min=float(os.getenv("RAINBOW_V_MIN", "-10.0")),
+            v_max=float(os.getenv("RAINBOW_V_MAX", "10.0")),
+        )
+    elif rl_mode == "multi_agent":
+        # Create multi-agent RL coordinator
+        num_agents = int(os.getenv("MULTI_AGENT_COUNT", "3"))
+        cooperation_mode = os.getenv("MULTI_AGENT_MODE", "cooperative")
+        communication = os.getenv("MULTI_AGENT_COMMUNICATION", "true").lower() == "true"
+
+        rl_coordinator = await create_multi_agent_rl_architecture(
+            model=model,
+            db=db,
+            num_agents=num_agents,
+            state_dim=int(os.getenv("MULTI_AGENT_STATE_DIM", "128")),
+            action_dim=len(sub_agents) + len(mcp_tools),
+            cooperation_mode=cooperation_mode,
+            communication=communication,
+        )
+    elif rl_mode == "curriculum":
+        # Create curriculum learning agent
+        base_rl_mode = os.getenv("CURRICULUM_BASE_RL", "dqn")
+
+        # Create base agent first
+        if base_rl_mode == "dqn":
+            from src.agents.modern_deep_rl import DQNAgent
+            from src.agents.reinforcement_learning import RewardSystem
+            reward_system = RewardSystem(db)
+
+            base_agent = DQNAgent(
+                name="curriculum_base_dqn",
+                model=model,
+                db=db,
+                reward_system=reward_system,
+                state_dim=int(os.getenv("CURRICULUM_STATE_DIM", "128")),
+                action_dim=len(sub_agents) + len(mcp_tools),
+            )
+        else:
+            # Default to basic RL agent
+            base_agent = await create_rl_agent_architecture(
+                model=model, db=db, sub_agents=sub_agents, tools=mcp_tools
+            )
+
+        rl_coordinator = await create_curriculum_learning_agent(
+            model=model,
+            db=db,
+            base_agent=base_agent,
+            difficulty_increment=float(os.getenv("CURRICULUM_DIFFICULTY_INCREMENT", "0.1")),
+        )
+    elif rl_mode == "meta_learning":
+        # Create meta-learning agent (MAML)
+        from src.agents.reinforcement_learning import RewardSystem
+        reward_system = RewardSystem(db)
+
+        rl_coordinator = MAMLAgent(
+            name="maml_coordinator",
+            model=model,
+            db=db,
+            reward_system=reward_system,
+            state_dim=int(os.getenv("MAML_STATE_DIM", "128")),
+            action_dim=len(sub_agents) + len(mcp_tools),
+            meta_lr=float(os.getenv("MAML_META_LR", "1e-3")),
+            inner_lr=float(os.getenv("MAML_INNER_LR", "1e-2")),
+            inner_steps=int(os.getenv("MAML_INNER_STEPS", "5")),
+        )
+    elif rl_mode == "distributed":
+        # Create distributed RL system
+        num_workers = int(os.getenv("DISTRIBUTED_WORKERS", "4"))
+        model_type = os.getenv("DISTRIBUTED_MODEL_TYPE", "dqn")
+
+        rl_coordinator = await create_distributed_rl_system(
+            model=model,
+            db=db,
+            num_workers=num_workers,
+            model_type=model_type,
+            state_dim=int(os.getenv("DISTRIBUTED_STATE_DIM", "128")),
+            action_dim=len(sub_agents) + len(mcp_tools),
+        )
+    elif rl_mode == "safe":
+        # Create safe RL agent
+        base_rl_mode = os.getenv("SAFE_BASE_RL", "dqn")
+
+        # Create base agent first
+        if base_rl_mode == "dqn":
+            from src.agents.modern_deep_rl import DQNAgent
+            from src.agents.reinforcement_learning import RewardSystem
+            reward_system = RewardSystem(db)
+
+            base_agent = DQNAgent(
+                name="safe_base_dqn",
+                model=model,
+                db=db,
+                reward_system=reward_system,
+                state_dim=int(os.getenv("SAFE_STATE_DIM", "128")),
+                action_dim=len(sub_agents) + len(mcp_tools),
+            )
+        else:
+            # Default to basic RL agent
+            base_agent = await create_rl_agent_architecture(
+                model=model, db=db, sub_agents=sub_agents, tools=mcp_tools
+            )
+
+        # Create safety constraints
+        safety_constraints = [
+            ResourceUsageConstraint(
+                max_resource_usage=float(os.getenv("SAFE_MAX_RESOURCE_USAGE", "0.8"))
+            ),
+            ResponseTimeConstraint(
+                max_response_time=float(os.getenv("SAFE_MAX_RESPONSE_TIME", "5.0"))
+            ),
+        ]
+
+        rl_coordinator = await create_safe_rl_agent(
+            model=model,
+            db=db,
+            base_agent=base_agent,
+            safety_constraints=safety_constraints,
+            safety_weight=float(os.getenv("SAFE_WEIGHT", "0.5")),
+        )
+    elif rl_mode == "explainable":
+        # Create explainable RL agent
+        base_rl_mode = os.getenv("EXPLAINABLE_BASE_RL", "dqn")
+
+        # Create base agent first
+        if base_rl_mode == "dqn":
+            from src.agents.modern_deep_rl import DQNAgent
+            from src.agents.reinforcement_learning import RewardSystem
+            reward_system = RewardSystem(db)
+
+            base_agent = DQNAgent(
+                name="explainable_base_dqn",
+                model=model,
+                db=db,
+                reward_system=reward_system,
+                state_dim=int(os.getenv("EXPLAINABLE_STATE_DIM", "128")),
+                action_dim=len(sub_agents) + len(mcp_tools),
+            )
+        else:
+            # Default to basic RL agent
+            base_agent = await create_rl_agent_architecture(
+                model=model, db=db, sub_agents=sub_agents, tools=mcp_tools
+            )
+
+        # Define feature names
+        feature_names = os.getenv("EXPLAINABLE_FEATURE_NAMES", "").split(",")
+        if not feature_names or feature_names == [""]:
+            feature_names = None
+
+        explanation_methods = os.getenv("EXPLAINABLE_METHODS", "gradient,permutation").split(",")
+
+        rl_coordinator = await create_explainable_rl_agent(
+            model=model,
+            db=db,
+            base_agent=base_agent,
+            feature_names=feature_names,
+            explanation_methods=explanation_methods,
+        )
     else:
         raise ValueError(f"Unknown RL mode: {rl_mode}")
 
     return rl_coordinator
+
 
 async def chat_with_rl_agent() -> None:
     """Chat with the reinforcement learning agent."""
@@ -152,9 +352,7 @@ async def chat_with_rl_agent() -> None:
             rl_agent = await setup_rl_agent(mcp_tools, rl_mode)
 
             # Set up A/B testing if enabled
-            ab_testing_enabled = (
-                os.getenv("RL_AB_TESTING_ENABLED", "false").lower() == "true"
-            )
+            ab_testing_enabled = os.getenv("RL_AB_TESTING_ENABLED", "false").lower() == "true"
             ab_testing_framework = None
 
             if ab_testing_enabled:
@@ -164,9 +362,7 @@ async def chat_with_rl_agent() -> None:
                     db=db,
                     sub_agents=await create_specialized_sub_agents(model, mcp_tools),
                     tools=mcp_tools,
-                    exploration_rate=float(
-                        os.getenv("RL_AB_TESTING_EXPLORATION_RATE", "0.2")
-                    ),
+                    exploration_rate=float(os.getenv("RL_AB_TESTING_EXPLORATION_RATE", "0.2")),
                 )
 
                 # Add variants
@@ -198,9 +394,7 @@ async def chat_with_rl_agent() -> None:
 
                 print("A/B Testing Framework initialized with 3 variants.")
 
-            print(
-                f"\n=== Advanced Reinforcement Learning Agent ({rl_mode.upper()} mode) ===\n"
-            )
+            print(f"\n=== Advanced Reinforcement Learning Agent ({rl_mode.upper()} mode) ===\n")
             print("Commands:")
             print("- 'exit': Quit the application")
             print("- 'feedback: <message>': Provide feedback on the last response")
@@ -234,27 +428,17 @@ async def chat_with_rl_agent() -> None:
 
                     # Get the last request and response
                     last_request = next(
-                        (
-                            msg["content"]
-                            for msg in reversed(history)
-                            if msg["role"] == "user"
-                        ),
+                        (msg["content"] for msg in reversed(history) if msg["role"] == "user"),
                         None,
                     )
                     last_response = next(
-                        (
-                            msg["content"]
-                            for msg in reversed(history)
-                            if msg["role"] == "assistant"
-                        ),
+                        (msg["content"] for msg in reversed(history) if msg["role"] == "assistant"),
                         None,
                     )
 
                     if last_request and last_response:
                         # Update from feedback
-                        await rl_agent.update_from_feedback(
-                            last_request, last_response, feedback
-                        )
+                        await rl_agent.update_from_feedback(last_request, last_response, feedback)
 
                         # Save interaction for batch learning
                         db.save_agent_interaction(
@@ -289,15 +473,11 @@ async def chat_with_rl_agent() -> None:
                     }
                     selected_action = last_result.get("selected_agent", "")
                     alternative_actions = [
-                        agent
-                        for agent in rl_agent.sub_agents.keys()
-                        if agent != selected_action
+                        agent for agent in rl_agent.sub_agents.keys() if agent != selected_action
                     ]
 
                     # Get state and q-values
-                    if hasattr(rl_agent, "rl_agent") and hasattr(
-                        rl_agent.rl_agent, "q_table"
-                    ):
+                    if hasattr(rl_agent, "rl_agent") and hasattr(rl_agent.rl_agent, "q_table"):
                         # For Q-learning
                         state = (
                             await rl_agent._extract_state(context)
@@ -332,9 +512,7 @@ async def chat_with_rl_agent() -> None:
                         policy_data = db.get_q_table("rl_coordinator_q_learning") or {}
                     elif rl_mode == "advanced":
                         policy_type = "deep_rl"
-                        policy_data = (
-                            db.get_drl_weights("advanced_rl_coordinator_deep_rl") or {}
-                        )
+                        policy_data = db.get_drl_weights("advanced_rl_coordinator_deep_rl") or {}
                     elif rl_mode == "multi_objective":
                         policy_type = "multi_objective"
                         policy_data = db.get_mo_q_tables("mo_rl_coordinator_moql") or {}
@@ -369,21 +547,13 @@ async def chat_with_rl_agent() -> None:
                         print(f"- {name}:")
                         print(f"  - Success rate: {summary['success_rate']:.4f}")
                         print(f"  - Average reward: {summary['avg_reward']:.4f}")
-                        print(
-                            f"  - Average response time: {summary['avg_response_time']:.4f}s"
-                        )
+                        print(f"  - Average response time: {summary['avg_response_time']:.4f}s")
                         print(f"  - Requests: {summary['total_requests']}")
 
                     print("\nBest Variants:")
-                    print(
-                        f"- By success rate: {results['best_variants']['by_success_rate']}"
-                    )
-                    print(
-                        f"- By average reward: {results['best_variants']['by_avg_reward']}"
-                    )
-                    print(
-                        f"- By response time: {results['best_variants']['by_response_time']}"
-                    )
+                    print(f"- By success rate: {results['best_variants']['by_success_rate']}")
+                    print(f"- By average reward: {results['best_variants']['by_avg_reward']}")
+                    print(f"- By response time: {results['best_variants']['by_response_time']}")
 
                     continue
 
@@ -403,9 +573,7 @@ async def chat_with_rl_agent() -> None:
                     # Process the request
                     if ab_testing_enabled and ab_testing_framework is not None:
                         # Use A/B testing framework
-                        result = await ab_testing_framework.process_request(
-                            user_input, history
-                        )
+                        result = await ab_testing_framework.process_request(user_input, history)
                         print(f"[Debug] Using variant: {result['variant']}")
                     else:
                         # Use regular RL agent
@@ -426,9 +594,7 @@ async def chat_with_rl_agent() -> None:
                     history.append(
                         {
                             "role": "assistant",
-                            "content": result["response"]
-                            if result["success"]
-                            else result["error"],
+                            "content": result["response"] if result["success"] else result["error"],
                         }
                     )
 
@@ -448,13 +614,12 @@ async def chat_with_rl_agent() -> None:
 
                     # Print selected tools if available
                     if "selected_tools" in result:
-                        print(
-                            f"[Debug] Selected tools: {', '.join(result['selected_tools'])}"
-                        )
+                        print(f"[Debug] Selected tools: {', '.join(result['selected_tools'])}")
 
                 except Exception as e:
                     error_message = format_error_for_user(e)
                     print(f"\nError: {error_message}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_rl_agent())

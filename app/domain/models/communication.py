@@ -11,6 +11,7 @@ from pydantic import Field, field_validator
 
 from .base import BaseEntity, BaseValueObject, ValidationError
 
+
 class EmailStatus(str, Enum):
     """Email delivery status."""
 
@@ -22,6 +23,7 @@ class EmailStatus(str, Enum):
     OPENED = "opened"
     CLICKED = "clicked"
 
+
 class CallStatus(str, Enum):
     """Call status enumeration."""
 
@@ -32,12 +34,14 @@ class CallStatus(str, Enum):
     ENDED = "ended"
     FAILED = "failed"
 
+
 class MediaType(str, Enum):
     """Media type enumeration."""
 
     AUDIO = "audio"
     VIDEO = "video"
     SCREEN_SHARE = "screen_share"
+
 
 class ApprovalStatus(str, Enum):
     """Approval workflow status."""
@@ -46,6 +50,7 @@ class ApprovalStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     EXPIRED = "expired"
+
 
 class EmailTemplate(BaseValueObject):
     """Email template value object."""
@@ -63,6 +68,7 @@ class EmailTemplate(BaseValueObject):
         if not v or not v.strip():
             raise ValidationError("Template name cannot be empty")
         return v.strip()
+
 
 class EmailMessage(BaseEntity):
     """Email message entity."""
@@ -84,6 +90,7 @@ class EmailMessage(BaseEntity):
             raise ValidationError("Invalid email address")
         return v.lower().strip()
 
+
 class MediaStream(BaseValueObject):
     """Media stream configuration."""
 
@@ -101,6 +108,7 @@ class MediaStream(BaseValueObject):
             raise ValidationError("Bitrate must be positive")
         return v
 
+
 class CallParticipant(BaseValueObject):
     """Call participant information."""
 
@@ -117,6 +125,7 @@ class CallParticipant(BaseValueObject):
     )
     is_muted: bool = Field(default=False, description="Whether participant is muted")
     is_video_enabled: bool = Field(default=False, description="Whether video is enabled")
+
 
 class CallSession(BaseEntity):
     """Call session entity."""
@@ -143,6 +152,7 @@ class CallSession(BaseEntity):
     def participant_count(self) -> int:
         """Get number of participants."""
         return len(self.participants)
+
 
 class ApprovalRequest(BaseEntity):
     """Approval request entity for human-in-the-loop workflows."""

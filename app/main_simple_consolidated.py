@@ -31,6 +31,7 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+
 def display_banner():
     """Display application banner."""
     banner = Text()
@@ -41,6 +42,7 @@ def display_banner():
 
     panel = Panel(banner, title="🤖 Consolidated System", border_style="blue", padding=(1, 2))
     console.print(panel)
+
 
 @app.command()
 def api(
@@ -74,6 +76,7 @@ def api(
         console.print(f"💥 API server failed: {e}", style="red")
         raise typer.Exit(1)
 
+
 @app.command()
 def cli():
     """Start the consolidated CLI interface."""
@@ -93,6 +96,7 @@ def cli():
     except Exception as e:
         console.print(f"💥 CLI interface failed: {e}", style="red")
         raise typer.Exit(1)
+
 
 @app.command()
 def status():
@@ -124,6 +128,7 @@ def status():
     except:
         console.print("🌐 API Server: ❌ NOT RUNNING")
         console.print("💡 Start with: python app/main_simple_consolidated.py api")
+
 
 @app.command()
 def info():
@@ -168,6 +173,7 @@ def info():
 
     panel = Panel(info_text.strip(), title="📋 Consolidated System Info", border_style="green")
     console.print(panel)
+
 
 @app.command()
 def structure():
@@ -219,6 +225,7 @@ Benefits:
 
     console.print(structure_text)
 
+
 @app.command()
 def test():
     """Test the consolidated system."""
@@ -259,6 +266,7 @@ def test():
     console.print("1. Start API: python app/main_simple_consolidated.py api")
     console.print("2. Start CLI: python app/main_simple_consolidated.py cli")
     console.print("3. Check docs: http://localhost:8003/docs")
+
 
 if __name__ == "__main__":
     app()

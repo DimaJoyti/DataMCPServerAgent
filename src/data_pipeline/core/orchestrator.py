@@ -8,13 +8,16 @@ handling pipeline lifecycle, task coordination, and execution management.
 import asyncio
 import logging
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
-from concurrent.futures import ThreadPoolExecutor
 
 import structlog
 from pydantic import BaseModel
 
+from ..monitoring.metrics.pipeline_metrics import PipelineMetrics
+from ..storage.unified_access.data_access_layer import DataAccessLayer
+from .executor import PipelineExecutor
 from .pipeline_models import (
     Pipeline,
     PipelineConfig,
@@ -24,12 +27,11 @@ from .pipeline_models import (
     TaskStatus,
 )
 from .scheduler import PipelineScheduler
-from .executor import PipelineExecutor
-from ..storage.unified_access.data_access_layer import DataAccessLayer
-from ..monitoring.metrics.pipeline_metrics import PipelineMetrics
+
 
 class OrchestratorConfig(BaseModel):
     """Configuration for the pipeline orchestrator."""
+
     max_concurrent_pipelines: int = 10
     max_concurrent_tasks: int = 50
     default_timeout: int = 3600  # 1 hour
@@ -38,6 +40,7 @@ class OrchestratorConfig(BaseModel):
     max_retry_attempts: int = 3
     enable_metrics: bool = True
     enable_logging: bool = True
+
 
 class PipelineOrchestrator:
     """
@@ -51,7 +54,7 @@ class PipelineOrchestrator:
         self,
         config: Optional[OrchestratorConfig] = None,
         data_access_layer: Optional[DataAccessLayer] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the pipeline orchestrator.
@@ -168,9 +171,7 @@ class PipelineOrchestrator:
             await self.data_access_layer.save_pipeline(pipeline)
 
         self.logger.info(
-            "Pipeline registered",
-            pipeline_id=pipeline.pipeline_id,
-            name=pipeline.config.name
+            "Pipeline registered", pipeline_id=pipeline.pipeline_id, name=pipeline.config.name
         )
 
         return pipeline
@@ -210,7 +211,7 @@ class PipelineOrchestrator:
         self,
         pipeline_id: str,
         parameters: Optional[Dict[str, Any]] = None,
-        triggered_by: Optional[str] = None
+        triggered_by: Optional[str] = None,
     ) -> str:
         """
         Trigger a pipeline execution.
@@ -245,10 +246,7 @@ class PipelineOrchestrator:
         asyncio.create_task(self._execute_pipeline(pipeline_run))
 
         self.logger.info(
-            "Pipeline triggered",
-            pipeline_id=pipeline_id,
-            run_id=run_id,
-            triggered_by=triggered_by
+            "Pipeline triggered", pipeline_id=pipeline_id, run_id=run_id, triggered_by=triggered_by
         )
 
         return run_id
@@ -312,7 +310,7 @@ class PipelineOrchestrator:
                     "Pipeline execution failed",
                     run_id=pipeline_run.run_id,
                     error=str(e),
-                    exc_info=True
+                    exc_info=True,
                 )
                 pipeline_run.status = PipelineStatus.FAILED
                 pipeline_run.error_message = str(e)
@@ -368,9 +366,7 @@ class PipelineOrchestrator:
             pipeline_run.status = PipelineStatus.SUCCESS
 
         self.logger.info(
-            "Pipeline execution completed",
-            run_id=pipeline_run.run_id,
-            status=pipeline_run.status
+            "Pipeline execution completed", run_id=pipeline_run.run_id, status=pipeline_run.status
         )
 
     async def _execute_tasks_with_dependencies(self, pipeline_run: PipelineRun) -> None:
@@ -383,9 +379,11 @@ class PipelineOrchestrator:
             # Find ready tasks
             ready_tasks = []
             for task_id, task in tasks.items():
-                if (task_id not in completed_tasks and
-                    task_id not in running_tasks and
-                    all(dep in completed_tasks for dep in task.config.depends_on)):
+                if (
+                    task_id not in completed_tasks
+                    and task_id not in running_tasks
+                    and all(dep in completed_tasks for dep in task.config.depends_on)
+                ):
                     ready_tasks.append(task)
 
             if not ready_tasks:
@@ -395,7 +393,7 @@ class PipelineOrchestrator:
                     self.logger.error(
                         "Pipeline deadlock detected",
                         run_id=pipeline_run.run_id,
-                        remaining_tasks=list(remaining_tasks)
+                        remaining_tasks=list(remaining_tasks),
                     )
                     break
 
@@ -414,10 +412,7 @@ class PipelineOrchestrator:
             await asyncio.sleep(0.1)  # Small delay to prevent busy waiting
 
     async def _execute_task(
-        self,
-        task: PipelineTask,
-        completed_tasks: Set[str],
-        running_tasks: Set[str]
+        self, task: PipelineTask, completed_tasks: Set[str], running_tasks: Set[str]
     ) -> None:
         """Execute a single task."""
         async with self.task_semaphore:
@@ -426,10 +421,7 @@ class PipelineOrchestrator:
                 completed_tasks.add(task.task_id)
             except Exception as e:
                 self.logger.error(
-                    "Task execution failed",
-                    task_id=task.task_id,
-                    run_id=task.run_id,
-                    error=str(e)
+                    "Task execution failed", task_id=task.task_id, run_id=task.run_id, error=str(e)
                 )
                 task.status = TaskStatus.FAILED
                 task.error_message = str(e)
@@ -481,16 +473,16 @@ class PipelineOrchestrator:
         for task_id in task_deps:
             if task_id not in visited:
                 if has_cycle(task_id, visited, set()):
-                    raise ValueError(f"Circular dependency detected in pipeline {config.pipeline_id}")
+                    raise ValueError(
+                        f"Circular dependency detected in pipeline {config.pipeline_id}"
+                    )
 
         # Validate task dependencies exist
         task_ids = {task.task_id for task in config.tasks}
         for task in config.tasks:
             for dep in task.depends_on:
                 if dep not in task_ids:
-                    raise ValueError(
-                        f"Task {task.task_id} depends on non-existent task {dep}"
-                    )
+                    raise ValueError(f"Task {task.task_id} depends on non-existent task {dep}")
 
     async def _heartbeat_loop(self) -> None:
         """Background heartbeat loop."""
@@ -501,7 +493,7 @@ class PipelineOrchestrator:
                     await self.metrics.update_orchestrator_metrics(
                         active_pipelines=len(self.active_pipelines),
                         active_tasks=len(self.active_tasks),
-                        registered_pipelines=len(self.pipeline_registry)
+                        registered_pipelines=len(self.pipeline_registry),
                     )
 
                 await asyncio.sleep(self.config.heartbeat_interval)
@@ -523,9 +515,12 @@ class PipelineOrchestrator:
                 # (this shouldn't happen normally, but just in case)
                 to_remove = []
                 for run_id, pipeline_run in self.active_pipelines.items():
-                    if (pipeline_run.status in [PipelineStatus.SUCCESS, PipelineStatus.FAILED, PipelineStatus.CANCELLED] and
-                        pipeline_run.end_time and
-                        (current_time - pipeline_run.end_time).total_seconds() > 300):  # 5 minutes
+                    if (
+                        pipeline_run.status
+                        in [PipelineStatus.SUCCESS, PipelineStatus.FAILED, PipelineStatus.CANCELLED]
+                        and pipeline_run.end_time
+                        and (current_time - pipeline_run.end_time).total_seconds() > 300
+                    ):  # 5 minutes
                         to_remove.append(run_id)
 
                 for run_id in to_remove:

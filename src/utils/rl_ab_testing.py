@@ -6,9 +6,8 @@ selecting the best one based on performance metrics.
 
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 from langchain_anthropic import ChatAnthropic
 
 from src.agents.advanced_rl_decision_making import (
@@ -24,6 +23,7 @@ from src.agents.reinforcement_learning import (
     create_rl_agent_architecture,
 )
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class RLStrategyVariant:
     """Represents a variant of a reinforcement learning strategy for A/B testing."""
@@ -58,9 +58,7 @@ class RLStrategyVariant:
         }
         self.request_history = []
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a request using this variant.
 
         Args:
@@ -135,10 +133,7 @@ class RLStrategyVariant:
         """
         if self.performance_metrics["total_requests"] == 0:
             return 0.0
-        return (
-            self.performance_metrics["total_reward"]
-            / self.performance_metrics["total_requests"]
-        )
+        return self.performance_metrics["total_reward"] / self.performance_metrics["total_requests"]
 
     def get_performance_summary(self) -> Dict[str, Any]:
         """Get a summary of performance metrics for this variant.
@@ -156,6 +151,7 @@ class RLStrategyVariant:
             "avg_tool_usage": self.performance_metrics["avg_tool_usage"],
             "total_requests": self.performance_metrics["total_requests"],
         }
+
 
 class RLABTestingFramework:
     """Framework for A/B testing different reinforcement learning strategies."""
@@ -259,14 +255,10 @@ class RLABTestingFramework:
             return random.choice(list(self.variants.keys()))
 
         # Exploitation: best variant by average reward
-        best_variant = max(
-            self.variants.values(), key=lambda v: v.get_avg_reward()
-        )
+        best_variant = max(self.variants.values(), key=lambda v: v.get_avg_reward())
         return best_variant.name
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a request using the A/B testing framework.
 
         Args:
@@ -304,18 +296,13 @@ class RLABTestingFramework:
         """
         # Get performance summaries for all variants
         variant_summaries = {
-            name: variant.get_performance_summary()
-            for name, variant in self.variants.items()
+            name: variant.get_performance_summary() for name, variant in self.variants.items()
         }
 
         # Find the best variant by different metrics
         if variant_summaries:
-            best_by_success_rate = max(
-                variant_summaries.values(), key=lambda v: v["success_rate"]
-            )
-            best_by_avg_reward = max(
-                variant_summaries.values(), key=lambda v: v["avg_reward"]
-            )
+            best_by_success_rate = max(variant_summaries.values(), key=lambda v: v["success_rate"])
+            best_by_avg_reward = max(variant_summaries.values(), key=lambda v: v["avg_reward"])
             best_by_response_time = min(
                 variant_summaries.values(), key=lambda v: v["avg_response_time"]
             )
@@ -330,11 +317,11 @@ class RLABTestingFramework:
             "best_variants": {
                 "by_success_rate": best_by_success_rate["name"] if best_by_success_rate else None,
                 "by_avg_reward": best_by_avg_reward["name"] if best_by_avg_reward else None,
-                "by_response_time": best_by_response_time["name"] if best_by_response_time else None,
+                "by_response_time": (
+                    best_by_response_time["name"] if best_by_response_time else None
+                ),
             },
-            "total_requests": sum(
-                v["total_requests"] for v in variant_summaries.values()
-            ),
+            "total_requests": sum(v["total_requests"] for v in variant_summaries.values()),
         }
 
         # Save test results
@@ -355,13 +342,9 @@ class RLABTestingFramework:
             return None
 
         if metric == "success_rate":
-            return max(
-                self.variants.items(), key=lambda x: x[1].get_success_rate()
-            )[0]
+            return max(self.variants.items(), key=lambda x: x[1].get_success_rate())[0]
         elif metric == "avg_reward":
-            return max(
-                self.variants.items(), key=lambda x: x[1].get_avg_reward()
-            )[0]
+            return max(self.variants.items(), key=lambda x: x[1].get_avg_reward())[0]
         elif metric == "avg_response_time":
             return min(
                 self.variants.items(),

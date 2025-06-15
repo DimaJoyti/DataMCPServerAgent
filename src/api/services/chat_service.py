@@ -5,8 +5,9 @@ Chat service for the API.
 import asyncio
 import json
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 from src.core.advanced_main import chat_with_advanced_agent
@@ -23,6 +24,7 @@ from src.core.seo_main import chat_with_seo_agent
 
 from ..config import config
 from ..models.response_models import ChatResponse, ChatStreamResponse
+
 
 class ChatService:
     """Service for chat interactions."""
@@ -154,8 +156,7 @@ class ChatService:
             # Split the response into chunks for simulated streaming
             chunk_size = 20  # Characters per chunk
             chunks = [
-                response_text[i : i + chunk_size]
-                for i in range(0, len(response_text), chunk_size)
+                response_text[i : i + chunk_size] for i in range(0, len(response_text), chunk_size)
             ]
 
             # Stream the chunks
@@ -248,9 +249,7 @@ class ChatService:
                 )
 
                 # Create a timestamp (use current time as we don't have real timestamps)
-                created_at = datetime.now() - timedelta(
-                    minutes=(len(paginated_messages) - i)
-                )
+                created_at = datetime.now() - timedelta(minutes=(len(paginated_messages) - i))
 
                 # Create a ChatResponse object
                 history.append(
@@ -456,9 +455,7 @@ class ChatService:
                 return ai_message
             except Exception as e:
                 # Handle errors
-                error_message = (
-                    f"An error occurred while processing your message: {str(e)}"
-                )
+                error_message = f"An error occurred while processing your message: {str(e)}"
 
                 # Add error message to history
                 messages.append({"role": "assistant", "content": error_message})

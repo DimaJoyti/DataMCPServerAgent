@@ -9,11 +9,11 @@ This module contains the core infrastructure components including:
 - Configuration management
 """
 
-from .enhanced_client import EnhancedBrightDataClient
 from .cache_manager import CacheManager
+from .config import BrightDataConfig
+from .enhanced_client import EnhancedBrightDataClient
 from .error_handler import BrightDataErrorHandler
 from .rate_limiter import RateLimiter
-from .config import BrightDataConfig
 
 __all__ = [
     "EnhancedBrightDataClient",

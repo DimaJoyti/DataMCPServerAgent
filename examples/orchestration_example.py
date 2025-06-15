@@ -5,6 +5,7 @@ This example shows how to use the integrated reasoning, planning, meta-reasoning
 
 import asyncio
 import os
+
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 
@@ -74,7 +75,7 @@ async def demonstrate_orchestration():
             # Show orchestration statistics
             latest_history = coordinator.orchestration_history[-1] if coordinator.orchestration_history else None
             if latest_history:
-                print(f"\n📊 Orchestration Stats:")
+                print("\n📊 Orchestration Stats:")
                 print(f"   - Strategy used: {latest_history['strategy']}")
                 print(f"   - Processing time: {latest_history['duration']:.2f}s")
                 print(f"   - Reasoning chain ID: {latest_history['reasoning_chain_id']}")
@@ -148,7 +149,7 @@ async def demonstrate_orchestration():
 
     # Show cognitive state
     cognitive_state = coordinator.meta_reasoning_engine.cognitive_state
-    print(f"\nCurrent cognitive state:")
+    print("\nCurrent cognitive state:")
     print(f"   - Confidence level: {cognitive_state.confidence_level:.2f}")
     print(f"   - Cognitive load: {cognitive_state.cognitive_load:.2f}")
     print(f"   - Error rate: {cognitive_state.error_rate:.2f}")
@@ -184,7 +185,7 @@ async def interactive_orchestration_demo():
             if user_input.lower() in ['quit', 'exit']:
                 break
             elif user_input.lower() == 'stats':
-                print(f"\n📊 System Statistics:")
+                print("\n📊 System Statistics:")
                 print(f"   - Requests processed: {len(coordinator.orchestration_history)}")
                 print(f"   - Active reasoning chains: {len(coordinator.active_reasoning_chains)}")
                 print(f"   - Meta-decisions: {len(coordinator.meta_reasoning_engine.meta_decisions)}")

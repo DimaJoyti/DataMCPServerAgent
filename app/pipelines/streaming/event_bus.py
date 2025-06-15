@@ -21,12 +21,15 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
+
 class EventPriority(int, Enum):
     """Event priority levels."""
+
     LOW = 1
     NORMAL = 5
     HIGH = 8
     CRITICAL = 10
+
 
 @dataclass
 class EventFilter:
@@ -45,7 +48,7 @@ class EventFilter:
     # Metadata filtering
     metadata_filters: Optional[Dict[str, Any]] = None
 
-    def matches(self, event: 'BusEvent') -> bool:
+    def matches(self, event: "BusEvent") -> bool:
         """Check if event matches this filter."""
         # Event type check
         if self.event_types and event.event_type not in self.event_types:
@@ -68,6 +71,7 @@ class EventFilter:
                     return False
 
         return True
+
 
 class BusEvent(BaseModel):
     """Event in the event bus."""
@@ -97,6 +101,7 @@ class BusEvent(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+
 @dataclass
 class EventSubscription:
     """Subscription to events."""
@@ -110,6 +115,7 @@ class EventSubscription:
     def __post_init__(self):
         if self.created_at == 0.0:
             self.created_at = time.time()
+
 
 class EventHandler:
     """Base class for event handlers."""
@@ -125,6 +131,7 @@ class EventHandler:
     def can_handle(self, event: BusEvent) -> bool:
         """Check if this handler can handle the event."""
         return True
+
 
 class EventBus:
     """Event bus for coordinating streaming pipeline components."""
@@ -215,15 +222,14 @@ class EventBus:
             self.logger.error(f"Failed to publish event: {e}")
             return False
 
-    def subscribe(self, handler: Callable[[BusEvent], Any],
-                 event_filter: Optional[EventFilter] = None) -> str:
+    def subscribe(
+        self, handler: Callable[[BusEvent], Any], event_filter: Optional[EventFilter] = None
+    ) -> str:
         """Subscribe to events."""
         subscription_id = str(uuid4())
 
         subscription = EventSubscription(
-            subscription_id=subscription_id,
-            handler=handler,
-            event_filter=event_filter
+            subscription_id=subscription_id, handler=handler, event_filter=event_filter
         )
 
         self.subscriptions[subscription_id] = subscription
@@ -249,7 +255,9 @@ class EventBus:
 
         # Remove from indexes
         for event_type, subs in self.handlers_by_type.items():
-            self.handlers_by_type[event_type] = [s for s in subs if s.subscription_id != subscription_id]
+            self.handlers_by_type[event_type] = [
+                s for s in subs if s.subscription_id != subscription_id
+            ]
 
         del self.subscriptions[subscription_id]
 
@@ -264,8 +272,7 @@ class EventBus:
             try:
                 # Get event from queue with timeout
                 priority, timestamp, event = await asyncio.wait_for(
-                    self.event_queue.get(),
-                    timeout=1.0
+                    self.event_queue.get(), timeout=1.0
                 )
 
                 # Process event
@@ -296,9 +303,7 @@ class EventBus:
             handler_tasks = []
             for subscription in matching_subscriptions:
                 if subscription.active:
-                    task = asyncio.create_task(
-                        self._handle_event_with_timeout(event, subscription)
-                    )
+                    task = asyncio.create_task(self._handle_event_with_timeout(event, subscription))
                     handler_tasks.append(task)
 
             # Wait for all handlers to complete
@@ -308,7 +313,9 @@ class EventBus:
                 # Check for failures
                 failures = [r for r in results if isinstance(r, Exception)]
                 if failures:
-                    self.logger.warning(f"Event {event.event_id} had {len(failures)} handler failures")
+                    self.logger.warning(
+                        f"Event {event.event_id} had {len(failures)} handler failures"
+                    )
                     for failure in failures:
                         self.logger.error(f"Handler failure: {failure}")
 
@@ -354,13 +361,14 @@ class EventBus:
             return subscription.event_filter.matches(event)
         return True
 
-    async def _handle_event_with_timeout(self, event: BusEvent, subscription: EventSubscription) -> Any:
+    async def _handle_event_with_timeout(
+        self, event: BusEvent, subscription: EventSubscription
+    ) -> Any:
         """Handle event with timeout."""
         try:
             if asyncio.iscoroutinefunction(subscription.handler):
                 result = await asyncio.wait_for(
-                    subscription.handler(event),
-                    timeout=self.processing_timeout
+                    subscription.handler(event), timeout=self.processing_timeout
                 )
             else:
                 result = subscription.handler(event)
@@ -378,7 +386,7 @@ class EventBus:
 
         # Trim history if too large
         if len(self.event_history) > self.max_event_history:
-            self.event_history = self.event_history[-self.max_event_history:]
+            self.event_history = self.event_history[-self.max_event_history :]
 
     def get_stats(self) -> Dict[str, Any]:
         """Get event bus statistics."""
@@ -394,11 +402,12 @@ class EventBus:
             "active_subscriptions": len([s for s in self.subscriptions.values() if s.active]),
             "total_subscriptions": len(self.subscriptions),
             "processing_rate": self.events_processed / max(uptime, 1),
-            "success_rate": self.events_processed / max(self.events_published, 1)
+            "success_rate": self.events_processed / max(self.events_published, 1),
         }
 
-    def get_event_history(self, event_type: Optional[str] = None,
-                         limit: Optional[int] = None) -> List[BusEvent]:
+    def get_event_history(
+        self, event_type: Optional[str] = None, limit: Optional[int] = None
+    ) -> List[BusEvent]:
         """Get event history."""
         history = self.event_history
 

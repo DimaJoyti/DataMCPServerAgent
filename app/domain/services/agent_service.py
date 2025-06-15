@@ -13,6 +13,7 @@ from app.domain.models.task import Task, TaskStatus
 
 logger = get_logger(__name__)
 
+
 class AgentService(DomainService, LoggerMixin):
     """Core agent management service."""
 
@@ -201,6 +202,7 @@ class AgentService(DomainService, LoggerMixin):
             score += 25.0
 
         return score
+
 
 class AgentScalingService(DomainService, LoggerMixin):
     """Service for agent scaling operations."""

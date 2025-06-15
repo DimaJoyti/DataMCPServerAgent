@@ -5,15 +5,13 @@ This script demonstrates how to use the TradingView scraping tools for cryptocur
 """
 
 import asyncio
-import os
 import sys
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from mcp import ClientSession
-from src.tools.tradingview_tools import create_tradingview_tools, TradingViewToolkit
+from src.tools.tradingview_tools import TradingViewToolkit, create_tradingview_tools
 from src.utils.env_config import load_dotenv
 
 # Load environment variables

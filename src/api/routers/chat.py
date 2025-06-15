@@ -2,22 +2,20 @@
 Chat router for the API.
 """
 
-import asyncio
 import uuid
-from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Path
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from ..models.request_models import ChatRequest
-from ..models.response_models import ChatResponse, ChatStreamResponse, ErrorResponse
-from ..services.agent_service import AgentService
-from ..services.chat_service import ChatService
 from ..middleware.auth import get_api_key
+from ..models.request_models import ChatRequest
+from ..models.response_models import ChatResponse
+from ..services.chat_service import ChatService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
 
 @router.post("/", response_model=ChatResponse)
 async def chat(
@@ -70,6 +68,7 @@ async def chat(
             detail=str(e),
         )
 
+
 @router.post("/stream", response_model=None)
 async def chat_stream(
     request: ChatRequest,
@@ -111,6 +110,7 @@ async def chat_stream(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.get("/sessions/{session_id}", response_model=List[ChatResponse])
 async def get_chat_history(

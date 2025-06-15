@@ -4,12 +4,13 @@ This module provides centralized access to environment variables.
 """
 
 import os
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
 
 def get_env(key: str, default: Optional[Any] = None) -> Any:
     """Get an environment variable.
@@ -22,6 +23,7 @@ def get_env(key: str, default: Optional[Any] = None) -> Any:
         Environment variable value or default
     """
     return os.getenv(key, default)
+
 
 def get_mcp_server_params() -> Dict[str, Any]:
     """Get MCP server parameters from environment variables.
@@ -39,6 +41,7 @@ def get_mcp_server_params() -> Dict[str, Any]:
         "args": ["@brightdata/mcp"],
     }
 
+
 def get_model_config() -> Dict[str, str]:
     """Get model configuration from environment variables.
 
@@ -49,6 +52,7 @@ def get_model_config() -> Dict[str, str]:
         "model_name": get_env("MODEL_NAME", "claude-3-5-sonnet-20240620"),
         "model_provider": get_env("MODEL_PROVIDER", "anthropic"),
     }
+
 
 def get_memory_config() -> Dict[str, Any]:
     """Get memory configuration from environment variables.
@@ -80,6 +84,7 @@ def get_memory_config() -> Dict[str, Any]:
         }
 
     return config
+
 
 def get_logging_config() -> Dict[str, Any]:
     """Get logging configuration from environment variables.

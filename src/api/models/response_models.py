@@ -2,9 +2,11 @@
 Response models for the API.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
+
 
 class ChatResponse(BaseModel):
     """Response model for chat interactions."""
@@ -14,9 +16,16 @@ class ChatResponse(BaseModel):
     session_id: str = Field(..., description="Session ID for the conversation")
     created_at: datetime = Field(..., description="Timestamp for the response")
     agent_mode: str = Field(..., description="Agent mode used for the response")
-    tool_usage: Optional[List[Dict[str, Any]]] = Field(None, description="Tools used in generating the response")
-    sources: Optional[List[Dict[str, Any]]] = Field(None, description="Sources used in generating the response")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata for the response")
+    tool_usage: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Tools used in generating the response"
+    )
+    sources: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Sources used in generating the response"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata for the response"
+    )
+
 
 class ChatStreamResponse(BaseModel):
     """Response model for streaming chat interactions."""
@@ -26,7 +35,10 @@ class ChatStreamResponse(BaseModel):
     session_id: str = Field(..., description="Session ID for the conversation")
     created_at: datetime = Field(..., description="Timestamp for the chunk")
     is_final: bool = Field(False, description="Whether this is the final chunk")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata for the chunk")
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata for the chunk"
+    )
+
 
 class AgentResponse(BaseModel):
     """Response model for agent operations."""
@@ -36,7 +48,10 @@ class AgentResponse(BaseModel):
     status: str = Field(..., description="Status of the agent")
     capabilities: List[str] = Field(..., description="Capabilities of the agent")
     created_at: datetime = Field(..., description="Timestamp for agent creation")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata for the agent")
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata for the agent"
+    )
+
 
 class MemoryResponse(BaseModel):
     """Response model for memory operations."""
@@ -44,7 +59,10 @@ class MemoryResponse(BaseModel):
     session_id: str = Field(..., description="Session ID for the memory")
     memory_items: List[Dict[str, Any]] = Field(..., description="Memory items")
     memory_backend: str = Field(..., description="Memory backend used")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata for the memory")
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata for the memory"
+    )
+
 
 class ToolResponse(BaseModel):
     """Response model for tool operations."""
@@ -53,7 +71,10 @@ class ToolResponse(BaseModel):
     tool_output: Any = Field(..., description="Output from the tool")
     execution_time: float = Field(..., description="Time taken to execute the tool (in seconds)")
     status: str = Field(..., description="Status of the tool operation")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata for the tool operation")
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata for the tool operation"
+    )
+
 
 class FeedbackResponse(BaseModel):
     """Response model for feedback."""
@@ -64,6 +85,7 @@ class FeedbackResponse(BaseModel):
     status: str = Field(..., description="Status of the feedback")
     created_at: datetime = Field(..., description="Timestamp for the feedback")
 
+
 class ErrorResponse(BaseModel):
     """Response model for errors."""
 
@@ -71,6 +93,7 @@ class ErrorResponse(BaseModel):
     error_message: str = Field(..., description="Error message")
     error_details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
     request_id: Optional[str] = Field(None, description="Request ID for tracking")
+
 
 class HealthResponse(BaseModel):
     """Response model for health checks."""

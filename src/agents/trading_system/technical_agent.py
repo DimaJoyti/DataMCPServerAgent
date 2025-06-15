@@ -4,20 +4,18 @@ Technical Analysis Agent for the Fetch.ai Advanced Crypto Trading System.
 This agent performs multi-timeframe analysis with primary and secondary indicators.
 """
 
-import asyncio
-import json
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import ccxt
-import numpy as np
 import pandas as pd
 import ta
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class Timeframe(str, Enum):
     """Trading timeframes."""
@@ -31,6 +29,7 @@ class Timeframe(str, Enum):
     DAY_1 = "1d"
     WEEK_1 = "1w"
 
+
 class IndicatorType(str, Enum):
     """Types of technical indicators."""
 
@@ -39,6 +38,7 @@ class IndicatorType(str, Enum):
     VOLATILITY = "volatility"
     VOLUME = "volume"
     OSCILLATOR = "oscillator"
+
 
 class Indicator(Model):
     """Model for a technical indicator."""
@@ -49,6 +49,7 @@ class Indicator(Model):
     signal: str  # "buy", "sell", or "neutral"
     timeframe: Timeframe
     timestamp: str
+
 
 class TechnicalAnalysisResult(Model):
     """Model for technical analysis results."""
@@ -61,6 +62,7 @@ class TechnicalAnalysisResult(Model):
     overall_signal: str = "neutral"  # "buy", "sell", or "neutral"
     confidence: float = 0.0  # 0.0 to 1.0
 
+
 class TechnicalAgentState(BaseAgentState):
     """State model for the Technical Analysis Agent."""
 
@@ -70,6 +72,7 @@ class TechnicalAgentState(BaseAgentState):
     secondary_indicator_types: List[str] = ["volume", "atr", "adx"]
     analysis_interval: int = 3600  # seconds
     recent_analyses: List[TechnicalAnalysisResult] = []
+
 
 class TechnicalAnalysisAgent(BaseAgent):
     """Agent for performing technical analysis on cryptocurrency markets."""
@@ -83,7 +86,7 @@ class TechnicalAnalysisAgent(BaseAgent):
         logger: Optional[logging.Logger] = None,
         exchange_id: str = "binance",
         api_key: Optional[str] = None,
-        api_secret: Optional[str] = None
+        api_secret: Optional[str] = None,
     ):
         """Initialize the Technical Analysis Agent.
 
@@ -101,11 +104,13 @@ class TechnicalAnalysisAgent(BaseAgent):
 
         # Initialize exchange
         exchange_class = getattr(ccxt, exchange_id)
-        self.exchange = exchange_class({
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': True,
-        })
+        self.exchange = exchange_class(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+            }
+        )
 
         # Initialize agent state
         self.state = TechnicalAgentState()
@@ -141,8 +146,10 @@ class TechnicalAnalysisAgent(BaseAgent):
                 return
 
             # Convert to DataFrame
-            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            df = pd.DataFrame(
+                ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
+            )
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
 
             # Calculate primary indicators
             primary_indicators = self._calculate_primary_indicators(df, timeframe)
@@ -163,7 +170,7 @@ class TechnicalAnalysisAgent(BaseAgent):
                 primary_indicators=primary_indicators,
                 secondary_indicators=secondary_indicators,
                 overall_signal=overall_signal,
-                confidence=confidence
+                confidence=confidence,
             )
 
             # Update state
@@ -203,7 +210,9 @@ class TechnicalAnalysisAgent(BaseAgent):
             self.logger.error(f"Error fetching OHLCV data: {str(e)}")
             return []
 
-    def _calculate_primary_indicators(self, df: pd.DataFrame, timeframe: Timeframe) -> List[Indicator]:
+    def _calculate_primary_indicators(
+        self, df: pd.DataFrame, timeframe: Timeframe
+    ) -> List[Indicator]:
         """Calculate primary technical indicators.
 
         Args:
@@ -218,7 +227,7 @@ class TechnicalAnalysisAgent(BaseAgent):
 
         # RSI
         if "rsi" in self.state.primary_indicator_types:
-            rsi = ta.momentum.RSIIndicator(df['close']).rsi()
+            rsi = ta.momentum.RSIIndicator(df["close"]).rsi()
             last_rsi = rsi.iloc[-1]
 
             signal = "neutral"
@@ -227,18 +236,20 @@ class TechnicalAnalysisAgent(BaseAgent):
             elif last_rsi > 70:
                 signal = "sell"
 
-            indicators.append(Indicator(
-                name="RSI",
-                type=IndicatorType.MOMENTUM,
-                value=float(last_rsi),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="RSI",
+                    type=IndicatorType.MOMENTUM,
+                    value=float(last_rsi),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         # MACD
         if "macd" in self.state.primary_indicator_types:
-            macd = ta.trend.MACD(df['close'])
+            macd = ta.trend.MACD(df["close"])
             macd_line = macd.macd().iloc[-1]
             signal_line = macd.macd_signal().iloc[-1]
 
@@ -248,21 +259,23 @@ class TechnicalAnalysisAgent(BaseAgent):
             elif macd_line < signal_line:
                 signal = "sell"
 
-            indicators.append(Indicator(
-                name="MACD",
-                type=IndicatorType.TREND,
-                value=float(macd_line - signal_line),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="MACD",
+                    type=IndicatorType.TREND,
+                    value=float(macd_line - signal_line),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         # Bollinger Bands
         if "bollinger" in self.state.primary_indicator_types:
-            bollinger = ta.volatility.BollingerBands(df['close'])
+            bollinger = ta.volatility.BollingerBands(df["close"])
             upper = bollinger.bollinger_hband().iloc[-1]
             lower = bollinger.bollinger_lband().iloc[-1]
-            current = df['close'].iloc[-1]
+            current = df["close"].iloc[-1]
 
             signal = "neutral"
             if current < lower:
@@ -274,18 +287,22 @@ class TechnicalAnalysisAgent(BaseAgent):
             middle = bollinger.bollinger_mavg().iloc[-1]
             percent = (current - middle) / (upper - middle) if upper != middle else 0
 
-            indicators.append(Indicator(
-                name="Bollinger Bands",
-                type=IndicatorType.VOLATILITY,
-                value=float(percent),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="Bollinger Bands",
+                    type=IndicatorType.VOLATILITY,
+                    value=float(percent),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         return indicators
 
-    def _calculate_secondary_indicators(self, df: pd.DataFrame, timeframe: Timeframe) -> List[Indicator]:
+    def _calculate_secondary_indicators(
+        self, df: pd.DataFrame, timeframe: Timeframe
+    ) -> List[Indicator]:
         """Calculate secondary technical indicators.
 
         Args:
@@ -300,75 +317,79 @@ class TechnicalAnalysisAgent(BaseAgent):
 
         # Volume
         if "volume" in self.state.secondary_indicator_types:
-            volume = df['volume'].iloc[-1]
-            avg_volume = df['volume'].rolling(window=20).mean().iloc[-1]
+            volume = df["volume"].iloc[-1]
+            avg_volume = df["volume"].rolling(window=20).mean().iloc[-1]
 
             signal = "neutral"
             if volume > avg_volume * 1.5:
                 # High volume could confirm a trend
-                if df['close'].iloc[-1] > df['close'].iloc[-2]:
+                if df["close"].iloc[-1] > df["close"].iloc[-2]:
                     signal = "buy"
                 else:
                     signal = "sell"
 
-            indicators.append(Indicator(
-                name="Volume",
-                type=IndicatorType.VOLUME,
-                value=float(volume / avg_volume),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="Volume",
+                    type=IndicatorType.VOLUME,
+                    value=float(volume / avg_volume),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         # ATR (Average True Range)
         if "atr" in self.state.secondary_indicator_types:
-            atr = ta.volatility.AverageTrueRange(
-                df['high'], df['low'], df['close']
-            ).average_true_range().iloc[-1]
+            atr = (
+                ta.volatility.AverageTrueRange(df["high"], df["low"], df["close"])
+                .average_true_range()
+                .iloc[-1]
+            )
 
             # ATR doesn't give buy/sell signals directly
             # It's used to measure volatility
             signal = "neutral"
 
-            indicators.append(Indicator(
-                name="ATR",
-                type=IndicatorType.VOLATILITY,
-                value=float(atr),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="ATR",
+                    type=IndicatorType.VOLATILITY,
+                    value=float(atr),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         # ADX (Average Directional Index)
         if "adx" in self.state.secondary_indicator_types:
-            adx = ta.trend.ADXIndicator(
-                df['high'], df['low'], df['close']
-            ).adx().iloc[-1]
+            adx = ta.trend.ADXIndicator(df["high"], df["low"], df["close"]).adx().iloc[-1]
 
             signal = "neutral"
             if adx > 25:
                 # Strong trend, but need +DI and -DI to determine direction
                 # This is simplified; a real implementation would check +DI and -DI
-                if df['close'].iloc[-1] > df['close'].iloc[-5]:
+                if df["close"].iloc[-1] > df["close"].iloc[-5]:
                     signal = "buy"
                 else:
                     signal = "sell"
 
-            indicators.append(Indicator(
-                name="ADX",
-                type=IndicatorType.TREND,
-                value=float(adx),
-                signal=signal,
-                timeframe=timeframe,
-                timestamp=timestamp
-            ))
+            indicators.append(
+                Indicator(
+                    name="ADX",
+                    type=IndicatorType.TREND,
+                    value=float(adx),
+                    signal=signal,
+                    timeframe=timeframe,
+                    timestamp=timestamp,
+                )
+            )
 
         return indicators
 
     def _determine_overall_signal(
-        self,
-        primary_indicators: List[Indicator],
-        secondary_indicators: List[Indicator]
+        self, primary_indicators: List[Indicator], secondary_indicators: List[Indicator]
     ) -> tuple[str, float]:
         """Determine overall signal from indicators.
 
@@ -426,7 +447,9 @@ class TechnicalAnalysisAgent(BaseAgent):
         # Combine signals
         if primary_signal == secondary_signal:
             overall_signal = primary_signal
-            confidence = primary_weight * primary_confidence + secondary_weight * secondary_confidence
+            confidence = (
+                primary_weight * primary_confidence + secondary_weight * secondary_confidence
+            )
         elif primary_signal == "neutral":
             overall_signal = secondary_signal
             confidence = secondary_confidence * secondary_weight
@@ -437,9 +460,13 @@ class TechnicalAnalysisAgent(BaseAgent):
             # Conflicting signals
             if primary_confidence * primary_weight > secondary_confidence * secondary_weight:
                 overall_signal = primary_signal
-                confidence = primary_confidence * primary_weight - secondary_confidence * secondary_weight
+                confidence = (
+                    primary_confidence * primary_weight - secondary_confidence * secondary_weight
+                )
             else:
                 overall_signal = secondary_signal
-                confidence = secondary_confidence * secondary_weight - primary_confidence * primary_weight
+                confidence = (
+                    secondary_confidence * secondary_weight - primary_confidence * primary_weight
+                )
 
         return overall_signal, confidence

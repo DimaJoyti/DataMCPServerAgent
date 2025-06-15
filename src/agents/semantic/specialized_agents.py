@@ -5,15 +5,14 @@ Implements specialized agents for different domains and tasks,
 each with domain-specific knowledge and capabilities.
 """
 
-import asyncio
 import json
-import logging
 from typing import Any, Dict, List, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import BaseTool
 
 from .base_semantic_agent import BaseSemanticAgent, SemanticAgentConfig, SemanticContext
+
 
 class DataAnalysisAgent(BaseSemanticAgent):
     """
@@ -27,7 +26,9 @@ class DataAnalysisAgent(BaseSemanticAgent):
     - Data quality assessment
     """
 
-    def __init__(self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs):
+    def __init__(
+        self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs
+    ):
         """Initialize the data analysis agent."""
         # Set default configuration for data analysis
         config.specialization = "data_analysis"
@@ -122,7 +123,9 @@ class DataAnalysisAgent(BaseSemanticAgent):
         """Determine the type of analysis needed."""
         request_lower = request.lower()
 
-        if any(word in request_lower for word in ["mean", "average", "median", "std", "correlation"]):
+        if any(
+            word in request_lower for word in ["mean", "average", "median", "std", "correlation"]
+        ):
             return "statistical"
         elif any(word in request_lower for word in ["chart", "plot", "graph", "visualize"]):
             return "visualization"
@@ -220,6 +223,7 @@ class DataAnalysisAgent(BaseSemanticAgent):
             "insights": ["Data quality is good", "No major anomalies detected"],
         }
 
+
 class DocumentProcessingAgent(BaseSemanticAgent):
     """
     Specialized agent for document processing tasks.
@@ -232,7 +236,9 @@ class DocumentProcessingAgent(BaseSemanticAgent):
     - Metadata extraction
     """
 
-    def __init__(self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs):
+    def __init__(
+        self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs
+    ):
         """Initialize the document processing agent."""
         config.specialization = "document_processing"
         config.capabilities = config.capabilities or [
@@ -372,6 +378,7 @@ class DocumentProcessingAgent(BaseSemanticAgent):
             },
         }
 
+
 class KnowledgeExtractionAgent(BaseSemanticAgent):
     """
     Specialized agent for knowledge extraction and graph building.
@@ -384,7 +391,9 @@ class KnowledgeExtractionAgent(BaseSemanticAgent):
     - Ontology building
     """
 
-    def __init__(self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs):
+    def __init__(
+        self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs
+    ):
         """Initialize the knowledge extraction agent."""
         config.specialization = "knowledge_extraction"
         config.capabilities = config.capabilities or [
@@ -454,6 +463,7 @@ class KnowledgeExtractionAgent(BaseSemanticAgent):
             },
         ]
 
+
 class ReasoningAgent(BaseSemanticAgent):
     """
     Specialized agent for logical reasoning and inference.
@@ -466,7 +476,9 @@ class ReasoningAgent(BaseSemanticAgent):
     - Argument analysis
     """
 
-    def __init__(self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs):
+    def __init__(
+        self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs
+    ):
         """Initialize the reasoning agent."""
         config.specialization = "reasoning"
         config.capabilities = config.capabilities or [
@@ -532,6 +544,7 @@ class ReasoningAgent(BaseSemanticAgent):
             "confidence": 0.85,
         }
 
+
 class SearchAgent(BaseSemanticAgent):
     """
     Specialized agent for semantic search and information retrieval.
@@ -544,7 +557,9 @@ class SearchAgent(BaseSemanticAgent):
     - Multi-modal search
     """
 
-    def __init__(self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs):
+    def __init__(
+        self, config: SemanticAgentConfig, tools: Optional[List[BaseTool]] = None, **kwargs
+    ):
         """Initialize the search agent."""
         config.specialization = "search"
         config.capabilities = config.capabilities or [

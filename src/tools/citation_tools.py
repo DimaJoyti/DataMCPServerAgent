@@ -5,11 +5,12 @@ This module provides tools for formatting citations and generating bibliographie
 in various citation styles.
 """
 
-from typing import List, Optional
+from typing import List
 
 from langchain.tools import Tool
 
 from src.models.research_models import CitationFormat, Source
+
 
 class CitationFormatter:
     """Tool for formatting citations in various styles."""
@@ -44,6 +45,7 @@ class CitationFormatter:
         """
         try:
             import json
+
             data = json.loads(input_str)
             source_data = data.get("source", {})
             format = data.get("format", "apa")
@@ -51,6 +53,7 @@ class CitationFormatter:
             return self.format_citation(source_data, format)
         except Exception as e:
             return f"Error formatting citation: {str(e)}"
+
 
 class BibliographyGenerator:
     """Tool for generating bibliographies in various styles."""
@@ -102,6 +105,7 @@ class BibliographyGenerator:
         """
         try:
             import json
+
             data = json.loads(input_str)
             sources_data = data.get("sources", [])
             format = data.get("format", "apa")
@@ -109,6 +113,7 @@ class BibliographyGenerator:
             return self.generate_bibliography(sources_data, format)
         except Exception as e:
             return f"Error generating bibliography: {str(e)}"
+
 
 # Create tool instances
 citation_formatter = CitationFormatter()
@@ -118,11 +123,11 @@ bibliography_generator = BibliographyGenerator()
 format_citation_tool = Tool(
     name="format_citation",
     func=citation_formatter.run,
-    description="Format a source as a citation in a specified style (APA, MLA, Chicago, Harvard, IEEE). Input should be a JSON string with 'source' and 'format' fields."
+    description="Format a source as a citation in a specified style (APA, MLA, Chicago, Harvard, IEEE). Input should be a JSON string with 'source' and 'format' fields.",
 )
 
 generate_bibliography_tool = Tool(
     name="generate_bibliography",
     func=bibliography_generator.run,
-    description="Generate a bibliography from a list of sources in a specified style (APA, MLA, Chicago, Harvard, IEEE). Input should be a JSON string with 'sources' and 'format' fields."
+    description="Generate a bibliography from a list of sources in a specified style (APA, MLA, Chicago, Harvard, IEEE). Input should be a JSON string with 'sources' and 'format' fields.",
 )

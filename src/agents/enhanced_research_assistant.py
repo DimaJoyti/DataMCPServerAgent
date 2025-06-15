@@ -9,12 +9,19 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.tools import BaseTool
+# Use lazy imports for memory optimization
+from src.utils.lazy_imports import langchain_anthropic, langchain_core
+
+# Access classes through lazy loaders
+ChatAnthropic = langchain_anthropic.ChatAnthropic
+HumanMessage = langchain_core.messages.HumanMessage
+SystemMessage = langchain_core.messages.SystemMessage  
+ChatPromptTemplate = langchain_core.prompts.ChatPromptTemplate
+BaseTool = langchain_core.tools.BaseTool
 from pydantic import BaseModel, Field
 
+from src.memory.distributed_memory_manager import DistributedMemoryManager
+from src.memory.knowledge_graph_integration import KnowledgeGraphIntegration
 from src.memory.research_memory_persistence import (
     ResearchMemoryDatabase,
     ResearchProject,
@@ -25,8 +32,6 @@ from src.tools.enhanced_tool_selection import (
     EnhancedToolSelector,
     ToolPerformanceTracker,
 )
-from src.memory.distributed_memory_manager import DistributedMemoryManager
-from src.memory.knowledge_graph_integration import KnowledgeGraphIntegration
 
 # Import real tools instead of mock tools
 from src.tools.research_assistant_tools import (
@@ -72,6 +77,7 @@ except ImportError:
     format_citation_tool = MockTool("Citation Formatter")
     generate_bibliography_tool = MockTool("Bibliography Generator")
 
+
 class EnhancedResearchResponseModel(BaseModel):
     """Enhanced structured response format for research results with advanced features."""
 
@@ -86,6 +92,7 @@ class EnhancedResearchResponseModel(BaseModel):
     visualizations: List[Dict] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
 
+
 class EnhancedResearchAssistant:
     """Enhanced Research Assistant with advanced features."""
 
@@ -96,7 +103,7 @@ class EnhancedResearchAssistant:
         tools: Optional[List[BaseTool]] = None,
         kg_memory_type: str = "redis",
         kg_memory_config: Optional[Dict[str, Any]] = None,
-        kg_namespace: str = "datamcp_kg"
+        kg_namespace: str = "datamcp_kg",
     ):
         """Initialize the enhanced research assistant with knowledge graph integration."""
         # Initialize model
@@ -142,15 +149,13 @@ Knowledge Graph Context: {kg_context}
 
         # --- Knowledge Graph Integration ---
         self.kg_memory_manager = DistributedMemoryManager(
-            memory_type=kg_memory_type,
-            config=kg_memory_config,
-            namespace=kg_namespace
+            memory_type=kg_memory_type, config=kg_memory_config, namespace=kg_namespace
         )
         self.kg_integration = KnowledgeGraphIntegration(
             memory_manager=self.kg_memory_manager,
             db=self.memory_db,
             model=self.model,
-            namespace=kg_namespace
+            namespace=kg_namespace,
         )
 
     def _get_default_tools(self) -> List[BaseTool]:
@@ -246,9 +251,7 @@ Knowledge Graph Context: {kg_context}
         execution_time = time.time() - start_time
 
         # Save tool performance
-        self.tool_performance_tracker.track_performance(
-            tool_name, success, execution_time
-        )
+        self.tool_performance_tracker.track_performance(tool_name, success, execution_time)
 
         # Save tool usage in research memory
         self.memory_db.save_tool_usage(
@@ -298,7 +301,7 @@ Knowledge Graph Context: {kg_context}
             "query": query,
             "project_id": project_id,
             "citation_format": citation_format,
-            "kg_context": json.dumps(kg_context, ensure_ascii=False)
+            "kg_context": json.dumps(kg_context, ensure_ascii=False),
         }
         research_message = self.research_prompt.format_messages(**input_values)
         # Add tool results to the message

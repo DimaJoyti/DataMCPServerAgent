@@ -10,28 +10,25 @@ This script demonstrates the new LLM-driven pipelines features of Phase 2:
 """
 
 import asyncio
-import time
-from pathlib import Path
-from typing import Dict
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 console = Console()
 
 def show_phase2_welcome():
     """Show Phase 2 welcome message."""
     welcome_text = """
-🚀 ФАЗА 2: LLM-driven Pipelines
+🚀 PHASE 2: LLM-driven Pipelines
 
-Демонстрація нових можливостей:
-🎭 Мультимодальна обробка (Текст + Зображення + Аудіо)
-🔍 RAG архітектура з гібридним пошуком
-⚡ Streaming обробка в реальному часі
-🧠 Інтелектуальна оркестрація pipeline
-🔗 Cloudflare AI інтеграція
+Demonstration of new capabilities:
+🎭 Multimodal processing (Text + Image + Audio)
+🔍 RAG architecture with hybrid search
+⚡ Real-time streaming processing
+🧠 Intelligent pipeline orchestration
+🔗 Cloudflare AI integration
     """
 
     panel = Panel(
@@ -46,7 +43,7 @@ def show_phase2_welcome():
 async def demo_multimodal_processing():
     """Demo multimodal processing capabilities."""
     console.print("\n" + "="*60, style="bold")
-    console.print("🎭 ДЕМОНСТРАЦІЯ МУЛЬТИМОДАЛЬНОЇ ОБРОБКИ", style="bold magenta")
+    console.print("🎭 DEMONSTRATION OF MULTIMODAL PROCESSING", style="bold magenta")
     console.print("="*60, style="bold")
 
     # Simulate multimodal processing
@@ -70,31 +67,31 @@ async def demo_multimodal_processing():
             await asyncio.sleep(0.5)
 
     # Show results table
-    table = Table(title="Мультимодальні Процесори")
-    table.add_column("Процесор", style="cyan")
-    table.add_column("Статус", style="bold")
-    table.add_column("Можливості", style="dim")
+    table = Table(title="Multimodal Processors")
+    table.add_column("Processor", style="cyan")
+    table.add_column("Status", style="bold")
+    table.add_column("Capabilities", style="dim")
 
-    table.add_row("TextImageProcessor", "✅ Готовий", "OCR, опис зображень, візуальний Q&A")
-    table.add_row("TextAudioProcessor", "✅ Готовий", "Розпізнавання мови, синтез, аналіз")
-    table.add_row("CombinedProcessor", "✅ Готовий", "Крос-модальний аналіз, об'єднані ембединги")
-    table.add_row("ProcessorFactory", "✅ Готовий", "Динамічний вибір процесора")
+    table.add_row("TextImageProcessor", "✅ Ready", "OCR, image description, visual Q&A")
+    table.add_row("TextAudioProcessor", "✅ Ready", "Speech recognition, synthesis, analysis")
+    table.add_row("CombinedProcessor", "✅ Ready", "Cross-modal analysis, unified embeddings")
+    table.add_row("ProcessorFactory", "✅ Ready", "Dynamic processor selection")
 
     console.print(table)
 
 async def demo_rag_architecture():
     """Demo RAG architecture capabilities."""
     console.print("\n" + "="*60, style="bold")
-    console.print("🔍 ДЕМОНСТРАЦІЯ RAG АРХІТЕКТУРИ", style="bold magenta")
+    console.print("🔍 DEMONSTRATION OF RAG ARCHITECTURE", style="bold magenta")
     console.print("="*60, style="bold")
 
     # Simulate RAG components
     components = [
-        ("Vector Search", "Семантичний пошук з ембедингами"),
-        ("Keyword Search", "Повнотекстовий пошук з індексацією"),
-        ("Semantic Search", "Контекстуальне розуміння"),
-        ("Hybrid Fusion", "Об'єднання результатів з RRF"),
-        ("Reranking", "Покращення релевантності")
+        ("Vector Search", "Semantic search with embeddings"),
+        ("Keyword Search", "Full-text search with indexing"),
+        ("Semantic Search", "Contextual understanding"),
+        ("Hybrid Fusion", "Merging results from RRF"),
+        ("Reranking", "Improving relevance")
     ]
 
     with Progress(
@@ -110,19 +107,19 @@ async def demo_rag_architecture():
             await asyncio.sleep(0.3)
 
     # Show search demo
-    console.print("\n🔍 Демонстрація гібридного пошуку:", style="bold blue")
+    console.print("\n🔍 Demonstration of hybrid search:", style="bold blue")
 
     search_results = [
-        ("Vector", 0.95, "Семантично релевантний результат"),
-        ("Keyword", 0.87, "Точне співпадіння ключових слів"),
-        ("Semantic", 0.92, "Контекстуально відповідний"),
-        ("Fused", 0.94, "Об'єднаний результат з RRF")
+        ("Vector", 0.95, "Semantically relevant result"),
+        ("Keyword", 0.87, "Exact keyword match"),
+        ("Semantic", 0.92, "Contextually appropriate"),
+        ("Fused", 0.94, "Merged result from RRF")
     ]
 
-    results_table = Table(title="Результати Гібридного Пошуку")
-    results_table.add_column("Тип пошуку", style="cyan")
-    results_table.add_column("Релевантність", style="green")
-    results_table.add_column("Опис", style="dim")
+    results_table = Table(title="Hybrid Search Results")
+    results_table.add_column("Search Type", style="cyan")
+    results_table.add_column("Relevance", style="green")
+    results_table.add_column("Description", style="dim")
 
     for search_type, score, description in search_results:
         results_table.add_row(search_type, f"{score:.2f}", description)
@@ -132,18 +129,18 @@ async def demo_rag_architecture():
 async def demo_streaming_pipeline():
     """Demo streaming pipeline capabilities."""
     console.print("\n" + "="*60, style="bold")
-    console.print("⚡ ДЕМОНСТРАЦІЯ STREAMING PIPELINE", style="bold magenta")
+    console.print("⚡ DEMONSTRATION OF STREAMING PIPELINE", style="bold magenta")
     console.print("="*60, style="bold")
 
-    console.print("🚧 Streaming Pipeline в розробці", style="yellow")
-    console.print("Планові можливості:", style="bold")
+    console.print("🚧 Streaming Pipeline in development", style="yellow")
+    console.print("Planned features:", style="bold")
 
     streaming_features = [
-        "Real-time обробка документів",
+        "Real-time document processing",
         "Incremental vector updates",
-        "Live monitoring та метрики",
-        "Auto-scaling за навантаженням",
-        "Event-driven архітектура"
+        "Live monitoring and metrics",
+        "Auto-scaling based on load",
+        "Event-driven architecture"
     ]
 
     for feature in streaming_features:
@@ -153,22 +150,22 @@ async def demo_streaming_pipeline():
 async def demo_orchestration():
     """Demo intelligent orchestration."""
     console.print("\n" + "="*60, style="bold")
-    console.print("🧠 ДЕМОНСТРАЦІЯ ІНТЕЛЕКТУАЛЬНОЇ ОРКЕСТРАЦІЇ", style="bold magenta")
+    console.print("🧠 DEMONSTRATION OF INTELLIGENT ORCHESTRATION", style="bold magenta")
     console.print("="*60, style="bold")
 
     # Simulate orchestration decisions
     scenarios = [
-        ("Text document", "TextProcessor", "Простий текстовий процесор"),
-        ("Image with text", "TextImageProcessor", "Мультимодальний процесор"),
-        ("Audio file", "TextAudioProcessor", "Аудіо процесор"),
-        ("Complex media", "CombinedProcessor", "Повний мультимодальний процесор"),
-        ("Large dataset", "StreamingPipeline", "Streaming обробка")
+        ("Text document", "TextProcessor", "Simple text processor"),
+        ("Image with text", "TextImageProcessor", "Multimodal processor"),
+        ("Audio file", "TextAudioProcessor", "Audio processor"),
+        ("Complex media", "CombinedProcessor", "Full multimodal processor"),
+        ("Large dataset", "StreamingPipeline", "Streaming processing")
     ]
 
-    orchestration_table = Table(title="Інтелектуальний Вибір Pipeline")
-    orchestration_table.add_column("Тип контенту", style="cyan")
-    orchestration_table.add_column("Обраний Pipeline", style="green")
-    orchestration_table.add_column("Обґрунтування", style="dim")
+    orchestration_table = Table(title="Intelligent Pipeline Selection")
+    orchestration_table.add_column("Content Type", style="cyan")
+    orchestration_table.add_column("Selected Pipeline", style="green")
+    orchestration_table.add_column("Reasoning", style="dim")
 
     for content_type, pipeline, reasoning in scenarios:
         orchestration_table.add_row(content_type, pipeline, reasoning)
@@ -179,22 +176,22 @@ async def demo_orchestration():
 async def demo_cloudflare_integration():
     """Demo Cloudflare AI integration."""
     console.print("\n" + "="*60, style="bold")
-    console.print("☁️ ДЕМОНСТРАЦІЯ CLOUDFLARE AI ІНТЕГРАЦІЇ", style="bold magenta")
+    console.print("☁️ DEMONSTRATION OF CLOUDFLARE AI INTEGRATION", style="bold magenta")
     console.print("="*60, style="bold")
 
     # Show Cloudflare AI models
     cf_models = [
-        ("Text Generation", "@cf/meta/llama-2-7b-chat-int8", "LLM для генерації тексту"),
-        ("Text Embeddings", "@cf/baai/bge-base-en-v1.5", "Векторизація тексту"),
-        ("Image Generation", "@cf/stabilityai/stable-diffusion-xl-base-1.0", "Генерація зображень"),
-        ("Speech Synthesis", "@cf/myshell-ai/melotts", "Синтез мови"),
-        ("AutoRAG", "Cloudflare AutoRAG", "Автоматичний RAG")
+        ("Text Generation", "@cf/meta/llama-2-7b-chat-int8", "LLM for text generation"),
+        ("Text Embeddings", "@cf/baai/bge-base-en-v1.5", "Text vectorization"),
+        ("Image Generation", "@cf/stabilityai/stable-diffusion-xl-base-1.0", "Image generation"),
+        ("Speech Synthesis", "@cf/myshell-ai/melotts", "Speech synthesis"),
+        ("AutoRAG", "Cloudflare AutoRAG", "Automatic RAG")
     ]
 
     cf_table = Table(title="Cloudflare AI Models")
-    cf_table.add_column("Категорія", style="cyan")
-    cf_table.add_column("Модель", style="green")
-    cf_table.add_column("Призначення", style="dim")
+    cf_table.add_column("Category", style="cyan")
+    cf_table.add_column("Model", style="green")
+    cf_table.add_column("Purpose", style="dim")
 
     for category, model, purpose in cf_models:
         cf_table.add_row(category, model, purpose)
@@ -204,23 +201,23 @@ async def demo_cloudflare_integration():
 def show_phase2_summary():
     """Show Phase 2 completion summary."""
     console.print("\n" + "="*60, style="bold")
-    console.print("📊 ПІДСУМОК ФАЗИ 2", style="bold magenta")
+    console.print("📊 PHASE 2 SUMMARY", style="bold magenta")
     console.print("="*60, style="bold")
 
     # Achievement metrics
     achievements = [
-        ("Мультимодальні процесори", "4/4", "100%", "green"),
-        ("RAG компоненти", "5/5", "100%", "green"),
+        ("Multimodal processors", "4/4", "100%", "green"),
+        ("RAG components", "5/5", "100%", "green"),
         ("Streaming pipeline", "0/5", "0%", "yellow"),
-        ("Оркестрація", "3/4", "75%", "green"),
-        ("Cloudflare інтеграція", "5/5", "100%", "green")
+        ("Orchestration", "3/4", "75%", "green"),
+        ("Cloudflare integration", "5/5", "100%", "green")
     ]
 
-    summary_table = Table(title="Прогрес Фази 2")
-    summary_table.add_column("Компонент", style="cyan")
-    summary_table.add_column("Готовність", style="bold")
-    summary_table.add_column("Відсоток", style="bold")
-    summary_table.add_column("Статус", style="bold")
+    summary_table = Table(title="Phase 2 Progress")
+    summary_table.add_column("Component", style="cyan")
+    summary_table.add_column("Readiness", style="bold")
+    summary_table.add_column("Percentage", style="bold")
+    summary_table.add_column("Status", style="bold")
 
     total_progress = 0
     for component, ready, percent, status_style in achievements:
@@ -241,30 +238,30 @@ def show_phase2_summary():
     # Final message
     if overall_progress >= 80:
         style = "green"
-        message = f"🎉 ФАЗА 2 УСПІШНО ПРОСУВАЄТЬСЯ! ({overall_progress:.1f}% готовності)"
+        message = f"🎉 PHASE 2 SUCCESSFULLY ADVANCING! ({overall_progress:.1f}% readiness)"
     elif overall_progress >= 60:
         style = "yellow"
-        message = f"⚠️ Фаза 2 в активній розробці ({overall_progress:.1f}% готовності)"
+        message = f"⚠️ Phase 2 in active development ({overall_progress:.1f}% readiness)"
     else:
         style = "red"
-        message = f"🔧 Фаза 2 потребує більше роботи ({overall_progress:.1f}% готовності)"
+        message = f"🔧 Phase 2 needs more work ({overall_progress:.1f}% readiness)"
 
     console.print(f"\n{message}", style=f"bold {style}")
 
     # Next steps
     next_steps = """
-🎯 НАСТУПНІ КРОКИ ФАЗИ 2:
+🎯 NEXT STEPS FOR PHASE 2:
 
-1. ⚡ Завершити Streaming Pipeline
-2. 🔧 Покращити оркестрацію
-3. 🧪 Додати реальні тести
-4. 📊 Імплементувати метрики
-5. 🌐 Створити Web UI
+1. ⚡ Complete Streaming Pipeline
+2. 🔧 Improve orchestration
+3. 🧪 Add real tests
+4. 📊 Implement metrics
+5. 🌐 Create Web UI
     """
 
     panel = Panel(
         next_steps.strip(),
-        title="🚀 Roadmap Фази 2",
+        title="🚀 Roadmap for Phase 2",
         border_style="blue",
         padding=(1, 2)
     )

@@ -4,14 +4,14 @@ Code Quality Monitor
 Automated code quality checking and metrics tracking.
 """
 
-import subprocess
 import json
+import logging
+import subprocess
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class QualityReport:
 
 class CodeQualityMonitor:
     """Monitor and track code quality metrics"""
-    
+
     def __init__(self, project_root: str, directories: List[str]):
         self.project_root = Path(project_root)
         self.directories = directories
@@ -68,12 +68,12 @@ class CodeQualityMonitor:
                 "weight": 10
             }
         }
-    
+
     def run_tool(self, tool_name: str, directories: List[str]) -> QualityMetrics:
         """Run a specific quality tool"""
         start_time = time.time()
         tool_config = self.tools_config.get(tool_name)
-        
+
         if not tool_config:
             return QualityMetrics(
                 timestamp=datetime.now(),
@@ -84,9 +84,9 @@ class CodeQualityMonitor:
                 execution_time_seconds=0,
                 details={"error": f"Unknown tool: {tool_name}"}
             )
-        
+
         command = tool_config["command"] + directories
-        
+
         try:
             result = subprocess.run(
                 command,
@@ -95,16 +95,16 @@ class CodeQualityMonitor:
                 text=True,
                 timeout=300  # 5 minutes timeout
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             # Parse results based on tool
             issues_count, files_checked, details = self._parse_tool_output(
                 tool_name, result.stdout, result.stderr, result.returncode
             )
-            
+
             status = "success" if result.returncode == 0 else "warning"
-            
+
             return QualityMetrics(
                 timestamp=datetime.now(),
                 tool=tool_name,
@@ -114,7 +114,7 @@ class CodeQualityMonitor:
                 execution_time_seconds=execution_time,
                 details=details
             )
-            
+
         except subprocess.TimeoutExpired:
             return QualityMetrics(
                 timestamp=datetime.now(),
@@ -135,13 +135,13 @@ class CodeQualityMonitor:
                 execution_time_seconds=time.time() - start_time,
                 details={"error": str(e)}
             )
-    
+
     def _parse_tool_output(self, tool_name: str, stdout: str, stderr: str, returncode: int) -> tuple:
         """Parse tool output to extract metrics"""
         issues_count = 0
         files_checked = 0
         details = {"stdout": stdout, "stderr": stderr, "returncode": returncode}
-        
+
         try:
             if tool_name == "ruff" and stdout:
                 # Ruff outputs JSON
@@ -149,14 +149,14 @@ class CodeQualityMonitor:
                 issues_count = len(ruff_data)
                 files_checked = len(set(item.get("filename", "") for item in ruff_data))
                 details["issues"] = ruff_data
-                
+
             elif tool_name == "bandit" and stdout:
                 # Bandit outputs JSON
                 bandit_data = json.loads(stdout)
                 issues_count = len(bandit_data.get("results", []))
                 files_checked = len(bandit_data.get("metrics", {}).get("_totals", {}).get("loc", 0))
                 details["results"] = bandit_data
-                
+
             elif tool_name in ["black", "isort"]:
                 # Count files mentioned in diff output
                 if stdout:
@@ -171,7 +171,7 @@ class CodeQualityMonitor:
                                 if part.endswith(".py"):
                                     files_mentioned.add(part)
                     files_checked = len(files_mentioned)
-                
+
             elif tool_name == "mypy":
                 # Count error lines
                 if stdout:
@@ -181,38 +181,38 @@ class CodeQualityMonitor:
                             issues_count += 1
                         if ".py:" in line:
                             files_checked += 1
-                
+
         except Exception as e:
             details["parse_error"] = str(e)
-        
+
         return issues_count, files_checked, details
-    
+
     def run_all_tools(self) -> Dict[str, QualityMetrics]:
         """Run all quality tools"""
         results = {}
-        
+
         for tool_name in self.tools_config.keys():
             logger.info(f"Running {tool_name}...")
-            
+
             # Adjust directories for specific tools
             dirs = self.directories.copy()
             if tool_name == "mypy":
                 # MyPy works better with specific directories
                 dirs = ["app", "src"]
-            
+
             results[tool_name] = self.run_tool(tool_name, dirs)
             logger.info(f"{tool_name} completed: {results[tool_name].status}")
-        
+
         return results
-    
+
     def calculate_overall_score(self, tool_results: Dict[str, QualityMetrics]) -> float:
         """Calculate overall quality score (0-100)"""
         total_weight = sum(config["weight"] for config in self.tools_config.values())
         weighted_score = 0
-        
+
         for tool_name, metrics in tool_results.items():
             tool_weight = self.tools_config[tool_name]["weight"]
-            
+
             if metrics.status == "error":
                 tool_score = 0
             elif metrics.status == "success":
@@ -229,20 +229,20 @@ class CodeQualityMonitor:
                     tool_score = 40
                 else:
                     tool_score = 20
-            
+
             weighted_score += (tool_score * tool_weight) / total_weight
-        
+
         return round(weighted_score, 2)
-    
+
     def generate_report(self, tool_results: Dict[str, QualityMetrics]) -> QualityReport:
         """Generate comprehensive quality report"""
         overall_score = self.calculate_overall_score(tool_results)
         total_issues = sum(metrics.issues_count for metrics in tool_results.values())
-        
+
         # Count critical issues (errors and high-severity warnings)
         critical_issues = 0
         warnings = 0
-        
+
         for metrics in tool_results.values():
             if metrics.status == "error":
                 critical_issues += 1
@@ -251,14 +251,14 @@ class CodeQualityMonitor:
                     critical_issues += metrics.issues_count
                 else:
                     warnings += metrics.issues_count
-        
+
         # Calculate trends (would need historical data)
         trends = {
             "score_trend": "stable",  # Would calculate from historical data
             "issues_trend": "stable",
             "last_improvement": None
         }
-        
+
         return QualityReport(
             timestamp=datetime.now(),
             overall_score=overall_score,
@@ -268,7 +268,7 @@ class CodeQualityMonitor:
             tool_results=tool_results,
             trends=trends
         )
-    
+
     def save_report(self, report: QualityReport, output_path: str) -> None:
         """Save quality report to JSON file"""
         output_data = {
@@ -280,7 +280,7 @@ class CodeQualityMonitor:
             "trends": report.trends,
             "tool_results": {}
         }
-        
+
         for tool_name, metrics in report.tool_results.items():
             output_data["tool_results"][tool_name] = {
                 "timestamp": metrics.timestamp.isoformat(),
@@ -290,26 +290,26 @@ class CodeQualityMonitor:
                 "execution_time_seconds": metrics.execution_time_seconds,
                 "details": metrics.details
             }
-        
+
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w') as f:
             json.dump(output_data, f, indent=2)
-        
+
         logger.info(f"Quality report saved to {output_path}")
 
 
 def monitor_code_quality(project_root: str, directories: List[str], output_path: str) -> QualityReport:
     """Main function to monitor code quality"""
     monitor = CodeQualityMonitor(project_root, directories)
-    
+
     logger.info("Starting code quality analysis...")
     tool_results = monitor.run_all_tools()
-    
+
     logger.info("Generating quality report...")
     report = monitor.generate_report(tool_results)
-    
+
     monitor.save_report(report, output_path)
-    
+
     logger.info(f"Quality analysis complete. Overall score: {report.overall_score}/100")
     return report
 
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         directories=["app", "src", "examples", "scripts", "tests"],
         output_path="monitoring/data/quality_report.json"
     )
-    
+
     print(f"Overall Quality Score: {report.overall_score}/100")
     print(f"Total Issues: {report.total_issues}")
     print(f"Critical Issues: {report.critical_issues}")

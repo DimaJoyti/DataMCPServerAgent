@@ -8,9 +8,9 @@ This module provides intelligent orchestration capabilities:
 - Resource management
 """
 
-from .router import PipelineRouter
-from .optimizer import DynamicOptimizer
 from .coordinator import PipelineCoordinator
+from .optimizer import DynamicOptimizer
+from .router import PipelineRouter
 
 __all__ = [
     "PipelineRouter",

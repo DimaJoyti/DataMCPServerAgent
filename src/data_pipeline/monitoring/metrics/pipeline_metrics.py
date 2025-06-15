@@ -5,20 +5,20 @@ This module provides comprehensive metrics collection and reporting
 for data pipeline operations and performance monitoring.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone
 from collections import defaultdict, deque
-import time
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 import structlog
 from pydantic import BaseModel, Field
 
 from ...core.pipeline_models import PipelineRun, PipelineStatus
 
+
 class MetricsConfig(BaseModel):
     """Configuration for metrics collection."""
+
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
     metrics_retention_hours: int = Field(default=24, description="Metrics retention in hours")
     aggregation_interval: int = Field(default=60, description="Aggregation interval in seconds")
@@ -31,11 +31,14 @@ class MetricsConfig(BaseModel):
     enable_custom_metrics: bool = Field(default=True, description="Enable custom metrics")
     max_metric_samples: int = Field(default=1000, description="Maximum metric samples to keep")
 
+
 class MetricSample(BaseModel):
     """Represents a single metric sample."""
+
     timestamp: datetime
     value: float
     labels: Dict[str, str] = Field(default_factory=dict)
+
 
 class PipelineMetrics:
     """
@@ -46,9 +49,7 @@ class PipelineMetrics:
     """
 
     def __init__(
-        self,
-        config: Optional[MetricsConfig] = None,
-        logger: Optional[logging.Logger] = None
+        self, config: Optional[MetricsConfig] = None, logger: Optional[logging.Logger] = None
     ):
         """
         Initialize the pipeline metrics.
@@ -61,7 +62,9 @@ class PipelineMetrics:
         self.logger = logger or structlog.get_logger("pipeline_metrics")
 
         # Metrics storage
-        self.metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=self.config.max_metric_samples))
+        self.metrics: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=self.config.max_metric_samples)
+        )
         self.counters: Dict[str, float] = defaultdict(float)
         self.gauges: Dict[str, float] = defaultdict(float)
         self.histograms: Dict[str, List[float]] = defaultdict(list)
@@ -86,20 +89,30 @@ class PipelineMetrics:
             self.pipeline_runs[pipeline_run.run_id] = pipeline_run
 
             # Record metrics
-            await self._record_counter("pipeline_starts_total", 1, {
-                "pipeline_id": pipeline_run.pipeline_id,
-                "triggered_by": pipeline_run.triggered_by or "unknown"
-            })
+            await self._record_counter(
+                "pipeline_starts_total",
+                1,
+                {
+                    "pipeline_id": pipeline_run.pipeline_id,
+                    "triggered_by": pipeline_run.triggered_by or "unknown",
+                },
+            )
 
-            await self._record_gauge("active_pipelines", len([
-                run for run in self.pipeline_runs.values()
-                if run.status == PipelineStatus.RUNNING
-            ]))
+            await self._record_gauge(
+                "active_pipelines",
+                len(
+                    [
+                        run
+                        for run in self.pipeline_runs.values()
+                        if run.status == PipelineStatus.RUNNING
+                    ]
+                ),
+            )
 
             self.logger.debug(
                 "Pipeline start recorded",
                 run_id=pipeline_run.run_id,
-                pipeline_id=pipeline_run.pipeline_id
+                pipeline_id=pipeline_run.pipeline_id,
             )
 
         except Exception as e:
@@ -117,61 +130,76 @@ class PipelineMetrics:
             self.pipeline_runs[pipeline_run.run_id] = pipeline_run
 
             # Record completion metrics
-            await self._record_counter("pipeline_completions_total", 1, {
-                "pipeline_id": pipeline_run.pipeline_id,
-                "status": pipeline_run.status.value,
-                "triggered_by": pipeline_run.triggered_by or "unknown"
-            })
+            await self._record_counter(
+                "pipeline_completions_total",
+                1,
+                {
+                    "pipeline_id": pipeline_run.pipeline_id,
+                    "status": pipeline_run.status.value,
+                    "triggered_by": pipeline_run.triggered_by or "unknown",
+                },
+            )
 
             # Record duration
             if pipeline_run.duration:
-                await self._record_histogram("pipeline_duration_seconds", pipeline_run.duration, {
-                    "pipeline_id": pipeline_run.pipeline_id,
-                    "status": pipeline_run.status.value
-                })
+                await self._record_histogram(
+                    "pipeline_duration_seconds",
+                    pipeline_run.duration,
+                    {"pipeline_id": pipeline_run.pipeline_id, "status": pipeline_run.status.value},
+                )
 
             # Record task metrics
             for task in pipeline_run.tasks:
-                await self._record_counter("task_completions_total", 1, {
-                    "pipeline_id": pipeline_run.pipeline_id,
-                    "task_id": task.task_id,
-                    "task_type": task.config.task_type.value,
-                    "status": task.status.value
-                })
-
-                if task.duration:
-                    await self._record_histogram("task_duration_seconds", task.duration, {
+                await self._record_counter(
+                    "task_completions_total",
+                    1,
+                    {
                         "pipeline_id": pipeline_run.pipeline_id,
                         "task_id": task.task_id,
-                        "task_type": task.config.task_type.value
-                    })
+                        "task_type": task.config.task_type.value,
+                        "status": task.status.value,
+                    },
+                )
+
+                if task.duration:
+                    await self._record_histogram(
+                        "task_duration_seconds",
+                        task.duration,
+                        {
+                            "pipeline_id": pipeline_run.pipeline_id,
+                            "task_id": task.task_id,
+                            "task_type": task.config.task_type.value,
+                        },
+                    )
 
             # Update pipeline statistics
             await self._update_pipeline_stats(pipeline_run)
 
             # Update active pipelines gauge
-            await self._record_gauge("active_pipelines", len([
-                run for run in self.pipeline_runs.values()
-                if run.status == PipelineStatus.RUNNING
-            ]))
+            await self._record_gauge(
+                "active_pipelines",
+                len(
+                    [
+                        run
+                        for run in self.pipeline_runs.values()
+                        if run.status == PipelineStatus.RUNNING
+                    ]
+                ),
+            )
 
             self.logger.debug(
                 "Pipeline completion recorded",
                 run_id=pipeline_run.run_id,
                 pipeline_id=pipeline_run.pipeline_id,
                 status=pipeline_run.status,
-                duration=pipeline_run.duration
+                duration=pipeline_run.duration,
             )
 
         except Exception as e:
             self.logger.error("Failed to record pipeline completion", error=str(e))
 
     async def record_data_volume(
-        self,
-        pipeline_id: str,
-        task_id: str,
-        records_processed: int,
-        bytes_processed: int
+        self, pipeline_id: str, task_id: str, records_processed: int, bytes_processed: int
     ) -> None:
         """
         Record data volume metrics.
@@ -183,25 +211,23 @@ class PipelineMetrics:
             bytes_processed: Number of bytes processed
         """
         try:
-            await self._record_counter("records_processed_total", records_processed, {
-                "pipeline_id": pipeline_id,
-                "task_id": task_id
-            })
+            await self._record_counter(
+                "records_processed_total",
+                records_processed,
+                {"pipeline_id": pipeline_id, "task_id": task_id},
+            )
 
-            await self._record_counter("bytes_processed_total", bytes_processed, {
-                "pipeline_id": pipeline_id,
-                "task_id": task_id
-            })
+            await self._record_counter(
+                "bytes_processed_total",
+                bytes_processed,
+                {"pipeline_id": pipeline_id, "task_id": task_id},
+            )
 
         except Exception as e:
             self.logger.error("Failed to record data volume", error=str(e))
 
     async def record_error(
-        self,
-        pipeline_id: str,
-        task_id: Optional[str],
-        error_type: str,
-        error_message: str
+        self, pipeline_id: str, task_id: Optional[str], error_type: str, error_message: str
     ) -> None:
         """
         Record error metrics.
@@ -213,10 +239,7 @@ class PipelineMetrics:
             error_message: Error message
         """
         try:
-            labels = {
-                "pipeline_id": pipeline_id,
-                "error_type": error_type
-            }
+            labels = {"pipeline_id": pipeline_id, "error_type": error_type}
 
             if task_id:
                 labels["task_id"] = task_id
@@ -224,20 +247,14 @@ class PipelineMetrics:
             await self._record_counter("errors_total", 1, labels)
 
             self.logger.debug(
-                "Error recorded",
-                pipeline_id=pipeline_id,
-                task_id=task_id,
-                error_type=error_type
+                "Error recorded", pipeline_id=pipeline_id, task_id=task_id, error_type=error_type
             )
 
         except Exception as e:
             self.logger.error("Failed to record error", error=str(e))
 
     async def update_orchestrator_metrics(
-        self,
-        active_pipelines: int,
-        active_tasks: int,
-        registered_pipelines: int
+        self, active_pipelines: int, active_tasks: int, registered_pipelines: int
     ) -> None:
         """
         Update orchestrator metrics.
@@ -270,25 +287,20 @@ class PipelineMetrics:
 
             # Get recent runs for this pipeline
             recent_runs = [
-                run for run in self.pipeline_runs.values()
-                if run.pipeline_id == pipeline_id
+                run for run in self.pipeline_runs.values() if run.pipeline_id == pipeline_id
             ]
 
             # Calculate success rate
             if recent_runs:
-                successful_runs = len([
-                    run for run in recent_runs
-                    if run.status == PipelineStatus.SUCCESS
-                ])
+                successful_runs = len(
+                    [run for run in recent_runs if run.status == PipelineStatus.SUCCESS]
+                )
                 success_rate = successful_runs / len(recent_runs)
             else:
                 success_rate = 0.0
 
             # Calculate average duration
-            completed_runs = [
-                run for run in recent_runs
-                if run.duration is not None
-            ]
+            completed_runs = [run for run in recent_runs if run.duration is not None]
 
             if completed_runs:
                 avg_duration = sum(run.duration for run in completed_runs) / len(completed_runs)
@@ -301,14 +313,15 @@ class PipelineMetrics:
                 "success_rate": success_rate,
                 "average_duration": avg_duration,
                 "last_run_time": max(
-                    (run.start_time for run in recent_runs if run.start_time),
-                    default=None
+                    (run.start_time for run in recent_runs if run.start_time), default=None
                 ),
-                "stats": stats
+                "stats": stats,
             }
 
         except Exception as e:
-            self.logger.error("Failed to get pipeline metrics", pipeline_id=pipeline_id, error=str(e))
+            self.logger.error(
+                "Failed to get pipeline metrics", pipeline_id=pipeline_id, error=str(e)
+            )
             return {}
 
     async def get_system_metrics(self) -> Dict[str, Any]:
@@ -320,20 +333,17 @@ class PipelineMetrics:
         """
         try:
             total_runs = len(self.pipeline_runs)
-            active_runs = len([
-                run for run in self.pipeline_runs.values()
-                if run.status == PipelineStatus.RUNNING
-            ])
+            active_runs = len(
+                [run for run in self.pipeline_runs.values() if run.status == PipelineStatus.RUNNING]
+            )
 
-            successful_runs = len([
-                run for run in self.pipeline_runs.values()
-                if run.status == PipelineStatus.SUCCESS
-            ])
+            successful_runs = len(
+                [run for run in self.pipeline_runs.values() if run.status == PipelineStatus.SUCCESS]
+            )
 
-            failed_runs = len([
-                run for run in self.pipeline_runs.values()
-                if run.status == PipelineStatus.FAILED
-            ])
+            failed_runs = len(
+                [run for run in self.pipeline_runs.values() if run.status == PipelineStatus.FAILED]
+            )
 
             return {
                 "total_pipeline_runs": total_runs,
@@ -343,7 +353,7 @@ class PipelineMetrics:
                 "success_rate": successful_runs / total_runs if total_runs > 0 else 0.0,
                 "counters": dict(self.counters),
                 "gauges": dict(self.gauges),
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -357,9 +367,7 @@ class PipelineMetrics:
 
         # Also store as time series
         sample = MetricSample(
-            timestamp=datetime.now(timezone.utc),
-            value=value,
-            labels=labels or {}
+            timestamp=datetime.now(timezone.utc), value=value, labels=labels or {}
         )
         self.metrics[metric_key].append(sample)
 
@@ -370,26 +378,26 @@ class PipelineMetrics:
 
         # Also store as time series
         sample = MetricSample(
-            timestamp=datetime.now(timezone.utc),
-            value=value,
-            labels=labels or {}
+            timestamp=datetime.now(timezone.utc), value=value, labels=labels or {}
         )
         self.metrics[metric_key].append(sample)
 
-    async def _record_histogram(self, name: str, value: float, labels: Dict[str, str] = None) -> None:
+    async def _record_histogram(
+        self, name: str, value: float, labels: Dict[str, str] = None
+    ) -> None:
         """Record a histogram metric."""
         metric_key = self._build_metric_key(name, labels or {})
         self.histograms[metric_key].append(value)
 
         # Keep only recent samples
         if len(self.histograms[metric_key]) > self.config.max_metric_samples:
-            self.histograms[metric_key] = self.histograms[metric_key][-self.config.max_metric_samples:]
+            self.histograms[metric_key] = self.histograms[metric_key][
+                -self.config.max_metric_samples :
+            ]
 
         # Also store as time series
         sample = MetricSample(
-            timestamp=datetime.now(timezone.utc),
-            value=value,
-            labels=labels or {}
+            timestamp=datetime.now(timezone.utc), value=value, labels=labels or {}
         )
         self.metrics[metric_key].append(sample)
 
@@ -413,7 +421,7 @@ class PipelineMetrics:
                 "total_duration": 0.0,
                 "total_tasks": 0,
                 "successful_tasks": 0,
-                "failed_tasks": 0
+                "failed_tasks": 0,
             }
 
         stats = self.pipeline_stats[pipeline_id]
@@ -466,7 +474,9 @@ class PipelineMetrics:
     async def cleanup_old_metrics(self) -> None:
         """Clean up old metrics based on retention policy."""
         try:
-            cutoff_time = datetime.now(timezone.utc).timestamp() - (self.config.metrics_retention_hours * 3600)
+            cutoff_time = datetime.now(timezone.utc).timestamp() - (
+                self.config.metrics_retention_hours * 3600
+            )
 
             for metric_key, samples in self.metrics.items():
                 # Remove old samples
@@ -475,10 +485,14 @@ class PipelineMetrics:
 
             # Clean up old pipeline runs
             old_runs = [
-                run_id for run_id, run in self.pipeline_runs.items()
-                if (run.start_time and
-                    run.start_time.timestamp() < cutoff_time and
-                    run.status in [PipelineStatus.SUCCESS, PipelineStatus.FAILED, PipelineStatus.CANCELLED])
+                run_id
+                for run_id, run in self.pipeline_runs.items()
+                if (
+                    run.start_time
+                    and run.start_time.timestamp() < cutoff_time
+                    and run.status
+                    in [PipelineStatus.SUCCESS, PipelineStatus.FAILED, PipelineStatus.CANCELLED]
+                )
             ]
 
             for run_id in old_runs:

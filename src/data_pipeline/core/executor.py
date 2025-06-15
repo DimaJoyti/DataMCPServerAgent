@@ -7,35 +7,38 @@ supporting various task types and execution environments.
 
 import asyncio
 import importlib
+import json
 import logging
-import subprocess
-import sys
+import os
 import traceback
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Callable
-import json
-import os
+from typing import Any, Callable, Dict, Optional
 
 import structlog
 from pydantic import BaseModel
 
 from .pipeline_models import PipelineTask, TaskStatus, TaskType
 
+
 class ExecutorConfig(BaseModel):
     """Configuration for the task executor."""
+
     max_task_timeout: int = 3600  # 1 hour
     default_retry_delay: int = 60  # 1 minute
     enable_task_isolation: bool = True
     working_directory: Optional[str] = None
     environment_variables: Dict[str, str] = {}
 
+
 class TaskExecutionContext(BaseModel):
     """Context for task execution."""
+
     task: PipelineTask
     working_directory: str
     environment: Dict[str, str]
     timeout: Optional[int] = None
     retry_attempt: int = 0
+
 
 class PipelineExecutor:
     """
@@ -46,9 +49,7 @@ class PipelineExecutor:
     """
 
     def __init__(
-        self,
-        config: Optional[ExecutorConfig] = None,
-        logger: Optional[logging.Logger] = None
+        self, config: Optional[ExecutorConfig] = None, logger: Optional[logging.Logger] = None
     ):
         """
         Initialize the pipeline executor.
@@ -97,7 +98,7 @@ class PipelineExecutor:
             "Starting task execution",
             task_id=task.task_id,
             task_type=task.config.task_type,
-            run_id=task.run_id
+            run_id=task.run_id,
         )
 
         task.status = TaskStatus.RUNNING
@@ -109,7 +110,7 @@ class PipelineExecutor:
             working_directory=self.config.working_directory or os.getcwd(),
             environment={**os.environ, **self.config.environment_variables},
             timeout=task.config.timeout or self.config.max_task_timeout,
-            retry_attempt=task.attempt_count
+            retry_attempt=task.attempt_count,
         )
 
         try:
@@ -118,9 +119,7 @@ class PipelineExecutor:
 
             task.status = TaskStatus.SUCCESS
             self.logger.info(
-                "Task execution completed successfully",
-                task_id=task.task_id,
-                run_id=task.run_id
+                "Task execution completed successfully", task_id=task.task_id, run_id=task.run_id
             )
 
         except Exception as e:
@@ -132,7 +131,7 @@ class PipelineExecutor:
                 task_id=task.task_id,
                 run_id=task.run_id,
                 error=str(e),
-                exc_info=True
+                exc_info=True,
             )
 
         finally:
@@ -175,7 +174,7 @@ class PipelineExecutor:
                         attempt=attempt + 1,
                         max_retries=max_retries,
                         retry_delay=retry_delay,
-                        error=str(e)
+                        error=str(e),
                     )
 
                     task.status = TaskStatus.RETRY
@@ -337,7 +336,7 @@ class PipelineExecutor:
                 module=task.config.module,
                 function=task.config.function,
                 error=str(e),
-                traceback=traceback.format_exc()
+                traceback=traceback.format_exc(),
             )
             raise e
 
@@ -362,14 +361,13 @@ class PipelineExecutor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=context.working_directory,
-                env=env
+                env=env,
             )
 
             # Wait for completion with timeout
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=context.timeout
+                    process.communicate(), timeout=context.timeout
                 )
             except asyncio.TimeoutError:
                 process.kill()
@@ -379,7 +377,9 @@ class PipelineExecutor:
             # Check return code
             if process.returncode != 0:
                 error_msg = stderr.decode() if stderr else "Command failed"
-                raise RuntimeError(f"Command failed with return code {process.returncode}: {error_msg}")
+                raise RuntimeError(
+                    f"Command failed with return code {process.returncode}: {error_msg}"
+                )
 
             # Return output
             output = stdout.decode() if stdout else ""
@@ -395,6 +395,6 @@ class PipelineExecutor:
                 "Shell command execution failed",
                 task_id=task.task_id,
                 command=task.config.command,
-                error=str(e)
+                error=str(e),
             )
             raise e

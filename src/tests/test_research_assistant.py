@@ -6,7 +6,6 @@ This script tests the basic functionality of the Enhanced Research Assistant.
 import asyncio
 import os
 import sys
-import time
 from pathlib import Path
 
 # Add the parent directory to the Python path
@@ -18,6 +17,7 @@ from langchain_anthropic import ChatAnthropic
 from src.agents.enhanced_research_assistant import EnhancedResearchAssistant
 from src.agents.research_rl_integration import RLEnhancedResearchAssistant
 from src.memory.research_memory_persistence import ResearchMemoryDatabase
+
 
 async def test_enhanced_research_assistant():
     """Test the Enhanced Research Assistant."""
@@ -40,7 +40,7 @@ async def test_enhanced_research_assistant():
     project = assistant.create_project(
         name="Test Project",
         description="Test project for research assistant",
-        tags=["test", "research"]
+        tags=["test", "research"],
     )
 
     print(f"Created project: {project.name} (ID: {project.id})")
@@ -50,14 +50,13 @@ async def test_enhanced_research_assistant():
 
     print(f"Researching: {query}")
 
-    response = await assistant.invoke({
-        "query": query,
-        "project_id": project.id,
-        "citation_format": "apa"
-    })
+    response = await assistant.invoke(
+        {"query": query, "project_id": project.id, "citation_format": "apa"}
+    )
 
     # Parse the response
     import json
+
     output = json.loads(response["output"])
 
     print("\n--- Research Results ---")
@@ -91,6 +90,7 @@ async def test_enhanced_research_assistant():
     if os.path.exists(db_path):
         os.remove(db_path)
 
+
 async def test_rl_enhanced_research_assistant():
     """Test the RL-Enhanced Research Assistant."""
     print("\nTesting RL-Enhanced Research Assistant...")
@@ -107,18 +107,14 @@ async def test_rl_enhanced_research_assistant():
 
     # Initialize the RL-enhanced research assistant
     assistant = RLEnhancedResearchAssistant(
-        model=model,
-        db_path=db_path,
-        learning_rate=0.1,
-        discount_factor=0.9,
-        exploration_rate=0.2
+        model=model, db_path=db_path, learning_rate=0.1, discount_factor=0.9, exploration_rate=0.2
     )
 
     # Create a project
     project = assistant.create_project(
         name="RL Test Project",
         description="Test project for RL-enhanced research assistant",
-        tags=["test", "research", "rl"]
+        tags=["test", "research", "rl"],
     )
 
     print(f"Created project: {project.name} (ID: {project.id})")
@@ -128,14 +124,13 @@ async def test_rl_enhanced_research_assistant():
 
     print(f"Researching: {query}")
 
-    response = await assistant.invoke({
-        "query": query,
-        "project_id": project.id,
-        "citation_format": "apa"
-    })
+    response = await assistant.invoke(
+        {"query": query, "project_id": project.id, "citation_format": "apa"}
+    )
 
     # Parse the response
     import json
+
     output = json.loads(response["output"])
 
     print("\n--- Research Results ---")
@@ -162,9 +157,7 @@ async def test_rl_enhanced_research_assistant():
     feedback = "This research was excellent and very comprehensive!"
 
     learning_results = await assistant.update_from_feedback(
-        query=query,
-        response=output,
-        feedback=feedback
+        query=query, response=output, feedback=feedback
     )
 
     print("\n--- Learning Results ---")
@@ -180,6 +173,7 @@ async def test_rl_enhanced_research_assistant():
     if os.path.exists(db_path):
         os.remove(db_path)
 
+
 async def main():
     """Run the tests."""
     # Load environment variables
@@ -190,6 +184,7 @@ async def main():
 
     # Test the RL-Enhanced Research Assistant
     await test_rl_enhanced_research_assistant()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

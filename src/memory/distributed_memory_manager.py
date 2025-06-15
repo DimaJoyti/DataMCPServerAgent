@@ -16,6 +16,7 @@ from src.utils.error_handlers import format_error_for_user
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 class DistributedMemoryManager:
     """Manager for distributed memory operations."""
 
@@ -23,7 +24,7 @@ class DistributedMemoryManager:
         self,
         memory_type: str = "redis",
         config: Optional[Dict[str, Any]] = None,
-        namespace: str = "datamcp"
+        namespace: str = "datamcp",
     ):
         """Initialize the distributed memory manager.
 
@@ -39,17 +40,12 @@ class DistributedMemoryManager:
         # Initialize the memory backend
         self._initialize_backend()
 
-        # Cache for frequently accessed data
-        self.cache = {}
+        # Cache for frequently accessed data with memory optimization
+        from src.utils.bounded_collections import BoundedDict
+        self.cache = BoundedDict(max_size=1000, ttl_seconds=300)  # 5 min TTL, max 1000 items
 
         # Metrics for monitoring
-        self.metrics = {
-            "reads": 0,
-            "writes": 0,
-            "cache_hits": 0,
-            "cache_misses": 0,
-            "errors": 0
-        }
+        self.metrics = {"reads": 0, "writes": 0, "cache_hits": 0, "cache_misses": 0, "errors": 0}
 
     def _initialize_backend(self) -> None:
         """Initialize the memory backend based on configuration."""
@@ -62,32 +58,29 @@ class DistributedMemoryManager:
                         "port": int(os.getenv("REDIS_PORT", "6379")),
                         "db": int(os.getenv("REDIS_DB", "0")),
                         "password": os.getenv("REDIS_PASSWORD", None),
-                        "prefix": f"{self.namespace}:"
+                        "prefix": f"{self.namespace}:",
                     }
                 elif self.memory_type == "mongodb":
                     self.config = {
                         "connection_string": os.getenv("MONGODB_URI", "mongodb://localhost:27017/"),
-                        "database_name": os.getenv("MONGODB_DB", "agent_memory")
+                        "database_name": os.getenv("MONGODB_DB", "agent_memory"),
                     }
 
             # Create the memory backend
             self.backend = DistributedMemoryFactory.create_memory_backend(
-                self.memory_type,
-                **self.config
+                self.memory_type, **self.config
             )
 
-            logger.info(f"Initialized {self.memory_type} memory backend with namespace {self.namespace}")
+            logger.info(
+                f"Initialized {self.memory_type} memory backend with namespace {self.namespace}"
+            )
         except Exception as e:
             error_message = format_error_for_user(e)
             logger.error(f"Failed to initialize memory backend: {error_message}")
             raise RuntimeError(f"Failed to initialize memory backend: {error_message}")
 
     async def save_entity(
-        self,
-        entity_type: str,
-        entity_id: str,
-        entity_data: Dict[str, Any],
-        cache: bool = True
+        self, entity_type: str, entity_id: str, entity_data: Dict[str, Any], cache: bool = True
     ) -> None:
         """Save an entity to distributed memory.
 
@@ -104,10 +97,7 @@ class DistributedMemoryManager:
             # Update cache if enabled
             if cache:
                 cache_key = f"{entity_type}:{entity_id}"
-                self.cache[cache_key] = {
-                    "data": entity_data,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"data": entity_data, "timestamp": time.time()}
 
             # Update metrics
             self.metrics["writes"] += 1
@@ -124,7 +114,7 @@ class DistributedMemoryManager:
         entity_type: str,
         entity_id: str,
         use_cache: bool = True,
-        cache_ttl: int = 300  # 5 minutes
+        cache_ttl: int = 300,  # 5 minutes
     ) -> Optional[Dict[str, Any]]:
         """Load an entity from distributed memory.
 
@@ -159,10 +149,7 @@ class DistributedMemoryManager:
             # Update cache if data found and caching is enabled
             if entity_data and use_cache:
                 cache_key = f"{entity_type}:{entity_id}"
-                self.cache[cache_key] = {
-                    "data": entity_data,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"data": entity_data, "timestamp": time.time()}
 
             # Update metrics
             self.metrics["reads"] += 1
@@ -197,7 +184,9 @@ class DistributedMemoryManager:
             # Update metrics
             self.metrics["writes"] += 1
 
-            logger.debug(f"Deleted entity {entity_type}:{entity_id} from {self.memory_type} backend")
+            logger.debug(
+                f"Deleted entity {entity_type}:{entity_id} from {self.memory_type} backend"
+            )
             return result
         except Exception as e:
             error_message = format_error_for_user(e)
@@ -238,12 +227,7 @@ class DistributedMemoryManager:
             self.metrics["errors"] += 1
             raise
 
-    async def save_tool_usage(
-        self,
-        tool_name: str,
-        args: Dict[str, Any],
-        result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to distributed memory.
 
         Args:
@@ -341,9 +325,9 @@ class DistributedMemoryManager:
             self.clear_cache()
 
             # Close backend connections if supported
-            if hasattr(self.backend, 'close'):
+            if hasattr(self.backend, "close"):
                 await self.backend.close()
-            elif hasattr(self.backend, 'cleanup'):
+            elif hasattr(self.backend, "cleanup"):
                 await self.backend.cleanup()
 
             logger.info(f"Cleaned up {self.memory_type} memory manager")

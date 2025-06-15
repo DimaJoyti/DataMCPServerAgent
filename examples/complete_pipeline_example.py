@@ -4,7 +4,6 @@ Complete pipeline example demonstrating document processing, vectorization, and 
 
 import asyncio
 import logging
-import os
 from pathlib import Path
 
 # Configure logging
@@ -15,28 +14,29 @@ logging.basicConfig(
 
 # Add src to path for imports
 import sys
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.data_pipeline.document_processing import (
-    DocumentProcessor,
+    ChunkingConfig,
     DocumentProcessingConfig,
+    DocumentProcessor,
     ParsingConfig,
-    ChunkingConfig
-)
-from src.data_pipeline.vectorization import (
-    EmbeddingConfig,
-    HuggingFaceEmbedder,
-    BatchVectorProcessor,
-    BatchProcessingConfig,
-    VectorCache,
-    CacheConfig
 )
 from src.data_pipeline.vector_stores.schemas import (
+    DistanceMetric,
     DocumentVectorSchema,
     VectorStoreConfig,
     VectorStoreType,
-    DistanceMetric
 )
+from src.data_pipeline.vectorization import (
+    BatchProcessingConfig,
+    BatchVectorProcessor,
+    CacheConfig,
+    EmbeddingConfig,
+    HuggingFaceEmbedder,
+)
+
 
 class CompletePipelineDemo:
     """Complete pipeline demonstration."""
@@ -367,7 +367,7 @@ storage, databases, networking, software, and analytics.
 
             # Show sample record
             sample_record = vector_records[0]
-            print(f"\n   Sample record:")
+            print("\n   Sample record:")
             print(f"     - ID: {sample_record.id}")
             print(f"     - Document: {sample_record.document_title}")
             print(f"     - Chunk index: {sample_record.chunk_index}")
@@ -390,7 +390,7 @@ storage, databases, networking, software, and analytics.
         # Step 7: Cache statistics
         cache_stats = self.batch_processor.get_cache_stats()
         if cache_stats:
-            print(f"\n7. Cache Statistics...")
+            print("\n7. Cache Statistics...")
             print(f"   - Cache hits: {cache_stats['hits']}")
             print(f"   - Cache misses: {cache_stats['misses']}")
             print(f"   - Hit rate: {cache_stats['hit_rate']:.1%}")
@@ -418,7 +418,7 @@ async def main():
         demo = CompletePipelineDemo()
         results = await demo.run_complete_pipeline()
 
-        print(f"\nDemo completed successfully!")
+        print("\nDemo completed successfully!")
         print(f"Processed {len(results['processing_results'])} documents")
         print(f"Created {len(results['vector_records'])} vector records")
 

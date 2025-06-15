@@ -5,26 +5,30 @@ This module provides API connectivity for REST APIs, GraphQL,
 and other web-based data sources.
 """
 
-import asyncio
+import json
 import logging
-from typing import Any, Dict, List, Optional, AsyncGenerator, Union
+from collections.abc import AsyncGenerator
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urljoin
+
+import aiohttp
 import pandas as pd
 import polars as pl
-import aiohttp
-import json
-from urllib.parse import urljoin, urlencode
-
 import structlog
 from pydantic import BaseModel, Field
 
+
 class APIConfig(BaseModel):
     """API connection configuration."""
+
     base_url: str = Field(..., description="Base URL for the API")
     endpoint: str = Field(..., description="API endpoint")
     method: str = Field(default="GET", description="HTTP method")
 
     # Authentication
-    auth_type: Optional[str] = Field(None, description="Authentication type (bearer, basic, api_key)")
+    auth_type: Optional[str] = Field(
+        None, description="Authentication type (bearer, basic, api_key)"
+    )
     api_key: Optional[str] = Field(None, description="API key")
     api_key_header: str = Field(default="X-API-Key", description="API key header name")
     username: Optional[str] = Field(None, description="Username for basic auth")
@@ -37,7 +41,9 @@ class APIConfig(BaseModel):
     timeout: int = Field(default=30, description="Request timeout in seconds")
 
     # Pagination
-    pagination_type: Optional[str] = Field(None, description="Pagination type (offset, cursor, page)")
+    pagination_type: Optional[str] = Field(
+        None, description="Pagination type (offset, cursor, page)"
+    )
     page_size: int = Field(default=100, description="Number of records per page")
     page_param: str = Field(default="page", description="Page parameter name")
     size_param: str = Field(default="size", description="Size parameter name")
@@ -48,6 +54,7 @@ class APIConfig(BaseModel):
     data_path: Optional[str] = Field(None, description="JSON path to data array")
     next_page_path: Optional[str] = Field(None, description="JSON path to next page info")
     total_count_path: Optional[str] = Field(None, description="JSON path to total count")
+
 
 class APIConnector:
     """
@@ -96,16 +103,9 @@ class APIConnector:
 
             if self.config.auth_type == "basic" and self.config.username and self.config.password:
                 auth = aiohttp.BasicAuth(self.config.username, self.config.password)
-                self.session = aiohttp.ClientSession(
-                    headers=headers,
-                    timeout=timeout,
-                    auth=auth
-                )
+                self.session = aiohttp.ClientSession(headers=headers, timeout=timeout, auth=auth)
             else:
-                self.session = aiohttp.ClientSession(
-                    headers=headers,
-                    timeout=timeout
-                )
+                self.session = aiohttp.ClientSession(headers=headers, timeout=timeout)
 
             # Test connection
             await self._test_connection()
@@ -113,17 +113,11 @@ class APIConnector:
             self.is_connected = True
 
             self.logger.info(
-                "API connected",
-                base_url=self.config.base_url,
-                endpoint=self.config.endpoint
+                "API connected", base_url=self.config.base_url, endpoint=self.config.endpoint
             )
 
         except Exception as e:
-            self.logger.error(
-                "API connection failed",
-                error=str(e),
-                base_url=self.config.base_url
-            )
+            self.logger.error("API connection failed", error=str(e), base_url=self.config.base_url)
             raise e
 
     async def disconnect(self) -> None:
@@ -139,9 +133,7 @@ class APIConnector:
             self.logger.error("API disconnection error", error=str(e))
 
     async def read_batches(
-        self,
-        batch_size: int = 100,
-        **kwargs
+        self, batch_size: int = 100, **kwargs
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """
         Read data in batches from the API.
@@ -175,7 +167,7 @@ class APIConnector:
                 if isinstance(data, list):
                     # Process in batches
                     for i in range(0, len(data), batch_size):
-                        batch = data[i:i + batch_size]
+                        batch = data[i : i + batch_size]
                         if use_polars:
                             yield pl.DataFrame(batch)
                         else:
@@ -188,18 +180,10 @@ class APIConnector:
                         yield pd.DataFrame([data])
 
         except Exception as e:
-            self.logger.error(
-                "API read error",
-                error=str(e),
-                endpoint=self.config.endpoint
-            )
+            self.logger.error("API read error", error=str(e), endpoint=self.config.endpoint)
             raise e
 
-    async def write_batch(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        **kwargs
-    ) -> None:
+    async def write_batch(self, data: Union[pd.DataFrame, pl.DataFrame], **kwargs) -> None:
         """
         Write a batch of data to the API.
 
@@ -221,21 +205,15 @@ class APIConnector:
             batch_size = kwargs.get("batch_size", 100)
 
             for i in range(0, len(records), batch_size):
-                batch = records[i:i + batch_size]
+                batch = records[i : i + batch_size]
                 await self._send_batch(batch)
 
             self.logger.debug(
-                "Batch written to API",
-                records=len(data),
-                endpoint=self.config.endpoint
+                "Batch written to API", records=len(data), endpoint=self.config.endpoint
             )
 
         except Exception as e:
-            self.logger.error(
-                "API write error",
-                error=str(e),
-                records=len(data)
-            )
+            self.logger.error("API write error", error=str(e), records=len(data))
             raise e
 
     async def _test_connection(self) -> None:
@@ -247,14 +225,14 @@ class APIConnector:
             async with self.session.request(
                 "HEAD" if self.config.method == "GET" else self.config.method,
                 url,
-                params=self.config.params
+                params=self.config.params,
             ) as response:
                 if response.status >= 400:
                     raise aiohttp.ClientResponseError(
                         request_info=response.request_info,
                         history=response.history,
                         status=response.status,
-                        message=f"API test failed with status {response.status}"
+                        message=f"API test failed with status {response.status}",
                     )
 
         except Exception as e:
@@ -262,9 +240,7 @@ class APIConnector:
             raise e
 
     async def _read_paginated_data(
-        self,
-        batch_size: int,
-        use_polars: bool
+        self, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read data from paginated API."""
         page = 1
@@ -320,7 +296,9 @@ class APIConnector:
 
             # Check total count if available
             if self.config.total_count_path:
-                total_count = self._extract_data_from_path(response_data, self.config.total_count_path)
+                total_count = self._extract_data_from_path(
+                    response_data, self.config.total_count_path
+                )
                 if total_count and offset >= total_count:
                     has_more = False
 
@@ -329,11 +307,7 @@ class APIConnector:
         url = urljoin(self.config.base_url, self.config.endpoint)
         request_params = params or self.config.params
 
-        async with self.session.request(
-            self.config.method,
-            url,
-            params=request_params
-        ) as response:
+        async with self.session.request(self.config.method, url, params=request_params) as response:
             response.raise_for_status()
 
             content_type = response.headers.get("content-type", "")
@@ -352,10 +326,7 @@ class APIConnector:
         url = urljoin(self.config.base_url, self.config.endpoint)
 
         async with self.session.request(
-            "POST",  # Assume POST for writing
-            url,
-            json=batch,
-            params=self.config.params
+            "POST", url, json=batch, params=self.config.params  # Assume POST for writing
         ) as response:
             response.raise_for_status()
 
@@ -386,5 +357,5 @@ class APIConnector:
             "auth_type": self.config.auth_type,
             "pagination_type": self.config.pagination_type,
             "page_size": self.config.page_size,
-            "connected": self.is_connected
+            "connected": self.is_connected,
         }

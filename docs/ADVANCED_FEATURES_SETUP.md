@@ -1,173 +1,173 @@
-# 🚀 Розширені функції пайплайну обробки документів
+# 🚀 Advanced Document Processing Pipeline Features
 
-## 📋 Огляд нових функцій
+## 📋 Overview of New Features
 
-Ми успішно реалізували чотири основні напрямки розвитку системи:
+We have successfully implemented four main development directions:
 
-### ✅ 1. Інтеграція з векторними сховищами - реалізація конкретних бекендів
+### ✅ 1. Vector Store Integration - Concrete Backend Implementation
 
-**Реалізовані векторні сховища:**
-- **Memory Store** - швидке in-memory сховище для розробки та тестування
-- **ChromaDB** - популярне векторне сховище з підтримкою гібридного пошуку
-- **FAISS** - високопродуктивне сховище від Facebook AI для великих обсягів даних
-- **Pinecone, Weaviate, Qdrant** - підготовлені інтерфейси (потребують додаткових залежностей)
+**Implemented Vector Stores:**
+- **Memory Store** - fast in-memory storage for development and testing
+- **ChromaDB** - popular vector store with hybrid search support
+- **FAISS** - high-performance store from Facebook AI for large volumes
+- **Pinecone, Weaviate, Qdrant** - prepared interfaces (require additional dependencies)
 
-**Ключові можливості:**
-- Автоматичне управління колекціями
-- Гібридний пошук (векторний + ключові слова)
-- Фільтрація та сортування результатів
-- Статистика та моніторинг
-- Батчева обробка для продуктивності
+**Key Capabilities:**
+- Automatic collection management
+- Hybrid search (vector + keywords)
+- Result filtering and sorting
+- Statistics and monitoring
+- Batch processing for performance
 
-### ✅ 2. Веб-інтерфейс - інтеграція з agent-ui
+### ✅ 2. Web Interface - Integration with agent-ui
 
-**Реалізований веб-інтерфейс:**
-- **FastAPI REST API** з повною документацією
-- **Асинхронна обробка** документів з відстеженням прогресу
-- **Інтерактивний веб-інтерфейс** з Alpine.js та Tailwind CSS
-- **Інтеграція з agent-ui** через стандартні API ендпоінти
+**Implemented Web Interface:**
+- **FastAPI REST API** with full documentation
+- **Asynchronous document processing** with progress tracking
+- **Interactive web interface** with Alpine.js and Tailwind CSS
+- **Integration with agent-ui** through standard API endpoints
 
-**API ендпоінти:**
-- `POST /documents/upload` - завантаження та обробка документів
-- `GET /documents/{task_id}/status` - статус обробки
-- `POST /search` - пошук у векторних сховищах
-- `GET /stats` - статистика системи
-- `GET /collections` - управління колекціями
+**API Endpoints:**
+- `POST /documents/upload` - document upload and processing
+- `GET /documents/{task_id}/status` - processing status
+- `POST /search` - search in vector stores
+- `GET /stats` - system statistics
+- `GET /collections` - collection management
 
-### ✅ 3. Розширення форматів - додаткові типи документів
+### ✅ 3. Format Extension - Additional Document Types
 
-**Нові підтримувані формати:**
-- **Excel файли** (.xlsx, .xls) - з підтримкою множинних аркушів
-- **PowerPoint презентації** (.pptx) - з витяганням тексту та нотаток
-- **CSV/TSV файли** - з автоматичним визначенням параметрів
-- **Покращена підтримка** існуючих форматів
+**New Supported Formats:**
+- **Excel files** (.xlsx, .xls) - with multiple sheet support
+- **PowerPoint presentations** (.pptx) - with text and notes extraction
+- **CSV/TSV files** - with automatic parameter detection
+- **Enhanced support** for existing formats
 
-**Функції парсерів:**
-- Автоматичне визначення кодування та роздільників
-- Збереження структури документів
-- Витягання метаданих
-- Обробка таблиць та зображень
+**Parser Features:**
+- Automatic encoding and delimiter detection
+- Document structure preservation
+- Metadata extraction
+- Table and image processing
 
-### ✅ 4. Оптимізація - асинхронна обробка та розподілені обчислення
+### ✅ 4. Optimization - Asynchronous Processing and Distributed Computing
 
-**Асинхронні компоненти:**
-- **AsyncDocumentProcessor** - паралельна обробка документів
-- **AsyncBatchProcessor** - асинхронна векторизація
-- **TaskQueue & TaskManager** - система черг завдань з пріоритетами
-- **DistributedProcessor** - розподілена обробка
+**Asynchronous Components:**
+- **AsyncDocumentProcessor** - parallel document processing
+- **AsyncBatchProcessor** - asynchronous vectorization
+- **TaskQueue & TaskManager** - task queue system with priorities
+- **DistributedProcessor** - distributed processing
 
-**Оптимізації продуктивності:**
-- Паралельна обробка з контролем ресурсів
-- Батчева векторизація з кешуванням
-- Система повторних спроб
-- Моніторинг та статистика
+**Performance Optimizations:**
+- Parallel processing with resource control
+- Batch vectorization with caching
+- Retry system
+- Monitoring and statistics
 
-## 🛠️ Встановлення додаткових залежностей
+## 🛠️ Installing Additional Dependencies
 
-### Базові залежності (вже встановлені)
+### Basic Dependencies (already installed)
 ```bash
 uv pip install fastapi uvicorn pydantic
 uv pip install sentence-transformers transformers torch
 ```
 
-### Векторні сховища
+### Vector Stores
 ```bash
 # ChromaDB
 uv pip install chromadb
 
 # FAISS
 uv pip install faiss-cpu
-# або для GPU
+# or for GPU
 uv pip install faiss-gpu
 
-# Опціональні сховища
+# Optional stores
 uv pip install pinecone-client weaviate-client qdrant-client
 ```
 
-### Нові формати документів
+### New Document Formats
 ```bash
-# Excel файли
+# Excel files
 uv pip install pandas openpyxl xlrd
 
-# PowerPoint презентації
+# PowerPoint presentations
 uv pip install python-pptx
 
-# Покращена обробка CSV
+# Enhanced CSV processing
 uv pip install chardet
 ```
 
-### Веб-інтерфейс
+### Web Interface
 ```bash
-# FastAPI та залежності
+# FastAPI and dependencies
 uv pip install fastapi uvicorn python-multipart aiofiles
 
-# Опціонально для продакшену
+# Optional for production
 uv pip install gunicorn
 ```
 
-## 🚀 Запуск нових функцій
+## 🚀 Running New Features
 
-### 1. Демонстрація векторних сховищ
+### 1. Vector Stores Demo
 ```bash
 cd d:\AI\DataMCPServerAgent
 python examples/vector_stores_example.py
 ```
 
-**Що демонструється:**
-- Створення різних типів векторних сховищ
-- Вставка та пошук векторів
-- Гібридний пошук
-- Статистика та управління
+**What's demonstrated:**
+- Creating different types of vector stores
+- Vector insertion and search
+- Hybrid search
+- Statistics and management
 
-### 2. Запуск веб-інтерфейсу
+### 2. Starting Web Interface
 ```bash
-# Запуск API сервера
+# Start API server
 python src/web_interface/server.py
 
-# Або з налаштуваннями
+# Or with custom settings
 HOST=0.0.0.0 PORT=8000 python src/web_interface/server.py
 ```
 
-**Доступні URL:**
-- `http://localhost:8000` - API документація (Swagger)
-- `http://localhost:8000/ui` - веб-інтерфейс
-- `http://localhost:8000/health` - перевірка здоров'я
-- `http://localhost:8000/stats` - статистика системи
+**Available URLs:**
+- `http://localhost:8000` - API documentation (Swagger)
+- `http://localhost:8000/ui` - web interface
+- `http://localhost:8000/health` - health check
+- `http://localhost:8000/stats` - system statistics
 
-### 3. Тестування нових форматів
+### 3. Testing New Formats
 ```bash
 python examples/advanced_features_example.py
 ```
 
-**Що тестується:**
-- Обробка Excel, PowerPoint, CSV файлів
-- Порівняння з існуючими форматами
-- Витягання метаданих
-- Продуктивність обробки
+**What's tested:**
+- Processing Excel, PowerPoint, CSV files
+- Comparison with existing formats
+- Metadata extraction
+- Processing performance
 
-### 4. Демонстрація асинхронної обробки
+### 4. Asynchronous Processing Demo
 ```bash
-# Включено в advanced_features_example.py
+# Included in advanced_features_example.py
 python examples/advanced_features_example.py
 ```
 
-**Що демонструється:**
-- Паралельна обробка документів
-- Система черг завдань
-- Порівняння продуктивності
-- Моніторинг прогресу
+**What's demonstrated:**
+- Parallel document processing
+- Task queue system
+- Performance comparison
+- Progress monitoring
 
-## 📊 Приклади використання
+## 📊 Usage Examples
 
-### Векторні сховища
+### Vector Stores
 ```python
 from src.data_pipeline.vector_stores.vector_store_manager import VectorStoreManager
 from src.data_pipeline.vector_stores.schemas import VectorStoreConfig, VectorStoreType
 
-# Створення менеджера
+# Create manager
 manager = VectorStoreManager()
 
-# Створення ChromaDB сховища
+# Create ChromaDB store
 config = VectorStoreConfig(
     store_type=VectorStoreType.CHROMA,
     collection_name="my_documents",
@@ -177,7 +177,7 @@ config = VectorStoreConfig(
 
 store = await manager.create_store("chroma_store", config)
 
-# Пошук
+# Search
 from src.data_pipeline.vector_stores.schemas.search_models import SearchQuery, SearchType
 
 query = SearchQuery(
@@ -189,11 +189,11 @@ query = SearchQuery(
 results = await store.search_vectors(query)
 ```
 
-### Веб API
+### Web API
 ```python
 import httpx
 
-# Завантаження документа
+# Upload document
 files = {"file": open("document.pdf", "rb")}
 data = {
     "enable_vectorization": True,
@@ -204,10 +204,10 @@ data = {
 response = httpx.post("http://localhost:8000/documents/upload", files=files, data=data)
 task_id = response.json()["task_id"]
 
-# Перевірка статусу
+# Check status
 status = httpx.get(f"http://localhost:8000/documents/{task_id}/status")
 
-# Пошук
+# Search
 search_data = {
     "query_text": "artificial intelligence",
     "search_type": "hybrid",
@@ -217,17 +217,17 @@ search_data = {
 results = httpx.post("http://localhost:8000/search", json=search_data)
 ```
 
-### Асинхронна обробка
+### Asynchronous Processing
 ```python
 from src.data_pipeline.async_processing import AsyncDocumentProcessor, TaskManager
 
-# Асинхронна обробка документів
+# Asynchronous document processing
 async_processor = AsyncDocumentProcessor(max_workers=4)
 
 files = ["doc1.pdf", "doc2.docx", "doc3.xlsx"]
 results = await async_processor.process_files_async(files)
 
-# Система черг
+# Task queue system
 task_manager = TaskManager(max_workers=3)
 await task_manager.start()
 
@@ -238,33 +238,33 @@ task_id = await task_manager.submit_task(
 )
 ```
 
-### Нові формати документів
+### New Document Formats
 ```python
 from src.data_pipeline.document_processing import DocumentProcessor
 
 processor = DocumentProcessor()
 
-# Excel файл
+# Excel file
 excel_result = processor.process_file("spreadsheet.xlsx")
 print(f"Sheets: {excel_result.metadata.custom_metadata['total_sheets']}")
 
-# PowerPoint презентація
+# PowerPoint presentation
 ppt_result = processor.process_file("presentation.pptx")
 print(f"Slides: {ppt_result.metadata.page_count}")
 
-# CSV файл з автоматичним визначенням параметрів
+# CSV file with automatic parameter detection
 csv_result = processor.process_file("data.csv")
 print(f"Delimiter: {csv_result.metadata.custom_metadata['delimiter']}")
 ```
 
-## 🔧 Налаштування продуктивності
+## 🔧 Performance Configuration
 
-### Векторні сховища
+### Vector Stores
 ```python
-# FAISS для великих обсягів
+# FAISS for large volumes
 config = VectorStoreConfig(
     store_type=VectorStoreType.FAISS,
-    index_type="hnsw",  # Для швидкого пошуку
+    index_type="hnsw",  # For fast search
     index_params={
         "M": 16,
         "ef_construction": 200,
@@ -272,34 +272,34 @@ config = VectorStoreConfig(
     }
 )
 
-# ChromaDB з оптимізацією
+# ChromaDB with optimization
 config = VectorStoreConfig(
     store_type=VectorStoreType.CHROMA,
-    batch_size=100,  # Більші батчі
+    batch_size=100,  # Larger batches
     persist_directory="data/chroma"
 )
 ```
 
-### Асинхронна обробка
+### Asynchronous Processing
 ```python
-# Оптимізація для CPU-інтенсивних задач
+# Optimization for CPU-intensive tasks
 async_processor = AsyncDocumentProcessor(
     max_workers=8,
-    use_process_pool=True,  # Використання процесів
+    use_process_pool=True,  # Use processes
     chunk_size=20
 )
 
-# Налаштування черг
+# Queue configuration
 task_manager = TaskManager(
     max_workers=6,
     queue_maxsize=1000,
-    cleanup_interval=1800  # 30 хвилин
+    cleanup_interval=1800  # 30 minutes
 )
 ```
 
-### Веб-інтерфейс
+### Web Interface
 ```bash
-# Продакшен запуск з Gunicorn
+# Production run with Gunicorn
 gunicorn src.web_interface.server:app \
     --workers 4 \
     --worker-class uvicorn.workers.UvicornWorker \
@@ -307,36 +307,36 @@ gunicorn src.web_interface.server:app \
     --timeout 300
 ```
 
-## 📈 Моніторинг та діагностика
+## 📈 Monitoring and Diagnostics
 
-### Статистика системи
+### System Statistics
 ```python
-# Статистика векторних сховищ
+# Vector store statistics
 stats = await manager.get_stats_all()
 print(f"Total vectors: {sum(s.get('total_vectors', 0) for s in stats.values())}")
 
-# Статистика черг завдань
+# Task queue statistics
 task_stats = task_manager.get_stats()
 print(f"Success rate: {task_stats['success_rate']:.1f}%")
 
-# Статистика кешу
+# Cache statistics
 cache_stats = batch_processor.get_cache_stats()
 print(f"Cache hit rate: {cache_stats.get('hit_rate', 0):.1f}%")
 ```
 
-### Логування
+### Logging
 ```python
 import logging
 
-# Детальне логування для діагностики
+# Detailed logging for diagnostics
 logging.getLogger('src.data_pipeline').setLevel(logging.DEBUG)
 logging.getLogger('src.web_interface').setLevel(logging.INFO)
 logging.getLogger('src.async_processing').setLevel(logging.INFO)
 ```
 
-## 🔄 Інтеграція з agent-ui
+## 🔄 Integration with agent-ui
 
-### Налаштування MCP сервера
+### MCP Server Configuration
 ```json
 {
   "mcpServers": {
@@ -352,15 +352,15 @@ logging.getLogger('src.async_processing').setLevel(logging.INFO)
 }
 ```
 
-### Використання в агентах
+### Usage in Agents
 ```typescript
-// Завантаження документа через агент
+// Document upload through agent
 const uploadResponse = await fetch('/documents/upload', {
   method: 'POST',
   body: formData
 });
 
-// Пошук документів
+// Document search
 const searchResponse = await fetch('/search', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -372,30 +372,30 @@ const searchResponse = await fetch('/search', {
 });
 ```
 
-## 🎯 Наступні кроки
+## 🎯 Next Steps
 
-1. **Розширення векторних сховищ**
-   - Реалізація Pinecone, Weaviate, Qdrant бекендів
-   - Підтримка гібридних індексів
-   - Автоматичне масштабування
+1. **Vector Store Expansion**
+   - Implement Pinecone, Weaviate, Qdrant backends
+   - Support for hybrid indexes
+   - Automatic scaling
 
-2. **Покращення веб-інтерфейсу**
-   - Реалтайм оновлення статусу
-   - Візуалізація результатів пошуку
-   - Адміністративна панель
+2. **Web Interface Improvements**
+   - Real-time status updates
+   - Search result visualization
+   - Administrative panel
 
-3. **Додаткові формати**
-   - Аудіо та відео файли
-   - Архіви та стиснені файли
-   - Спеціалізовані формати (CAD, GIS)
+3. **Additional Formats**
+   - Audio and video files
+   - Archives and compressed files
+   - Specialized formats (CAD, GIS)
 
-4. **Розподілені обчислення**
-   - Кластерна обробка
-   - Інтеграція з Kubernetes
-   - Автоматичне балансування навантаження
+4. **Distributed Computing**
+   - Cluster processing
+   - Kubernetes integration
+   - Automatic load balancing
 
 ---
 
-**Система готова до використання в продакшені!** 🎉
+**System is ready for production use!** 🎉
 
-Всі компоненти протестовані та оптимізовані для високої продуктивності та надійності.
+All components are tested and optimized for high performance and reliability.

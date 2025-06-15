@@ -2,14 +2,9 @@
 Document metadata extraction and management module.
 """
 
-from .models import (
-    DocumentType,
-    ProcessingStatus,
-    DocumentMetadata,
-    ChunkMetadata
-)
-from .extractor import MetadataExtractor
 from .enricher import MetadataEnricher
+from .extractor import MetadataExtractor
+from .models import ChunkMetadata, DocumentMetadata, DocumentType, ProcessingStatus
 
 __all__ = [
     "DocumentType",

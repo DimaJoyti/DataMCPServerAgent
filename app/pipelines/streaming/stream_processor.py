@@ -22,8 +22,10 @@ from pydantic import BaseModel, Field
 from app.core.logging import get_logger
 from app.pipelines.multimodal import ProcessorFactory
 
+
 class StreamEventType(str, Enum):
     """Types of stream events."""
+
     DOCUMENT_ADDED = "document_added"
     DOCUMENT_UPDATED = "document_updated"
     DOCUMENT_DELETED = "document_deleted"
@@ -31,13 +33,16 @@ class StreamEventType(str, Enum):
     ERROR_OCCURRED = "error_occurred"
     SYSTEM_ALERT = "system_alert"
 
+
 class ProcessingStatus(str, Enum):
     """Processing status for stream events."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     RETRYING = "retrying"
+
 
 @dataclass
 class StreamEvent:
@@ -60,6 +65,7 @@ class StreamEvent:
     # Tracing
     trace_id: Optional[str] = None
     parent_event_id: Optional[str] = None
+
 
 class StreamingConfig(BaseModel):
     """Configuration for streaming pipeline."""
@@ -89,6 +95,7 @@ class StreamingConfig(BaseModel):
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
     metrics_interval_seconds: float = Field(default=10.0, description="Metrics collection interval")
 
+
 class ProcessingResult(BaseModel):
     """Result of stream processing."""
 
@@ -108,6 +115,7 @@ class ProcessingResult(BaseModel):
     # Error handling
     error_message: Optional[str] = Field(None, description="Error message if failed")
     retry_count: int = Field(default=0, description="Number of retries attempted")
+
 
 class StreamProcessor:
     """Individual stream processor worker."""
@@ -162,14 +170,16 @@ class StreamProcessor:
                 output=output,
                 metadata={
                     "event_type": event.event_type,
-                    "content_size": len(str(event.content)) if event.content else 0
-                }
+                    "content_size": len(str(event.content)) if event.content else 0,
+                },
             )
 
             self.processed_count += 1
             event.status = ProcessingStatus.COMPLETED
 
-            self.logger.debug(f"Successfully processed event {event.event_id} in {processing_time_ms:.2f}ms")
+            self.logger.debug(
+                f"Successfully processed event {event.event_id} in {processing_time_ms:.2f}ms"
+            )
             return result
 
         except Exception as e:
@@ -186,7 +196,7 @@ class StreamProcessor:
                 processing_time_ms=processing_time_ms,
                 worker_id=self.worker_id,
                 error_message=error_message,
-                retry_count=event.retry_count
+                retry_count=event.retry_count,
             )
 
             self.error_count += 1
@@ -199,21 +209,21 @@ class StreamProcessor:
         content = event.content
 
         # Simulate multimodal processing
-        if hasattr(content, 'text') or hasattr(content, 'image') or hasattr(content, 'audio'):
+        if hasattr(content, "text") or hasattr(content, "image") or hasattr(content, "audio"):
             # Use multimodal processor
             result = await self.multimodal_processor.process(content)
             return {
                 "type": "multimodal_processing",
                 "extracted_text": result.extracted_text,
                 "embeddings_generated": bool(result.combined_embedding),
-                "entities_found": len(result.extracted_entities)
+                "entities_found": len(result.extracted_entities),
             }
         else:
             # Simple text processing
             return {
                 "type": "text_processing",
                 "content_length": len(str(content)),
-                "processed_at": time.time()
+                "processed_at": time.time(),
             }
 
     async def _process_document_updated(self, event: StreamEvent) -> Dict[str, Any]:
@@ -221,7 +231,7 @@ class StreamProcessor:
         return {
             "type": "document_update",
             "updated_fields": event.metadata.get("updated_fields", []),
-            "version": event.metadata.get("version", 1) + 1
+            "version": event.metadata.get("version", 1) + 1,
         }
 
     async def _process_document_deleted(self, event: StreamEvent) -> Dict[str, Any]:
@@ -229,7 +239,7 @@ class StreamProcessor:
         return {
             "type": "document_deletion",
             "document_id": event.metadata.get("document_id"),
-            "cleanup_completed": True
+            "cleanup_completed": True,
         }
 
     async def _process_generic_event(self, event: StreamEvent) -> Dict[str, Any]:
@@ -237,7 +247,7 @@ class StreamProcessor:
         return {
             "type": "generic_processing",
             "event_type": event.event_type,
-            "content_processed": bool(event.content)
+            "content_processed": bool(event.content),
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -247,9 +257,13 @@ class StreamProcessor:
             "is_running": self.is_running,
             "processed_count": self.processed_count,
             "error_count": self.error_count,
-            "success_rate": self.processed_count / (self.processed_count + self.error_count)
-                          if (self.processed_count + self.error_count) > 0 else 0.0
+            "success_rate": (
+                self.processed_count / (self.processed_count + self.error_count)
+                if (self.processed_count + self.error_count) > 0
+                else 0.0
+            ),
         }
+
 
 class StreamingPipeline:
     """Main streaming pipeline coordinator."""
@@ -393,10 +407,7 @@ class StreamingPipeline:
         while self.is_running and not self.shutdown_event.is_set():
             try:
                 # Get event from queue with timeout
-                event = await asyncio.wait_for(
-                    self.event_queue.get(),
-                    timeout=1.0
-                )
+                event = await asyncio.wait_for(self.event_queue.get(), timeout=1.0)
 
                 # Process event
                 result = await worker.process_event(event)
@@ -420,13 +431,17 @@ class StreamingPipeline:
         active_workers = sum(1 for w in self.workers if w.is_running)
 
         # Scale up if needed
-        if (queue_usage > self.config.scale_up_threshold and
-            active_workers < self.config.max_workers):
+        if (
+            queue_usage > self.config.scale_up_threshold
+            and active_workers < self.config.max_workers
+        ):
             await self._scale_up()
 
         # Scale down if needed
-        elif (queue_usage < self.config.scale_down_threshold and
-              active_workers > self.config.min_workers):
+        elif (
+            queue_usage < self.config.scale_down_threshold
+            and active_workers > self.config.min_workers
+        ):
             await self._scale_down()
 
     async def _scale_up(self) -> None:
@@ -445,7 +460,10 @@ class StreamingPipeline:
         # Find a worker to remove (simple strategy: last added)
         for i in range(len(self.workers) - 1, -1, -1):
             worker = self.workers[i]
-            if worker.is_running and len([w for w in self.workers if w.is_running]) > self.config.min_workers:
+            if (
+                worker.is_running
+                and len([w for w in self.workers if w.is_running]) > self.config.min_workers
+            ):
                 worker.is_running = False
                 self.logger.info(f"Scaled down: removed worker {worker.worker_id}")
                 break
@@ -493,18 +511,21 @@ class StreamingPipeline:
                 "uptime_seconds": uptime,
                 "total_events_processed": self.total_events_processed,
                 "total_events_failed": self.total_events_failed,
-                "success_rate": self.total_events_processed /
-                              (self.total_events_processed + self.total_events_failed)
-                              if (self.total_events_processed + self.total_events_failed) > 0 else 0.0
+                "success_rate": (
+                    self.total_events_processed
+                    / (self.total_events_processed + self.total_events_failed)
+                    if (self.total_events_processed + self.total_events_failed) > 0
+                    else 0.0
+                ),
             },
             "queue": {
                 "size": self.event_queue.qsize(),
                 "max_size": self.config.max_queue_size,
-                "usage": self.event_queue.qsize() / self.config.max_queue_size
+                "usage": self.event_queue.qsize() / self.config.max_queue_size,
             },
             "workers": {
                 "total": len(self.workers),
                 "active": sum(1 for w in self.workers if w.is_running),
-                "stats": [w.get_stats() for w in self.workers]
-            }
+                "stats": [w.get_stats() for w in self.workers],
+            },
         }

@@ -13,6 +13,7 @@ from ..document_processing.document_processor import DocumentProcessingConfig, D
 from ..document_processing.metadata.models import DocumentMetadata
 from ..document_processing.parsers.base_parser import ParsedDocument
 
+
 class AsyncDocumentProcessor:
     """Asynchronous document processor with parallel processing capabilities."""
 
@@ -21,7 +22,7 @@ class AsyncDocumentProcessor:
         config: Optional[DocumentProcessingConfig] = None,
         max_workers: int = 4,
         use_process_pool: bool = False,
-        chunk_size: int = 10
+        chunk_size: int = 10,
     ):
         """
         Initialize async document processor.
@@ -62,17 +63,13 @@ class AsyncDocumentProcessor:
 
         # Run in executor to avoid blocking
         result = await loop.run_in_executor(
-            self.executor,
-            self._sync_processor.process_file,
-            file_path
+            self.executor, self._sync_processor.process_file, file_path
         )
 
         return result
 
     async def process_files_async(
-        self,
-        file_paths: List[Union[str, Path]],
-        progress_callback: Optional[callable] = None
+        self, file_paths: List[Union[str, Path]], progress_callback: Optional[callable] = None
     ) -> List[ParsedDocument]:
         """
         Process multiple files asynchronously.
@@ -105,7 +102,9 @@ class AsyncDocumentProcessor:
                 # Call progress callback if provided
                 if progress_callback:
                     progress = (completed / len(file_paths)) * 100
-                    await self._safe_callback(progress_callback, completed, len(file_paths), progress)
+                    await self._safe_callback(
+                        progress_callback, completed, len(file_paths), progress
+                    )
 
             except Exception as e:
                 self.logger.error(f"Failed to process file: {e}")
@@ -123,7 +122,7 @@ class AsyncDocumentProcessor:
         self,
         file_paths: List[Union[str, Path]],
         batch_size: Optional[int] = None,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> List[ParsedDocument]:
         """
         Process files in batches to control memory usage.
@@ -143,7 +142,7 @@ class AsyncDocumentProcessor:
 
         # Process in batches
         for i in range(0, len(file_paths), batch_size):
-            batch = file_paths[i:i + batch_size]
+            batch = file_paths[i : i + batch_size]
 
             self.logger.info(f"Processing batch {i//batch_size + 1}: {len(batch)} files")
 
@@ -165,7 +164,7 @@ class AsyncDocumentProcessor:
         content: str,
         document_id: str,
         document_type: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ParsedDocument:
         """
         Process text content asynchronously.
@@ -187,7 +186,7 @@ class AsyncDocumentProcessor:
             content,
             document_id,
             document_type,
-            metadata
+            metadata,
         )
 
         return result
@@ -205,9 +204,7 @@ class AsyncDocumentProcessor:
         loop = asyncio.get_event_loop()
 
         result = await loop.run_in_executor(
-            self.executor,
-            self._sync_processor.extract_metadata,
-            file_path
+            self.executor, self._sync_processor.extract_metadata, file_path
         )
 
         return result
@@ -222,8 +219,7 @@ class AsyncDocumentProcessor:
         loop = asyncio.get_event_loop()
 
         result = await loop.run_in_executor(
-            self.executor,
-            self._sync_processor.get_supported_formats
+            self.executor, self._sync_processor.get_supported_formats
         )
 
         return result
@@ -238,10 +234,7 @@ class AsyncDocumentProcessor:
         try:
             loop = asyncio.get_event_loop()
 
-            result = await loop.run_in_executor(
-                self.executor,
-                self._sync_processor.health_check
-            )
+            result = await loop.run_in_executor(self.executor, self._sync_processor.health_check)
 
             return result
         except Exception as e:
@@ -266,8 +259,9 @@ class AsyncDocumentProcessor:
 
     def __del__(self):
         """Cleanup on deletion."""
-        if hasattr(self, 'executor') and self.executor:
+        if hasattr(self, "executor") and self.executor:
             self.executor.shutdown(wait=False)
+
 
 class AsyncDocumentProcessorManager:
     """Manager for multiple async document processors."""
@@ -288,9 +282,7 @@ class AsyncDocumentProcessorManager:
         """Initialize all processors."""
         for i in range(self.num_processors):
             processor = AsyncDocumentProcessor(
-                config=config,
-                max_workers=2,  # Fewer workers per processor
-                use_process_pool=False
+                config=config, max_workers=2, use_process_pool=False  # Fewer workers per processor
             )
             self.processors.append(processor)
 
@@ -303,9 +295,7 @@ class AsyncDocumentProcessorManager:
         return processor
 
     async def process_files_distributed(
-        self,
-        file_paths: List[Union[str, Path]],
-        progress_callback: Optional[callable] = None
+        self, file_paths: List[Union[str, Path]], progress_callback: Optional[callable] = None
     ) -> List[ParsedDocument]:
         """
         Process files distributed across multiple processors.

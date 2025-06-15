@@ -5,16 +5,15 @@ This agent analyzes news and social media with VADER sentiment analysis,
 incorporating source credibility weighting.
 """
 
-import asyncio
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class NewsSource(Model):
     """Model for a news source."""
@@ -23,6 +22,7 @@ class NewsSource(Model):
     url: str
     credibility_score: float = 1.0  # 0.0 to 1.0
     category: str = "general"
+
 
 class SentimentData(Model):
     """Model for sentiment data."""
@@ -35,6 +35,7 @@ class SentimentData(Model):
     sentiment_score: float = 0.0  # -1.0 to 1.0
     weighted_score: float = 0.0  # Adjusted by source credibility
 
+
 class SentimentAnalysisResult(Model):
     """Model for sentiment analysis results."""
 
@@ -45,6 +46,7 @@ class SentimentAnalysisResult(Model):
     sources: List[str] = []
     detailed_scores: Dict[str, float] = {}
 
+
 class SentimentAgentState(BaseAgentState):
     """State model for the Sentiment Intelligence Agent."""
 
@@ -52,6 +54,7 @@ class SentimentAgentState(BaseAgentState):
     recent_analyses: List[SentimentAnalysisResult] = []
     symbols_to_track: List[str] = ["BTC/USD", "ETH/USD"]
     analysis_interval: int = 3600  # seconds
+
 
 class SentimentIntelligenceAgent(BaseAgent):
     """Agent for analyzing news and social media sentiment."""
@@ -62,7 +65,7 @@ class SentimentIntelligenceAgent(BaseAgent):
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the Sentiment Intelligence Agent.
 
@@ -137,19 +140,23 @@ class SentimentIntelligenceAgent(BaseAgent):
             # Calculate weighted score
             weighted_score = score * source_credibility
 
-            sentiment_data.append(SentimentData(
-                source=item["source"],
-                title=item["title"],
-                url=item["url"],
-                content=item["content"],
-                timestamp=item["timestamp"],
-                sentiment_score=score,
-                weighted_score=weighted_score
-            ))
+            sentiment_data.append(
+                SentimentData(
+                    source=item["source"],
+                    title=item["title"],
+                    url=item["url"],
+                    content=item["content"],
+                    timestamp=item["timestamp"],
+                    sentiment_score=score,
+                    weighted_score=weighted_score,
+                )
+            )
 
         # Calculate overall sentiment
         if sentiment_data:
-            overall_sentiment = sum(data.weighted_score for data in sentiment_data) / len(sentiment_data)
+            overall_sentiment = sum(data.weighted_score for data in sentiment_data) / len(
+                sentiment_data
+            )
 
             # Create result
             result = SentimentAnalysisResult(
@@ -158,7 +165,7 @@ class SentimentIntelligenceAgent(BaseAgent):
                 data_points=len(sentiment_data),
                 timestamp=datetime.now().isoformat(),
                 sources=[data.source for data in sentiment_data],
-                detailed_scores={data.source: data.weighted_score for data in sentiment_data}
+                detailed_scores={data.source: data.weighted_score for data in sentiment_data},
             )
 
             # Update state
@@ -166,7 +173,9 @@ class SentimentIntelligenceAgent(BaseAgent):
             if len(self.state.recent_analyses) > 10:
                 self.state.recent_analyses.pop(0)
 
-            ctx.logger.info(f"Sentiment analysis for {symbol}: {overall_sentiment:.2f} ({len(sentiment_data)} data points)")
+            ctx.logger.info(
+                f"Sentiment analysis for {symbol}: {overall_sentiment:.2f} ({len(sentiment_data)} data points)"
+            )
 
             # Broadcast result to other agents
             # Implementation depends on the communication protocol
@@ -204,13 +213,13 @@ class SentimentIntelligenceAgent(BaseAgent):
                 "title": f"{symbol} price surges after positive regulatory news",
                 "url": "https://example.com/news/1",
                 "content": f"The price of {symbol} has increased by 5% following positive regulatory developments.",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             },
             {
                 "source": "TradingView",
                 "title": f"Technical analysis suggests {symbol} may continue uptrend",
                 "url": "https://example.com/news/2",
                 "content": f"Technical indicators are showing strong bullish signals for {symbol} in the short term.",
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         ]

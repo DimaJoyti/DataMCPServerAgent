@@ -5,8 +5,6 @@ Example script demonstrating the multi-agent learning system.
 import asyncio
 import os
 import sys
-import time
-from typing import Dict
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,7 +16,7 @@ from src.agents.learning_capabilities import FeedbackCollector, LearningAgent
 from src.agents.multi_agent_learning import (
     CollaborativeLearningSystem,
     KnowledgeTransferAgent,
-    MultiAgentLearningSystem
+    MultiAgentLearningSystem,
 )
 from src.memory.collaborative_knowledge import CollaborativeKnowledgeBase
 from src.memory.memory_persistence import MemoryDatabase

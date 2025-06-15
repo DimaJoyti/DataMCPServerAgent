@@ -22,47 +22,47 @@ def main():
     parser = argparse.ArgumentParser(
         description="DataMCPServerAgent API Server"
     )
-    
+
     parser.add_argument(
         "--host",
         type=str,
         default=os.getenv("API_HOST", "0.0.0.0"),
         help="Host to bind the server to",
     )
-    
+
     parser.add_argument(
         "--port",
         type=int,
         default=int(os.getenv("API_PORT", "8000")),
         help="Port to bind the server to",
     )
-    
+
     parser.add_argument(
         "--reload",
         action="store_true",
         default=os.getenv("API_RELOAD", "false").lower() == "true",
         help="Enable auto-reload on code changes",
     )
-    
+
     parser.add_argument(
         "--debug",
         action="store_true",
         default=os.getenv("API_DEBUG", "false").lower() == "true",
         help="Enable debug mode",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Set environment variables
     os.environ["API_HOST"] = args.host
     os.environ["API_PORT"] = str(args.port)
     os.environ["API_RELOAD"] = str(args.reload).lower()
     os.environ["API_DEBUG"] = str(args.debug).lower()
-    
+
     print(f"Starting DataMCPServerAgent API Server on {args.host}:{args.port}")
     print(f"Debug mode: {args.debug}")
     print(f"Auto-reload: {args.reload}")
-    
+
     # Start the API server
     start_api()
 

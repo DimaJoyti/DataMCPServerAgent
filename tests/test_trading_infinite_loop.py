@@ -6,29 +6,28 @@ for the trading strategy generation system.
 """
 
 import asyncio
-import json
-import pytest
 import tempfile
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.agents.trading_infinite_loop.trading_strategy_orchestrator import (
+    TradingStrategyConfig,
     TradingStrategyOrchestrator,
-    TradingStrategyConfig
 )
-from src.api.services.trading_strategy_service import TradingStrategyService
 from src.agents.trading_system import AdvancedCryptoTradingSystem
+from src.api.services.trading_strategy_service import TradingStrategyService
 
 
 class TestTradingStrategyConfig:
     """Test trading strategy configuration."""
-    
+
     def test_default_config(self):
         """Test default configuration values."""
         config = TradingStrategyConfig()
-        
+
         assert config.target_symbols == ["BTC/USDT", "ETH/USDT", "BNB/USDT"]
         assert config.strategy_types == ["momentum", "mean_reversion", "arbitrage", "ml_based"]
         assert config.risk_tolerance == 0.02
@@ -37,7 +36,7 @@ class TestTradingStrategyConfig:
         assert config.min_sharpe_ratio == 1.5
         assert config.max_drawdown == 0.1
         assert config.min_win_rate == 0.6
-    
+
     def test_custom_config(self):
         """Test custom configuration values."""
         config = TradingStrategyConfig(
@@ -45,7 +44,7 @@ class TestTradingStrategyConfig:
             risk_tolerance=0.05,
             min_sharpe_ratio=2.0
         )
-        
+
         assert config.target_symbols == ["BTC/USDT"]
         assert config.risk_tolerance == 0.05
         assert config.min_sharpe_ratio == 2.0
@@ -53,22 +52,22 @@ class TestTradingStrategyConfig:
 
 class TestTradingStrategyOrchestrator:
     """Test trading strategy orchestrator."""
-    
+
     @pytest.fixture
     def mock_model(self):
         """Mock language model."""
         return MagicMock()
-    
+
     @pytest.fixture
     def mock_tools(self):
         """Mock tools list."""
         return []
-    
+
     @pytest.fixture
     def mock_trading_system(self):
         """Mock trading system."""
         return MagicMock(spec=AdvancedCryptoTradingSystem)
-    
+
     @pytest.fixture
     def orchestrator(self, mock_model, mock_tools, mock_trading_system):
         """Create orchestrator instance."""
@@ -79,7 +78,7 @@ class TestTradingStrategyOrchestrator:
             trading_system=mock_trading_system,
             config=config
         )
-    
+
     def test_orchestrator_initialization(self, orchestrator):
         """Test orchestrator initialization."""
         assert orchestrator.model is not None
@@ -88,11 +87,11 @@ class TestTradingStrategyOrchestrator:
         assert isinstance(orchestrator.config, TradingStrategyConfig)
         assert orchestrator.strategies == {}
         assert orchestrator.performance_history == []
-    
+
     def test_create_strategy_specification(self, orchestrator):
         """Test strategy specification creation."""
         spec = orchestrator._create_strategy_specification()
-        
+
         assert spec["content_type"] == "trading_strategy"
         assert spec["format"] == "python_class"
         assert spec["evolution_pattern"] == "genetic_algorithm"
@@ -101,7 +100,7 @@ class TestTradingStrategyOrchestrator:
         assert "risk_management" in spec["innovation_areas"]
         assert spec["quality_requirements"]["min_sharpe_ratio"] == 1.5
         assert spec["target_symbols"] == ["BTC/USDT", "ETH/USDT", "BNB/USDT"]
-    
+
     @pytest.mark.asyncio
     async def test_generate_trading_strategies(self, orchestrator):
         """Test strategy generation process."""
@@ -113,29 +112,29 @@ class TestTradingStrategyOrchestrator:
                     "session_id": "test_session",
                     "results": {"total_iterations": 5}
                 }
-                
+
                 # Mock strategy processing
                 with patch.object(orchestrator, '_process_generated_strategies') as mock_process:
                     mock_process.return_value = None
-                    
+
                     result = await orchestrator.generate_trading_strategies(
                         count=5,
                         output_dir=temp_dir
                     )
-                    
+
                     assert result["success"] is True
                     assert "session_id" in result
                     mock_execute.assert_called_once()
                     mock_process.assert_called_once()
-    
+
     def test_calculate_backtest_metrics(self, orchestrator):
         """Test backtest metrics calculation."""
         backtest_results = {
             "daily_returns": [0.01, -0.005, 0.02, 0.015, -0.01, 0.008]
         }
-        
+
         metrics = orchestrator._calculate_backtest_metrics(backtest_results)
-        
+
         assert "total_return" in metrics
         assert "annual_return" in metrics
         assert "volatility" in metrics
@@ -145,7 +144,7 @@ class TestTradingStrategyOrchestrator:
         assert metrics["total_trades"] == 6
         assert metrics["winning_trades"] == 4
         assert metrics["win_rate"] == pytest.approx(0.667, rel=1e-2)
-    
+
     def test_meets_performance_criteria(self, orchestrator):
         """Test performance criteria evaluation."""
         # Good performance
@@ -155,7 +154,7 @@ class TestTradingStrategyOrchestrator:
             "win_rate": 0.7
         }
         assert orchestrator._meets_performance_criteria(good_performance) is True
-        
+
         # Poor performance
         poor_performance = {
             "sharpe_ratio": 0.5,
@@ -163,7 +162,7 @@ class TestTradingStrategyOrchestrator:
             "win_rate": 0.4
         }
         assert orchestrator._meets_performance_criteria(poor_performance) is False
-    
+
     @pytest.mark.asyncio
     async def test_get_best_strategies(self, orchestrator):
         """Test getting best strategies."""
@@ -182,9 +181,9 @@ class TestTradingStrategyOrchestrator:
                 "created_at": "2024-01-03T00:00:00"
             }
         }
-        
+
         best_strategies = await orchestrator.get_best_strategies(limit=2)
-        
+
         assert len(best_strategies) == 2
         assert best_strategies[0]["strategy_id"] == "strategy_2"
         assert best_strategies[1]["strategy_id"] == "strategy_1"
@@ -192,7 +191,7 @@ class TestTradingStrategyOrchestrator:
 
 class TestTradingStrategyService:
     """Test trading strategy service."""
-    
+
     @pytest.fixture
     def service(self):
         """Create service instance."""
@@ -203,20 +202,20 @@ class TestTradingStrategyService:
                 service.tools = []
                 service.trading_system = MagicMock()
                 return service
-    
+
     @pytest.mark.asyncio
     async def test_start_generation(self, service):
         """Test starting strategy generation."""
         config = TradingStrategyConfig()
-        
+
         with patch.object(service, '_run_generation') as mock_run:
             session_id = await service.start_generation(count=5, config=config)
-            
+
             assert session_id in service.active_sessions
             assert service.active_sessions[session_id]["status"] == "starting"
             assert service.active_sessions[session_id]["strategies_generated"] == 0
             mock_run.assert_called_once()
-    
+
     @pytest.mark.asyncio
     async def test_get_generation_status(self, service):
         """Test getting generation status."""
@@ -233,15 +232,15 @@ class TestTradingStrategyService:
             "execution_time": 300.0,
             "errors": []
         }
-        
+
         status = await service.get_generation_status(session_id)
-        
+
         assert status is not None
         assert status["session_id"] == session_id
         assert status["status"] == "running"
         assert status["strategies_generated"] == 10
         assert status["strategies_accepted"] == 8
-    
+
     @pytest.mark.asyncio
     async def test_list_strategies(self, service):
         """Test listing strategies."""
@@ -253,18 +252,18 @@ class TestTradingStrategyService:
                 "created_at": "2024-01-01T00:00:00"
             },
             "strategy_2": {
-                "strategy_id": "strategy_2", 
+                "strategy_id": "strategy_2",
                 "performance": {"sharpe_ratio": 1.5, "overall_score": 0.6},
                 "created_at": "2024-01-02T00:00:00"
             }
         }
-        
+
         strategies = await service.list_strategies(limit=10)
-        
+
         assert len(strategies) == 2
         assert strategies[0]["strategy_id"] == "strategy_1"  # Higher score first
         assert strategies[1]["strategy_id"] == "strategy_2"
-    
+
     @pytest.mark.asyncio
     async def test_deploy_strategy(self, service):
         """Test strategy deployment."""
@@ -275,18 +274,18 @@ class TestTradingStrategyService:
             "performance": {"sharpe_ratio": 2.0},
             "status": "generated"
         }
-        
+
         result = await service.deploy_strategy(
             strategy_id=strategy_id,
             allocation=0.1,
             max_position_size=0.05,
             stop_loss=0.02
         )
-        
+
         assert result["live_trading_started"] is True
         assert "deployment_id" in result
         assert service.strategies[strategy_id]["status"] == "deployed"
-    
+
     @pytest.mark.asyncio
     async def test_get_performance_summary(self, service):
         """Test performance summary."""
@@ -309,9 +308,9 @@ class TestTradingStrategyService:
                 }
             }
         }
-        
+
         summary = await service.get_performance_summary()
-        
+
         assert summary["total_strategies"] == 2
         assert summary["average_performance"]["sharpe_ratio"] == 1.75
         assert summary["average_performance"]["total_return"] == 0.125
@@ -320,7 +319,7 @@ class TestTradingStrategyService:
 
 class TestIntegration:
     """Integration tests for the complete system."""
-    
+
     @pytest.mark.asyncio
     async def test_end_to_end_strategy_generation(self):
         """Test complete strategy generation workflow."""
@@ -330,37 +329,37 @@ class TestIntegration:
                 service.model = MagicMock()
                 service.tools = []
                 service.trading_system = MagicMock()
-                
+
                 config = TradingStrategyConfig(
                     target_symbols=["BTC/USDT"],
                     backtest_period_days=7
                 )
-                
+
                 # Mock the generation process
                 with patch.object(service, '_run_generation') as mock_run:
                     # Start generation
                     session_id = await service.start_generation(count=3, config=config)
-                    
+
                     # Simulate completion
                     service.active_sessions[session_id]["status"] = "completed"
                     service.active_sessions[session_id]["strategies_accepted"] = 2
-                    
+
                     # Add mock strategies
                     service.strategies["strategy_1"] = {
                         "strategy_id": "strategy_1",
                         "performance": {"sharpe_ratio": 2.0, "overall_score": 0.8},
                         "created_at": "2024-01-01T00:00:00"
                     }
-                    
+
                     # Check status
                     status = await service.get_generation_status(session_id)
                     assert status["status"] == "completed"
                     assert status["strategies_accepted"] == 2
-                    
+
                     # List strategies
                     strategies = await service.list_strategies()
                     assert len(strategies) == 1
-                    
+
                     # Deploy strategy
                     result = await service.deploy_strategy(
                         strategy_id="strategy_1",
@@ -373,40 +372,41 @@ class TestIntegration:
 
 class TestPerformance:
     """Performance tests for the trading infinite loop system."""
-    
+
     @pytest.mark.asyncio
     async def test_strategy_generation_performance(self):
         """Test performance of strategy generation."""
         start_time = time.time()
-        
+
         # Mock rapid strategy generation
         config = TradingStrategyConfig()
         orchestrator = MagicMock()
-        
+
         # Simulate processing 100 strategies
         for i in range(100):
             strategy_data = {"code": f"strategy_{i}", "performance": {"sharpe_ratio": 1.5 + i * 0.01}}
             # Mock processing time
             await asyncio.sleep(0.001)
-        
+
         end_time = time.time()
         execution_time = end_time - start_time
-        
+
         # Should process 100 strategies in reasonable time
         assert execution_time < 1.0  # Less than 1 second for mock processing
-    
+
     def test_memory_usage(self):
         """Test memory usage with large number of strategies."""
-        import psutil
         import os
-        
+
+        import psutil
+
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
-        
+
         # Create service with many strategies
         service = TradingStrategyService()
         service.strategies = {}
-        
+
         # Add 1000 mock strategies
         for i in range(1000):
             service.strategies[f"strategy_{i}"] = {
@@ -414,10 +414,10 @@ class TestPerformance:
                 "performance": {"sharpe_ratio": 1.5, "overall_score": 0.7},
                 "backtest_results": {"trades": [{"pnl": 100}] * 100}  # Mock large data
             }
-        
+
         final_memory = process.memory_info().rss
         memory_increase = final_memory - initial_memory
-        
+
         # Memory increase should be reasonable (less than 100MB for 1000 strategies)
         assert memory_increase < 100 * 1024 * 1024
 

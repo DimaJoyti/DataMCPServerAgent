@@ -4,13 +4,12 @@ Redis service for the API.
 
 import json
 import time
-import uuid
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from redis.asyncio import Redis
 
 from ..config import config
+
 
 class RedisService:
     """Service for Redis operations."""

@@ -14,24 +14,19 @@ from langchain_core.tools import BaseTool
 
 from src.agents.agent_architecture import AgentMemory, SpecializedSubAgent
 from src.memory.memory_persistence import MemoryDatabase
-from src.tools.seo_tools import (
-    seo_analyzer_tool,
-    keyword_research_tool,
-    content_optimizer_tool,
-    metadata_generator_tool,
-    backlink_analyzer_tool
-)
-from src.tools.seo_advanced_tools import (
-    competitor_analysis_tool,
-    rank_tracking_tool
-)
+from src.tools.seo_advanced_tools import competitor_analysis_tool, rank_tracking_tool
 from src.tools.seo_bulk_tools import bulk_analysis_tool
-from src.tools.seo_ml_tools import (
-    ml_content_optimizer_tool,
-    ml_ranking_prediction_tool
-)
+from src.tools.seo_ml_tools import ml_content_optimizer_tool, ml_ranking_prediction_tool
 from src.tools.seo_scheduled_reporting import scheduled_reporting_tool
+from src.tools.seo_tools import (
+    backlink_analyzer_tool,
+    content_optimizer_tool,
+    keyword_research_tool,
+    metadata_generator_tool,
+    seo_analyzer_tool,
+)
 from src.utils.error_handlers import format_error_for_user
+
 
 class SEOAgent:
     """Specialized agent for SEO tasks."""
@@ -41,7 +36,7 @@ class SEOAgent:
         model: ChatAnthropic,
         memory: AgentMemory,
         db: Optional[MemoryDatabase] = None,
-        additional_tools: Optional[List[BaseTool]] = None
+        additional_tools: Optional[List[BaseTool]] = None,
     ):
         """Initialize the SEO agent.
 
@@ -68,7 +63,7 @@ class SEOAgent:
             ml_content_optimizer_tool,
             ml_ranking_prediction_tool,
             scheduled_reporting_tool,
-            seo_visualization_tool
+            seo_visualization_tool,
         ]
 
         # Add additional tools if provided
@@ -79,8 +74,10 @@ class SEOAgent:
         self.sub_agents = self._create_specialized_sub_agents()
 
         # Create the main SEO agent prompt
-        self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an expert SEO agent specialized in search engine optimization.
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an expert SEO agent specialized in search engine optimization.
 Your goal is to help users improve their website's visibility in search engines and drive more organic traffic.
 
 You can perform the following tasks:
@@ -112,10 +109,12 @@ Always consider the latest SEO best practices, including:
 - Core Web Vitals
 - Content quality and relevance
 - Competitive analysis and differentiation
-"""),
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessage(content="{request}")
-        ])
+"""
+                ),
+                MessagesPlaceholder(variable_name="history"),
+                HumanMessage(content="{request}"),
+            ]
+        )
 
     def _create_specialized_sub_agents(self) -> Dict[str, SpecializedSubAgent]:
         """Create specialized sub-agents for different SEO tasks.
@@ -141,10 +140,7 @@ Provide clear, prioritized recommendations based on impact and implementation ef
 """
         website_analysis_tools = [seo_analyzer_tool, backlink_analyzer_tool, bulk_analysis_tool]
         sub_agents["website_analysis"] = SpecializedSubAgent(
-            "Website Analysis Agent",
-            self.model,
-            website_analysis_tools,
-            website_analysis_prompt
+            "Website Analysis Agent", self.model, website_analysis_tools, website_analysis_prompt
         )
 
         # Keyword Research Agent
@@ -163,10 +159,7 @@ Provide strategic keyword recommendations that align with the user's goals and c
 """
         keyword_research_tools = [keyword_research_tool, rank_tracking_tool]
         sub_agents["keyword_research"] = SpecializedSubAgent(
-            "Keyword Research Agent",
-            self.model,
-            keyword_research_tools,
-            keyword_research_prompt
+            "Keyword Research Agent", self.model, keyword_research_tools, keyword_research_prompt
         )
 
         # Content Optimization Agent
@@ -185,12 +178,16 @@ When optimizing content:
 
 Focus on creating high-quality, valuable content that satisfies user intent while following SEO best practices.
 """
-        content_optimization_tools = [content_optimizer_tool, metadata_generator_tool, ml_content_optimizer_tool]
+        content_optimization_tools = [
+            content_optimizer_tool,
+            metadata_generator_tool,
+            ml_content_optimizer_tool,
+        ]
         sub_agents["content_optimization"] = SpecializedSubAgent(
             "Content Optimization Agent",
             self.model,
             content_optimization_tools,
-            content_optimization_prompt
+            content_optimization_prompt,
         )
 
         # Competitive Analysis Agent
@@ -208,12 +205,16 @@ When analyzing competitors:
 
 Provide strategic recommendations to help users outperform their competitors in search results.
 """
-        competitive_analysis_tools = [competitor_analysis_tool, rank_tracking_tool, ml_ranking_prediction_tool]
+        competitive_analysis_tools = [
+            competitor_analysis_tool,
+            rank_tracking_tool,
+            ml_ranking_prediction_tool,
+        ]
         sub_agents["competitive_analysis"] = SpecializedSubAgent(
             "Competitive Analysis Agent",
             self.model,
             competitive_analysis_tools,
-            competitive_analysis_prompt
+            competitive_analysis_prompt,
         )
 
         return sub_agents
@@ -257,13 +258,9 @@ Provide strategic recommendations to help users outperform their competitors in 
 
         # Save to database if available
         if self.db:
+            self.db.save_conversation_message({"role": "user", "content": request}, "seo_agent")
             self.db.save_conversation_message(
-                {"role": "user", "content": request},
-                "seo_agent"
-            )
-            self.db.save_conversation_message(
-                {"role": "assistant", "content": response},
-                "seo_agent"
+                {"role": "assistant", "content": response}, "seo_agent"
             )
 
         return response
@@ -294,8 +291,11 @@ If the request doesn't clearly match any specific sub-agent, return "main".
 
         # Get the sub-agent selection from the model
         messages = [
-            {"role": "system", "content": "You are a task router that selects the most appropriate specialized agent for a request."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a task router that selects the most appropriate specialized agent for a request.",
+            },
+            {"role": "user", "content": prompt},
         ]
 
         response = await self.model.ainvoke(messages)
@@ -304,14 +304,22 @@ If the request doesn't clearly match any specific sub-agent, return "main".
         sub_agent_name = response.content.strip().lower()
 
         # Clean up the response to get just the sub-agent name
-        sub_agent_name = sub_agent_name.replace('"', '').replace("'", "")
-        if "website" in sub_agent_name or "analysis" in sub_agent_name and "competitive" not in sub_agent_name:
+        sub_agent_name = sub_agent_name.replace('"', "").replace("'", "")
+        if (
+            "website" in sub_agent_name
+            or "analysis" in sub_agent_name
+            and "competitive" not in sub_agent_name
+        ):
             return "website_analysis"
         elif "keyword" in sub_agent_name or "research" in sub_agent_name:
             return "keyword_research"
         elif "content" in sub_agent_name or "optimization" in sub_agent_name:
             return "content_optimization"
-        elif "competitive" in sub_agent_name or "competitor" in sub_agent_name or "competition" in sub_agent_name:
+        elif (
+            "competitive" in sub_agent_name
+            or "competitor" in sub_agent_name
+            or "competition" in sub_agent_name
+        ):
             return "competitive_analysis"
         else:
             return "main"
@@ -328,10 +336,7 @@ If the request doesn't clearly match any specific sub-agent, return "main".
         """
         try:
             # Prepare the input for the prompt
-            input_values = {
-                "request": request,
-                "history": history
-            }
+            input_values = {"request": request, "history": history}
 
             # Get the response from the model
             messages = self.prompt.format_messages(**input_values)

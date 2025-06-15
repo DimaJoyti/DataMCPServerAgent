@@ -34,6 +34,7 @@ from app.core.logging import get_logger, setup_logging
 # Import semantic agents
 try:
     from src.agents.semantic.main import SemanticAgentsSystem
+
     SEMANTIC_AGENTS_AVAILABLE = True
 except ImportError:
     SemanticAgentsSystem = None
@@ -51,6 +52,7 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+
 def display_banner():
     """Display application banner."""
     banner = Text()
@@ -61,6 +63,7 @@ def display_banner():
 
     panel = Panel(banner, title="🤖 Welcome", border_style="blue", padding=(1, 2))
     console.print(panel)
+
 
 @app.command()
 def api(
@@ -107,6 +110,7 @@ def api(
         logger.error(f"💥 API server failed: {e}", exc_info=True)
         raise typer.Exit(1)
 
+
 @app.command()
 def cli(
     env: Environment = typer.Option(Environment.DEVELOPMENT, help="Environment"),
@@ -140,6 +144,7 @@ def cli(
         logger.error(f"💥 CLI interface failed: {e}", exc_info=True)
         raise typer.Exit(1)
 
+
 @app.command()
 def worker(
     env: Environment = typer.Option(Environment.DEVELOPMENT, help="Environment"),
@@ -171,6 +176,7 @@ def worker(
     except Exception as e:
         logger.error(f"💥 Background worker failed: {e}", exc_info=True)
         raise typer.Exit(1)
+
 
 @app.command()
 def status():
@@ -212,6 +218,7 @@ def status():
     except:
         console.print("❌ Cache: [red]DISCONNECTED[/red]")
 
+
 @app.command()
 def migrate(
     env: Environment = typer.Option(Environment.DEVELOPMENT, help="Environment"),
@@ -244,6 +251,7 @@ def migrate(
         console.print(f"💥 Migration failed: {e}", style="red")
         raise typer.Exit(1)
 
+
 @app.command()
 def test(
     coverage: bool = typer.Option(True, help="Run with coverage"),
@@ -274,6 +282,7 @@ def test(
     except subprocess.CalledProcessError:
         console.print("❌ Some tests failed", style="red")
         raise typer.Exit(1)
+
 
 @app.command()
 def semantic_agents(
@@ -312,6 +321,7 @@ def semantic_agents(
 
         # Create FastAPI app with semantic agents
         from fastapi import FastAPI
+
         app = FastAPI(
             title="DataMCPServerAgent with Phase 3 Semantic Agents",
             description="Advanced AI Agent System with LLM Pipeline Integration",
@@ -333,10 +343,10 @@ def semantic_agents(
                     "RAG architecture with hybrid search",
                     "Real-time streaming pipelines",
                     "Intelligent task coordination",
-                    "LLM pipeline integration"
+                    "LLM pipeline integration",
                 ],
                 "enabled": enable_phase3,
-                "version": "3.0.0"
+                "version": "3.0.0",
             }
 
         # Run with uvicorn
@@ -353,10 +363,13 @@ def semantic_agents(
         logger.error(f"💥 Semantic agents system failed: {e}", exc_info=True)
         raise typer.Exit(1)
 
+
 @app.command()
 def pipelines(
     action: str = typer.Argument(..., help="Action: test, demo, benchmark"),
-    pipeline_type: str = typer.Option("multimodal", help="Pipeline type: multimodal, rag, streaming"),
+    pipeline_type: str = typer.Option(
+        "multimodal", help="Pipeline type: multimodal, rag, streaming"
+    ),
     config_file: Optional[str] = typer.Option(None, help="Configuration file path"),
 ) -> None:
     """Manage and test LLM-driven pipelines."""
@@ -388,6 +401,7 @@ def pipelines(
         console.print(f"❌ Pipeline operation failed: {e}", style="red")
         raise typer.Exit(1)
 
+
 def _test_pipeline(pipeline_type: str, settings) -> None:
     """Test a specific pipeline type."""
     if pipeline_type == "multimodal":
@@ -413,15 +427,18 @@ def _test_pipeline(pipeline_type: str, settings) -> None:
     else:
         console.print(f"❌ Unknown pipeline type: {pipeline_type}", style="red")
 
+
 def _demo_pipeline(pipeline_type: str, settings) -> None:
     """Run a demo of a specific pipeline type."""
     console.print(f"🎭 Demo for {pipeline_type} pipeline would run here", style="blue")
     console.print("This would show interactive examples and use cases", style="dim")
 
+
 def _benchmark_pipeline(pipeline_type: str, settings) -> None:
     """Benchmark a specific pipeline type."""
     console.print(f"📊 Benchmark for {pipeline_type} pipeline would run here", style="blue")
     console.print("This would measure performance metrics and throughput", style="dim")
+
 
 @app.command()
 def phase3(
@@ -479,6 +496,7 @@ def phase3(
         console.print("Available actions: test, demo, info", style="yellow")
         raise typer.Exit(1)
 
+
 @app.command()
 def docs(
     serve: bool = typer.Option(False, help="Serve documentation"),
@@ -508,6 +526,7 @@ def docs(
         except subprocess.CalledProcessError:
             console.print("❌ Failed to generate documentation", style="red")
             raise typer.Exit(1)
+
 
 if __name__ == "__main__":
     app()

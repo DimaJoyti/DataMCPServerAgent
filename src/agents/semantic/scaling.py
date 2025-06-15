@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from .base_semantic_agent import BaseSemanticAgent, SemanticAgentConfig
 from .coordinator import SemanticCoordinator
 from .performance import PerformanceTracker
+
 
 class ScalingAction(str, Enum):
     """Types of scaling actions."""
@@ -24,6 +24,7 @@ class ScalingAction(str, Enum):
     SCALE_DOWN = "scale_down"
     REDISTRIBUTE = "redistribute"
     OPTIMIZE = "optimize"
+
 
 @dataclass
 class ScalingRule:
@@ -41,6 +42,7 @@ class ScalingRule:
     priority: int = 1
     conditions: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class ScalingEvent:
     """Scaling event record."""
@@ -54,6 +56,7 @@ class ScalingEvent:
     agent_id: Optional[str] = None
     success: bool = True
     details: Dict[str, Any] = field(default_factory=dict)
+
 
 class LoadBalancer:
     """
@@ -88,8 +91,7 @@ class LoadBalancer:
 
         # Remove session affinities
         sessions_to_remove = [
-            session_id for session_id, aid in self.session_affinity.items()
-            if aid == agent_id
+            session_id for session_id, aid in self.session_affinity.items() if aid == agent_id
         ]
         for session_id in sessions_to_remove:
             del self.session_affinity[session_id]
@@ -130,14 +132,17 @@ class LoadBalancer:
         # Check session affinity first
         if session_id and session_id in self.session_affinity:
             agent_id = self.session_affinity[session_id]
-            if (agent_id in self.agent_health and
-                self.agent_health[agent_id] and
-                agent_id not in exclude_agents):
+            if (
+                agent_id in self.agent_health
+                and self.agent_health[agent_id]
+                and agent_id not in exclude_agents
+            ):
                 return agent_id
 
         # Get healthy agents
         healthy_agents = [
-            agent_id for agent_id, healthy in self.agent_health.items()
+            agent_id
+            for agent_id, healthy in self.agent_health.items()
             if healthy and agent_id not in exclude_agents
         ]
 
@@ -174,6 +179,7 @@ class LoadBalancer:
 
         # Select based on weights
         import random
+
         target = random.uniform(0, total_weight)
         current_weight = 0
 
@@ -194,6 +200,7 @@ class LoadBalancer:
         if session_id in self.session_affinity:
             del self.session_affinity[session_id]
             self.logger.debug(f"Removed session affinity: {session_id}")
+
 
 class AutoScaler:
     """
@@ -312,8 +319,7 @@ class AutoScaler:
 
             # Check cooldown period
             last_action_time = self.last_scaling_action.get(rule.rule_id)
-            if (last_action_time and
-                current_time - last_action_time < rule.cooldown_period):
+            if last_action_time and current_time - last_action_time < rule.cooldown_period:
                 continue
 
             # Get metric value
@@ -333,9 +339,7 @@ class AutoScaler:
                 threshold = rule.threshold_low
 
             if action:
-                await self._execute_scaling_action(
-                    action, rule, metric_value, threshold
-                )
+                await self._execute_scaling_action(action, rule, metric_value, threshold)
 
     def _get_metric_value(
         self,
@@ -421,7 +425,8 @@ class AutoScaler:
 
         # Find agents with low utilization
         low_utilization_agents = [
-            agent_id for agent_id, perf in agent_performance.items()
+            agent_id
+            for agent_id, perf in agent_performance.items()
             if perf.get("total_operations", 0) < 5  # Low activity threshold
         ]
 
@@ -466,7 +471,8 @@ class AutoScaler:
     def get_scaling_status(self) -> Dict[str, Any]:
         """Get current scaling status and history."""
         recent_events = [
-            event for event in self.scaling_history
+            event
+            for event in self.scaling_history
             if event.timestamp > datetime.now() - timedelta(hours=24)
         ]
 

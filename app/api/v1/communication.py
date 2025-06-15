@@ -11,6 +11,7 @@ from app.domain.services.communication_service import EmailService
 
 router = APIRouter()
 
+
 class SendEmailRequest(BaseModel):
     """Request model for sending email."""
 
@@ -18,6 +19,7 @@ class SendEmailRequest(BaseModel):
     subject: str = Field(description="Email subject")
     html_content: str = Field(description="HTML content")
     text_content: str = Field(description="Text content")
+
 
 @router.post("/email/send", response_model=SuccessResponse)
 async def send_email(

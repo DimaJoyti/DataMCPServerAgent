@@ -8,10 +8,13 @@ import uuid
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class PipelineStatus(str, Enum):
     """Pipeline execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -19,8 +22,10 @@ class PipelineStatus(str, Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
+
 class TaskStatus(str, Enum):
     """Task execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -28,8 +33,10 @@ class TaskStatus(str, Enum):
     SKIPPED = "skipped"
     RETRY = "retry"
 
+
 class TaskType(str, Enum):
     """Types of pipeline tasks."""
+
     INGESTION = "ingestion"
     TRANSFORMATION = "transformation"
     VALIDATION = "validation"
@@ -37,8 +44,10 @@ class TaskType(str, Enum):
     EXPORT = "export"
     CUSTOM = "custom"
 
+
 class DataSourceType(str, Enum):
     """Types of data sources."""
+
     DATABASE = "database"
     FILE = "file"
     API = "api"
@@ -46,8 +55,10 @@ class DataSourceType(str, Enum):
     QUEUE = "queue"
     OBJECT_STORAGE = "object_storage"
 
+
 class TaskConfig(BaseModel):
     """Configuration for a pipeline task."""
+
     task_id: str = Field(..., description="Unique task identifier")
     task_type: TaskType = Field(..., description="Type of task")
     name: str = Field(..., description="Human-readable task name")
@@ -72,11 +83,17 @@ class TaskConfig(BaseModel):
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Task parameters")
 
     # Data source/destination configuration
-    input_sources: List[Dict[str, Any]] = Field(default_factory=list, description="Input data sources")
-    output_destinations: List[Dict[str, Any]] = Field(default_factory=list, description="Output destinations")
+    input_sources: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Input data sources"
+    )
+    output_destinations: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Output destinations"
+    )
+
 
 class PipelineConfig(BaseModel):
     """Configuration for a data pipeline."""
+
     pipeline_id: str = Field(..., description="Unique pipeline identifier")
     name: str = Field(..., description="Human-readable pipeline name")
     description: Optional[str] = Field(None, description="Pipeline description")
@@ -95,7 +112,9 @@ class PipelineConfig(BaseModel):
     tasks: List[TaskConfig] = Field(..., description="Pipeline tasks")
 
     # Global parameters
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Global pipeline parameters")
+    parameters: Dict[str, Any] = Field(
+        default_factory=dict, description="Global pipeline parameters"
+    )
 
     # Notification configuration
     notifications: Dict[str, Any] = Field(default_factory=dict, description="Notification settings")
@@ -104,8 +123,10 @@ class PipelineConfig(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Pipeline tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
+
 class PipelineTask(BaseModel):
     """Runtime representation of a pipeline task."""
+
     task_id: str = Field(..., description="Unique task identifier")
     pipeline_id: str = Field(..., description="Parent pipeline identifier")
     run_id: str = Field(..., description="Pipeline run identifier")
@@ -132,23 +153,31 @@ class PipelineTask(BaseModel):
     # Metrics
     metrics: Dict[str, Any] = Field(default_factory=dict, description="Task execution metrics")
 
+
 class PipelineRun(BaseModel):
     """Runtime representation of a pipeline execution."""
-    run_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique run identifier")
+
+    run_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()), description="Unique run identifier"
+    )
     pipeline_id: str = Field(..., description="Pipeline identifier")
 
     # Pipeline configuration snapshot
     config: PipelineConfig = Field(..., description="Pipeline configuration")
 
     # Runtime state
-    status: PipelineStatus = Field(default=PipelineStatus.PENDING, description="Current pipeline status")
+    status: PipelineStatus = Field(
+        default=PipelineStatus.PENDING, description="Current pipeline status"
+    )
     start_time: Optional[datetime] = Field(None, description="Pipeline start time")
     end_time: Optional[datetime] = Field(None, description="Pipeline end time")
     duration: Optional[float] = Field(None, description="Pipeline duration in seconds")
 
     # Execution details
     triggered_by: Optional[str] = Field(None, description="What triggered this run")
-    trigger_time: datetime = Field(default_factory=datetime.utcnow, description="When the run was triggered")
+    trigger_time: datetime = Field(
+        default_factory=datetime.utcnow, description="When the run was triggered"
+    )
 
     # Tasks
     tasks: List[PipelineTask] = Field(default_factory=list, description="Pipeline tasks")
@@ -159,16 +188,22 @@ class PipelineRun(BaseModel):
     metrics: Dict[str, Any] = Field(default_factory=dict, description="Pipeline execution metrics")
 
     # Runtime parameters
-    runtime_parameters: Dict[str, Any] = Field(default_factory=dict, description="Runtime parameters")
+    runtime_parameters: Dict[str, Any] = Field(
+        default_factory=dict, description="Runtime parameters"
+    )
+
 
 class Pipeline(BaseModel):
     """Complete pipeline definition."""
+
     pipeline_id: str = Field(..., description="Unique pipeline identifier")
     config: PipelineConfig = Field(..., description="Pipeline configuration")
 
     # Pipeline metadata
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Last update timestamp"
+    )
     created_by: Optional[str] = Field(None, description="Creator identifier")
 
     # Pipeline state
@@ -185,8 +220,10 @@ class Pipeline(BaseModel):
     # Next scheduled run
     next_run_time: Optional[datetime] = Field(None, description="Next scheduled run time")
 
+
 class DataSource(BaseModel):
     """Data source configuration."""
+
     source_id: str = Field(..., description="Unique source identifier")
     name: str = Field(..., description="Human-readable source name")
     source_type: DataSourceType = Field(..., description="Type of data source")
@@ -206,8 +243,10 @@ class DataSource(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Source tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
+
 class DataDestination(BaseModel):
     """Data destination configuration."""
+
     destination_id: str = Field(..., description="Unique destination identifier")
     name: str = Field(..., description="Human-readable destination name")
     destination_type: DataSourceType = Field(..., description="Type of data destination")
@@ -221,15 +260,19 @@ class DataDestination(BaseModel):
 
     # Write configuration
     write_mode: str = Field(default="append", description="Write mode (append, overwrite, upsert)")
-    partition_config: Optional[Dict[str, Any]] = Field(None, description="Partitioning configuration")
+    partition_config: Optional[Dict[str, Any]] = Field(
+        None, description="Partitioning configuration"
+    )
 
     # Metadata
     description: Optional[str] = Field(None, description="Destination description")
     tags: List[str] = Field(default_factory=list, description="Destination tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
+
 class ValidationRule(BaseModel):
     """Data validation rule."""
+
     rule_id: str = Field(..., description="Unique rule identifier")
     name: str = Field(..., description="Human-readable rule name")
     rule_type: str = Field(..., description="Type of validation rule")
@@ -247,8 +290,10 @@ class ValidationRule(BaseModel):
     description: Optional[str] = Field(None, description="Rule description")
     tags: List[str] = Field(default_factory=list, description="Rule tags")
 
+
 class QualityMetrics(BaseModel):
     """Data quality metrics."""
+
     total_records: int = Field(..., description="Total number of records")
     valid_records: int = Field(..., description="Number of valid records")
     invalid_records: int = Field(..., description="Number of invalid records")
@@ -265,8 +310,12 @@ class QualityMetrics(BaseModel):
     outlier_count: int = Field(default=0, description="Number of outliers")
 
     # Rule violations
-    rule_violations: Dict[str, int] = Field(default_factory=dict, description="Rule violation counts")
+    rule_violations: Dict[str, int] = Field(
+        default_factory=dict, description="Rule violation counts"
+    )
 
     # Timestamps
-    measured_at: datetime = Field(default_factory=datetime.utcnow, description="Measurement timestamp")
+    measured_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Measurement timestamp"
+    )
     data_timestamp: Optional[datetime] = Field(None, description="Data timestamp")

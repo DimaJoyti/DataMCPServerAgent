@@ -18,9 +18,8 @@ from mcp.client.stdio import stdio_client
 from src.agents.agent_architecture import (
     AgentMemory,
     CoordinatorAgent,
-    SpecializedSubAgent,
     ToolSelectionAgent,
-    create_specialized_sub_agents
+    create_specialized_sub_agents,
 )
 from src.tools.bright_data_tools import BrightDataToolkit
 from src.utils.error_handlers import format_error_for_user
@@ -38,6 +37,7 @@ server_params = StdioServerParameters(
     },
     args=["@brightdata/mcp"],
 )
+
 
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load both standard MCP tools and custom Bright Data tools.
@@ -64,6 +64,7 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
 
     return list(tool_dict.values())
 
+
 async def chat_with_advanced_agent():
     """Run the advanced agent with specialized sub-agents and memory."""
     async with stdio_client(server_params) as (read, write):
@@ -88,10 +89,12 @@ async def chat_with_advanced_agent():
             coordinator = CoordinatorAgent(model, sub_agents, tool_selector, memory)
 
             # Add initial system message to memory
-            memory.add_message({
-                "role": "system",
-                "content": "You are an advanced AI assistant with specialized capabilities for web automation and data collection using Bright Data MCP tools."
-            })
+            memory.add_message(
+                {
+                    "role": "system",
+                    "content": "You are an advanced AI assistant with specialized capabilities for web automation and data collection using Bright Data MCP tools.",
+                }
+            )
 
             print("DataMCPServerAgent initialized with advanced architecture.")
             print("Available specialized agents:")
@@ -134,10 +137,10 @@ async def chat_with_advanced_agent():
                     print(f"Agent: An error occurred: {error_message}")
 
                     # Add error message to memory
-                    memory.add_message({
-                        "role": "assistant",
-                        "content": f"An error occurred: {error_message}"
-                    })
+                    memory.add_message(
+                        {"role": "assistant", "content": f"An error occurred: {error_message}"}
+                    )
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_advanced_agent())

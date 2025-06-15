@@ -7,20 +7,24 @@ resource allocation, and overall system performance.
 
 import asyncio
 import time
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from app.core.logging import get_logger, LoggerMixin
-from .router import PipelineRouter, RoutingDecision
+from app.core.logging import LoggerMixin, get_logger
+
 from .optimizer import DynamicOptimizer, OptimizationRecommendation
+from .router import PipelineRouter, RoutingDecision
+
 
 class CoordinatorStatus(str, Enum):
     """Coordinator status."""
+
     IDLE = "idle"
     ACTIVE = "active"
     OPTIMIZING = "optimizing"
     ERROR = "error"
+
 
 @dataclass
 class PipelineInstance:
@@ -38,6 +42,7 @@ class PipelineInstance:
     def __post_init__(self):
         if self.resource_usage is None:
             self.resource_usage = {}
+
 
 class PipelineCoordinator(LoggerMixin):
     """Coordinates multiple pipelines and optimizes system performance."""
@@ -99,13 +104,19 @@ class PipelineCoordinator(LoggerMixin):
 
         # Wait for tasks to complete
         await asyncio.gather(
-            *[task for task in [self.coordination_task, self.optimization_task, self.cleanup_task] if task],
-            return_exceptions=True
+            *[
+                task
+                for task in [self.coordination_task, self.optimization_task, self.cleanup_task]
+                if task
+            ],
+            return_exceptions=True,
         )
 
         self.logger.info("PipelineCoordinator stopped")
 
-    async def coordinate_request(self, content: Any, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def coordinate_request(
+        self, content: Any, metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Coordinate processing of a request."""
 
         try:
@@ -117,14 +128,14 @@ class PipelineCoordinator(LoggerMixin):
                 return {
                     "status": "rejected",
                     "reason": "Insufficient resources",
-                    "routing_decision": routing_decision.__dict__
+                    "routing_decision": routing_decision.__dict__,
                 }
 
             # Create or get pipeline instance
             pipeline_instance = await self._get_or_create_pipeline(routing_decision)
 
-# Process request (placeholder - in real implementation, this would delegate to
-# actual pipeline)
+            # Process request (placeholder - in real implementation, this would delegate to
+            # actual pipeline)
             result = await self._process_with_pipeline(pipeline_instance, content, metadata)
 
             # Update metrics
@@ -135,15 +146,12 @@ class PipelineCoordinator(LoggerMixin):
                 "pipeline_id": pipeline_instance.pipeline_id,
                 "pipeline_type": pipeline_instance.pipeline_type,
                 "routing_decision": routing_decision.__dict__,
-                "result": result
+                "result": result,
             }
 
         except Exception as e:
             self.logger.error(f"Coordination failed: {e}")
-            return {
-                "status": "failed",
-                "error": str(e)
-            }
+            return {"status": "failed", "error": str(e)}
 
     async def _check_resource_availability(self, routing_decision: RoutingDecision) -> bool:
         """Check if resources are available for the routing decision."""
@@ -160,7 +168,9 @@ class PipelineCoordinator(LoggerMixin):
         # In a real implementation, this would check actual system resources
         # For now, assume resources are available if requirements are reasonable
         if required_memory > 2000 or required_cores > 8:  # 2GB, 8 cores
-            self.logger.warning(f"Resource requirements too high: {routing_decision.resource_requirements}")
+            self.logger.warning(
+                f"Resource requirements too high: {routing_decision.resource_requirements}"
+            )
             return False
 
         return True
@@ -170,8 +180,10 @@ class PipelineCoordinator(LoggerMixin):
 
         # Look for existing pipeline of the same type
         for pipeline in self.active_pipelines.values():
-            if (pipeline.pipeline_type == routing_decision.pipeline_type.value and
-                pipeline.status == "idle"):
+            if (
+                pipeline.pipeline_type == routing_decision.pipeline_type.value
+                and pipeline.status == "idle"
+            ):
                 pipeline.status = "active"
                 pipeline.last_activity = time.time()
                 return pipeline
@@ -185,7 +197,7 @@ class PipelineCoordinator(LoggerMixin):
             status="active",
             created_at=time.time(),
             last_activity=time.time(),
-            resource_usage=routing_decision.resource_requirements
+            resource_usage=routing_decision.resource_requirements,
         )
 
         self.active_pipelines[pipeline_id] = pipeline_instance
@@ -193,8 +205,12 @@ class PipelineCoordinator(LoggerMixin):
         self.logger.info(f"Created new pipeline instance: {pipeline_id}")
         return pipeline_instance
 
-    async def _process_with_pipeline(self, pipeline_instance: PipelineInstance,
-                                   content: Any, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def _process_with_pipeline(
+        self,
+        pipeline_instance: PipelineInstance,
+        content: Any,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Process content with the specified pipeline instance."""
 
         # Simulate processing (in real implementation, this would delegate to actual pipeline)
@@ -214,10 +230,12 @@ class PipelineCoordinator(LoggerMixin):
             "processed_by": pipeline_instance.pipeline_id,
             "processing_time": processing_time,
             "pipeline_type": pipeline_instance.pipeline_type,
-            "success": True
+            "success": True,
         }
 
-    async def _update_coordination_metrics(self, pipeline_instance: PipelineInstance, result: Dict[str, Any]) -> None:
+    async def _update_coordination_metrics(
+        self, pipeline_instance: PipelineInstance, result: Dict[str, Any]
+    ) -> None:
         """Update coordination metrics."""
 
         current_time = time.time()
@@ -229,7 +247,7 @@ class PipelineCoordinator(LoggerMixin):
                 "failed_requests": 0,
                 "total_processing_time": 0.0,
                 "pipeline_usage": {},
-                "last_updated": current_time
+                "last_updated": current_time,
             }
 
         metrics = self.coordination_metrics
@@ -299,8 +317,10 @@ class PipelineCoordinator(LoggerMixin):
                 # Find idle pipelines
                 idle_pipelines = []
                 for pipeline_id, pipeline in self.active_pipelines.items():
-                    if (current_time - pipeline.last_activity > idle_threshold and
-                        pipeline.status == "idle"):
+                    if (
+                        current_time - pipeline.last_activity > idle_threshold
+                        and pipeline.status == "idle"
+                    ):
                         idle_pipelines.append(pipeline_id)
 
                 # Remove idle pipelines
@@ -340,7 +360,7 @@ class PipelineCoordinator(LoggerMixin):
             "total_processed": total_processed,
             "total_failed": total_failed,
             "success_rate": success_rate,
-            "coordination_metrics": self.coordination_metrics
+            "coordination_metrics": self.coordination_metrics,
         }
 
     async def _apply_optimizations(self, recommendations: List[OptimizationRecommendation]) -> None:
@@ -362,10 +382,10 @@ class PipelineCoordinator(LoggerMixin):
                     "type": p.pipeline_type,
                     "status": p.status,
                     "processed": p.processed_items,
-                    "failed": p.failed_items
+                    "failed": p.failed_items,
                 }
                 for p in self.active_pipelines.values()
             ],
             "coordination_metrics": self.coordination_metrics,
-            "optimization_summary": self.optimizer.get_optimization_summary()
+            "optimization_summary": self.optimizer.get_optimization_summary(),
         }

@@ -3,9 +3,8 @@ Utility functions for processing and formatting results from Bright Data MCP too
 These functions help clean, structure, and enhance the raw data returned by MCP tools.
 """
 
-import json
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 
 def clean_html_content(content: str) -> str:
@@ -19,16 +18,16 @@ def clean_html_content(content: str) -> str:
     """
     # Remove script tags and their contents
     content = re.sub(r'<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>', '', content)
-    
+
     # Remove style tags and their contents
     content = re.sub(r'<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>', '', content)
-    
+
     # Remove HTML comments
     content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
-    
+
     # Replace multiple newlines with a single newline
     content = re.sub(r'\n\s*\n', '\n\n', content)
-    
+
     return content.strip()
 
 
@@ -42,16 +41,16 @@ def extract_main_content(markdown_content: str) -> str:
         Main content section
     """
     lines = markdown_content.split('\n')
-    
+
     # Skip initial navigation/header (usually first 10-15% of content)
     start_idx = min(int(len(lines) * 0.15), 20)
-    
+
     # Skip footer (usually last 10% of content)
     end_idx = max(int(len(lines) * 0.9), len(lines) - 15)
-    
+
     # Extract the main content
     main_content = '\n'.join(lines[start_idx:end_idx])
-    
+
     return main_content
 
 
@@ -105,19 +104,19 @@ def format_search_results(results: Dict[str, Any]) -> str:
     """
     if not results or "results" not in results:
         return "No search results found."
-        
+
     formatted_results = "## Search Results\n\n"
-    
+
     for i, result in enumerate(results.get("results", []), 1):
         title = result.get("title", "No Title")
         url = result.get("url", "")
         description = result.get("description", "No description available.")
-        
+
         formatted_results += f"### {i}. {title}\n"
         formatted_results += f"**URL**: {url}\n\n"
         formatted_results += f"{description}\n\n"
         formatted_results += "---\n\n"
-        
+
     return formatted_results
 
 
@@ -132,21 +131,21 @@ def format_product_data(product_data: Dict[str, Any]) -> str:
     """
     if not product_data or isinstance(product_data, str):
         return "No product data available or invalid format."
-        
+
     output = "## Product Information\n\n"
-    
+
     # Extract key product information
     title = product_data.get("title", "Unknown Product")
     price = product_data.get("price", "Price not available")
     rating = product_data.get("rating", "No rating")
     reviews_count = product_data.get("reviews_count", "No reviews")
     availability = product_data.get("availability", "Unknown availability")
-    
+
     output += f"### {title}\n\n"
     output += f"**Price**: {price}\n"
     output += f"**Rating**: {rating} ({reviews_count} reviews)\n"
     output += f"**Availability**: {availability}\n\n"
-    
+
     # Add features if available
     features = product_data.get("features", [])
     if features:
@@ -154,13 +153,13 @@ def format_product_data(product_data: Dict[str, Any]) -> str:
         for feature in features:
             output += f"- {feature}\n"
         output += "\n"
-        
+
     # Add description if available
     description = product_data.get("description", "")
     if description:
         output += "### Description\n\n"
         output += f"{description}\n\n"
-        
+
     return output
 
 
@@ -175,37 +174,37 @@ def format_product_comparison(products: List[Dict[str, Any]]) -> str:
     """
     if not products:
         return "No products to compare."
-        
+
     output = "## Product Comparison\n\n"
-    
+
     # Create comparison table header
     output += "| Product | Price | Rating | Availability |\n"
     output += "|---------|-------|--------|-------------|\n"
-    
+
     # Add each product to the table
     for product in products:
         if "error" in product:
-            output += f"| Error retrieving product | - | - | - |\n"
+            output += "| Error retrieving product | - | - | - |\n"
             continue
-            
+
         title = product.get("title", "Unknown Product")
         price = product.get("price", "N/A")
         rating = product.get("rating", "N/A")
         availability = product.get("availability", "Unknown")
-        
+
         output += f"| {title} | {price} | {rating} | {availability} |\n"
-        
+
     output += "\n### Detailed Comparison\n\n"
-    
+
     # Add detailed comparison for each product
     for i, product in enumerate(products, 1):
         if "error" in product:
             output += f"### Product {i}: Error retrieving data\n\n"
             continue
-            
+
         title = product.get("title", f"Product {i}")
         output += f"### {title}\n\n"
-        
+
         # Add features comparison
         features = product.get("features", [])
         if features:
@@ -213,7 +212,7 @@ def format_product_comparison(products: List[Dict[str, Any]]) -> str:
             for feature in features[:5]:  # Limit to top 5 features
                 output += f"- {feature}\n"
             output += "\n"
-            
+
     return output
 
 
@@ -229,7 +228,7 @@ def format_social_media_data(data: Dict[str, Any], analysis_type: str = "basic")
     """
     if not data or isinstance(data, str):
         return "No social media data available or invalid format."
-        
+
     if analysis_type == "basic":
         return format_basic_social_media(data)
     elif analysis_type == "detailed":
@@ -250,7 +249,7 @@ def format_basic_social_media(data: Dict[str, Any]) -> str:
         Basic formatted information
     """
     output = "## Social Media Content\n\n"
-    
+
     # Handle different data structures based on platform
     if "username" in data:
         output += f"**Username**: {data.get('username', 'Unknown')}\n"
@@ -266,7 +265,7 @@ def format_basic_social_media(data: Dict[str, Any]) -> str:
         output += f"\n**Content**: {data.get('text', '')}\n"
     if "caption" in data:
         output += f"\n**Caption**: {data.get('caption', '')}\n"
-    
+
     # Add engagement metrics if available
     if "likes" in data or "comments" in data or "shares" in data:
         output += "\n**Engagement**:\n"
@@ -276,7 +275,7 @@ def format_basic_social_media(data: Dict[str, Any]) -> str:
             output += f"- Comments: {data.get('comments', 0)}\n"
         if "shares" in data:
             output += f"- Shares: {data.get('shares', 0)}\n"
-            
+
     return output
 
 
@@ -291,26 +290,26 @@ def format_detailed_social_media(data: Dict[str, Any]) -> str:
     """
     # Start with basic formatting
     output = format_basic_social_media(data)
-    
+
     # Add more detailed information
     if "bio" in data:
         output += f"\n### Bio\n{data.get('bio', 'No bio available.')}\n"
-        
+
     if "website" in data:
         output += f"\n**Website**: {data.get('website', 'None')}\n"
-        
+
     # Add hashtags if available
     hashtags = []
     if "text" in data:
         hashtags = re.findall(r"#(\w+)", data.get("text", ""))
     elif "caption" in data:
         hashtags = re.findall(r"#(\w+)", data.get("caption", ""))
-        
+
     if hashtags:
         output += "\n### Hashtags\n"
         for tag in hashtags:
             output += f"- #{tag}\n"
-            
+
     return output
 
 
@@ -324,7 +323,7 @@ def format_engagement_analysis(data: Dict[str, Any]) -> str:
         Engagement analysis
     """
     output = "## Social Media Engagement Analysis\n\n"
-    
+
     # Basic content info
     if "username" in data:
         output += f"**Account**: {data.get('username', 'Unknown')}\n"
@@ -332,24 +331,24 @@ def format_engagement_analysis(data: Dict[str, Any]) -> str:
         output += f"**Content**: {data.get('text', '')[:100]}...\n\n"
     elif "caption" in data:
         output += f"**Content**: {data.get('caption', '')[:100]}...\n\n"
-        
+
     # Engagement metrics
     output += "### Engagement Metrics\n\n"
-    
+
     likes = data.get("likes", 0)
     comments = data.get("comments", 0)
     shares = data.get("shares", 0)
-    
+
     output += f"- **Likes**: {likes}\n"
     output += f"- **Comments**: {comments}\n"
     output += f"- **Shares**: {shares}\n"
-    
+
     # Calculate engagement rate if followers are available
     followers = data.get("followers", 0)
     if followers and followers > 0:
         engagement = (likes + comments + shares) / followers * 100
         output += f"\n**Engagement Rate**: {engagement:.2f}%\n"
-        
+
         # Add engagement assessment
         if engagement > 5:
             output += "\n**Assessment**: High engagement rate (>5%)\n"
@@ -357,5 +356,5 @@ def format_engagement_analysis(data: Dict[str, Any]) -> str:
             output += "\n**Assessment**: Average engagement rate (2-5%)\n"
         else:
             output += "\n**Assessment**: Low engagement rate (<2%)\n"
-            
+
     return output

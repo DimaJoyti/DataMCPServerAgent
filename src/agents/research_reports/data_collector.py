@@ -4,7 +4,7 @@ This module provides functionality for collecting data from various sources.
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import BaseTool
@@ -12,15 +12,11 @@ from langchain_core.tools import BaseTool
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
+
 class DataCollector:
     """Component for collecting data from various sources."""
 
-    def __init__(
-        self,
-        model: ChatAnthropic,
-        tools: List[BaseTool],
-        memory_db: MemoryDatabase
-    ):
+    def __init__(self, model: ChatAnthropic, tools: List[BaseTool], memory_db: MemoryDatabase):
         """Initialize the data collector.
 
         Args:
@@ -82,9 +78,7 @@ class DataCollector:
 
             # Store collected data in memory
             self.memory_db.save_entity(
-                "research_data",
-                f"collected_{int(time.time())}",
-                collected_data
+                "research_data", f"collected_{int(time.time())}", collected_data
             )
 
             return collected_data
@@ -111,10 +105,16 @@ class DataCollector:
             sources.extend(["google_scholar", "arxiv"])
 
             # Add specialized sources based on topic
-            if any(term in topic.lower() for term in ["health", "medical", "disease", "treatment", "drug"]):
+            if any(
+                term in topic.lower()
+                for term in ["health", "medical", "disease", "treatment", "drug"]
+            ):
                 sources.append("pubmed")
 
-            if any(term in topic.lower() for term in ["book", "literature", "novel", "author", "publication"]):
+            if any(
+                term in topic.lower()
+                for term in ["book", "literature", "novel", "author", "publication"]
+            ):
                 sources.extend(["google_books", "open_library"])
 
         # Add news sources for deep research

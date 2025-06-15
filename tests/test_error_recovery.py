@@ -19,6 +19,7 @@ from src.utils.error_recovery import (
     RetryStrategy,
 )
 
+
 class TestCircuitBreaker(unittest.TestCase):
     """Tests for the CircuitBreaker class."""
 

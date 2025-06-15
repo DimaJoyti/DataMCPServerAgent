@@ -5,8 +5,6 @@ Example script demonstrating the reinforcement learning capabilities.
 import asyncio
 import os
 import sys
-import time
-from typing import Dict, Any
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,20 +12,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 
+from src.agents.agent_architecture import create_specialized_sub_agents
 from src.agents.reinforcement_learning import (
-    RewardSystem,
-    QLearningAgent,
-    PolicyGradientAgent,
-    RLCoordinatorAgent,
-    create_rl_agent_architecture
-)
-from src.agents.agent_architecture import (
-    SpecializedSubAgent,
-    create_specialized_sub_agents
+    create_rl_agent_architecture,
 )
 from src.memory.memory_persistence import MemoryDatabase
-from src.tools.bright_data_tools import BrightDataToolkit
-from src.utils.error_handlers import format_error_for_user
 
 load_dotenv()
 

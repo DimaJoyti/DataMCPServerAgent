@@ -10,17 +10,14 @@ import sys
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from bright_data_tools import BrightDataToolkit
 from dotenv import load_dotenv
+from enhanced_agent_architecture import create_enhanced_agent_architecture
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-
-from bright_data_tools import BrightDataToolkit
-from enhanced_agent_architecture import create_enhanced_agent_architecture
-from error_handlers import format_error_for_user
-from memory_persistence import MemoryDatabase
 
 load_dotenv()
 

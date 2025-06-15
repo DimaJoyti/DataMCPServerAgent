@@ -10,16 +10,12 @@ import sys
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from bright_data_tools import BrightDataToolkit
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
-from langchain_core.tools import BaseTool
+from error_handlers import format_error_for_user, with_retry
 from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.prebuilt import create_react_agent
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-
-from bright_data_tools import BrightDataToolkit
-from error_handlers import format_error_for_user, with_retry
 from result_processors import format_product_comparison
 
 load_dotenv()

@@ -4,13 +4,12 @@ This module implements meta-cognitive capabilities for reasoning about reasoning
 strategy selection, and self-monitoring of cognitive performance.
 """
 
-import asyncio
 import json
 import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -19,17 +18,21 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.agents.advanced_reasoning import AdvancedReasoningEngine, ReasoningChain
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class MetaReasoningStrategy(Enum):
     """Types of meta-reasoning strategies."""
+
     STRATEGY_SELECTION = "strategy_selection"
     PERFORMANCE_MONITORING = "performance_monitoring"
     ERROR_DETECTION = "error_detection"
     COGNITIVE_LOAD_ASSESSMENT = "cognitive_load_assessment"
     STRATEGY_ADAPTATION = "strategy_adaptation"
 
+
 @dataclass
 class CognitiveState:
     """Represents the current cognitive state of the reasoning system."""
+
     confidence_level: float
     cognitive_load: float
     error_rate: float
@@ -38,9 +41,11 @@ class CognitiveState:
     attention_focus: List[str]
     working_memory_usage: float
 
+
 @dataclass
 class MetaReasoningDecision:
     """Represents a meta-reasoning decision."""
+
     decision_id: str
     strategy: MetaReasoningStrategy
     decision: str
@@ -49,14 +54,12 @@ class MetaReasoningDecision:
     expected_impact: Dict[str, float]
     timestamp: float
 
+
 class MetaReasoningEngine:
     """Engine for meta-reasoning about reasoning processes."""
 
     def __init__(
-        self,
-        model: ChatAnthropic,
-        db: MemoryDatabase,
-        reasoning_engine: AdvancedReasoningEngine
+        self, model: ChatAnthropic, db: MemoryDatabase, reasoning_engine: AdvancedReasoningEngine
     ):
         """Initialize the meta-reasoning engine.
 
@@ -75,7 +78,7 @@ class MetaReasoningEngine:
             strategy_effectiveness={},
             recent_performance=[],
             attention_focus=[],
-            working_memory_usage=0.2
+            working_memory_usage=0.2,
         )
         self.meta_decisions: List[MetaReasoningDecision] = []
 
@@ -86,8 +89,10 @@ class MetaReasoningEngine:
         """Initialize meta-reasoning prompts."""
 
         # Strategy selection prompt
-        self.strategy_selection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a meta-reasoning agent responsible for selecting optimal reasoning strategies.
+        self.strategy_selection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a meta-reasoning agent responsible for selecting optimal reasoning strategies.
 
 Your task is to analyze the current problem and cognitive state, then recommend the best reasoning approach.
 
@@ -113,8 +118,10 @@ Respond with a JSON object containing:
 - "rationale": Explanation for the recommendation
 - "expected_effectiveness": Predicted effectiveness (0-100)
 - "resource_requirements": Estimated cognitive load
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Problem: {problem}
 Problem type: {problem_type}
 Current cognitive state: {cognitive_state}
@@ -123,12 +130,16 @@ Required confidence: {confidence_requirement}
 Past strategy performance: {strategy_history}
 
 Recommend the optimal reasoning strategy.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Performance monitoring prompt
-        self.monitoring_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a cognitive performance monitor. Your task is to assess the current reasoning performance and identify issues.
+        self.monitoring_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a cognitive performance monitor. Your task is to assess the current reasoning performance and identify issues.
 
 Monitor these aspects:
 1. Reasoning accuracy and consistency
@@ -145,20 +156,26 @@ Respond with a JSON object containing:
 - "cognitive_load_assessment": Current cognitive load (0-100)
 - "recommendations": Suggestions for improvement
 - "attention_alerts": Areas requiring immediate attention
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Current reasoning chain: {reasoning_chain}
 Recent decisions: {recent_decisions}
 Performance metrics: {performance_metrics}
 Error history: {error_history}
 
 Assess the current reasoning performance.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Error detection prompt
-        self.error_detection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an error detection specialist. Your task is to identify potential errors, inconsistencies, or logical fallacies in reasoning.
+        self.error_detection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an error detection specialist. Your task is to identify potential errors, inconsistencies, or logical fallacies in reasoning.
 
 Look for:
 1. Logical inconsistencies
@@ -175,22 +192,26 @@ Respond with a JSON object containing:
 - "severity_levels": Severity of each error (1-10)
 - "correction_suggestions": How to fix each error
 - "confidence_impact": How errors affect confidence
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Reasoning steps to analyze: {reasoning_steps}
 Context: {context}
 Goal: {goal}
 
 Detect any errors or issues in the reasoning.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def select_reasoning_strategy(
         self,
         problem: str,
         problem_type: str,
         time_constraint: Optional[float] = None,
-        confidence_requirement: float = 0.8
+        confidence_requirement: float = 0.8,
     ) -> Dict[str, Any]:
         """Select the optimal reasoning strategy for a problem.
 
@@ -213,7 +234,7 @@ Detect any errors or issues in the reasoning.
             "cognitive_state": json.dumps(self.cognitive_state.__dict__, indent=2),
             "time_constraint": str(time_constraint) if time_constraint else "No constraint",
             "confidence_requirement": confidence_requirement,
-            "strategy_history": json.dumps(strategy_history, indent=2)
+            "strategy_history": json.dumps(strategy_history, indent=2),
         }
 
         # Get strategy recommendation
@@ -228,7 +249,7 @@ Detect any errors or issues in the reasoning.
                 "supporting_strategies": [],
                 "rationale": response.content,
                 "expected_effectiveness": 70,
-                "resource_requirements": 50
+                "resource_requirements": 50,
             }
 
         # Record the meta-reasoning decision
@@ -239,7 +260,7 @@ Detect any errors or issues in the reasoning.
             rationale=strategy_recommendation["rationale"],
             confidence=strategy_recommendation["expected_effectiveness"] / 100.0,
             expected_impact={"effectiveness": strategy_recommendation["expected_effectiveness"]},
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         self.meta_decisions.append(decision)
@@ -247,10 +268,7 @@ Detect any errors or issues in the reasoning.
 
         return strategy_recommendation
 
-    async def monitor_performance(
-        self,
-        reasoning_chain: ReasoningChain
-    ) -> Dict[str, Any]:
+    async def monitor_performance(self, reasoning_chain: ReasoningChain) -> Dict[str, Any]:
         """Monitor the performance of ongoing reasoning.
 
         Args:
@@ -269,7 +287,7 @@ Detect any errors or issues in the reasoning.
             "reasoning_chain": self._format_reasoning_chain(reasoning_chain),
             "recent_decisions": json.dumps(recent_decisions, indent=2),
             "performance_metrics": json.dumps(performance_metrics, indent=2),
-            "error_history": json.dumps(error_history, indent=2)
+            "error_history": json.dumps(error_history, indent=2),
         }
 
         # Get performance assessment
@@ -285,7 +303,7 @@ Detect any errors or issues in the reasoning.
                 "error_patterns": [],
                 "cognitive_load_assessment": 50,
                 "recommendations": [],
-                "attention_alerts": []
+                "attention_alerts": [],
             }
 
         # Update cognitive state based on assessment
@@ -294,10 +312,7 @@ Detect any errors or issues in the reasoning.
         return assessment
 
     async def detect_errors(
-        self,
-        reasoning_steps: List[Dict[str, Any]],
-        context: Dict[str, Any],
-        goal: str
+        self, reasoning_steps: List[Dict[str, Any]], context: Dict[str, Any], goal: str
     ) -> Dict[str, Any]:
         """Detect errors in reasoning steps.
 
@@ -312,7 +327,7 @@ Detect any errors or issues in the reasoning.
         input_values = {
             "reasoning_steps": json.dumps(reasoning_steps, indent=2),
             "context": json.dumps(context, indent=2),
-            "goal": goal
+            "goal": goal,
         }
 
         messages = self.error_detection_prompt.format_messages(**input_values)
@@ -326,7 +341,7 @@ Detect any errors or issues in the reasoning.
                 "error_types": [],
                 "severity_levels": [],
                 "correction_suggestions": [response.content],
-                "confidence_impact": 0.1
+                "confidence_impact": 0.1,
             }
 
         # Record error detection decision
@@ -338,7 +353,7 @@ Detect any errors or issues in the reasoning.
                 rationale=f"Error types: {', '.join(error_analysis['error_types'])}",
                 confidence=0.8,
                 expected_impact={"confidence_reduction": error_analysis["confidence_impact"]},
-                timestamp=time.time()
+                timestamp=time.time(),
             )
 
             self.meta_decisions.append(decision)
@@ -347,9 +362,7 @@ Detect any errors or issues in the reasoning.
         return error_analysis
 
     async def adapt_strategy(
-        self,
-        current_performance: Dict[str, Any],
-        target_performance: Dict[str, Any]
+        self, current_performance: Dict[str, Any], target_performance: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Adapt reasoning strategy based on performance feedback.
 
@@ -369,22 +382,28 @@ Detect any errors or issues in the reasoning.
         adaptations = []
 
         if performance_gap.get("accuracy", 0) > 0.1:
-            adaptations.append({
-                "type": "increase_validation",
-                "description": "Add more validation steps to improve accuracy"
-            })
+            adaptations.append(
+                {
+                    "type": "increase_validation",
+                    "description": "Add more validation steps to improve accuracy",
+                }
+            )
 
         if performance_gap.get("speed", 0) > 0.1:
-            adaptations.append({
-                "type": "simplify_reasoning",
-                "description": "Use simpler reasoning strategies to improve speed"
-            })
+            adaptations.append(
+                {
+                    "type": "simplify_reasoning",
+                    "description": "Use simpler reasoning strategies to improve speed",
+                }
+            )
 
         if performance_gap.get("confidence", 0) > 0.1:
-            adaptations.append({
-                "type": "gather_more_evidence",
-                "description": "Collect more evidence before making decisions"
-            })
+            adaptations.append(
+                {
+                    "type": "gather_more_evidence",
+                    "description": "Collect more evidence before making decisions",
+                }
+            )
 
         # Record adaptation decision
         decision = MetaReasoningDecision(
@@ -394,7 +413,7 @@ Detect any errors or issues in the reasoning.
             rationale=f"Performance gaps: {performance_gap}",
             confidence=0.7,
             expected_impact=performance_gap,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         self.meta_decisions.append(decision)
@@ -403,7 +422,7 @@ Detect any errors or issues in the reasoning.
         return {
             "adaptations": adaptations,
             "performance_gap": performance_gap,
-            "expected_improvement": self._estimate_improvement(adaptations)
+            "expected_improvement": self._estimate_improvement(adaptations),
         }
 
     def _update_cognitive_state(self, assessment: Dict[str, Any]):
@@ -418,14 +437,10 @@ Detect any errors or issues in the reasoning.
         # Update error rate based on identified issues
         if assessment["identified_issues"]:
             self.cognitive_state.error_rate = min(
-                self.cognitive_state.error_rate + 0.05 * len(assessment["identified_issues"]),
-                1.0
+                self.cognitive_state.error_rate + 0.05 * len(assessment["identified_issues"]), 1.0
             )
         else:
-            self.cognitive_state.error_rate = max(
-                self.cognitive_state.error_rate - 0.01,
-                0.0
-            )
+            self.cognitive_state.error_rate = max(self.cognitive_state.error_rate - 0.01, 0.0)
 
         # Update attention focus
         self.cognitive_state.attention_focus = assessment.get("attention_alerts", [])
@@ -462,12 +477,11 @@ Detect any errors or issues in the reasoning.
             "chain_of_thought": 0.8,
             "causal_reasoning": 0.75,
             "counterfactual_reasoning": 0.7,
-            "analogical_reasoning": 0.65
+            "analogical_reasoning": 0.65,
         }
 
     async def _calculate_performance_metrics(
-        self,
-        reasoning_chain: ReasoningChain
+        self, reasoning_chain: ReasoningChain
     ) -> Dict[str, float]:
         """Calculate performance metrics for a reasoning chain.
 
@@ -481,7 +495,9 @@ Detect any errors or issues in the reasoning.
             return {"accuracy": 0.0, "speed": 0.0, "confidence": 0.0}
 
         # Calculate average confidence
-        avg_confidence = sum(step.confidence for step in reasoning_chain.steps) / len(reasoning_chain.steps)
+        avg_confidence = sum(step.confidence for step in reasoning_chain.steps) / len(
+            reasoning_chain.steps
+        )
 
         # Calculate reasoning speed (steps per minute)
         if len(reasoning_chain.steps) > 1:
@@ -493,7 +509,7 @@ Detect any errors or issues in the reasoning.
         return {
             "accuracy": avg_confidence,  # Using confidence as proxy for accuracy
             "speed": min(speed / 10, 1.0),  # Normalize to 0-1 range
-            "confidence": avg_confidence
+            "confidence": avg_confidence,
         }
 
     async def _get_error_history(self) -> List[Dict[str, Any]]:

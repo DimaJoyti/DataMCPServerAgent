@@ -4,8 +4,8 @@ Testing CI/CD fixes
 """
 
 import sys
-import os
 from pathlib import Path
+
 
 def test_workflow_files():
     """Test workflow files"""
@@ -27,22 +27,22 @@ def test_workflow_files():
         print(f"\n📄 Checking: {workflow_file.name}")
 
         try:
-            with open(workflow_file, 'r', encoding='utf-8') as f:
+            with open(workflow_file, encoding='utf-8') as f:
                 content = f.read()
 
             # Check for deprecated versions
             if "actions/upload-artifact@v3" in content:
-                print(f"  ❌ Found deprecated version upload-artifact@v3")
+                print("  ❌ Found deprecated version upload-artifact@v3")
                 issues_found = True
             elif "actions/upload-artifact@v4" in content:
-                print(f"  ✅ Using current version upload-artifact@v4")
+                print("  ✅ Using current version upload-artifact@v4")
 
             # Check for other deprecated actions
             if "actions/setup-python@v3" in content:
-                print(f"  ⚠️ Recommend updating setup-python to v4")
+                print("  ⚠️ Recommend updating setup-python to v4")
 
             if "actions/cache@v2" in content:
-                print(f"  ⚠️ Recommend updating cache to v3")
+                print("  ⚠️ Recommend updating cache to v3")
 
         except Exception as e:
             print(f"  ❌ Error reading file: {e}")
@@ -56,64 +56,64 @@ def test_workflow_files():
         return False
 
 def test_requirements_files():
-    """Тестування файлів requirements"""
+    """Testing requirements files"""
     print("\n🔍 Перевірка файлів requirements...")
-    
+
     project_root = Path(__file__).parent.parent
-    
+
     req_files = [
         "requirements.txt",
         "requirements-ci.txt"
     ]
-    
+
     for req_file in req_files:
         file_path = project_root / req_file
         print(f"\n📄 Перевірка: {req_file}")
-        
+
         if not file_path.exists():
             print(f"  ❌ Файл {req_file} не існує")
             continue
-        
+
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
-            
+
             # Перевірка на основні залежності
             if req_file == "requirements-ci.txt":
                 required_packages = [
                     "pytest",
                     "black",
-                    "isort", 
+                    "isort",
                     "ruff",
                     "mypy",
                     "bandit"
                 ]
-                
+
                 for package in required_packages:
                     if package in content:
                         print(f"  ✅ {package} присутній")
                     else:
                         print(f"  ❌ {package} відсутній")
-            
+
         except Exception as e:
             print(f"  ❌ Помилка при читанні файлу: {e}")
 
 def test_project_structure():
     """Тестування структури проекту"""
     print("\n🔍 Перевірка структури проекту...")
-    
+
     project_root = Path(__file__).parent.parent
-    
+
     required_dirs = [
         "src",
-        "app", 
+        "app",
         "examples",
         "scripts",
         "tests",
         "docs",
         ".github/workflows"
     ]
-    
+
     for dir_name in required_dirs:
         dir_path = project_root / dir_name
         if dir_path.exists():
@@ -124,19 +124,19 @@ def test_project_structure():
 def test_documentation():
     """Тестування документації"""
     print("\n🔍 Перевірка документації...")
-    
+
     project_root = Path(__file__).parent.parent
-    
+
     doc_files = [
         "README.md",
         "docs/CI_CD_IMPROVEMENTS.md"
     ]
-    
+
     for doc_file in doc_files:
         file_path = project_root / doc_file
         if file_path.exists():
             print(f"  ✅ {doc_file} існує")
-            
+
             # Перевірка розміру файлу
             size = file_path.stat().st_size
             if size > 100:  # Більше 100 байт
@@ -150,9 +150,9 @@ def main():
     """Головна функція"""
     print("🚀 Тестування виправлень CI/CD для DataMCPServerAgent")
     print("=" * 60)
-    
+
     all_tests_passed = True
-    
+
     # Запуск тестів
     tests = [
         ("Workflow файли", test_workflow_files),
@@ -160,7 +160,7 @@ def main():
         ("Структура проекту", test_project_structure),
         ("Документація", test_documentation)
     ]
-    
+
     for test_name, test_func in tests:
         print(f"\n🧪 Тест: {test_name}")
         try:
@@ -170,12 +170,12 @@ def main():
         except Exception as e:
             print(f"❌ Помилка в тесті {test_name}: {e}")
             all_tests_passed = False
-    
+
     # Підсумок
     print("\n" + "=" * 60)
     print("📊 ПІДСУМОК ТЕСТУВАННЯ")
     print("=" * 60)
-    
+
     if all_tests_passed:
         print("🎉 Всі тести пройдені успішно!")
         print("✅ CI/CD виправлення працюють коректно")

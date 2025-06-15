@@ -1,15 +1,14 @@
 """
-Тестовий скрипт для 3D-візуалізацій.
-Цей скрипт тестує основну функціональність 3D-візуалізацій.
+Test script for 3D visualizations.
+This script tests the basic functionality of 3D visualizations.
 """
 
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
 
-# Додаємо батьківську директорію до шляху Python
+# Adding the parent directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import numpy as np
@@ -25,14 +24,15 @@ from src.tools.research_3d_visualization import (
     generate_volume_3d_tool,
 )
 
-def test_surface_3d_visualization():
-    """Тестування 3D-поверхневої візуалізації."""
-    print("Тестування 3D-поверхневої візуалізації...")
 
-    # Створюємо генератор візуалізації
+def test_surface_3d_visualization():
+    """Testing 3D surface visualization."""
+    print("Testing 3D surface visualization...")
+
+    # Create a visualization generator
     generator = Visualization3DGenerator()
 
-    # Створюємо дані для поверхні
+    # Create data for the surface
     x = np.linspace(-5, 5, 50)
     y = np.linspace(-5, 5, 50)
     X, Y = np.meshgrid(x, y)
@@ -44,24 +44,21 @@ def test_surface_3d_visualization():
         z_data=Z.tolist(),
         x_label="X",
         y_label="Y",
-        z_label="Z"
+        z_label="Z",
     )
 
-    # Створюємо конфігурацію поверхні
+    # Create a surface configuration
     surface_config = Visualization3DConfig(
-        title="Тестова 3D-поверхня",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test 3D Surface", width=800, height=600, interactive=True
     )
 
-    # Генеруємо поверхню
+    # Generate the surface
     result = generator.generate_surface_3d(surface_data, surface_config)
 
-    print(f"3D-поверхня згенерована: {result['filepath']}")
-    print(f"URL 3D-поверхні: {result['url']}")
+    print(f"3D surface generated: {result['filepath']}")
+    print(f"3D surface URL: {result['url']}")
 
-    # Тестуємо функцію інструменту
+    # Test the tool function
     tool_input = {
         "data": {
             "x_data": X.tolist(),
@@ -69,30 +66,31 @@ def test_surface_3d_visualization():
             "z_data": Z.tolist(),
             "x_label": "X",
             "y_label": "Y",
-            "z_label": "Z"
+            "z_label": "Z",
         },
         "config": {
-            "title": "Тестова 3D-поверхня (Інструмент)",
+            "title": "Test 3D Surface (Tool)",
             "width": 800,
             "height": 600,
-            "interactive": True
-        }
+            "interactive": True,
+        },
     }
 
     tool_result = generate_surface_3d_tool(json.dumps(tool_input))
     tool_result_dict = json.loads(tool_result)
 
-    print(f"Результат інструменту 3D-поверхні: {tool_result_dict['filepath']}")
-    print(f"URL інструменту 3D-поверхні: {tool_result_dict['url']}")
+    print(f"3D surface tool result: {tool_result_dict['filepath']}")
+    print(f"3D surface tool URL: {tool_result_dict['url']}")
+
 
 def test_scatter_3d_visualization():
-    """Тестування 3D-точкової візуалізації."""
-    print("\nТестування 3D-точкової візуалізації...")
+    """Testing 3D scatter visualization."""
+    print("\nTesting 3D scatter visualization...")
 
-    # Створюємо генератор візуалізації
+    # Create a visualization generator
     generator = Visualization3DGenerator()
 
-    # Створюємо дані для точкової діаграми
+    # Create data for the scatter plot
     n = 100
     x = np.random.randn(n)
     y = np.random.randn(n)
@@ -108,24 +106,21 @@ def test_scatter_3d_visualization():
         size_data=sizes.tolist(),
         x_label="X",
         y_label="Y",
-        z_label="Z"
+        z_label="Z",
     )
 
-    # Створюємо конфігурацію точкової діаграми
+    # Create a scatter plot configuration
     scatter_config = Visualization3DConfig(
-        title="Тестова 3D-точкова діаграма",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test 3D Scatter Plot", width=800, height=600, interactive=True
     )
 
-    # Генеруємо точкову діаграму
+    # Generate the scatter plot
     result = generator.generate_scatter_3d(scatter_data, scatter_config)
 
-    print(f"3D-точкова діаграма згенерована: {result['filepath']}")
-    print(f"URL 3D-точкової діаграми: {result['url']}")
+    print(f"3D scatter plot generated: {result['filepath']}")
+    print(f"3D scatter plot URL: {result['url']}")
 
-    # Тестуємо функцію інструменту
+    # Test the tool function
     tool_input = {
         "data": {
             "x_data": x.tolist(),
@@ -135,30 +130,31 @@ def test_scatter_3d_visualization():
             "size_data": sizes.tolist(),
             "x_label": "X",
             "y_label": "Y",
-            "z_label": "Z"
+            "z_label": "Z",
         },
         "config": {
-            "title": "Тестова 3D-точкова діаграма (Інструмент)",
+            "title": "Test 3D Scatter Plot (Tool)",
             "width": 800,
             "height": 600,
-            "interactive": True
-        }
+            "interactive": True,
+        },
     }
 
     tool_result = generate_scatter_3d_tool(json.dumps(tool_input))
     tool_result_dict = json.loads(tool_result)
 
-    print(f"Результат інструменту 3D-точкової діаграми: {tool_result_dict['filepath']}")
-    print(f"URL інструменту 3D-точкової діаграми: {tool_result_dict['url']}")
+    print(f"3D scatter tool result: {tool_result_dict['filepath']}")
+    print(f"3D scatter tool URL: {tool_result_dict['url']}")
+
 
 def test_volume_3d_visualization():
-    """Тестування 3D-об'ємної візуалізації."""
-    print("\nТестування 3D-об'ємної візуалізації...")
+    """Testing 3D volume visualization."""
+    print("\nTesting 3D volume visualization...")
 
-    # Створюємо генератор візуалізації
+    # Create a visualization generator
     generator = Visualization3DGenerator()
 
-    # Створюємо дані для об'ємної візуалізації
+    # Create data for the volume visualization
     n = 20
     x = np.linspace(-5, 5, n)
     y = np.linspace(-5, 5, n)
@@ -167,7 +163,7 @@ def test_volume_3d_visualization():
     X, Y, Z = np.meshgrid(x, y, z)
     volume_data = np.exp(-(X**2 + Y**2 + Z**2) / 10)
 
-    # Створюємо дані для об'ємної візуалізації
+    # Create data for the volume visualization
     volume_data_obj = Volume3DData(
         volume_data=volume_data.tolist(),
         x_range=x.tolist(),
@@ -175,25 +171,22 @@ def test_volume_3d_visualization():
         z_range=z.tolist(),
         x_label="X",
         y_label="Y",
-        z_label="Z"
+        z_label="Z",
     )
 
-    # Створюємо конфігурацію об'ємної візуалізації
+    # Create a volume visualization configuration
     volume_config = Visualization3DConfig(
-        title="Тестова 3D-об'ємна візуалізація",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test 3D Volume Visualization", width=800, height=600, interactive=True
     )
 
-    # Генеруємо об'ємну візуалізацію
+    # Generate the volume visualization
     try:
         result = generator.generate_volume_3d(volume_data_obj, volume_config)
 
-        print(f"3D-об'ємна візуалізація згенерована: {result['filepath']}")
-        print(f"URL 3D-об'ємної візуалізації: {result['url']}")
+        print(f"3D volume visualization generated: {result['filepath']}")
+        print(f"3D volume visualization URL: {result['url']}")
 
-        # Тестуємо функцію інструменту
+        # Test the tool function
         tool_input = {
             "data": {
                 "volume_data": volume_data.tolist(),
@@ -202,40 +195,42 @@ def test_volume_3d_visualization():
                 "z_range": z.tolist(),
                 "x_label": "X",
                 "y_label": "Y",
-                "z_label": "Z"
+                "z_label": "Z",
             },
             "config": {
-                "title": "Тестова 3D-об'ємна візуалізація (Інструмент)",
+                "title": "Test 3D Volume Visualization (Tool)",
                 "width": 800,
                 "height": 600,
-                "interactive": True
-            }
+                "interactive": True,
+            },
         }
 
         tool_result = generate_volume_3d_tool(json.dumps(tool_input))
         tool_result_dict = json.loads(tool_result)
 
-        print(f"Результат інструменту 3D-об'ємної візуалізації: {tool_result_dict['filepath']}")
-        print(f"URL інструменту 3D-об'ємної візуалізації: {tool_result_dict['url']}")
+        print(f"3D volume tool result: {tool_result_dict['filepath']}")
+        print(f"3D volume tool URL: {tool_result_dict['url']}")
     except ImportError:
-        print("Plotly не доступний. Пропускаємо тест 3D-об'ємної візуалізації.")
+        print("Plotly not available. Skipping 3D volume visualization test.")
+
 
 def main():
-    """Запуск тестів."""
-    # Створюємо тимчасову директорію для тестових візуалізацій
+    """Run tests."""
+    # Create a temporary directory for test visualizations
     with tempfile.TemporaryDirectory() as temp_dir:
-        print(f"Використовуємо тимчасову директорію: {temp_dir}")
+        print(f"Using temporary directory: {temp_dir}")
 
-        # Тестуємо 3D-поверхневу візуалізацію
+        # Test 3D surface visualization
         test_surface_3d_visualization()
 
-        # Тестуємо 3D-точкову візуалізацію
+        # Test 3D scatter visualization
         test_scatter_3d_visualization()
 
-        # Тестуємо 3D-об'ємну візуалізацію
+        # Test 3D volume visualization
         test_volume_3d_visualization()
 
-        print("\nВсі тести завершено.")
+        print("\nAll tests completed.")
+
 
 if __name__ == "__main__":
     main()

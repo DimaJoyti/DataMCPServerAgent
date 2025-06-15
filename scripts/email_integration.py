@@ -3,15 +3,15 @@ Email API Integration for Human-in-the-Loop workflows.
 Supports Cloudflare Email Workers, SendGrid, and Mailgun.
 """
 
-import uuid
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import smtplib
-from email.mime.text import MIMEText
+import uuid
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -12,14 +12,12 @@ This script demonstrates all the completed features of Phase 1:
 """
 
 import subprocess
-import sys
 import time
 from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 console = Console()
 
@@ -62,16 +60,16 @@ def run_command_demo(cmd: list, description: str, show_output: bool = True) -> b
 def show_welcome():
     """Show welcome message."""
     welcome_text = """
-🎉 ФАЗА 1 ЗАВЕРШЕНА: Демонстрація Результатів
+🎉 PHASE 1 COMPLETED: Results Demonstration
 
-Цей скрипт демонструє всі досягнення Фази 1:
-✅ Консолідована кодова база
-✅ Єдина точка входу
-✅ Покращена якість коду
-✅ Система конфігурації
-✅ Структуроване логування
-✅ CLI інтерфейс
-✅ Семантичні агенти (базова інфраструктура)
+This script demonstrates all Phase 1 achievements:
+✅ Consolidated codebase
+✅ Single entry point
+✅ Improved code quality
+✅ Configuration system
+✅ Structured logging
+✅ CLI interface
+✅ Semantic agents (basic infrastructure)
     """
 
     panel = Panel(

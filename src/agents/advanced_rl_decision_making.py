@@ -6,21 +6,19 @@ decision-making algorithms and approaches.
 
 import random
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 
 from src.agents.reinforcement_learning import (
-    PolicyGradientAgent,
     QLearningAgent,
     RewardSystem,
     RLCoordinatorAgent,
 )
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class DeepRLAgent:
     """Agent that uses deep reinforcement learning for decision making."""
@@ -147,9 +145,7 @@ class DeepRLAgent:
             done: Whether the episode is done
         """
         # Add experience to replay buffer
-        self.replay_buffer.append(
-            (state_features, action, reward, next_state_features, done)
-        )
+        self.replay_buffer.append((state_features, action, reward, next_state_features, done))
 
         # Limit buffer size
         if len(self.replay_buffer) > self.replay_buffer_size:
@@ -174,14 +170,10 @@ class DeepRLAgent:
         action_indices = [self.actions.index(action) for action in actions]
 
         # Get current Q-values
-        current_q_values = np.array(
-            [self._forward(state) for state in states]
-        )
+        current_q_values = np.array([self._forward(state) for state in states])
 
         # Get next Q-values
-        next_q_values = np.array(
-            [self._forward(state) for state in next_states]
-        )
+        next_q_values = np.array([self._forward(state) for state in next_states])
 
         # Calculate target Q-values
         targets = current_q_values.copy()
@@ -199,6 +191,7 @@ class DeepRLAgent:
 
         # Save weights to database
         self.db.save_drl_weights(self.name, self.weights)
+
 
 class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
     """Advanced coordinator agent that uses reinforcement learning for decision making."""
@@ -254,9 +247,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             # For other RL types, we'll use the parent class implementation
             self.tool_selection_agent = None
 
-    async def select_tools(
-        self, request: str, state_features: List[float]
-    ) -> List[str]:
+    async def select_tools(self, request: str, state_features: List[float]) -> List[str]:
         """Select tools using reinforcement learning.
 
         Args:
@@ -275,9 +266,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             # In a real implementation, you would use a more sophisticated approach
             return [tool.name for tool in self.tools[:3]]  # Select first 3 tools
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a user request using advanced reinforcement learning for decision making.
 
         Args:
@@ -322,9 +311,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
         performance_metrics = {
             "success_rate": 1.0 if result["success"] else 0.0,
             "response_time": duration,
-            "tool_usage": len(result.get("tool_calls", []))
-            if "tool_calls" in result
-            else 0,
+            "tool_usage": len(result.get("tool_calls", [])) if "tool_calls" in result else 0,
         }
 
         # Calculate reward
@@ -347,9 +334,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
                     {"role": "user", "content": request},
                     {
                         "role": "assistant",
-                        "content": result["response"]
-                        if result["success"]
-                        else result["error"],
+                        "content": result["response"] if result["success"] else result["error"],
                     },
                 ],
             }
@@ -386,9 +371,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
                     {"role": "user", "content": request},
                     {
                         "role": "assistant",
-                        "content": result["response"]
-                        if result["success"]
-                        else result["error"],
+                        "content": result["response"] if result["success"] else result["error"],
                     },
                 ],
             }
@@ -409,6 +392,7 @@ class AdvancedRLCoordinatorAgent(RLCoordinatorAgent):
             "reward": reward,
             "performance_metrics": performance_metrics,
         }
+
 
 # Factory function to create advanced RL-based agent architecture
 async def create_advanced_rl_agent_architecture(

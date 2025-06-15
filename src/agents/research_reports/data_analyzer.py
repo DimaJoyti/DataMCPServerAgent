@@ -13,14 +13,11 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
+
 class DataAnalyzer:
     """Component for analyzing and synthesizing collected data."""
 
-    def __init__(
-        self,
-        model: ChatAnthropic,
-        memory_db: MemoryDatabase
-    ):
+    def __init__(self, model: ChatAnthropic, memory_db: MemoryDatabase):
         """Initialize the data analyzer.
 
         Args:
@@ -63,14 +60,12 @@ class DataAnalyzer:
                 "themes": themes,
                 "synthesis": synthesis,
                 "gaps": gaps,
-                "contradictions": contradictions
+                "contradictions": contradictions,
             }
 
             # Store analysis result in memory
             self.memory_db.save_entity(
-                "research_data",
-                f"analysis_{int(time.time())}",
-                analysis_result
+                "research_data", f"analysis_{int(time.time())}", analysis_result
             )
 
             return analysis_result
@@ -98,8 +93,12 @@ class DataAnalyzer:
             # Use the model to extract key points
 
             messages = [
-                SystemMessage(content="You are an expert at extracting key points from text. Extract the 5-10 most important points from the provided text."),
-                HumanMessage(content=f"Extract key points from this text from {source_name}:\n\n{source_data}")
+                SystemMessage(
+                    content="You are an expert at extracting key points from text. Extract the 5-10 most important points from the provided text."
+                ),
+                HumanMessage(
+                    content=f"Extract key points from this text from {source_name}:\n\n{source_data}"
+                ),
             ]
 
             response = await self.model.ainvoke(messages)
@@ -131,7 +130,7 @@ class DataAnalyzer:
 
         # If no points were found, try to extract sentences
         if not points and text:
-            sentences = re.split(r'(?<=[.!?])\s+', text)
+            sentences = re.split(r"(?<=[.!?])\s+", text)
             points = [s.strip() for s in sentences if len(s.strip()) > 20][:10]
 
         return points
@@ -156,8 +155,13 @@ class DataAnalyzer:
 
         # Use the model to identify themes
         messages = [
-            SystemMessage(content="You are an expert at identifying themes and patterns in information. Identify 3-5 main themes from the provided key points."),
-            HumanMessage(content="Identify the main themes from these key points:\n\n" + "\n".join([f"- {point}" for point in all_points]))
+            SystemMessage(
+                content="You are an expert at identifying themes and patterns in information. Identify 3-5 main themes from the provided key points."
+            ),
+            HumanMessage(
+                content="Identify the main themes from these key points:\n\n"
+                + "\n".join([f"- {point}" for point in all_points])
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
@@ -178,27 +182,25 @@ class DataAnalyzer:
             if theme_match:
                 # Save the previous theme if it exists
                 if current_theme:
-                    themes.append({
-                        "name": current_theme,
-                        "description": "\n".join(current_description)
-                    })
+                    themes.append(
+                        {"name": current_theme, "description": "\n".join(current_description)}
+                    )
 
                 # Start a new theme
-                current_theme = re.sub(r"^(\d+\.\s+|#+\s+|:|-)","", line).strip()
+                current_theme = re.sub(r"^(\d+\.\s+|#+\s+|:|-)", "", line).strip()
                 current_description = []
             elif current_theme:
                 current_description.append(line)
 
         # Add the last theme
         if current_theme:
-            themes.append({
-                "name": current_theme,
-                "description": "\n".join(current_description)
-            })
+            themes.append({"name": current_theme, "description": "\n".join(current_description)})
 
         return themes
 
-    async def _synthesize_information(self, key_points: Dict[str, List[str]], themes: List[Dict[str, Any]]) -> str:
+    async def _synthesize_information(
+        self, key_points: Dict[str, List[str]], themes: List[Dict[str, Any]]
+    ) -> str:
         """Synthesize information from key points and themes.
 
         Args:
@@ -209,7 +211,9 @@ class DataAnalyzer:
             Synthesized information
         """
         # Prepare input for the model
-        theme_text = "\n".join([f"Theme: {theme['name']}\nDescription: {theme['description']}" for theme in themes])
+        theme_text = "\n".join(
+            [f"Theme: {theme['name']}\nDescription: {theme['description']}" for theme in themes]
+        )
 
         points_text = ""
         for source, points in key_points.items():
@@ -218,8 +222,12 @@ class DataAnalyzer:
                 points_text += f"{i}. {point}\n"
 
         messages = [
-            SystemMessage(content="You are an expert at synthesizing information from multiple sources. Create a coherent synthesis of the provided key points and themes."),
-            HumanMessage(content=f"Synthesize the following information into a coherent narrative:\n\nTHEMES:\n{theme_text}\n\nKEY POINTS:{points_text}")
+            SystemMessage(
+                content="You are an expert at synthesizing information from multiple sources. Create a coherent synthesis of the provided key points and themes."
+            ),
+            HumanMessage(
+                content=f"Synthesize the following information into a coherent narrative:\n\nTHEMES:\n{theme_text}\n\nKEY POINTS:{points_text}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
@@ -235,8 +243,12 @@ class DataAnalyzer:
             List of identified gaps
         """
         messages = [
-            SystemMessage(content="You are an expert at identifying gaps in research. Identify 3-5 areas where more information is needed based on the provided synthesis."),
-            HumanMessage(content=f"Identify gaps in the following research synthesis:\n\n{synthesis}")
+            SystemMessage(
+                content="You are an expert at identifying gaps in research. Identify 3-5 areas where more information is needed based on the provided synthesis."
+            ),
+            HumanMessage(
+                content=f"Identify gaps in the following research synthesis:\n\n{synthesis}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)
@@ -255,8 +267,12 @@ class DataAnalyzer:
             List of identified contradictions
         """
         messages = [
-            SystemMessage(content="You are an expert at identifying contradictions in research. Identify any contradictory information or perspectives in the provided synthesis."),
-            HumanMessage(content=f"Identify contradictions in the following research synthesis:\n\n{synthesis}")
+            SystemMessage(
+                content="You are an expert at identifying contradictions in research. Identify any contradictory information or perspectives in the provided synthesis."
+            ),
+            HumanMessage(
+                content=f"Identify contradictions in the following research synthesis:\n\n{synthesis}"
+            ),
         ]
 
         response = await self.model.ainvoke(messages)

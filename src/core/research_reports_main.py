@@ -5,7 +5,7 @@ This version implements a specialized agent for generating comprehensive researc
 
 import asyncio
 import os
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -17,11 +17,12 @@ from mcp.client.stdio import stdio_client
 from src.agents.research_reports.research_reports_agent import ResearchReportsAgent
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.bright_data_tools import BrightDataToolkit
-from src.utils.error_handlers import format_error_for_user
 from src.utils.env_config import get_mcp_server_params
+from src.utils.error_handlers import format_error_for_user
 
 # Load environment variables
 load_dotenv()
+
 
 async def load_all_tools(session: ClientSession = None) -> List[BaseTool]:
     """Load both standard MCP tools and custom tools for research reports.
@@ -59,6 +60,7 @@ async def load_all_tools(session: ClientSession = None) -> List[BaseTool]:
 
     return list(tool_dict.values())
 
+
 def _load_research_tools() -> List[BaseTool]:
     """Load research-specific tools.
 
@@ -67,33 +69,43 @@ def _load_research_tools() -> List[BaseTool]:
     """
     # Import research tools
     try:
-        from src.tools.research_assistant_tools import search_tool, wiki_tool, save_tool
         from src.tools.academic_tools import (
-            google_scholar_tool, pubmed_tool, arxiv_tool,
-            google_books_tool, open_library_tool
+            arxiv_tool,
+            google_books_tool,
+            google_scholar_tool,
+            open_library_tool,
+            pubmed_tool,
         )
         from src.tools.export_tools import (
-            export_to_markdown_tool, export_to_html_tool,
-            export_to_pdf_tool, export_to_docx_tool
+            export_to_docx_tool,
+            export_to_html_tool,
+            export_to_markdown_tool,
+            export_to_pdf_tool,
         )
+        from src.tools.research_assistant_tools import save_tool, search_tool, wiki_tool
 
         return [
-            search_tool, wiki_tool, save_tool,
-            google_scholar_tool, pubmed_tool, arxiv_tool,
-            google_books_tool, open_library_tool,
-            export_to_markdown_tool, export_to_html_tool,
-            export_to_pdf_tool, export_to_docx_tool
+            search_tool,
+            wiki_tool,
+            save_tool,
+            google_scholar_tool,
+            pubmed_tool,
+            arxiv_tool,
+            google_books_tool,
+            open_library_tool,
+            export_to_markdown_tool,
+            export_to_html_tool,
+            export_to_pdf_tool,
+            export_to_docx_tool,
         ]
     except ImportError as e:
         print(f"Warning: Could not import all research tools: {e}")
         # Return empty list if tools are not available
         return []
 
+
 async def create_research_reports_agent(
-    model: ChatAnthropic,
-    tools: List[BaseTool],
-    db: MemoryDatabase,
-    config: Dict[str, Any] = None
+    model: ChatAnthropic, tools: List[BaseTool], db: MemoryDatabase, config: Dict[str, Any] = None
 ) -> ResearchReportsAgent:
     """Create a research reports agent.
 
@@ -113,6 +125,7 @@ async def create_research_reports_agent(
     agent = ResearchReportsAgent(model, tools, db, templates)
 
     return agent
+
 
 async def chat_loop(agent: ResearchReportsAgent, session: Optional[ClientSession] = None):
     """Run the chat loop for the research reports agent.
@@ -143,6 +156,7 @@ async def chat_loop(agent: ResearchReportsAgent, session: Optional[ClientSession
         except Exception as e:
             error_message = format_error_for_user(e)
             print(f"\nError: {error_message}\n")
+
 
 async def chat_with_research_reports_agent(config: Dict[str, Any] = None):
     """Chat with the research reports agent.
@@ -192,6 +206,7 @@ async def chat_with_research_reports_agent(config: Dict[str, Any] = None):
 
         # Start the chat loop without MCP session
         await chat_loop(agent, None)
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_research_reports_agent())

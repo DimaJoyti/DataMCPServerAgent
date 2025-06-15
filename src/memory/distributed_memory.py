@@ -30,6 +30,7 @@ except ImportError:
 
     subprocess.check_call(["pip", "install", "pymongo", "motor"])
 
+
 class DistributedMemoryBackend(ABC):
     """Abstract base class for distributed memory backends."""
 
@@ -47,9 +48,7 @@ class DistributedMemoryBackend(ABC):
         pass
 
     @abstractmethod
-    async def load_entity(
-        self, entity_type: str, entity_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def load_entity(self, entity_type: str, entity_id: str) -> Optional[Dict[str, Any]]:
         """Load an entity from the distributed memory.
 
         Args:
@@ -93,9 +92,7 @@ class DistributedMemoryBackend(ABC):
         pass
 
     @abstractmethod
-    async def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to the distributed memory.
 
         Args:
@@ -124,9 +121,7 @@ class DistributedMemoryBackend(ABC):
         pass
 
     @abstractmethod
-    async def load_entities_by_type(
-        self, entity_type: str
-    ) -> Dict[str, Dict[str, Any]]:
+    async def load_entities_by_type(self, entity_type: str) -> Dict[str, Dict[str, Any]]:
         """Load all entities of a given type from the distributed memory.
 
         Args:
@@ -169,9 +164,7 @@ class DistributedMemoryBackend(ABC):
         pass
 
     @abstractmethod
-    async def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to the distributed memory.
 
         Args:
@@ -250,6 +243,7 @@ class DistributedMemoryBackend(ABC):
         """
         pass
 
+
 class RedisMemoryBackend(DistributedMemoryBackend):
     """Redis-based distributed memory backend."""
 
@@ -270,9 +264,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
             password: Redis password
             prefix: Key prefix for Redis keys
         """
-        self.redis = Redis(
-            host=host, port=port, db=db, password=password, decode_responses=True
-        )
+        self.redis = Redis(host=host, port=port, db=db, password=password, decode_responses=True)
         self.prefix = prefix
 
     async def save_entity(
@@ -320,9 +312,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
         await self.redis.srem(f"{self.prefix}entity_types:{entity_type}", entity_id)
 
         # Check if there are any entities of this type left
-        entity_count = await self.redis.scard(
-            f"{self.prefix}entity_types:{entity_type}"
-        )
+        entity_count = await self.redis.scard(f"{self.prefix}entity_types:{entity_type}")
 
         # If no entities of this type left, remove the entity type
         if entity_count == 0:
@@ -330,9 +320,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
 
         return result > 0
 
-    async def load_entity(
-        self, entity_type: str, entity_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def load_entity(self, entity_type: str, entity_id: str) -> Optional[Dict[str, Any]]:
         """Load an entity from Redis.
 
         Args:
@@ -353,9 +341,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
 
         return None
 
-    async def load_entities_by_type(
-        self, entity_type: str
-    ) -> Dict[str, Dict[str, Any]]:
+    async def load_entities_by_type(self, entity_type: str) -> Dict[str, Dict[str, Any]]:
         """Load all entities of a given type from Redis.
 
         Args:
@@ -365,9 +351,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
             Dictionary of entity data by entity ID
         """
         # Get all entity IDs of this type
-        entity_ids = await self.redis.smembers(
-            f"{self.prefix}entity_types:{entity_type}"
-        )
+        entity_ids = await self.redis.smembers(f"{self.prefix}entity_types:{entity_type}")
 
         result = {}
 
@@ -426,9 +410,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
 
         return []
 
-    async def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to Redis.
 
         Args:
@@ -446,9 +428,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
         usage_id = f"{int(time.time() * 1000)}_{hash(str(args))}"
 
         # Save tool usage
-        await self.redis.hset(
-            f"{self.prefix}tool_usage:{tool_name}", usage_id, usage_json
-        )
+        await self.redis.hset(f"{self.prefix}tool_usage:{tool_name}", usage_id, usage_json)
 
         # Add tool name to the set of all tool names
         await self.redis.sadd(f"{self.prefix}tool_names", tool_name)
@@ -468,9 +448,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
 
         if tool_name:
             # Load usage for a specific tool
-            usage_data = await self.redis.hgetall(
-                f"{self.prefix}tool_usage:{tool_name}"
-            )
+            usage_data = await self.redis.hgetall(f"{self.prefix}tool_usage:{tool_name}")
 
             result[tool_name] = []
 
@@ -512,9 +490,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
         feedback_id = f"{int(time.time() * 1000)}_{hash(str(feedback_data))}"
 
         # Save feedback
-        await self.redis.hset(
-            f"{self.prefix}learning_feedback", feedback_id, feedback_json
-        )
+        await self.redis.hset(f"{self.prefix}learning_feedback", feedback_id, feedback_json)
 
         # Add feedback type to the set of all feedback types
         await self.redis.sadd(f"{self.prefix}feedback_types", feedback_type)
@@ -606,18 +582,14 @@ class RedisMemoryBackend(DistributedMemoryBackend):
         # Entity memory summary
         summary += "### Entities in Memory\n"
         for entity_type in entity_types:
-            entity_ids = await self.redis.smembers(
-                f"{self.prefix}entity_types:{entity_type}"
-            )
+            entity_ids = await self.redis.smembers(f"{self.prefix}entity_types:{entity_type}")
             summary += f"- {entity_type}: {len(entity_ids)} entities\n"
         summary += "\n"
 
         # Tool usage summary
         summary += "### Tool Usage\n"
         for tool_name in tool_names:
-            usage_data = await self.redis.hgetall(
-                f"{self.prefix}tool_usage:{tool_name}"
-            )
+            usage_data = await self.redis.hgetall(f"{self.prefix}tool_usage:{tool_name}")
             summary += f"- {tool_name}: {len(usage_data)} uses\n"
         summary += "\n"
 
@@ -646,6 +618,7 @@ class RedisMemoryBackend(DistributedMemoryBackend):
             return await self.redis.ping()
         except Exception:
             return False
+
 
 class MongoDBMemoryBackend(DistributedMemoryBackend):
     """MongoDB-based distributed memory backend."""
@@ -703,9 +676,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
             upsert=True,
         )
 
-    async def load_entity(
-        self, entity_type: str, entity_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def load_entity(self, entity_type: str, entity_id: str) -> Optional[Dict[str, Any]]:
         """Load an entity from MongoDB.
 
         Args:
@@ -725,9 +696,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
 
         return None
 
-    async def load_entities_by_type(
-        self, entity_type: str
-    ) -> Dict[str, Dict[str, Any]]:
+    async def load_entities_by_type(self, entity_type: str) -> Dict[str, Dict[str, Any]]:
         """Load all entities of a given type from MongoDB.
 
         Args:
@@ -791,9 +760,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
 
         return []
 
-    async def save_tool_usage(
-        self, tool_name: str, args: Dict[str, Any], result: Any
-    ) -> None:
+    async def save_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Save tool usage to MongoDB.
 
         Args:
@@ -914,9 +881,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
             query["feedback_type"] = feedback_type
 
         # Find all matching documents
-        cursor = self.learning_feedback.find(query).sort(
-            "timestamp", pymongo.DESCENDING
-        )
+        cursor = self.learning_feedback.find(query).sort("timestamp", pymongo.DESCENDING)
 
         result = []
 
@@ -973,9 +938,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
         tool_names = await self.get_tool_names()
 
         # Get feedback types
-        feedback_metadata = await self.metadata.find_one(
-            {"metadata_type": "feedback_types"}
-        )
+        feedback_metadata = await self.metadata.find_one({"metadata_type": "feedback_types"})
         feedback_types = feedback_metadata.get("types", []) if feedback_metadata else []
 
         # Get agent names
@@ -1000,17 +963,13 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
         # Count feedback by type
         feedback_counts = {}
         for feedback_type in feedback_types:
-            count = await self.learning_feedback.count_documents(
-                {"feedback_type": feedback_type}
-            )
+            count = await self.learning_feedback.count_documents({"feedback_type": feedback_type})
             feedback_counts[feedback_type] = count
 
         # Count feedback by agent
         agent_feedback_counts = {}
         for agent_name in agent_names:
-            count = await self.learning_feedback.count_documents(
-                {"agent_name": agent_name}
-            )
+            count = await self.learning_feedback.count_documents({"agent_name": agent_name})
             agent_feedback_counts[agent_name] = count
 
         # Format the summary
@@ -1057,6 +1016,7 @@ class MongoDBMemoryBackend(DistributedMemoryBackend):
         except Exception:
             return False
 
+
 class DistributedMemoryFactory:
     """Factory for creating distributed memory backends."""
 
@@ -1082,9 +1042,7 @@ class DistributedMemoryFactory:
             raise ValueError(f"Unsupported backend type: {backend_type}")
 
     @staticmethod
-    async def create_memory_backend_async(
-        backend_type: str, **kwargs
-    ) -> DistributedMemoryBackend:
+    async def create_memory_backend_async(backend_type: str, **kwargs) -> DistributedMemoryBackend:
         """Create a distributed memory backend asynchronously.
 
         This method is the same as create_memory_backend, but it's async to match

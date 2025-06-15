@@ -5,7 +5,6 @@ Script to install dependencies for the Document Processing Pipeline.
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_command(command: str, description: str = ""):
@@ -13,7 +12,7 @@ def run_command(command: str, description: str = ""):
     print(f"\n{'='*60}")
     print(f"🔧 {description or command}")
     print(f"{'='*60}")
-    
+
     try:
         result = subprocess.run(
             command.split(),
@@ -45,7 +44,7 @@ def install_core_dependencies():
         "tqdm>=4.65.0",
         "psutil>=5.9.0"
     ]
-    
+
     for dep in core_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -63,7 +62,7 @@ def install_document_processing():
         "langdetect>=1.0.9",
         "textstat>=0.7.3"
     ]
-    
+
     for dep in doc_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -76,7 +75,7 @@ def install_excel_powerpoint():
         "xlrd>=2.0.1",
         "python-pptx>=0.6.21"
     ]
-    
+
     for dep in office_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -89,7 +88,7 @@ def install_vectorization():
         "torch>=2.0.0",
         "openai>=1.0.0"
     ]
-    
+
     for dep in vector_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -100,7 +99,7 @@ def install_vector_stores():
         "chromadb>=0.4.0",
         "faiss-cpu>=1.7.4"
     ]
-    
+
     for dep in store_deps:
         success = run_command(f"uv pip install {dep}", f"Installing {dep}")
         if not success:
@@ -115,7 +114,7 @@ def install_web_interface():
         "python-multipart>=0.0.6",
         "jinja2>=3.1.0"
     ]
-    
+
     for dep in web_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -129,7 +128,7 @@ def install_development():
         "ruff>=0.0.280",
         "mypy>=1.5.0"
     ]
-    
+
     for dep in dev_deps:
         run_command(f"uv pip install {dep}", f"Installing {dep}")
 
@@ -144,11 +143,11 @@ def install_optional_dependencies():
         ("redis>=4.6.0", "Redis caching"),
         ("structlog>=23.0.0", "Structured logging")
     ]
-    
+
     print(f"\n{'='*60}")
     print("🔧 Installing optional dependencies")
     print(f"{'='*60}")
-    
+
     for dep, description in optional_deps:
         success = run_command(f"uv pip install {dep}", f"Installing {description}")
         if not success:
@@ -159,7 +158,7 @@ def main():
     """Main installation function."""
     print("🚀 Document Processing Pipeline - Dependency Installation")
     print("=" * 80)
-    
+
     # Check if uv is available
     try:
         subprocess.run(["uv", "--version"], check=True, capture_output=True)
@@ -168,7 +167,7 @@ def main():
         print("❌ UV package manager not found. Please install UV first:")
         print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
         sys.exit(1)
-    
+
     # Install dependencies in order
     install_core_dependencies()
     install_document_processing()
@@ -177,21 +176,21 @@ def main():
     install_vector_stores()
     install_web_interface()
     install_development()
-    
+
     # Ask about optional dependencies
     response = input("\n🤔 Install optional dependencies? (y/N): ").lower().strip()
     if response in ['y', 'yes']:
         install_optional_dependencies()
-    
+
     print(f"\n{'='*80}")
     print("🎉 Installation completed!")
     print("=" * 80)
-    
+
     print("\n📋 Next steps:")
     print("1. Run examples: python examples/advanced_features_example.py")
     print("2. Start web interface: python src/web_interface/server.py")
     print("3. Run tests: python -m pytest tests/")
-    
+
     print("\n📚 Documentation:")
     print("- Setup guide: ADVANCED_FEATURES_SETUP.md")
     print("- Pipeline guide: PIPELINE_SETUP.md")

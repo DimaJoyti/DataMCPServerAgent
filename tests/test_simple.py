@@ -4,8 +4,8 @@ Simple tests without external dependencies.
 These tests should always pass in any Python environment.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 
@@ -21,8 +21,8 @@ def test_basic_imports():
     """Test basic Python standard library imports."""
     import json
     import os
-    import sys
     import pathlib
+    import sys
     import tempfile
 
     assert json is not None
@@ -119,7 +119,7 @@ def test_file_operations():
 
     try:
         # Test file reading
-        with open(temp_file_path, 'r') as f:
+        with open(temp_file_path) as f:
             content = f.read()
 
         assert content == test_content

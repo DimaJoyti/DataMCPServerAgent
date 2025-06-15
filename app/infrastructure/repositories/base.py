@@ -16,6 +16,7 @@ from app.domain.models.base import BaseEntity, ConcurrencyError, Repository
 T = TypeVar("T", bound=BaseEntity)
 logger = get_logger(__name__)
 
+
 class SQLAlchemyRepository(Repository[T], LoggerMixin, Generic[T]):
     """Base SQLAlchemy repository implementation."""
 
@@ -215,6 +216,7 @@ class SQLAlchemyRepository(Repository[T], LoggerMixin, Generic[T]):
     async def _update_model_from_entity(self, model: Any, entity: T) -> None:
         """Update SQLAlchemy model from domain entity."""
         pass
+
 
 class InMemoryRepository(Repository[T], LoggerMixin, Generic[T]):
     """In-memory repository implementation for testing."""

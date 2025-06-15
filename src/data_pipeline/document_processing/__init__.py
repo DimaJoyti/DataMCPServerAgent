@@ -9,27 +9,17 @@ This module provides comprehensive document processing capabilities including:
 - Integration with vectorization pipeline
 """
 
-from .document_processor import DocumentProcessor, DocumentProcessingConfig
+from .chunking import AdaptiveChunker, BaseChunker, ChunkerFactory, SemanticChunker, TextChunker
+from .document_processor import DocumentProcessingConfig, DocumentProcessor
+from .metadata import DocumentMetadata, MetadataEnricher, MetadataExtractor
 from .parsers import (
     BaseParser,
-    PDFParser,
     DOCXParser,
     HTMLParser,
     MarkdownParser,
+    ParserFactory,
+    PDFParser,
     TextParser,
-    ParserFactory
-)
-from .chunking import (
-    BaseChunker,
-    TextChunker,
-    SemanticChunker,
-    AdaptiveChunker,
-    ChunkerFactory
-)
-from .metadata import (
-    DocumentMetadata,
-    MetadataExtractor,
-    MetadataEnricher
 )
 
 __version__ = "1.0.0"
@@ -39,7 +29,6 @@ __all__ = [
     # Main processor
     "DocumentProcessor",
     "DocumentProcessingConfig",
-
     # Parsers
     "BaseParser",
     "PDFParser",
@@ -48,14 +37,12 @@ __all__ = [
     "MarkdownParser",
     "TextParser",
     "ParserFactory",
-
     # Chunking
     "BaseChunker",
     "TextChunker",
     "SemanticChunker",
     "AdaptiveChunker",
     "ChunkerFactory",
-
     # Metadata
     "DocumentMetadata",
     "MetadataExtractor",

@@ -11,6 +11,7 @@ from .schemas.base_schema import VectorStoreConfig, VectorStoreType
 
 logger = logging.getLogger(__name__)
 
+
 class VectorStoreFactory:
     """Factory for creating vector store instances."""
 
@@ -27,6 +28,7 @@ class VectorStoreFactory:
         # ChromaDB
         try:
             from .backends.chroma_store import ChromaVectorStore
+
             self.register_store(VectorStoreType.CHROMA, ChromaVectorStore)
         except ImportError:
             logger.warning("ChromaDB not available - missing dependencies")
@@ -34,6 +36,7 @@ class VectorStoreFactory:
         # FAISS
         try:
             from .backends.faiss_store import FAISSVectorStore
+
             self.register_store(VectorStoreType.FAISS, FAISSVectorStore)
         except ImportError:
             logger.warning("FAISS not available - missing dependencies")
@@ -41,6 +44,7 @@ class VectorStoreFactory:
         # Pinecone
         try:
             from .backends.pinecone_store import PineconeVectorStore
+
             self.register_store(VectorStoreType.PINECONE, PineconeVectorStore)
         except ImportError:
             logger.warning("Pinecone not available - missing dependencies")
@@ -48,6 +52,7 @@ class VectorStoreFactory:
         # Weaviate
         try:
             from .backends.weaviate_store import WeaviateVectorStore
+
             self.register_store(VectorStoreType.WEAVIATE, WeaviateVectorStore)
         except ImportError:
             logger.warning("Weaviate not available - missing dependencies")
@@ -55,11 +60,14 @@ class VectorStoreFactory:
         # Qdrant
         try:
             from .backends.qdrant_store import QdrantVectorStore
+
             self.register_store(VectorStoreType.QDRANT, QdrantVectorStore)
         except ImportError:
             logger.warning("Qdrant not available - missing dependencies")
 
-    def register_store(self, store_type: VectorStoreType, store_class: Type[BaseVectorStore]) -> None:
+    def register_store(
+        self, store_type: VectorStoreType, store_class: Type[BaseVectorStore]
+    ) -> None:
         """
         Register a vector store class.
 
@@ -118,6 +126,7 @@ class VectorStoreFactory:
         """
         return store_type in self._stores
 
+
 class VectorStoreManager:
     """Manager for vector store instances."""
 
@@ -133,10 +142,7 @@ class VectorStoreManager:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     async def create_store(
-        self,
-        name: str,
-        config: VectorStoreConfig,
-        initialize: bool = True
+        self, name: str, config: VectorStoreConfig, initialize: bool = True
     ) -> BaseVectorStore:
         """
         Create and optionally initialize a vector store.
@@ -223,10 +229,7 @@ class VectorStoreManager:
         Returns:
             Dict[str, str]: Mapping of store names to types
         """
-        return {
-            name: store.__class__.__name__
-            for name, store in self.stores.items()
-        }
+        return {name: store.__class__.__name__ for name, store in self.stores.items()}
 
     async def health_check_all(self) -> Dict[str, bool]:
         """
@@ -276,6 +279,7 @@ class VectorStoreManager:
     def __iter__(self):
         """Iterate over store names."""
         return iter(self.stores.keys())
+
 
 # Global instances
 vector_store_factory = VectorStoreFactory()

@@ -8,18 +8,22 @@ This module provides API client classes for various SEO APIs, including:
 - Ahrefs API for comprehensive SEO data
 """
 
-import os
-import json
-import time
 import hashlib
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-import requests
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 
+import requests
+
 # Cache directory for API responses
-CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache", "seo_api")
+CACHE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cache", "seo_api"
+)
 os.makedirs(CACHE_DIR, exist_ok=True)
+
 
 class APIClient:
     """Base class for API clients with caching and rate limiting."""
@@ -51,7 +55,9 @@ class APIClient:
         cache_hash = hashlib.md5(cache_key.encode()).hexdigest()
         return os.path.join(CACHE_DIR, f"{cache_hash}.json")
 
-    def _get_cached_response(self, endpoint: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _get_cached_response(
+        self, endpoint: str, params: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         Get a cached API response if available and not expired.
 
@@ -66,20 +72,22 @@ class APIClient:
 
         if os.path.exists(cache_path):
             try:
-                with open(cache_path, 'r') as f:
+                with open(cache_path) as f:
                     cached_data = json.load(f)
 
                 # Check if cache is still valid
-                cache_time = cached_data.get('_cache_time', 0)
+                cache_time = cached_data.get("_cache_time", 0)
                 if time.time() - cache_time < self.cache_ttl:
-                    return cached_data.get('data')
+                    return cached_data.get("data")
             except Exception:
                 # If there's any error reading the cache, ignore it
                 pass
 
         return None
 
-    def _cache_response(self, endpoint: str, params: Dict[str, Any], response: Dict[str, Any]) -> None:
+    def _cache_response(
+        self, endpoint: str, params: Dict[str, Any], response: Dict[str, Any]
+    ) -> None:
         """
         Cache an API response.
 
@@ -91,11 +99,8 @@ class APIClient:
         cache_path = self._get_cache_path(endpoint, params)
 
         try:
-            with open(cache_path, 'w') as f:
-                json.dump({
-                    '_cache_time': time.time(),
-                    'data': response
-                }, f)
+            with open(cache_path, "w") as f:
+                json.dump({"_cache_time": time.time(), "data": response}, f)
         except Exception:
             # If there's any error writing the cache, ignore it
             pass
@@ -111,6 +116,7 @@ class APIClient:
 
         self.last_request_time = time.time()
 
+
 class SEMrushClient(APIClient):
     """Client for the SEMrush API."""
 
@@ -123,11 +129,13 @@ class SEMrushClient(APIClient):
             cache_ttl: Cache time-to-live in seconds (default: 24 hours)
         """
         super().__init__(cache_ttl)
-        self.api_key = api_key or os.getenv('SEMRUSH_API_KEY')
+        self.api_key = api_key or os.getenv("SEMRUSH_API_KEY")
         self.base_url = "https://api.semrush.com"
         self.rate_limit_delay = 2  # SEMrush recommends 2 seconds between requests
 
-    def keyword_research(self, keyword: str, database: str = "us", limit: int = 10) -> Dict[str, Any]:
+    def keyword_research(
+        self, keyword: str, database: str = "us", limit: int = 10
+    ) -> Dict[str, Any]:
         """
         Research keywords related to a seed keyword.
 
@@ -146,7 +154,7 @@ class SEMrushClient(APIClient):
             "phrase": keyword,
             "database": database,
             "export_columns": "Ph,Nq,Cp,Co,Nr,Fk",  # Keyword, Volume, CPC, Competition, Results, Trend
-            "display_limit": limit
+            "display_limit": limit,
         }
 
         # Check cache first
@@ -164,25 +172,27 @@ class SEMrushClient(APIClient):
             response.raise_for_status()
 
             # Parse the CSV response
-            lines = response.text.strip().split('\n')
-            headers = lines[0].split(';')
+            lines = response.text.strip().split("\n")
+            headers = lines[0].split(";")
 
             keywords = []
             for line in lines[1:]:
-                values = line.split(';')
+                values = line.split(";")
                 keyword_data = dict(zip(headers, values))
 
                 # Convert to our standard format
-                keywords.append({
-                    "keyword": keyword_data.get("Ph", ""),
-                    "volume": int(keyword_data.get("Nq", "0") or "0"),
-                    "cpc": float(keyword_data.get("Cp", "0") or "0"),
-                    "competition": float(keyword_data.get("Co", "0") or "0") * 100,
-                    "difficulty": self._calculate_difficulty(
-                        float(keyword_data.get("Co", "0") or "0"),
-                        int(keyword_data.get("Nr", "0") or "0")
-                    )
-                })
+                keywords.append(
+                    {
+                        "keyword": keyword_data.get("Ph", ""),
+                        "volume": int(keyword_data.get("Nq", "0") or "0"),
+                        "cpc": float(keyword_data.get("Cp", "0") or "0"),
+                        "competition": float(keyword_data.get("Co", "0") or "0") * 100,
+                        "difficulty": self._calculate_difficulty(
+                            float(keyword_data.get("Co", "0") or "0"),
+                            int(keyword_data.get("Nr", "0") or "0"),
+                        ),
+                    }
+                )
 
             # Calculate opportunity score
             for kw in keywords:
@@ -196,7 +206,7 @@ class SEMrushClient(APIClient):
                 "keyword": keyword,
                 "database": database,
                 "keywords": keywords,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             # Cache the response
@@ -241,21 +251,111 @@ class SEMrushClient(APIClient):
             Dictionary with mock keyword data
         """
         mock_keywords = [
-            {"keyword": f"{keyword}", "volume": 12000, "cpc": 1.20, "competition": 65, "difficulty": 65},
-            {"keyword": f"best {keyword}", "volume": 8000, "cpc": 1.50, "competition": 55, "difficulty": 55},
-            {"keyword": f"{keyword} guide", "volume": 6500, "cpc": 0.90, "competition": 40, "difficulty": 40},
-            {"keyword": f"how to {keyword}", "volume": 5500, "cpc": 0.85, "competition": 35, "difficulty": 35},
-            {"keyword": f"{keyword} tips", "volume": 4500, "cpc": 0.70, "competition": 30, "difficulty": 30},
-            {"keyword": f"{keyword} for beginners", "volume": 3500, "cpc": 0.65, "competition": 25, "difficulty": 25},
-            {"keyword": f"advanced {keyword}", "volume": 2500, "cpc": 1.80, "competition": 70, "difficulty": 70},
-            {"keyword": f"{keyword} examples", "volume": 2000, "cpc": 0.50, "competition": 20, "difficulty": 20},
-            {"keyword": f"{keyword} tutorial", "volume": 1800, "cpc": 0.95, "competition": 45, "difficulty": 45},
-            {"keyword": f"{keyword} course", "volume": 1500, "cpc": 2.10, "competition": 60, "difficulty": 60},
-            {"keyword": f"free {keyword}", "volume": 1200, "cpc": 1.00, "competition": 50, "difficulty": 50},
-            {"keyword": f"{keyword} software", "volume": 1000, "cpc": 2.50, "competition": 75, "difficulty": 75},
-            {"keyword": f"{keyword} tools", "volume": 900, "cpc": 1.30, "competition": 55, "difficulty": 55},
-            {"keyword": f"learn {keyword}", "volume": 800, "cpc": 0.80, "competition": 40, "difficulty": 40},
-            {"keyword": f"{keyword} certification", "volume": 700, "cpc": 2.20, "competition": 65, "difficulty": 65}
+            {
+                "keyword": f"{keyword}",
+                "volume": 12000,
+                "cpc": 1.20,
+                "competition": 65,
+                "difficulty": 65,
+            },
+            {
+                "keyword": f"best {keyword}",
+                "volume": 8000,
+                "cpc": 1.50,
+                "competition": 55,
+                "difficulty": 55,
+            },
+            {
+                "keyword": f"{keyword} guide",
+                "volume": 6500,
+                "cpc": 0.90,
+                "competition": 40,
+                "difficulty": 40,
+            },
+            {
+                "keyword": f"how to {keyword}",
+                "volume": 5500,
+                "cpc": 0.85,
+                "competition": 35,
+                "difficulty": 35,
+            },
+            {
+                "keyword": f"{keyword} tips",
+                "volume": 4500,
+                "cpc": 0.70,
+                "competition": 30,
+                "difficulty": 30,
+            },
+            {
+                "keyword": f"{keyword} for beginners",
+                "volume": 3500,
+                "cpc": 0.65,
+                "competition": 25,
+                "difficulty": 25,
+            },
+            {
+                "keyword": f"advanced {keyword}",
+                "volume": 2500,
+                "cpc": 1.80,
+                "competition": 70,
+                "difficulty": 70,
+            },
+            {
+                "keyword": f"{keyword} examples",
+                "volume": 2000,
+                "cpc": 0.50,
+                "competition": 20,
+                "difficulty": 20,
+            },
+            {
+                "keyword": f"{keyword} tutorial",
+                "volume": 1800,
+                "cpc": 0.95,
+                "competition": 45,
+                "difficulty": 45,
+            },
+            {
+                "keyword": f"{keyword} course",
+                "volume": 1500,
+                "cpc": 2.10,
+                "competition": 60,
+                "difficulty": 60,
+            },
+            {
+                "keyword": f"free {keyword}",
+                "volume": 1200,
+                "cpc": 1.00,
+                "competition": 50,
+                "difficulty": 50,
+            },
+            {
+                "keyword": f"{keyword} software",
+                "volume": 1000,
+                "cpc": 2.50,
+                "competition": 75,
+                "difficulty": 75,
+            },
+            {
+                "keyword": f"{keyword} tools",
+                "volume": 900,
+                "cpc": 1.30,
+                "competition": 55,
+                "difficulty": 55,
+            },
+            {
+                "keyword": f"learn {keyword}",
+                "volume": 800,
+                "cpc": 0.80,
+                "competition": 40,
+                "difficulty": 40,
+            },
+            {
+                "keyword": f"{keyword} certification",
+                "volume": 700,
+                "cpc": 2.20,
+                "competition": 65,
+                "difficulty": 65,
+            },
         ]
 
         # Calculate opportunity score
@@ -271,7 +371,7 @@ class SEMrushClient(APIClient):
             "keyword": keyword,
             "database": "us",
             "keywords": mock_keywords,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         if error:
@@ -279,10 +379,16 @@ class SEMrushClient(APIClient):
 
         return result
 
+
 class MozClient(APIClient):
     """Client for the Moz API."""
 
-    def __init__(self, access_id: Optional[str] = None, secret_key: Optional[str] = None, cache_ttl: int = 86400):
+    def __init__(
+        self,
+        access_id: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        cache_ttl: int = 86400,
+    ):
         """
         Initialize the Moz API client.
 
@@ -292,8 +398,8 @@ class MozClient(APIClient):
             cache_ttl: Cache time-to-live in seconds (default: 24 hours)
         """
         super().__init__(cache_ttl)
-        self.access_id = access_id or os.getenv('MOZ_ACCESS_ID')
-        self.secret_key = secret_key or os.getenv('MOZ_SECRET_KEY')
+        self.access_id = access_id or os.getenv("MOZ_ACCESS_ID")
+        self.secret_key = secret_key or os.getenv("MOZ_SECRET_KEY")
         self.base_url = "https://lsapi.seomoz.com/v2"
         self.rate_limit_delay = 10  # Moz has stricter rate limits
 
@@ -314,7 +420,7 @@ class MozClient(APIClient):
             "limit": limit,
             "source_scope": "page",
             "target_scope": "subdomain",
-            "sort": "page_authority:desc"
+            "sort": "page_authority:desc",
         }
 
         # Check cache first
@@ -328,9 +434,7 @@ class MozClient(APIClient):
         # Make the API request
         try:
             url = f"{self.base_url}{endpoint}"
-            headers = {
-                "Authorization": f"Basic {self.access_id}:{self.secret_key}"
-            }
+            headers = {"Authorization": f"Basic {self.access_id}:{self.secret_key}"}
 
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
@@ -340,14 +444,16 @@ class MozClient(APIClient):
             # Format the response
             backlinks = []
             for link in data.get("links", []):
-                backlinks.append({
-                    "source": link.get("source_url", ""),
-                    "target_url": link.get("target_url", ""),
-                    "anchor_text": link.get("anchor_text", ""),
-                    "domain_authority": link.get("source_domain_authority", 0),
-                    "page_authority": link.get("source_page_authority", 0),
-                    "spam_score": link.get("source_spam_score", 0)
-                })
+                backlinks.append(
+                    {
+                        "source": link.get("source_url", ""),
+                        "target_url": link.get("target_url", ""),
+                        "anchor_text": link.get("anchor_text", ""),
+                        "domain_authority": link.get("source_domain_authority", 0),
+                        "page_authority": link.get("source_page_authority", 0),
+                        "spam_score": link.get("source_spam_score", 0),
+                    }
+                )
 
             # Get domain authority distribution
             da_ranges = {
@@ -360,7 +466,7 @@ class MozClient(APIClient):
                 "30-39": 0,
                 "20-29": 0,
                 "10-19": 0,
-                "0-9": 0
+                "0-9": 0,
             }
 
             for backlink in backlinks:
@@ -391,7 +497,7 @@ class MozClient(APIClient):
                 "total_backlinks": data.get("total_links", 0),
                 "top_backlinks": backlinks,
                 "domain_authority_distribution": da_ranges,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             # Cache the response
@@ -416,21 +522,126 @@ class MozClient(APIClient):
             Dictionary with mock backlink data
         """
         mock_backlinks = [
-            {"source": "example.com", "target_url": f"https://{domain}/", "anchor_text": "Homepage", "domain_authority": 85, "page_authority": 80, "spam_score": 1},
-            {"source": "blog.example.com", "target_url": f"https://{domain}/blog", "anchor_text": "Blog", "domain_authority": 75, "page_authority": 70, "spam_score": 2},
-            {"source": "news.example.org", "target_url": f"https://{domain}/news", "anchor_text": "Latest News", "domain_authority": 70, "page_authority": 65, "spam_score": 3},
-            {"source": "tutorial.example.net", "target_url": f"https://{domain}/tutorials", "anchor_text": "Tutorials", "domain_authority": 65, "page_authority": 60, "spam_score": 2},
-            {"source": "review.example.io", "target_url": f"https://{domain}/reviews", "anchor_text": "Product Reviews", "domain_authority": 60, "page_authority": 55, "spam_score": 4},
-            {"source": "forum.example.com", "target_url": f"https://{domain}/forum", "anchor_text": "Community Forum", "domain_authority": 55, "page_authority": 50, "spam_score": 3},
-            {"source": "docs.example.org", "target_url": f"https://{domain}/documentation", "anchor_text": "Documentation", "domain_authority": 50, "page_authority": 45, "spam_score": 2},
-            {"source": "help.example.net", "target_url": f"https://{domain}/help", "anchor_text": "Help Center", "domain_authority": 45, "page_authority": 40, "spam_score": 1},
-            {"source": "support.example.io", "target_url": f"https://{domain}/support", "anchor_text": "Support", "domain_authority": 40, "page_authority": 35, "spam_score": 2},
-            {"source": "learn.example.com", "target_url": f"https://{domain}/learn", "anchor_text": "Learning Center", "domain_authority": 35, "page_authority": 30, "spam_score": 3},
-            {"source": "academy.example.org", "target_url": f"https://{domain}/academy", "anchor_text": "Academy", "domain_authority": 30, "page_authority": 25, "spam_score": 4},
-            {"source": "school.example.net", "target_url": f"https://{domain}/school", "anchor_text": "School", "domain_authority": 25, "page_authority": 20, "spam_score": 5},
-            {"source": "university.example.io", "target_url": f"https://{domain}/university", "anchor_text": "University", "domain_authority": 20, "page_authority": 15, "spam_score": 6},
-            {"source": "college.example.com", "target_url": f"https://{domain}/college", "anchor_text": "College", "domain_authority": 15, "page_authority": 10, "spam_score": 7},
-            {"source": "institute.example.org", "target_url": f"https://{domain}/institute", "anchor_text": "Institute", "domain_authority": 10, "page_authority": 5, "spam_score": 8}
+            {
+                "source": "example.com",
+                "target_url": f"https://{domain}/",
+                "anchor_text": "Homepage",
+                "domain_authority": 85,
+                "page_authority": 80,
+                "spam_score": 1,
+            },
+            {
+                "source": "blog.example.com",
+                "target_url": f"https://{domain}/blog",
+                "anchor_text": "Blog",
+                "domain_authority": 75,
+                "page_authority": 70,
+                "spam_score": 2,
+            },
+            {
+                "source": "news.example.org",
+                "target_url": f"https://{domain}/news",
+                "anchor_text": "Latest News",
+                "domain_authority": 70,
+                "page_authority": 65,
+                "spam_score": 3,
+            },
+            {
+                "source": "tutorial.example.net",
+                "target_url": f"https://{domain}/tutorials",
+                "anchor_text": "Tutorials",
+                "domain_authority": 65,
+                "page_authority": 60,
+                "spam_score": 2,
+            },
+            {
+                "source": "review.example.io",
+                "target_url": f"https://{domain}/reviews",
+                "anchor_text": "Product Reviews",
+                "domain_authority": 60,
+                "page_authority": 55,
+                "spam_score": 4,
+            },
+            {
+                "source": "forum.example.com",
+                "target_url": f"https://{domain}/forum",
+                "anchor_text": "Community Forum",
+                "domain_authority": 55,
+                "page_authority": 50,
+                "spam_score": 3,
+            },
+            {
+                "source": "docs.example.org",
+                "target_url": f"https://{domain}/documentation",
+                "anchor_text": "Documentation",
+                "domain_authority": 50,
+                "page_authority": 45,
+                "spam_score": 2,
+            },
+            {
+                "source": "help.example.net",
+                "target_url": f"https://{domain}/help",
+                "anchor_text": "Help Center",
+                "domain_authority": 45,
+                "page_authority": 40,
+                "spam_score": 1,
+            },
+            {
+                "source": "support.example.io",
+                "target_url": f"https://{domain}/support",
+                "anchor_text": "Support",
+                "domain_authority": 40,
+                "page_authority": 35,
+                "spam_score": 2,
+            },
+            {
+                "source": "learn.example.com",
+                "target_url": f"https://{domain}/learn",
+                "anchor_text": "Learning Center",
+                "domain_authority": 35,
+                "page_authority": 30,
+                "spam_score": 3,
+            },
+            {
+                "source": "academy.example.org",
+                "target_url": f"https://{domain}/academy",
+                "anchor_text": "Academy",
+                "domain_authority": 30,
+                "page_authority": 25,
+                "spam_score": 4,
+            },
+            {
+                "source": "school.example.net",
+                "target_url": f"https://{domain}/school",
+                "anchor_text": "School",
+                "domain_authority": 25,
+                "page_authority": 20,
+                "spam_score": 5,
+            },
+            {
+                "source": "university.example.io",
+                "target_url": f"https://{domain}/university",
+                "anchor_text": "University",
+                "domain_authority": 20,
+                "page_authority": 15,
+                "spam_score": 6,
+            },
+            {
+                "source": "college.example.com",
+                "target_url": f"https://{domain}/college",
+                "anchor_text": "College",
+                "domain_authority": 15,
+                "page_authority": 10,
+                "spam_score": 7,
+            },
+            {
+                "source": "institute.example.org",
+                "target_url": f"https://{domain}/institute",
+                "anchor_text": "Institute",
+                "domain_authority": 10,
+                "page_authority": 5,
+                "spam_score": 8,
+            },
         ]
 
         # Sort by domain authority and limit results
@@ -448,7 +659,7 @@ class MozClient(APIClient):
             "30-39": 2,
             "20-29": 2,
             "10-19": 1,
-            "0-9": 0
+            "0-9": 0,
         }
 
         result = {
@@ -456,7 +667,7 @@ class MozClient(APIClient):
             "total_backlinks": 150,
             "top_backlinks": mock_backlinks,
             "domain_authority_distribution": da_ranges,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         if error:

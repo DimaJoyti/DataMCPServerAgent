@@ -8,27 +8,29 @@ for processing continuous data streams from various sources.
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Callable, AsyncGenerator
-from collections import deque
 import time
+from collections import deque
+from datetime import datetime, timezone
+from typing import Any, Callable, Dict, List, Optional
 
-import structlog
-from pydantic import BaseModel, Field
-from kafka import KafkaConsumer, KafkaProducer
 import redis.asyncio as redis
+import structlog
+from kafka import KafkaConsumer, KafkaProducer
+from pydantic import BaseModel, Field
 
-from ...core.pipeline_models import QualityMetrics
 
 class StreamIngestionConfig(BaseModel):
     """Configuration for streaming ingestion."""
+
     # Stream processing
     buffer_size: int = Field(default=1000, description="Buffer size for batching")
     batch_timeout: float = Field(default=5.0, description="Batch timeout in seconds")
     max_workers: int = Field(default=4, description="Maximum number of worker threads")
 
     # Kafka configuration
-    kafka_bootstrap_servers: List[str] = Field(default=["localhost:9092"], description="Kafka bootstrap servers")
+    kafka_bootstrap_servers: List[str] = Field(
+        default=["localhost:9092"], description="Kafka bootstrap servers"
+    )
     kafka_consumer_group: str = Field(default="data_pipeline", description="Kafka consumer group")
     kafka_auto_offset_reset: str = Field(default="latest", description="Kafka auto offset reset")
 
@@ -47,8 +49,10 @@ class StreamIngestionConfig(BaseModel):
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
     metrics_interval: float = Field(default=30.0, description="Metrics collection interval")
 
+
 class StreamMetrics(BaseModel):
     """Metrics for streaming ingestion."""
+
     messages_received: int = 0
     messages_processed: int = 0
     messages_failed: int = 0
@@ -68,8 +72,10 @@ class StreamMetrics(BaseModel):
     start_time: Optional[datetime] = None
     last_update_time: Optional[datetime] = None
 
+
 class StreamMessage(BaseModel):
     """Represents a streaming message."""
+
     id: str
     topic: str
     partition: Optional[int] = None
@@ -83,6 +89,7 @@ class StreamMessage(BaseModel):
     processed_at: Optional[datetime] = None
     retry_count: int = 0
 
+
 class StreamIngestionEngine:
     """
     Engine for streaming data ingestion.
@@ -94,7 +101,7 @@ class StreamIngestionEngine:
     def __init__(
         self,
         config: Optional[StreamIngestionConfig] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the streaming ingestion engine.
@@ -123,11 +130,7 @@ class StreamIngestionEngine:
 
         self.logger.info("Streaming ingestion engine initialized")
 
-    def register_message_handler(
-        self,
-        topic: str,
-        handler: Callable[[StreamMessage], Any]
-    ) -> None:
+    def register_message_handler(self, topic: str, handler: Callable[[StreamMessage], Any]) -> None:
         """
         Register a message handler for a specific topic.
 
@@ -187,10 +190,7 @@ class StreamIngestionEngine:
         self.shutdown_event.set()
 
     async def send_message(
-        self,
-        topic: str,
-        message: Any,
-        headers: Optional[Dict[str, str]] = None
+        self, topic: str, message: Any, headers: Optional[Dict[str, str]] = None
     ) -> bool:
         """
         Send a message to a topic.
@@ -206,12 +206,8 @@ class StreamIngestionEngine:
         try:
             if self.kafka_producer:
                 # Send to Kafka
-                message_bytes = json.dumps(message).encode('utf-8')
-                future = self.kafka_producer.send(
-                    topic,
-                    value=message_bytes,
-                    headers=headers or {}
-                )
+                message_bytes = json.dumps(message).encode("utf-8")
+                future = self.kafka_producer.send(topic, value=message_bytes, headers=headers or {})
 
                 # Wait for send to complete
                 record_metadata = future.get(timeout=10)
@@ -220,7 +216,7 @@ class StreamIngestionEngine:
                     "Message sent to Kafka",
                     topic=topic,
                     partition=record_metadata.partition,
-                    offset=record_metadata.offset
+                    offset=record_metadata.offset,
                 )
 
                 return True
@@ -228,11 +224,7 @@ class StreamIngestionEngine:
             return False
 
         except Exception as e:
-            self.logger.error(
-                "Failed to send message",
-                topic=topic,
-                error=str(e)
-            )
+            self.logger.error("Failed to send message", topic=topic, error=str(e))
             return False
 
     async def _initialize_connections(self) -> None:
@@ -243,15 +235,15 @@ class StreamIngestionEngine:
                 bootstrap_servers=self.config.kafka_bootstrap_servers,
                 group_id=self.config.kafka_consumer_group,
                 auto_offset_reset=self.config.kafka_auto_offset_reset,
-                value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+                value_deserializer=lambda x: json.loads(x.decode("utf-8")),
                 enable_auto_commit=True,
-                consumer_timeout_ms=1000
+                consumer_timeout_ms=1000,
             )
 
             # Initialize Kafka producer
             self.kafka_producer = KafkaProducer(
                 bootstrap_servers=self.config.kafka_bootstrap_servers,
-                value_serializer=lambda x: json.dumps(x).encode('utf-8')
+                value_serializer=lambda x: json.dumps(x).encode("utf-8"),
             )
 
             # Initialize Redis client
@@ -259,7 +251,7 @@ class StreamIngestionEngine:
                 host=self.config.redis_host,
                 port=self.config.redis_port,
                 db=self.config.redis_db,
-                decode_responses=True
+                decode_responses=True,
             )
 
             # Test Redis connection
@@ -268,10 +260,7 @@ class StreamIngestionEngine:
             self.logger.info("Streaming connections initialized")
 
         except Exception as e:
-            self.logger.error(
-                "Failed to initialize streaming connections",
-                error=str(e)
-            )
+            self.logger.error("Failed to initialize streaming connections", error=str(e))
             raise e
 
     async def _close_connections(self) -> None:
@@ -289,10 +278,7 @@ class StreamIngestionEngine:
             self.logger.info("Streaming connections closed")
 
         except Exception as e:
-            self.logger.error(
-                "Error closing streaming connections",
-                error=str(e)
-            )
+            self.logger.error("Error closing streaming connections", error=str(e))
 
     async def _kafka_consumer_loop(self) -> None:
         """Kafka consumer loop."""
@@ -316,7 +302,7 @@ class StreamIngestionEngine:
                                 message.timestamp / 1000, tz=timezone.utc
                             ),
                             headers={k: v.decode() for k, v in message.headers},
-                            payload=message.value
+                            payload=message.value,
                         )
 
                         await self._enqueue_message(stream_message)
@@ -350,8 +336,9 @@ class StreamIngestionEngine:
                     messages_to_process = []
 
                     # Collect messages for batch processing
-                    while (self.message_buffer and
-                           len(messages_to_process) < self.config.buffer_size):
+                    while (
+                        self.message_buffer and len(messages_to_process) < self.config.buffer_size
+                    ):
                         messages_to_process.append(self.message_buffer.popleft())
 
                     # Process batch
@@ -399,9 +386,9 @@ class StreamIngestionEngine:
                 # Update average processing time
                 if self.metrics.messages_processed > 0:
                     self.metrics.average_processing_time = (
-                        (self.metrics.average_processing_time * (self.metrics.messages_processed - 1) +
-                         processing_time) / self.metrics.messages_processed
-                    )
+                        self.metrics.average_processing_time * (self.metrics.messages_processed - 1)
+                        + processing_time
+                    ) / self.metrics.messages_processed
 
                 # Mark as processed for deduplication
                 if self.config.enable_deduplication:
@@ -422,7 +409,7 @@ class StreamIngestionEngine:
                     "Message processing failed",
                     message_id=message.id,
                     topic=message.topic,
-                    error=str(e)
+                    error=str(e),
                 )
 
                 # Retry logic
@@ -456,15 +443,11 @@ class StreamIngestionEngine:
                 self.metrics.throughput_messages_per_second = (
                     self.metrics.messages_processed / time_diff
                 )
-                self.metrics.throughput_bytes_per_second = (
-                    self.metrics.bytes_processed / time_diff
-                )
+                self.metrics.throughput_bytes_per_second = self.metrics.bytes_processed / time_diff
 
         # Calculate error rate
         if self.metrics.messages_received > 0:
-            self.metrics.error_rate = (
-                self.metrics.messages_failed / self.metrics.messages_received
-            )
+            self.metrics.error_rate = self.metrics.messages_failed / self.metrics.messages_received
 
         self.metrics.last_update_time = current_time
 
@@ -474,7 +457,7 @@ class StreamIngestionEngine:
             messages_processed=self.metrics.messages_processed,
             messages_failed=self.metrics.messages_failed,
             throughput_mps=self.metrics.throughput_messages_per_second,
-            error_rate=self.metrics.error_rate
+            error_rate=self.metrics.error_rate,
         )
 
     async def get_metrics(self) -> StreamMetrics:
@@ -490,5 +473,5 @@ class StreamIngestionEngine:
             "config": self.config.model_dump(),
             "metrics": self.metrics.model_dump(),
             "buffer_size": len(self.message_buffer),
-            "registered_handlers": list(self.message_handlers.keys())
+            "registered_handlers": list(self.message_handlers.keys()),
         }

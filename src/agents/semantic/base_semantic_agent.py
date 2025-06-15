@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from src.memory.distributed_memory_manager import DistributedMemoryManager
 from src.memory.knowledge_graph_manager import KnowledgeGraphManager
 
+
 @dataclass
 class SemanticAgentConfig:
     """Configuration for semantic agents."""
@@ -39,6 +40,7 @@ class SemanticAgentConfig:
     max_context_length: int = 8000
     memory_retention_days: int = 30
 
+
 class SemanticContext(BaseModel):
     """Semantic context for agent operations."""
 
@@ -50,6 +52,7 @@ class SemanticContext(BaseModel):
     confidence_score: float = 0.0
     metadata: Dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.now)
+
 
 class BaseSemanticAgent(ABC):
     """
@@ -256,12 +259,14 @@ class BaseSemanticAgent(ABC):
 
     def _register_message_handlers(self) -> None:
         """Register message handlers for inter-agent communication."""
-        self.message_handlers.update({
-            "task_request": self._handle_task_request,
-            "knowledge_share": self._handle_knowledge_share,
-            "status_query": self._handle_status_query,
-            "collaboration_invite": self._handle_collaboration_invite,
-        })
+        self.message_handlers.update(
+            {
+                "task_request": self._handle_task_request,
+                "knowledge_share": self._handle_knowledge_share,
+                "status_query": self._handle_status_query,
+                "collaboration_invite": self._handle_collaboration_invite,
+            }
+        )
 
     async def _handle_task_request(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle task request from another agent."""

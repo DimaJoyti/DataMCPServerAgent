@@ -3,19 +3,20 @@ TradingView Scraping Tools for Crypto Portfolio Management.
 This module provides specialized tools for extracting cryptocurrency data from TradingView.
 """
 
-import json
-import re
 import asyncio
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
+import re
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from langchain_core.tools import BaseTool
 from mcp import ClientSession
 
+
 class TimeFrame(Enum):
     """TradingView timeframe options."""
+
     M1 = "1"
     M5 = "5"
     M15 = "15"
@@ -26,8 +27,10 @@ class TimeFrame(Enum):
     W1 = "1W"
     MN1 = "1M"
 
+
 class CryptoExchange(Enum):
     """Supported cryptocurrency exchanges."""
+
     BINANCE = "BINANCE"
     COINBASE = "COINBASE"
     BITSTAMP = "BITSTAMP"
@@ -35,9 +38,11 @@ class CryptoExchange(Enum):
     BYBIT = "BYBIT"
     OKX = "OKX"
 
+
 @dataclass
 class CryptoSymbol:
     """Cryptocurrency symbol representation."""
+
     base: str  # BTC, ETH, etc.
     quote: str  # USD, USDT, etc.
     exchange: CryptoExchange
@@ -52,9 +57,11 @@ class CryptoSymbol:
         """Get TradingView formatted symbol."""
         return f"{self.exchange.value}:{self.symbol}"
 
+
 @dataclass
 class PriceData:
     """Price data structure."""
+
     timestamp: datetime
     open: float
     high: float
@@ -63,23 +70,28 @@ class PriceData:
     volume: float
     symbol: str
 
+
 @dataclass
 class TechnicalIndicator:
     """Technical indicator data."""
+
     name: str
     value: float
     signal: str  # BUY, SELL, NEUTRAL
     timestamp: datetime
 
+
 @dataclass
 class MarketSentiment:
     """Market sentiment data."""
+
     symbol: str
     bullish_percentage: float
     bearish_percentage: float
     neutral_percentage: float
     total_votes: int
     timestamp: datetime
+
 
 class TradingViewToolkit:
     """A toolkit for TradingView cryptocurrency data extraction."""
@@ -109,18 +121,28 @@ class TradingViewToolkit:
 
         # Create specialized crypto tools
         if "scrape_as_markdown_Bright_Data" in available_tools:
-            tools.extend([
-                self._create_crypto_price_tool(available_tools["scrape_as_markdown_Bright_Data"]),
-                self._create_crypto_analysis_tool(available_tools["scrape_as_markdown_Bright_Data"]),
-                self._create_crypto_sentiment_tool(available_tools["scrape_as_markdown_Bright_Data"]),
-                self._create_crypto_news_tool(available_tools["scrape_as_markdown_Bright_Data"]),
-                self._create_crypto_screener_tool(available_tools["scrape_as_markdown_Bright_Data"]),
-            ])
+            tools.extend(
+                [
+                    self._create_crypto_price_tool(
+                        available_tools["scrape_as_markdown_Bright_Data"]
+                    ),
+                    self._create_crypto_analysis_tool(
+                        available_tools["scrape_as_markdown_Bright_Data"]
+                    ),
+                    self._create_crypto_sentiment_tool(
+                        available_tools["scrape_as_markdown_Bright_Data"]
+                    ),
+                    self._create_crypto_news_tool(
+                        available_tools["scrape_as_markdown_Bright_Data"]
+                    ),
+                    self._create_crypto_screener_tool(
+                        available_tools["scrape_as_markdown_Bright_Data"]
+                    ),
+                ]
+            )
 
         if "scraping_browser_navigate_Bright_Data" in available_tools:
-            tools.append(
-                self._create_realtime_data_tool(available_tools)
-            )
+            tools.append(self._create_realtime_data_tool(available_tools))
 
         return tools
 
@@ -133,11 +155,9 @@ class TradingViewToolkit:
         Returns:
             A crypto price extraction tool
         """
+
         async def _run(
-            symbol: str,
-            exchange: str = "BINANCE",
-            timeframe: str = "1D",
-            period: str = "1M"
+            symbol: str, exchange: str = "BINANCE", timeframe: str = "1D", period: str = "1M"
         ) -> str:
             """Extract cryptocurrency price data from TradingView."""
             try:
@@ -163,13 +183,20 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)"},
-                    "exchange": {"type": "string", "description": "Exchange name", "default": "BINANCE"},
+                    "symbol": {
+                        "type": "string",
+                        "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)",
+                    },
+                    "exchange": {
+                        "type": "string",
+                        "description": "Exchange name",
+                        "default": "BINANCE",
+                    },
                     "timeframe": {"type": "string", "description": "Timeframe", "default": "1D"},
-                    "period": {"type": "string", "description": "Time period", "default": "1M"}
+                    "period": {"type": "string", "description": "Time period", "default": "1M"},
                 },
-                "required": ["symbol"]
-            }
+                "required": ["symbol"],
+            },
         )
 
     def _create_crypto_analysis_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -181,6 +208,7 @@ class TradingViewToolkit:
         Returns:
             A crypto technical analysis tool
         """
+
         async def _run(symbol: str, exchange: str = "BINANCE") -> str:
             """Extract technical analysis data from TradingView."""
             try:
@@ -202,11 +230,18 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)"},
-                    "exchange": {"type": "string", "description": "Exchange name", "default": "BINANCE"}
+                    "symbol": {
+                        "type": "string",
+                        "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)",
+                    },
+                    "exchange": {
+                        "type": "string",
+                        "description": "Exchange name",
+                        "default": "BINANCE",
+                    },
                 },
-                "required": ["symbol"]
-            }
+                "required": ["symbol"],
+            },
         )
 
     def _create_crypto_sentiment_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -218,6 +253,7 @@ class TradingViewToolkit:
         Returns:
             A crypto sentiment analysis tool
         """
+
         async def _run(symbol: str) -> str:
             """Extract market sentiment data from TradingView."""
             try:
@@ -239,10 +275,13 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)"}
+                    "symbol": {
+                        "type": "string",
+                        "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)",
+                    }
                 },
-                "required": ["symbol"]
-            }
+                "required": ["symbol"],
+            },
         )
 
     def _create_crypto_news_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -254,6 +293,7 @@ class TradingViewToolkit:
         Returns:
             A crypto news extraction tool
         """
+
         async def _run(symbol: str, limit: int = 10) -> str:
             """Extract crypto news from TradingView."""
             try:
@@ -275,11 +315,18 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "symbol": {"type": "string", "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)"},
-                    "limit": {"type": "integer", "description": "Number of news items to return", "default": 10}
+                    "symbol": {
+                        "type": "string",
+                        "description": "Crypto symbol (e.g., BTCUSD, ETHUSD)",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Number of news items to return",
+                        "default": 10,
+                    },
                 },
-                "required": ["symbol"]
-            }
+                "required": ["symbol"],
+            },
         )
 
     def _create_crypto_screener_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -291,11 +338,12 @@ class TradingViewToolkit:
         Returns:
             A crypto market screener tool
         """
+
         async def _run(
             market_cap_min: Optional[float] = None,
             volume_min: Optional[float] = None,
             change_min: Optional[float] = None,
-            limit: int = 50
+            limit: int = 50,
         ) -> str:
             """Screen cryptocurrency markets based on criteria."""
             try:
@@ -319,12 +367,22 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "market_cap_min": {"type": "number", "description": "Minimum market cap filter"},
+                    "market_cap_min": {
+                        "type": "number",
+                        "description": "Minimum market cap filter",
+                    },
                     "volume_min": {"type": "number", "description": "Minimum volume filter"},
-                    "change_min": {"type": "number", "description": "Minimum price change % filter"},
-                    "limit": {"type": "integer", "description": "Number of results to return", "default": 50}
-                }
-            }
+                    "change_min": {
+                        "type": "number",
+                        "description": "Minimum price change % filter",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Number of results to return",
+                        "default": 50,
+                    },
+                },
+            },
         )
 
     def _create_realtime_data_tool(self, available_tools: Dict[str, BaseTool]) -> BaseTool:
@@ -336,6 +394,7 @@ class TradingViewToolkit:
         Returns:
             A real-time crypto data tool
         """
+
         async def _run(symbols: List[str], duration: int = 60) -> str:
             """Extract real-time crypto data using browser automation."""
             try:
@@ -371,11 +430,19 @@ class TradingViewToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "symbols": {"type": "array", "items": {"type": "string"}, "description": "List of crypto symbols"},
-                    "duration": {"type": "integer", "description": "Duration to monitor in seconds", "default": 60}
+                    "symbols": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of crypto symbols",
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "description": "Duration to monitor in seconds",
+                        "default": 60,
+                    },
                 },
-                "required": ["symbols"]
-            }
+                "required": ["symbols"],
+            },
         )
 
     # Data parsing methods
@@ -390,28 +457,30 @@ class TradingViewToolkit:
             "volume": None,
             "market_cap": None,
             "high_24h": None,
-            "low_24h": None
+            "low_24h": None,
         }
 
         try:
             # Extract current price
-            price_match = re.search(r'(\d+,?\d*\.?\d*)\s*USD', content)
+            price_match = re.search(r"(\d+,?\d*\.?\d*)\s*USD", content)
             if price_match:
-                price_data["price"] = float(price_match.group(1).replace(',', ''))
+                price_data["price"] = float(price_match.group(1).replace(",", ""))
 
             # Extract price change
-            change_match = re.search(r'([+-]?\d+,?\d*\.?\d*)\s*\(([+-]?\d+\.?\d*)%\)', content)
+            change_match = re.search(r"([+-]?\d+,?\d*\.?\d*)\s*\(([+-]?\d+\.?\d*)%\)", content)
             if change_match:
-                price_data["change"] = float(change_match.group(1).replace(',', ''))
+                price_data["change"] = float(change_match.group(1).replace(",", ""))
                 price_data["change_percent"] = float(change_match.group(2))
 
             # Extract market cap
-            market_cap_match = re.search(r'Market capitalization\s*([0-9.,]+\s*[KMBT]?)\s*USD', content)
+            market_cap_match = re.search(
+                r"Market capitalization\s*([0-9.,]+\s*[KMBT]?)\s*USD", content
+            )
             if market_cap_match:
                 price_data["market_cap"] = self._parse_number_with_suffix(market_cap_match.group(1))
 
             # Extract volume
-            volume_match = re.search(r'Trading volume 24h\s*([0-9.,]+\s*[KMBT]?)\s*USD', content)
+            volume_match = re.search(r"Trading volume 24h\s*([0-9.,]+\s*[KMBT]?)\s*USD", content)
             if volume_match:
                 price_data["volume"] = self._parse_number_with_suffix(volume_match.group(1))
 
@@ -427,40 +496,41 @@ class TradingViewToolkit:
         try:
             # Look for technical analysis summary
             if "Strong sell" in content:
-                indicators.append(TechnicalIndicator(
-                    name="Overall Signal",
-                    value=0.0,
-                    signal="STRONG_SELL",
-                    timestamp=datetime.now()
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="Overall Signal",
+                        value=0.0,
+                        signal="STRONG_SELL",
+                        timestamp=datetime.now(),
+                    )
+                )
             elif "Sell" in content:
-                indicators.append(TechnicalIndicator(
-                    name="Overall Signal",
-                    value=0.25,
-                    signal="SELL",
-                    timestamp=datetime.now()
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="Overall Signal", value=0.25, signal="SELL", timestamp=datetime.now()
+                    )
+                )
             elif "Neutral" in content:
-                indicators.append(TechnicalIndicator(
-                    name="Overall Signal",
-                    value=0.5,
-                    signal="NEUTRAL",
-                    timestamp=datetime.now()
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="Overall Signal", value=0.5, signal="NEUTRAL", timestamp=datetime.now()
+                    )
+                )
             elif "Buy" in content:
-                indicators.append(TechnicalIndicator(
-                    name="Overall Signal",
-                    value=0.75,
-                    signal="BUY",
-                    timestamp=datetime.now()
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="Overall Signal", value=0.75, signal="BUY", timestamp=datetime.now()
+                    )
+                )
             elif "Strong buy" in content:
-                indicators.append(TechnicalIndicator(
-                    name="Overall Signal",
-                    value=1.0,
-                    signal="STRONG_BUY",
-                    timestamp=datetime.now()
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="Overall Signal",
+                        value=1.0,
+                        signal="STRONG_BUY",
+                        timestamp=datetime.now(),
+                    )
+                )
 
         except Exception as e:
             print(f"Error parsing technical indicators: {e}")
@@ -475,7 +545,7 @@ class TradingViewToolkit:
             bearish_percentage=50.0,
             neutral_percentage=0.0,
             total_votes=0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         try:
@@ -495,14 +565,12 @@ class TradingViewToolkit:
         try:
             # Extract news headlines and links
             # This would need to be adapted based on actual TradingView news page structure
-            lines = content.split('\n')
+            lines = content.split("\n")
             for line in lines[:limit]:
                 if line.strip() and len(line) > 20:
-                    news_items.append({
-                        "title": line.strip(),
-                        "timestamp": datetime.now(),
-                        "symbol": symbol
-                    })
+                    news_items.append(
+                        {"title": line.strip(), "timestamp": datetime.now(), "symbol": symbol}
+                    )
 
         except Exception as e:
             print(f"Error parsing news data: {e}")
@@ -515,7 +583,7 @@ class TradingViewToolkit:
         market_cap_min: Optional[float],
         volume_min: Optional[float],
         change_min: Optional[float],
-        limit: int
+        limit: int,
     ) -> List[Dict[str, Any]]:
         """Parse crypto screener data from TradingView content."""
         crypto_list = []
@@ -526,14 +594,16 @@ class TradingViewToolkit:
             sample_cryptos = ["Bitcoin", "Ethereum", "Binance Coin", "Cardano", "Solana"]
 
             for i, crypto in enumerate(sample_cryptos[:limit]):
-                crypto_list.append({
-                    "name": crypto,
-                    "symbol": f"{crypto[:3].upper()}USD",
-                    "price": 50000.0 - (i * 10000),
-                    "change_24h": 2.5 - (i * 0.5),
-                    "volume_24h": 1000000000 - (i * 100000000),
-                    "market_cap": 500000000000 - (i * 50000000000)
-                })
+                crypto_list.append(
+                    {
+                        "name": crypto,
+                        "symbol": f"{crypto[:3].upper()}USD",
+                        "price": 50000.0 - (i * 10000),
+                        "change_24h": 2.5 - (i * 0.5),
+                        "volume_24h": 1000000000 - (i * 100000000),
+                        "market_cap": 500000000000 - (i * 50000000000),
+                    }
+                )
 
         except Exception as e:
             print(f"Error parsing screener data: {e}")
@@ -547,7 +617,7 @@ class TradingViewToolkit:
             "timestamp": datetime.now(),
             "price": 0.0,
             "volume": 0.0,
-            "change": 0.0
+            "change": 0.0,
         }
 
     # Data formatting methods
@@ -568,7 +638,9 @@ class TradingViewToolkit:
         if price_data.get("market_cap"):
             output += f"**Market Cap**: ${price_data['market_cap']:,.0f}\n"
 
-        output += f"\n**Last Updated**: {price_data['timestamp'].strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+        output += (
+            f"\n**Last Updated**: {price_data['timestamp'].strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+        )
 
         return output
 
@@ -586,12 +658,14 @@ class TradingViewToolkit:
                 "BUY": "🔵",
                 "NEUTRAL": "⚪",
                 "SELL": "🔴",
-                "STRONG_SELL": "🔴"
+                "STRONG_SELL": "🔴",
             }.get(indicator.signal, "⚪")
 
             output += f"**{indicator.name}**: {signal_emoji} {indicator.signal}\n"
 
-        output += f"\n**Analysis Time**: {indicators[0].timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+        output += (
+            f"\n**Analysis Time**: {indicators[0].timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+        )
 
         return output
 
@@ -645,7 +719,9 @@ class TradingViewToolkit:
         for i, crypto in enumerate(crypto_list, 1):
             change_emoji = "📈" if crypto.get("change_24h", 0) >= 0 else "📉"
             output += f"| {i} | {crypto['name']} | {crypto['symbol']} | "
-            output += f"${crypto['price']:,.2f} | {change_emoji} {crypto.get('change_24h', 0):.2f}% | "
+            output += (
+                f"${crypto['price']:,.2f} | {change_emoji} {crypto.get('change_24h', 0):.2f}% | "
+            )
             output += f"${crypto['volume_24h']:,.0f} | ${crypto['market_cap']:,.0f} |\n"
 
         return output
@@ -666,15 +742,15 @@ class TradingViewToolkit:
     # Helper methods
     def _parse_number_with_suffix(self, value_str: str) -> float:
         """Parse numbers with K, M, B, T suffixes."""
-        value_str = value_str.replace(',', '').strip()
+        value_str = value_str.replace(",", "").strip()
 
-        if value_str.endswith('K'):
+        if value_str.endswith("K"):
             return float(value_str[:-1]) * 1_000
-        elif value_str.endswith('M'):
+        elif value_str.endswith("M"):
             return float(value_str[:-1]) * 1_000_000
-        elif value_str.endswith('B'):
+        elif value_str.endswith("B"):
             return float(value_str[:-1]) * 1_000_000_000
-        elif value_str.endswith('T'):
+        elif value_str.endswith("T"):
             return float(value_str[:-1]) * 1_000_000_000_000
         else:
             return float(value_str)
@@ -732,13 +808,7 @@ class TradingViewWebSocketClient:
 
         for symbol in symbols:
             # Send subscription message
-            message = {
-                "method": "subscribe",
-                "params": {
-                    "symbol": symbol,
-                    "resolution": "1"
-                }
-            }
+            message = {"method": "subscribe", "params": {"symbol": symbol, "resolution": "1"}}
             # In production, send this message via WebSocket
 
     async def disconnect(self):
@@ -761,7 +831,7 @@ class TradingViewChartingEngine:
         symbol: str,
         timeframe: str = "1H",
         indicators: List[str] = None,
-        overlays: List[str] = None
+        overlays: List[str] = None,
     ) -> Dict[str, Any]:
         """Create TradingView chart configuration."""
         config = {
@@ -781,35 +851,19 @@ class TradingViewChartingEngine:
             "show_popup_button": True,
             "popup_width": "1000",
             "popup_height": "650",
-            "no_referrer_policy": True
+            "no_referrer_policy": True,
         }
 
         self.chart_configs[symbol] = config
         return config
 
-    def add_custom_indicator(
-        self,
-        name: str,
-        script: str,
-        inputs: Dict[str, Any] = None
-    ) -> None:
+    def add_custom_indicator(self, name: str, script: str, inputs: Dict[str, Any] = None) -> None:
         """Add custom Pine Script indicator."""
-        self.indicators[name] = {
-            "script": script,
-            "inputs": inputs or {},
-            "type": "custom"
-        }
+        self.indicators[name] = {"script": script, "inputs": inputs or {}, "type": "custom"}
 
-    def add_strategy_overlay(
-        self,
-        strategy_name: str,
-        signals: List[Dict[str, Any]]
-    ) -> None:
+    def add_strategy_overlay(self, strategy_name: str, signals: List[Dict[str, Any]]) -> None:
         """Add strategy signals as chart overlay."""
-        self.strategies[strategy_name] = {
-            "signals": signals,
-            "type": "strategy_overlay"
-        }
+        self.strategies[strategy_name] = {"signals": signals, "type": "strategy_overlay"}
 
     def generate_chart_html(self, symbol: str) -> str:
         """Generate HTML for TradingView chart widget."""

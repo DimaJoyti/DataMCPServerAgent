@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 from ..document_processing.chunking.models import TextChunk
 from ..vectorization.batch_processor import BatchVectorProcessor
 
+
 @dataclass
 class AsyncBatchResult:
     """Result of async batch processing."""
@@ -27,6 +28,7 @@ class AsyncBatchResult:
         """Get only successful results (non-None)."""
         return [r for r in self.results if r is not None]
 
+
 class AsyncBatchProcessor:
     """Asynchronous batch processor for high-throughput processing."""
 
@@ -34,7 +36,7 @@ class AsyncBatchProcessor:
         self,
         batch_processor: BatchVectorProcessor,
         max_workers: int = 4,
-        max_concurrent_batches: int = 2
+        max_concurrent_batches: int = 2,
     ):
         """
         Initialize async batch processor.
@@ -58,7 +60,7 @@ class AsyncBatchProcessor:
         self,
         texts: List[str],
         batch_size: Optional[int] = None,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> AsyncBatchResult:
         """
         Process texts asynchronously.
@@ -75,7 +77,7 @@ class AsyncBatchProcessor:
         batch_size = batch_size or self.batch_processor.config.batch_size
 
         # Split into batches
-        batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
+        batches = [texts[i : i + batch_size] for i in range(0, len(texts), batch_size)]
 
         # Process batches concurrently
         tasks = []
@@ -118,14 +120,14 @@ class AsyncBatchProcessor:
             failed_count=failed_count,
             total_time=total_time,
             average_time_per_item=average_time,
-            errors=all_errors
+            errors=all_errors,
         )
 
     async def process_chunks_async(
         self,
         chunks: List[TextChunk],
         batch_size: Optional[int] = None,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> AsyncBatchResult:
         """
         Process text chunks asynchronously.
@@ -142,7 +144,7 @@ class AsyncBatchProcessor:
         batch_size = batch_size or self.batch_processor.config.batch_size
 
         # Split into batches
-        batches = [chunks[i:i + batch_size] for i in range(0, len(chunks), batch_size)]
+        batches = [chunks[i : i + batch_size] for i in range(0, len(chunks), batch_size)]
 
         # Process batches concurrently
         tasks = []
@@ -185,7 +187,7 @@ class AsyncBatchProcessor:
             failed_count=failed_count,
             total_time=total_time,
             average_time_per_item=average_time,
-            errors=all_errors
+            errors=all_errors,
         )
 
     async def _process_batch_async(
@@ -193,7 +195,7 @@ class AsyncBatchProcessor:
         batch: List[str],
         batch_index: int,
         total_batches: int,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> tuple[List[Any], List[str]]:
         """Process a single batch of texts asynchronously."""
         async with self.batch_semaphore:
@@ -202,19 +204,14 @@ class AsyncBatchProcessor:
             try:
                 # Run batch processing in executor
                 result = await loop.run_in_executor(
-                    self.executor,
-                    self.batch_processor.process_texts,
-                    batch
+                    self.executor, self.batch_processor.process_texts, batch
                 )
 
                 # Call progress callback
                 if progress_callback:
                     progress = ((batch_index + 1) / total_batches) * 100
                     await self._safe_callback(
-                        progress_callback,
-                        batch_index + 1,
-                        total_batches,
-                        progress
+                        progress_callback, batch_index + 1, total_batches, progress
                     )
 
                 return result.results, result.errors
@@ -228,7 +225,7 @@ class AsyncBatchProcessor:
         batch: List[TextChunk],
         batch_index: int,
         total_batches: int,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> tuple[List[Any], List[str]]:
         """Process a single batch of chunks asynchronously."""
         async with self.batch_semaphore:
@@ -237,19 +234,14 @@ class AsyncBatchProcessor:
             try:
                 # Run batch processing in executor
                 result = await loop.run_in_executor(
-                    self.executor,
-                    self.batch_processor.process_chunks,
-                    batch
+                    self.executor, self.batch_processor.process_chunks, batch
                 )
 
                 # Call progress callback
                 if progress_callback:
                     progress = ((batch_index + 1) / total_batches) * 100
                     await self._safe_callback(
-                        progress_callback,
-                        batch_index + 1,
-                        total_batches,
-                        progress
+                        progress_callback, batch_index + 1, total_batches, progress
                     )
 
                 return result.results, result.errors
@@ -263,7 +255,7 @@ class AsyncBatchProcessor:
         items: List[Union[str, TextChunk]],
         max_retries: int = 3,
         retry_delay: float = 1.0,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> AsyncBatchResult:
         """
         Process items with retry logic.
@@ -280,16 +272,22 @@ class AsyncBatchProcessor:
         for attempt in range(max_retries + 1):
             try:
                 if isinstance(items[0], str):
-                    return await self.process_texts_async(items, progress_callback=progress_callback)
+                    return await self.process_texts_async(
+                        items, progress_callback=progress_callback
+                    )
                 else:
-                    return await self.process_chunks_async(items, progress_callback=progress_callback)
+                    return await self.process_chunks_async(
+                        items, progress_callback=progress_callback
+                    )
 
             except Exception as e:
                 if attempt == max_retries:
                     self.logger.error(f"All retry attempts failed: {e}")
                     raise
 
-                self.logger.warning(f"Attempt {attempt + 1} failed, retrying in {retry_delay}s: {e}")
+                self.logger.warning(
+                    f"Attempt {attempt + 1} failed, retrying in {retry_delay}s: {e}"
+                )
                 await asyncio.sleep(retry_delay)
                 retry_delay *= 2  # Exponential backoff
 
@@ -297,10 +295,7 @@ class AsyncBatchProcessor:
         """Get cache statistics asynchronously."""
         loop = asyncio.get_event_loop()
 
-        result = await loop.run_in_executor(
-            self.executor,
-            self.batch_processor.get_cache_stats
-        )
+        result = await loop.run_in_executor(self.executor, self.batch_processor.get_cache_stats)
 
         return result
 
@@ -308,20 +303,14 @@ class AsyncBatchProcessor:
         """Clear cache asynchronously."""
         loop = asyncio.get_event_loop()
 
-        await loop.run_in_executor(
-            self.executor,
-            self.batch_processor.clear_cache
-        )
+        await loop.run_in_executor(self.executor, self.batch_processor.clear_cache)
 
     async def health_check_async(self) -> bool:
         """Perform health check asynchronously."""
         try:
             loop = asyncio.get_event_loop()
 
-            result = await loop.run_in_executor(
-                self.executor,
-                self.batch_processor.health_check
-            )
+            result = await loop.run_in_executor(self.executor, self.batch_processor.health_check)
 
             return result
         except Exception as e:
@@ -346,5 +335,5 @@ class AsyncBatchProcessor:
 
     def __del__(self):
         """Cleanup on deletion."""
-        if hasattr(self, 'executor') and self.executor:
+        if hasattr(self, "executor") and self.executor:
             self.executor.shutdown(wait=False)

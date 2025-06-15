@@ -2,13 +2,14 @@
 Secure MCP Client with built-in authentication and authorization.
 """
 
-from datetime import datetime
-from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Callable, Dict, Optional
 
-from auth_system import auth_system, require_auth, Permission, User
-from mcp_inspector import mcp_inspector, log_tool_call
+from auth_system import Permission, User, auth_system, require_auth
 from durable_objects_agent import durable_manager, with_durable_state
+from mcp_inspector import log_tool_call, mcp_inspector
+
 
 @dataclass
 class ToolCall:
