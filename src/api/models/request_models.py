@@ -2,8 +2,10 @@
 Request models for the API.
 """
 
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+
 
 class ChatRequest(BaseModel):
     """Request model for chat interactions."""
@@ -15,11 +17,13 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = Field(None, description="Additional context for the agent")
     stream: Optional[bool] = Field(False, description="Whether to stream the response")
 
+
 class AgentRequest(BaseModel):
     """Request model for agent operations."""
 
     agent_mode: str = Field(..., description="Agent mode to use")
     config: Optional[Dict[str, Any]] = Field(None, description="Agent configuration")
+
 
 class MemoryRequest(BaseModel):
     """Request model for memory operations."""
@@ -29,6 +33,7 @@ class MemoryRequest(BaseModel):
     memory_item: Optional[Dict[str, Any]] = Field(None, description="Memory item to store")
     memory_backend: Optional[str] = Field(None, description="Memory backend to use")
 
+
 class ToolRequest(BaseModel):
     """Request model for tool operations."""
 
@@ -36,6 +41,7 @@ class ToolRequest(BaseModel):
     tool_input: Dict[str, Any] = Field(..., description="Input for the tool")
     session_id: Optional[str] = Field(None, description="Session ID for the tool operation")
     agent_mode: Optional[str] = Field(None, description="Agent mode to use for the tool operation")
+
 
 class FeedbackRequest(BaseModel):
     """Request model for feedback."""
@@ -45,6 +51,7 @@ class FeedbackRequest(BaseModel):
     rating: int = Field(..., description="Rating (1-5)")
     feedback_text: Optional[str] = Field(None, description="Feedback text")
     feedback_type: str = Field("user", description="Type of feedback (user, self)")
+
 
 class WebhookRequest(BaseModel):
     """Request model for webhooks."""

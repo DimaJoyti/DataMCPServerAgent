@@ -8,13 +8,16 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+
 class ProcessingStatus(str, Enum):
     """Processing status enumeration."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
 
 class DocumentUploadRequest(BaseModel):
     """Request model for document upload."""
@@ -47,6 +50,7 @@ class DocumentUploadRequest(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Document tags")
     custom_metadata: Dict[str, Any] = Field(default_factory=dict, description="Custom metadata")
 
+
 class ChunkInfo(BaseModel):
     """Information about a text chunk."""
 
@@ -62,6 +66,7 @@ class ChunkInfo(BaseModel):
     has_embedding: bool = Field(default=False, description="Whether chunk has embedding")
     embedding_model: Optional[str] = Field(None, description="Model used for embedding")
     embedding_dimension: Optional[int] = Field(None, description="Embedding dimension")
+
 
 class DocumentProcessingResponse(BaseModel):
     """Response model for document processing."""
@@ -95,8 +100,11 @@ class DocumentProcessingResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="Processing warnings")
 
     # Storage information
-    stored_in_vector_store: bool = Field(default=False, description="Whether stored in vector store")
+    stored_in_vector_store: bool = Field(
+        default=False, description="Whether stored in vector store"
+    )
     vector_store_collection: Optional[str] = Field(None, description="Vector store collection")
+
 
 class VectorSearchRequest(BaseModel):
     """Request model for vector search."""
@@ -132,6 +140,7 @@ class VectorSearchRequest(BaseModel):
     collection_name: Optional[str] = Field(None, description="Collection to search")
     vector_store_type: str = Field(default="memory", description="Vector store type")
 
+
 class SearchResultItem(BaseModel):
     """Individual search result item."""
 
@@ -157,6 +166,7 @@ class SearchResultItem(BaseModel):
     document_title: Optional[str] = Field(None, description="Document title")
     chunk_index: Optional[int] = Field(None, description="Chunk index")
 
+
 class VectorSearchResponse(BaseModel):
     """Response model for vector search."""
 
@@ -179,6 +189,7 @@ class VectorSearchResponse(BaseModel):
     # Aggregations
     document_counts: Dict[str, int] = Field(default_factory=dict, description="Results by document")
     type_counts: Dict[str, int] = Field(default_factory=dict, description="Results by type")
+
 
 class PipelineStatus(BaseModel):
     """Pipeline status information."""
@@ -213,6 +224,7 @@ class PipelineStatus(BaseModel):
     last_updated: datetime = Field(default_factory=datetime.now, description="Last update time")
     uptime: Optional[float] = Field(None, description="Uptime in seconds")
 
+
 class TaskInfo(BaseModel):
     """Information about a processing task."""
 
@@ -236,6 +248,7 @@ class TaskInfo(BaseModel):
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Task metadata")
 
+
 class BatchProcessingRequest(BaseModel):
     """Request for batch processing multiple documents."""
 
@@ -253,7 +266,10 @@ class BatchProcessingRequest(BaseModel):
     continue_on_error: bool = Field(default=True, description="Continue on individual file errors")
 
     # Notification
-    callback_url: Optional[str] = Field(None, description="Callback URL for completion notification")
+    callback_url: Optional[str] = Field(
+        None, description="Callback URL for completion notification"
+    )
+
 
 class BatchProcessingResponse(BaseModel):
     """Response for batch processing."""

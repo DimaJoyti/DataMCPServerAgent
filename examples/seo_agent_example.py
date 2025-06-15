@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.seo_main import chat_with_seo_agent
 
+
 async def run_example():
     """Run the SEO agent example with advanced features."""
     print("Running SEO agent example with advanced features...")

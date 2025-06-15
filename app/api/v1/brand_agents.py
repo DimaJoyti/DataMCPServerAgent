@@ -3,57 +3,63 @@ Brand Agent API endpoints.
 Provides REST API for managing brand agents, knowledge, and conversations.
 """
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from app.api.dependencies import (
-    get_current_user,
+    get_ab_testing_service,
+    get_analytics_service,
     get_brand_agent_service,
-    get_knowledge_service,
-    get_conversation_service,
     get_conversation_engine,
-    get_ai_response_service,
-    get_knowledge_integration_service
+    get_conversation_service,
+    get_current_user,
+    get_knowledge_integration_service,
+    get_knowledge_service,
+    get_learning_service,
 )
-from app.api.models.responses import PaginatedResponse, SuccessResponse
 from app.domain.models.brand_agent import (
+    BrandAgentConfiguration,
     BrandAgentType,
     BrandPersonality,
-    BrandAgentConfiguration,
     ConversationChannel,
     KnowledgeType,
     PersonalityTrait,
 )
-from app.domain.models.conversation import MessageType, ConversationStatus
-from app.domain.services.brand_agent_service import BrandAgentService, KnowledgeService, ConversationService
-from app.domain.services.conversation_engine import ConversationEngine
-from app.domain.services.ai_response_service import AIResponseService
-from app.domain.services.knowledge_integration_service import KnowledgeIntegrationService
-from app.domain.services.analytics_service import AnalyticsService
-from app.domain.services.learning_service import LearningService
+from app.domain.models.conversation import ConversationStatus, MessageType
 from app.domain.services.ab_testing_service import ABTestingService
+from app.domain.services.analytics_service import AnalyticsService
+from app.domain.services.brand_agent_service import (
+    BrandAgentService,
+    ConversationService,
+    KnowledgeService,
+)
+from app.domain.services.conversation_engine import ConversationEngine
+from app.domain.services.knowledge_integration_service import KnowledgeIntegrationService
+from app.domain.services.learning_service import LearningService
 
 router = APIRouter()
+
 
 # Request Models
 class CreateBrandAgentRequest(BaseModel):
     """Request model for creating a brand agent."""
-    
+
     name: str = Field(description="Brand agent name")
     brand_id: str = Field(description="Brand/company ID")
     agent_type: BrandAgentType = Field(description="Type of brand agent")
     description: Optional[str] = Field(default=None, description="Agent description")
     personality: Optional[BrandPersonality] = Field(default=None, description="Agent personality")
-    configuration: Optional[BrandAgentConfiguration] = Field(default=None, description="Agent configuration")
+    configuration: Optional[BrandAgentConfiguration] = Field(
+        default=None, description="Agent configuration"
+    )
 
 
 class UpdatePersonalityRequest(BaseModel):
     """Request model for updating agent personality."""
-    
+
     traits: List[PersonalityTrait] = Field(description="Personality traits")
     tone: str = Field(description="Communication tone")
     communication_style: str = Field(description="Communication style")
@@ -65,13 +71,13 @@ class UpdatePersonalityRequest(BaseModel):
 
 class DeployAgentRequest(BaseModel):
     """Request model for deploying agent to channel."""
-    
+
     channel: ConversationChannel = Field(description="Channel to deploy to")
 
 
 class CreateKnowledgeRequest(BaseModel):
     """Request model for creating knowledge item."""
-    
+
     title: str = Field(description="Knowledge title")
     content: str = Field(description="Knowledge content")
     knowledge_type: KnowledgeType = Field(description="Type of knowledge")
@@ -83,7 +89,7 @@ class CreateKnowledgeRequest(BaseModel):
 
 class StartConversationRequest(BaseModel):
     """Request model for starting conversation."""
-    
+
     agent_id: str = Field(description="Brand agent ID")
     channel: ConversationChannel = Field(description="Communication channel")
     user_id: Optional[str] = Field(default=None, description="User ID")
@@ -91,7 +97,7 @@ class StartConversationRequest(BaseModel):
 
 class AddMessageRequest(BaseModel):
     """Request model for adding message to conversation."""
-    
+
     sender_type: str = Field(description="Sender type: 'user' or 'agent'")
     content: str = Field(description="Message content")
     message_type: str = Field(default="text", description="Message type")
@@ -101,7 +107,7 @@ class AddMessageRequest(BaseModel):
 # Response Models
 class BrandAgentResponse(BaseModel):
     """Response model for brand agent data."""
-    
+
     id: str
     name: str
     brand_id: str
@@ -113,14 +119,14 @@ class BrandAgentResponse(BaseModel):
     success_rate: float
     created_at: str
     updated_at: str
-    
+
     class Config:
         from_attributes = True
 
 
 class KnowledgeResponse(BaseModel):
     """Response model for knowledge data."""
-    
+
     id: str
     title: str
     content: str
@@ -130,14 +136,14 @@ class KnowledgeResponse(BaseModel):
     is_active: bool
     created_at: str
     last_updated: str
-    
+
     class Config:
         from_attributes = True
 
 
 class ConversationSessionResponse(BaseModel):
     """Response model for conversation session."""
-    
+
     id: str
     brand_agent_id: str
     user_id: Optional[str]
@@ -148,21 +154,21 @@ class ConversationSessionResponse(BaseModel):
     started_at: str
     ended_at: Optional[str]
     user_satisfaction: Optional[int]
-    
+
     class Config:
         from_attributes = True
 
 
 class ConversationMessageResponse(BaseModel):
     """Response model for conversation message."""
-    
+
     id: str
     session_id: str
     sender_type: str
     content: str
     message_type: str
     timestamp: str
-    
+
     class Config:
         from_attributes = True
 
@@ -208,11 +214,11 @@ async def list_brand_agents(
             filters["agent_type"] = agent_type
         if is_active is not None:
             filters["is_active"] = is_active
-        
+
         # Get agents from repository
         agent_repo = brand_agent_service.get_repository("brand_agent")
         agents = await agent_repo.list(**filters)
-        
+
         return [BrandAgentResponse.from_orm(agent) for agent in agents]
     except Exception as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
@@ -228,10 +234,10 @@ async def get_brand_agent(
     try:
         agent_repo = brand_agent_service.get_repository("brand_agent")
         agent = await agent_repo.get_by_id(agent_id)
-        
+
         if not agent:
             raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Brand agent not found")
-        
+
         return BrandAgentResponse.from_orm(agent)
     except HTTPException:
         raise
@@ -257,7 +263,7 @@ async def update_agent_personality(
             emoji_usage=request.emoji_usage,
             custom_phrases=request.custom_phrases,
         )
-        
+
         agent = await brand_agent_service.update_agent_personality(agent_id, personality)
         return BrandAgentResponse.from_orm(agent)
     except Exception as e:
@@ -334,7 +340,9 @@ async def create_knowledge_item(
 async def search_knowledge(
     brand_id: str = Query(..., description="Brand ID"),
     query: str = Query(..., description="Search query"),
-    knowledge_type: Optional[KnowledgeType] = Query(default=None, description="Filter by knowledge type"),
+    knowledge_type: Optional[KnowledgeType] = Query(
+        default=None, description="Filter by knowledge type"
+    ),
     knowledge_service: KnowledgeService = Depends(get_knowledge_service),
     current_user=Depends(get_current_user),
 ):
@@ -389,7 +397,9 @@ async def add_message_to_conversation(
 @router.post("/conversations/{session_id}/end", response_model=ConversationSessionResponse)
 async def end_conversation(
     session_id: str = Path(..., description="Conversation session ID"),
-    satisfaction_rating: Optional[int] = Query(default=None, ge=1, le=5, description="User satisfaction rating"),
+    satisfaction_rating: Optional[int] = Query(
+        default=None, ge=1, le=5, description="User satisfaction rating"
+    ),
     conversation_service: ConversationService = Depends(get_conversation_service),
     current_user=Depends(get_current_user),
 ):
@@ -515,13 +525,15 @@ async def get_live_conversation_status(
 async def end_live_conversation(
     conversation_id: str = Path(..., description="Live conversation ID"),
     reason: str = Query(default="user_ended", description="End reason"),
-    satisfaction_rating: Optional[int] = Query(default=None, ge=1, le=5, description="User satisfaction"),
+    satisfaction_rating: Optional[int] = Query(
+        default=None, ge=1, le=5, description="User satisfaction"
+    ),
     conversation_engine: ConversationEngine = Depends(get_conversation_engine),
     current_user=Depends(get_current_user),
 ):
     """End a live conversation."""
     try:
-        conversation = await conversation_engine.end_conversation(
+        await conversation_engine.end_conversation(
             conversation_id=conversation_id,
             reason=reason,
             user_satisfaction=satisfaction_rating,
@@ -536,9 +548,13 @@ async def end_live_conversation(
 async def search_brand_knowledge(
     brand_id: str = Query(..., description="Brand ID"),
     query: str = Query(..., description="Search query"),
-    knowledge_types: Optional[List[KnowledgeType]] = Query(default=None, description="Knowledge types filter"),
+    knowledge_types: Optional[List[KnowledgeType]] = Query(
+        default=None, description="Knowledge types filter"
+    ),
     limit: int = Query(default=5, ge=1, le=20, description="Result limit"),
-    min_relevance: float = Query(default=0.3, ge=0.0, le=1.0, description="Minimum relevance score"),
+    min_relevance: float = Query(
+        default=0.3, ge=0.0, le=1.0, description="Minimum relevance score"
+    ),
     knowledge_service: KnowledgeIntegrationService = Depends(get_knowledge_integration_service),
     current_user=Depends(get_current_user),
 ):
@@ -600,6 +616,7 @@ async def get_analytics_dashboard(
     """Get comprehensive analytics dashboard data."""
     try:
         from datetime import datetime, timedelta, timezone
+
         from app.domain.models.analytics import AnalyticsScope
 
         # Parse time range
@@ -619,9 +636,7 @@ async def get_analytics_dashboard(
         analytics_scope = AnalyticsScope(scope.upper())
 
         dashboard_data = await analytics_service.get_analytics_dashboard_data(
-            scope=analytics_scope,
-            scope_id=scope_id,
-            time_range=(start_time, now)
+            scope=analytics_scope, scope_id=scope_id, time_range=(start_time, now)
         )
 
         return dashboard_data
@@ -630,7 +645,7 @@ async def get_analytics_dashboard(
 
 
 @router.get("/analytics/performance/{agent_id}")
-async def get_agent_performance(
+async def get_detailed_agent_performance(
     agent_id: str = Path(..., description="Agent ID"),
     days: int = Query(default=7, ge=1, le=90, description="Number of days to analyze"),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
@@ -644,18 +659,12 @@ async def get_agent_performance(
         start_time = end_time - timedelta(days=days)
 
         performance = await analytics_service.collect_agent_performance(
-            agent_id=agent_id,
-            period_start=start_time,
-            period_end=end_time
+            agent_id=agent_id, period_start=start_time, period_end=end_time
         )
 
         return {
             "agent_id": agent_id,
-            "period": {
-                "start": start_time.isoformat(),
-                "end": end_time.isoformat(),
-                "days": days
-            },
+            "period": {"start": start_time.isoformat(), "end": end_time.isoformat(), "days": days},
             "metrics": {
                 "total_conversations": performance.total_conversations,
                 "completed_conversations": performance.completed_conversations,
@@ -673,7 +682,7 @@ async def get_agent_performance(
                 "satisfaction": performance.satisfaction_trend,
                 "response_time": performance.response_time_trend,
                 "volume": performance.volume_trend,
-            }
+            },
         }
     except Exception as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
@@ -712,7 +721,7 @@ async def get_system_metrics(
             "quality": {
                 "avg_ai_response_quality": metrics.avg_ai_response_quality,
                 "knowledge_hit_rate": metrics.knowledge_hit_rate,
-            }
+            },
         }
     except Exception as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
@@ -732,16 +741,14 @@ async def get_learning_insights(
         conversations = []  # Placeholder
 
         insights = await learning_service.analyze_conversation_patterns(
-            agent_id=agent_id,
-            conversations=conversations,
-            time_window_days=days
+            agent_id=agent_id, conversations=conversations, time_window_days=days
         )
 
         return {
             "agent_id": agent_id,
             "analysis_period_days": days,
             "insights": [insight.to_dict() for insight in insights],
-            "recommendations": await learning_service.get_learning_recommendations(agent_id)
+            "recommendations": await learning_service.get_learning_recommendations(agent_id),
         }
     except Exception as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
@@ -766,9 +773,7 @@ async def submit_learning_feedback(
         }
 
         await learning_service.learn_from_feedback(
-            agent_id=agent_id,
-            conversation_id=conversation_id,
-            user_feedback=feedback
+            agent_id=agent_id, conversation_id=conversation_id, user_feedback=feedback
         )
 
         return {"message": "Feedback submitted successfully"}
@@ -823,7 +828,7 @@ async def create_experiment(
                     "traffic_percentage": variant.traffic_percentage,
                 }
                 for variant in experiment.variants
-            ]
+            ],
         }
     except Exception as e:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))

@@ -13,14 +13,11 @@ from langchain_anthropic import ChatAnthropic
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
+
 class ReportFormatter:
     """Component for formatting research reports."""
 
-    def __init__(
-        self,
-        model: ChatAnthropic,
-        memory_db: MemoryDatabase
-    ):
+    def __init__(self, model: ChatAnthropic, memory_db: MemoryDatabase):
         """Initialize the report formatter.
 
         Args:
@@ -31,10 +28,7 @@ class ReportFormatter:
         self.memory_db = memory_db
 
     async def format_report(
-        self,
-        report: Dict[str, Any],
-        format_type: str = "markdown",
-        filename: str = None
+        self, report: Dict[str, Any], format_type: str = "markdown", filename: str = None
     ) -> Dict[str, Any]:
         """Format a research report.
 
@@ -80,15 +74,15 @@ class ReportFormatter:
                     "format_type": format_type,
                     "filename": filename,
                     "filepath": filepath,
-                    "content": content if format_type in ["markdown", "html"] else None
-                }
+                    "content": content if format_type in ["markdown", "html"] else None,
+                },
             )
 
             return {
                 "format_type": format_type,
                 "filename": filename,
                 "filepath": filepath,
-                "content": content if format_type in ["markdown", "html"] else None
+                "content": content if format_type in ["markdown", "html"] else None,
             }
         except Exception as e:
             error_message = format_error_for_user(e)
@@ -104,12 +98,7 @@ class ReportFormatter:
         Returns:
             File extension
         """
-        extensions = {
-            "markdown": "md",
-            "html": "html",
-            "pdf": "pdf",
-            "docx": "docx"
-        }
+        extensions = {"markdown": "md", "html": "html", "pdf": "pdf", "docx": "docx"}
         return extensions.get(format_type, "txt")
 
     def _format_markdown(self, report: Dict[str, Any]) -> str:
@@ -196,8 +185,8 @@ class ReportFormatter:
         <h2>Executive Summary</h2>
 """
         # Add executive summary with paragraph handling
-        executive_summary = report['executive_summary']
-        paragraphs = executive_summary.split('\n\n')
+        executive_summary = report["executive_summary"]
+        paragraphs = executive_summary.split("\n\n")
         for paragraph in paragraphs:
             html += f"        <p>{paragraph}</p>\n"
 
@@ -209,7 +198,7 @@ class ReportFormatter:
         <h2>{section_name}</h2>
 """
             # Add section content with paragraph handling
-            paragraphs = section_content.split('\n\n')
+            paragraphs = section_content.split("\n\n")
             for paragraph in paragraphs:
                 html += f"        <p>{paragraph}</p>\n"
 
@@ -223,7 +212,7 @@ class ReportFormatter:
         for entry in report["bibliography"]:
             html += f"            <li>{entry}</li>\n"
 
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         html += f"""        </ul>
     </div>
 
@@ -252,6 +241,7 @@ class ReportFormatter:
             # Try to use a PDF library if available
             try:
                 from weasyprint import HTML
+
                 HTML(string=html_content).write_pdf(filepath)
                 return f"PDF report saved to {filepath}"
             except ImportError:
@@ -281,11 +271,11 @@ class ReportFormatter:
                 document = Document()
 
                 # Add title
-                document.add_heading(report['topic'], 0)
+                document.add_heading(report["topic"], 0)
 
                 # Add executive summary
-                document.add_heading('Executive Summary', 1)
-                document.add_paragraph(report['executive_summary'])
+                document.add_heading("Executive Summary", 1)
+                document.add_paragraph(report["executive_summary"])
 
                 # Add sections
                 for section_name, section_content in report["sections"].items():
@@ -293,12 +283,14 @@ class ReportFormatter:
                     document.add_paragraph(section_content)
 
                 # Add bibliography
-                document.add_heading('Bibliography', 1)
+                document.add_heading("Bibliography", 1)
                 for entry in report["bibliography"]:
-                    document.add_paragraph(entry, style='List Bullet')
+                    document.add_paragraph(entry, style="List Bullet")
 
                 # Add timestamp
-                document.add_paragraph(f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", style='Subtitle')
+                document.add_paragraph(
+                    f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", style="Subtitle"
+                )
 
                 # Save the document
                 document.save(filepath)
@@ -308,7 +300,9 @@ class ReportFormatter:
                 markdown_content = self._format_markdown(report)
                 markdown_filepath = filepath.replace(".docx", ".md")
                 self._save_to_file(markdown_content, markdown_filepath)
-                return f"Markdown report saved to {markdown_filepath} (DOCX conversion not available)"
+                return (
+                    f"Markdown report saved to {markdown_filepath} (DOCX conversion not available)"
+                )
         except Exception as e:
             return f"Error creating DOCX: {str(e)}"
 

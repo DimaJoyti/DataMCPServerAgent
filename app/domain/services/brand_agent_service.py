@@ -3,7 +3,7 @@ Brand Agent domain services.
 Contains business logic for brand agent management, deployment, and optimization.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
@@ -14,15 +14,14 @@ from app.domain.models.brand_agent import (
     BrandAgentConfiguration,
     BrandAgentCreated,
     BrandAgentDeployed,
-    BrandAgentMetrics,
     BrandAgentType,
     BrandKnowledge,
     BrandPersonality,
     ConversationChannel,
+    ConversationEnded,
     ConversationMessage,
     ConversationSession,
     ConversationStarted,
-    ConversationEnded,
     KnowledgeType,
 )
 
@@ -121,9 +120,7 @@ class BrandAgentService(DomainService, LoggerMixin):
         self.logger.info(f"Updated personality for brand agent {agent_id}")
         return saved_agent
 
-    async def add_knowledge_to_agent(
-        self, agent_id: str, knowledge_id: str
-    ) -> BrandAgent:
+    async def add_knowledge_to_agent(self, agent_id: str, knowledge_id: str) -> BrandAgent:
         """Add knowledge item to brand agent."""
         agent_repo = self.get_repository("brand_agent")
         knowledge_repo = self.get_repository("brand_knowledge")
@@ -177,7 +174,8 @@ class BrandAgentService(DomainService, LoggerMixin):
         total_conversations = sum(a.metrics.total_conversations for a in agents)
         avg_satisfaction = (
             sum(a.metrics.user_satisfaction_avg for a in agents) / total_agents
-            if total_agents > 0 else 0
+            if total_agents > 0
+            else 0
         )
 
         return {
@@ -235,9 +233,7 @@ class KnowledgeService(DomainService, LoggerMixin):
         self.logger.info(f"Knowledge item created: {saved_knowledge.id}")
         return saved_knowledge
 
-    async def update_knowledge_content(
-        self, knowledge_id: str, new_content: str
-    ) -> BrandKnowledge:
+    async def update_knowledge_content(self, knowledge_id: str, new_content: str) -> BrandKnowledge:
         """Update knowledge item content."""
         knowledge_repo = self.get_repository("brand_knowledge")
         knowledge = await knowledge_repo.get_by_id(knowledge_id)
@@ -256,7 +252,7 @@ class KnowledgeService(DomainService, LoggerMixin):
     ) -> List[BrandKnowledge]:
         """Search knowledge items by query."""
         knowledge_repo = self.get_repository("brand_knowledge")
-        
+
         # Build search criteria
         criteria = {"metadata.brand_id": brand_id}
         if knowledge_type:
@@ -268,10 +264,13 @@ class KnowledgeService(DomainService, LoggerMixin):
         # Simple text search (in a real implementation, use proper search engine)
         query_lower = query.lower()
         matching_knowledge = [
-            k for k in all_knowledge
-            if (query_lower in k.title.lower() or 
-                query_lower in k.content.lower() or
-                any(query_lower in tag.lower() for tag in k.tags))
+            k
+            for k in all_knowledge
+            if (
+                query_lower in k.title.lower()
+                or query_lower in k.content.lower()
+                or any(query_lower in tag.lower() for tag in k.tags)
+            )
         ]
 
         # Sort by priority
@@ -375,9 +374,7 @@ class ConversationService(DomainService, LoggerMixin):
             raise ValidationError(f"Conversation session not found: {session_id}")
 
         # Calculate duration
-        duration_seconds = int(
-            (datetime.now(timezone.utc) - session.started_at).total_seconds()
-        )
+        duration_seconds = int((datetime.now(timezone.utc) - session.started_at).total_seconds())
 
         # End session
         session.end_session(satisfaction_rating)

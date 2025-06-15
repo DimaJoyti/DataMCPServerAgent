@@ -9,8 +9,10 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
+
 class DocumentType(str, Enum):
     """Supported document types."""
+
     PDF = "pdf"
     DOCX = "docx"
     HTML = "html"
@@ -29,13 +31,16 @@ class DocumentType(str, Enum):
     PRESENTATION = "presentation"
     UNKNOWN = "unknown"
 
+
 class ProcessingStatus(str, Enum):
     """Document processing status."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
+
 
 class DocumentMetadata(BaseModel):
     """Comprehensive document metadata model."""
@@ -73,8 +78,7 @@ class DocumentMetadata(BaseModel):
 
     # Processing information
     processing_status: ProcessingStatus = Field(
-        default=ProcessingStatus.PENDING,
-        description="Processing status"
+        default=ProcessingStatus.PENDING, description="Processing status"
     )
     processing_time: Optional[float] = Field(None, description="Processing time in seconds")
     error_message: Optional[str] = Field(None, description="Error message if processing failed")
@@ -86,34 +90,33 @@ class DocumentMetadata(BaseModel):
 
     # Custom metadata
     custom_fields: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Custom metadata fields"
+        default_factory=dict, description="Custom metadata fields"
     )
 
     # Tags and categories
     tags: List[str] = Field(default_factory=list, description="Document tags")
     categories: List[str] = Field(default_factory=list, description="Document categories")
 
-    @validator('document_type', pre=True)
+    @validator("document_type", pre=True)
     def validate_document_type(cls, v):
         """Validate and normalize document type."""
         if isinstance(v, str):
             v = v.lower()
             # Try to match known types
             for doc_type in DocumentType:
-                if v == doc_type.value or v.endswith(f'.{doc_type.value}'):
+                if v == doc_type.value or v.endswith(f".{doc_type.value}"):
                     return doc_type
             return DocumentType.UNKNOWN
         return v
 
-    @validator('file_size')
+    @validator("file_size")
     def validate_file_size(cls, v):
         """Validate file size is non-negative."""
         if v is not None and v < 0:
             raise ValueError("File size must be non-negative")
         return v
 
-    @validator('processing_time')
+    @validator("processing_time")
     def validate_processing_time(cls, v):
         """Validate processing time is non-negative."""
         if v is not None and v < 0:
@@ -148,7 +151,7 @@ class DocumentMetadata(BaseModel):
         path = Path(file_path)
 
         # Determine document type from extension
-        extension = path.suffix.lower().lstrip('.')
+        extension = path.suffix.lower().lstrip(".")
         doc_type = DocumentType.UNKNOWN
         for dt in DocumentType:
             if extension == dt.value:
@@ -164,6 +167,7 @@ class DocumentMetadata(BaseModel):
             created_at=datetime.fromtimestamp(path.stat().st_ctime) if path.exists() else None,
             modified_at=datetime.fromtimestamp(path.stat().st_mtime) if path.exists() else None,
         )
+
 
 class ChunkMetadata(BaseModel):
     """Metadata for document chunks."""
@@ -193,10 +197,7 @@ class ChunkMetadata(BaseModel):
     topic: Optional[str] = Field(None, description="Detected topic")
 
     # Custom metadata
-    custom_fields: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Custom chunk metadata"
-    )
+    custom_fields: Dict[str, Any] = Field(default_factory=dict, description="Custom chunk metadata")
 
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.now, description="Chunk creation time")

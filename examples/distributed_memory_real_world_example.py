@@ -4,20 +4,17 @@ This example demonstrates a practical use case for distributed memory in a multi
 """
 
 import asyncio
+import logging
 import os
 import sys
 import time
-import logging
-import json
-import random
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.memory.distributed_memory_manager import DistributedMemoryManager
 

@@ -1,38 +1,65 @@
 """
 Configuration for the API module.
+Uses unified configuration system from app.core.config for consistency.
 """
 
-import os
-from typing import List, Optional
+import warnings
+from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# Import unified configuration
+try:
+    from app.core.config import get_settings
+
+    UNIFIED_CONFIG_AVAILABLE = True
+except ImportError:
+    UNIFIED_CONFIG_AVAILABLE = False
+    warnings.warn(
+        "Unified configuration not available. Using legacy configuration.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
 
 class APIConfig(BaseModel):
-    """Configuration for the API."""
+    """Configuration for the API module (legacy, deprecated)."""
 
     # API settings
-    title: str = "DataMCPServerAgent API"
-    description: str = "API for interacting with DataMCPServerAgent"
-    version: str = "0.1.0"
-    openapi_url: str = "/openapi.json"
-    docs_url: str = "/docs"
-    redoc_url: str = "/redoc"
+    title: str = Field(default="DataMCPServerAgent API", description="API title")
+    description: str = Field(
+        default="API for interacting with DataMCPServerAgent",
+        description="API description"
+    )
+    version: str = Field(default="0.1.0", description="API version")
+    openapi_url: str = Field(default="/openapi.json", description="OpenAPI URL")
+    docs_url: str = Field(default="/docs", description="Docs URL")
+    redoc_url: str = Field(default="/redoc", description="ReDoc URL")
 
     # Server settings
-    host: str = "0.0.0.0"
-    port: int = 8000
-    debug: bool = False
-    reload: bool = False
+    host: str = Field(default="0.0.0.0", description="Host to bind to")
+    port: int = Field(default=8000, description="Port to bind to")
+    debug: bool = Field(default=False, description="Debug mode")
+    reload: bool = Field(default=False, description="Auto-reload")
 
-    # Security settings
-    enable_auth: bool = False
-    api_key_header: str = "X-API-Key"
-    api_keys: List[str] = []
+    # Security settings (DEPRECATED - use unified config)
+    enable_auth: bool = Field(default=False, description="Enable authentication")
+    api_key_header: str = Field(default="X-API-Key", description="API key header")
+    api_keys: List[str] = Field(default=[], description="Valid API keys")
 
-    # CORS settings
-    allow_origins: List[str] = ["*"]
-    allow_methods: List[str] = ["*"]
-    allow_headers: List[str] = ["*"]
+    # CORS settings (DEPRECATED - use unified config)
+    allow_origins: List[str] = Field(
+        default=["http://localhost:3002", "http://localhost:3000"],
+        description="CORS allowed origins (DEPRECATED)"
+    )
+    allow_methods: List[str] = Field(
+        default=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        description="CORS allowed methods (DEPRECATED)"
+    )
+    allow_headers: List[str] = Field(
+        default=["Content-Type", "Authorization", "X-API-Key"],
+        description="CORS allowed headers (DEPRECATED)"
+    )
 
     # Rate limiting
     enable_rate_limiting: bool = False
@@ -130,9 +157,7 @@ class APIConfig(BaseModel):
                 os.getenv("API_ENABLE_RATE_LIMITING").lower() == "true"
             )
         if os.getenv("API_RATE_LIMIT_PER_MINUTE"):
-            config_dict["rate_limit_per_minute"] = int(
-                os.getenv("API_RATE_LIMIT_PER_MINUTE")
-            )
+            config_dict["rate_limit_per_minute"] = int(os.getenv("API_RATE_LIMIT_PER_MINUTE"))
 
         # Logging
         if os.getenv("API_LOG_LEVEL"):
@@ -176,11 +201,41 @@ class APIConfig(BaseModel):
 
         # Tool settings
         if os.getenv("API_ENABLE_ALL_TOOLS"):
-            config_dict["enable_all_tools"] = (
-                os.getenv("API_ENABLE_ALL_TOOLS").lower() == "true"
-            )
+            config_dict["enable_all_tools"] = os.getenv("API_ENABLE_ALL_TOOLS").lower() == "true"
 
         return cls(**config_dict)
 
+
+# Unified configuration adapter
+def get_api_config() -> APIConfig:
+    """Get API configuration with unified settings when available."""
+    if UNIFIED_CONFIG_AVAILABLE:
+        try:
+            settings = get_settings()
+            # Create adapter using unified configuration
+            return APIConfig(
+                title=f"{settings.app_name} API",
+                description=settings.app_description,
+                version=settings.app_version,
+                host=settings.api_host,
+                port=settings.api_port,
+                debug=settings.debug,
+                allow_origins=settings.security.cors_origins,
+                allow_methods=settings.security.cors_methods,
+                allow_headers=settings.security.cors_headers,
+                api_key_header=settings.security.api_key_header,
+                rate_limit_per_minute=settings.security.rate_limit_per_minute,
+            )
+        except Exception as e:
+            warnings.warn(
+                f"Failed to load unified configuration: {e}. Using legacy configuration.",
+                RuntimeWarning,
+                stacklevel=2
+            )
+
+    # Fallback to legacy configuration
+    return APIConfig.from_env()
+
+
 # Create a global config instance
-config = APIConfig.from_env()
+config = get_api_config()

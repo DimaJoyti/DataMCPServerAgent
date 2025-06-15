@@ -5,14 +5,15 @@ Batch processor for vectorizing large amounts of text efficiently.
 import asyncio
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from .embeddings.base_embedder import BaseEmbedder, EmbeddingResult
-from .vector_cache import VectorCache, CacheConfig
 from ..document_processing.chunking.base_chunker import TextChunk
+from .embeddings.base_embedder import BaseEmbedder, EmbeddingResult
+from .vector_cache import CacheConfig, VectorCache
+
 
 class BatchProcessingConfig(BaseModel):
     """Configuration for batch vector processing."""
@@ -38,6 +39,7 @@ class BatchProcessingConfig(BaseModel):
 
     # Memory management
     clear_cache_interval: int = Field(default=1000, description="Clear cache every N items")
+
 
 class BatchProcessingResult(BaseModel):
     """Result of batch vector processing."""
@@ -68,14 +70,11 @@ class BatchProcessingResult(BaseModel):
         """Get only successful results."""
         return [r for r in self.results if r is not None]
 
+
 class BatchVectorProcessor:
     """Batch processor for vectorizing large amounts of text efficiently."""
 
-    def __init__(
-        self,
-        embedder: BaseEmbedder,
-        config: Optional[BatchProcessingConfig] = None
-    ):
+    def __init__(self, embedder: BaseEmbedder, config: Optional[BatchProcessingConfig] = None):
         """
         Initialize batch vector processor.
 
@@ -140,11 +139,13 @@ class BatchVectorProcessor:
                     if self.cache and result is not None:
                         self.cache.set(result.text_hash, result)
                 else:
-                    errors.append({
-                        "index": i,
-                        "text": texts[i][:100] + "..." if len(texts[i]) > 100 else texts[i],
-                        "error": "Processing failed"
-                    })
+                    errors.append(
+                        {
+                            "index": i,
+                            "text": texts[i][:100] + "..." if len(texts[i]) > 100 else texts[i],
+                            "error": "Processing failed",
+                        }
+                    )
 
         # Calculate statistics
         total_time = time.time() - start_time
@@ -168,7 +169,7 @@ class BatchVectorProcessor:
             average_time_per_item=total_time / len(texts) if texts else 0.0,
             results=results,
             errors=errors,
-            cache_hit_rate=cache_hit_rate
+            cache_hit_rate=cache_hit_rate,
         )
 
         self.logger.info(
@@ -195,15 +196,17 @@ class BatchVectorProcessor:
         for i, (chunk, embedding_result) in enumerate(zip(chunks, result.results)):
             if embedding_result is not None:
                 chunk.metadata.add_custom_field("embedding_model", embedding_result.model_name)
-                chunk.metadata.add_custom_field("embedding_dimension", embedding_result.embedding_dimension)
-                chunk.metadata.add_custom_field("embedding_processing_time", embedding_result.processing_time)
+                chunk.metadata.add_custom_field(
+                    "embedding_dimension", embedding_result.embedding_dimension
+                )
+                chunk.metadata.add_custom_field(
+                    "embedding_processing_time", embedding_result.processing_time
+                )
 
         return result
 
     def _check_cache(
-        self,
-        texts: List[str],
-        results: List[Optional[EmbeddingResult]]
+        self, texts: List[str], results: List[Optional[EmbeddingResult]]
     ) -> Tuple[List[Optional[EmbeddingResult]], List[int]]:
         """
         Check cache for existing embeddings.
@@ -228,9 +231,7 @@ class BatchVectorProcessor:
         return results, cached_indices
 
     def _process_pending_texts(
-        self,
-        texts: List[str],
-        indices: List[int]
+        self, texts: List[str], indices: List[int]
     ) -> List[Optional[EmbeddingResult]]:
         """
         Process texts that are not in cache.
@@ -251,8 +252,8 @@ class BatchVectorProcessor:
         batch_size = min(self.config.batch_size, len(texts))
 
         for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            batch_indices = indices[i:i + batch_size]
+            batch_texts = texts[i : i + batch_size]
+            batch_indices = indices[i : i + batch_size]
 
             # Apply rate limiting
             self._apply_rate_limit()
@@ -267,18 +268,18 @@ class BatchVectorProcessor:
                 self.logger.info(f"Processed {processed}/{len(texts)} texts")
 
             # Clear cache periodically to manage memory
-            if (self.cache and
-                self.config.clear_cache_interval > 0 and
-                (i + batch_size) % self.config.clear_cache_interval == 0):
+            if (
+                self.cache
+                and self.config.clear_cache_interval > 0
+                and (i + batch_size) % self.config.clear_cache_interval == 0
+            ):
                 # This would be a partial clear in a real implementation
                 pass
 
         return results
 
     def _process_batch(
-        self,
-        texts: List[str],
-        indices: List[int]
+        self, texts: List[str], indices: List[int]
     ) -> List[Optional[EmbeddingResult]]:
         """
         Process a single batch of texts.
@@ -297,13 +298,11 @@ class BatchVectorProcessor:
                 return results
 
             except Exception as e:
-                self.logger.warning(
-                    f"Batch processing attempt {attempt + 1} failed: {e}"
-                )
+                self.logger.warning(f"Batch processing attempt {attempt + 1} failed: {e}")
 
                 if attempt < self.config.max_retries:
                     # Wait before retry
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                 elif self.config.continue_on_error:
                     # Return None results for failed batch
                     return [None] * len(texts)
@@ -383,5 +382,5 @@ class BatchVectorProcessor:
             "hits": stats.hits,
             "misses": stats.misses,
             "hit_rate": stats.hit_rate,
-            "size": self.cache.size()
+            "size": self.cache.size(),
         }

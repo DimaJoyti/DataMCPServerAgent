@@ -21,6 +21,7 @@ from app.core.simple_config import SimpleSettings
 logger = get_logger(__name__)
 console = Console()
 
+
 class ConsolidatedCLI:
     """Consolidated CLI interface for DataMCPServerAgent."""
 

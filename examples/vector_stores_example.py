@@ -4,9 +4,10 @@ Example demonstrating vector store usage with different backends.
 
 import asyncio
 import logging
-import numpy as np
 from pathlib import Path
 from typing import List
+
+import numpy as np
 
 # Configure logging
 logging.basicConfig(
@@ -16,31 +17,23 @@ logging.basicConfig(
 
 # Add src to path for imports
 import sys
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.data_pipeline.vector_stores.schemas import (
-    VectorStoreConfig,
-    VectorStoreType,
     DistanceMetric,
     DocumentVectorSchema,
+    SearchFilters,
     SearchQuery,
     SearchType,
-    SearchFilters
-)
-from src.data_pipeline.vector_stores.backends import (
-    MemoryVectorStore,
-    ChromaVectorStore,
-    FAISSVectorStore
+    VectorStoreConfig,
+    VectorStoreType,
 )
 from src.data_pipeline.vector_stores.vector_store_manager import (
+    VectorStoreFactory,
     VectorStoreManager,
-    VectorStoreFactory
 )
-from src.data_pipeline.document_processing.metadata.models import (
-    DocumentMetadata,
-    ChunkMetadata,
-    DocumentType
-)
+
 
 class VectorStoreDemo:
     """Vector store demonstration."""
@@ -125,8 +118,9 @@ class VectorStoreDemo:
 
     def create_vector_records(self, sample_data: List[dict], schema: DocumentVectorSchema):
         """Convert sample data to vector records."""
-        from src.data_pipeline.vector_stores.schemas.base_schema import VectorRecord
         from datetime import datetime
+
+        from src.data_pipeline.vector_stores.schemas.base_schema import VectorRecord
 
         records = []
 
@@ -377,14 +371,14 @@ class VectorStoreDemo:
 
         # Health check all stores
         health_results = await self.manager.health_check_all()
-        print(f"3. Health check results:")
+        print("3. Health check results:")
         for store_name, is_healthy in health_results.items():
             status = "✓ Healthy" if is_healthy else "✗ Unhealthy"
             print(f"   {store_name}: {status}")
 
         # Get stats for all stores
         all_stats = await self.manager.get_stats_all()
-        print(f"4. Store statistics:")
+        print("4. Store statistics:")
         for store_name, stats in all_stats.items():
             if "error" in stats:
                 print(f"   {store_name}: Error - {stats['error']}")

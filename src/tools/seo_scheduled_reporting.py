@@ -4,30 +4,31 @@ Scheduled reporting tools for SEO.
 This module provides tools for scheduling and generating regular SEO reports.
 """
 
-import os
-import json
-import time
 import hashlib
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
-import requests
-import schedule
-import threading
+import json
+import os
 import smtplib
+import threading
+import time
+from datetime import datetime, timedelta
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-import pandas as pd
+from typing import Any, Dict, List, Optional
+
 import matplotlib.pyplot as plt
 from langchain.tools import Tool
 
-from src.tools.seo_bulk_tools import BulkAnalysisTool
 from src.tools.seo_advanced_tools import RankTrackingTool
+from src.tools.seo_bulk_tools import BulkAnalysisTool
 from src.tools.seo_ml_tools import MLRankingPredictionTool
 
 # Directory for storing scheduled reports
-REPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "reports", "seo")
+REPORTS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "reports", "seo"
+)
 os.makedirs(REPORTS_DIR, exist_ok=True)
+
 
 class ScheduledReportingTool:
     """Tool for scheduling and generating regular SEO reports."""
@@ -41,7 +42,9 @@ class ScheduledReportingTool:
         self.scheduler_thread = None
         self.running = False
 
-    def schedule_report(self, domain: str, frequency: str, report_type: str, email: Optional[str] = None) -> Dict[str, Any]:
+    def schedule_report(
+        self, domain: str, frequency: str, report_type: str, email: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Schedule a regular SEO report.
 
@@ -57,7 +60,9 @@ class ScheduledReportingTool:
         print(f"Scheduling {report_type} SEO report for {domain} with {frequency} frequency...")
 
         # Generate a unique ID for the report
-        report_id = hashlib.md5(f"{domain}_{frequency}_{report_type}_{time.time()}".encode()).hexdigest()
+        report_id = hashlib.md5(
+            f"{domain}_{frequency}_{report_type}_{time.time()}".encode()
+        ).hexdigest()
 
         # Determine the schedule
         if frequency == "daily":
@@ -67,7 +72,9 @@ class ScheduledReportingTool:
         elif frequency == "monthly":
             schedule_time = "1st 00:00"  # 1st of the month at midnight
         else:
-            return {"error": f"Invalid frequency: {frequency}. Must be 'daily', 'weekly', or 'monthly'."}
+            return {
+                "error": f"Invalid frequency: {frequency}. Must be 'daily', 'weekly', or 'monthly'."
+            }
 
         # Store the report configuration
         self.scheduled_reports[report_id] = {
@@ -78,7 +85,7 @@ class ScheduledReportingTool:
             "schedule_time": schedule_time,
             "created_at": datetime.now().isoformat(),
             "last_run": None,
-            "next_run": self._calculate_next_run(frequency)
+            "next_run": self._calculate_next_run(frequency),
         }
 
         # Start the scheduler if not already running
@@ -92,7 +99,7 @@ class ScheduledReportingTool:
             "report_type": report_type,
             "email": email,
             "schedule_time": schedule_time,
-            "next_run": self.scheduled_reports[report_id]["next_run"].isoformat()
+            "next_run": self.scheduled_reports[report_id]["next_run"].isoformat(),
         }
 
     def _calculate_next_run(self, frequency: str) -> datetime:
@@ -149,7 +156,9 @@ class ScheduledReportingTool:
 
                     # Update the last run time and calculate the next run
                     self.scheduled_reports[report_id]["last_run"] = now.isoformat()
-                    self.scheduled_reports[report_id]["next_run"] = self._calculate_next_run(report["frequency"])
+                    self.scheduled_reports[report_id]["next_run"] = self._calculate_next_run(
+                        report["frequency"]
+                    )
 
             # Sleep for a minute before checking again
             time.sleep(60)
@@ -176,7 +185,9 @@ class ScheduledReportingTool:
             if report_type == "basic":
                 result = self.bulk_analysis.analyze_site(domain, max_pages=10, depth="basic")
             else:  # comprehensive
-                result = self.bulk_analysis.analyze_site(domain, max_pages=50, depth="comprehensive")
+                result = self.bulk_analysis.analyze_site(
+                    domain, max_pages=50, depth="comprehensive"
+                )
 
             # Add ranking data
             ranking_data = self.rank_tracking.track_rankings(domain)
@@ -184,9 +195,11 @@ class ScheduledReportingTool:
 
             # Save the report
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            report_path = os.path.join(REPORTS_DIR, f"{domain.replace('.', '_')}_{report_type}_{timestamp}.json")
+            report_path = os.path.join(
+                REPORTS_DIR, f"{domain.replace('.', '_')}_{report_type}_{timestamp}.json"
+            )
 
-            with open(report_path, 'w') as f:
+            with open(report_path, "w") as f:
                 json.dump(result, f, indent=2)
 
             # Generate visualizations
@@ -194,14 +207,18 @@ class ScheduledReportingTool:
 
             # Send the report by email if an email address is provided
             if report["email"]:
-                self._send_report_email(report["email"], domain, report_type, report_path, visualization_path)
+                self._send_report_email(
+                    report["email"], domain, report_type, report_path, visualization_path
+                )
 
             print(f"Report generated and saved to {report_path}")
 
         except Exception as e:
             print(f"Error generating report: {str(e)}")
 
-    def _generate_visualizations(self, report_data: Dict[str, Any], domain: str, timestamp: str) -> str:
+    def _generate_visualizations(
+        self, report_data: Dict[str, Any], domain: str, timestamp: str
+    ) -> str:
         """
         Generate visualizations for the report.
 
@@ -218,7 +235,9 @@ class ScheduledReportingTool:
         os.makedirs(vis_dir, exist_ok=True)
 
         # Create a PDF file for visualizations
-        vis_path = os.path.join(vis_dir, f"{domain.replace('.', '_')}_{timestamp}_visualizations.pdf")
+        vis_path = os.path.join(
+            vis_dir, f"{domain.replace('.', '_')}_{timestamp}_visualizations.pdf"
+        )
 
         # Create visualizations using matplotlib
         plt.figure(figsize=(12, 8))
@@ -226,10 +245,10 @@ class ScheduledReportingTool:
         # SEO Score Distribution
         plt.subplot(2, 2, 1)
         scores = [page.get("seo_score", 0) for page in report_data.get("pages", [])]
-        plt.hist(scores, bins=10, range=(0, 100), alpha=0.7, color='blue')
-        plt.title('SEO Score Distribution')
-        plt.xlabel('SEO Score')
-        plt.ylabel('Number of Pages')
+        plt.hist(scores, bins=10, range=(0, 100), alpha=0.7, color="blue")
+        plt.title("SEO Score Distribution")
+        plt.xlabel("SEO Score")
+        plt.ylabel("Number of Pages")
 
         # Issues by Category
         plt.subplot(2, 2, 2)
@@ -241,11 +260,11 @@ class ScheduledReportingTool:
 
         categories = list(issue_categories.keys())
         counts = list(issue_categories.values())
-        plt.bar(categories, counts, color='red', alpha=0.7)
-        plt.title('Issues by Category')
-        plt.xlabel('Category')
-        plt.ylabel('Number of Issues')
-        plt.xticks(rotation=45, ha='right')
+        plt.bar(categories, counts, color="red", alpha=0.7)
+        plt.title("Issues by Category")
+        plt.xlabel("Category")
+        plt.ylabel("Number of Issues")
+        plt.xticks(rotation=45, ha="right")
 
         # Keyword Rankings
         plt.subplot(2, 2, 3)
@@ -253,25 +272,32 @@ class ScheduledReportingTool:
         keywords = [r.get("keyword", "") for r in rankings]
         positions = [r.get("current_rank", 0) for r in rankings]
 
-        plt.bar(keywords, positions, color='green', alpha=0.7)
-        plt.title('Keyword Rankings')
-        plt.xlabel('Keyword')
-        plt.ylabel('Position')
-        plt.xticks(rotation=45, ha='right')
+        plt.bar(keywords, positions, color="green", alpha=0.7)
+        plt.title("Keyword Rankings")
+        plt.xlabel("Keyword")
+        plt.ylabel("Position")
+        plt.xticks(rotation=45, ha="right")
         plt.gca().invert_yaxis()  # Invert Y-axis so lower (better) rankings are higher
 
         # Page Speed
         plt.subplot(2, 2, 4)
-        mobile_speeds = [page.get("page_speed", {}).get("mobile", 0) for page in report_data.get("pages", [])]
-        desktop_speeds = [page.get("page_speed", {}).get("desktop", 0) for page in report_data.get("pages", [])]
+        mobile_speeds = [
+            page.get("page_speed", {}).get("mobile", 0) for page in report_data.get("pages", [])
+        ]
+        desktop_speeds = [
+            page.get("page_speed", {}).get("desktop", 0) for page in report_data.get("pages", [])
+        ]
 
         if mobile_speeds and desktop_speeds:
-            labels = ['Mobile', 'Desktop']
-            speeds = [sum(mobile_speeds) / len(mobile_speeds), sum(desktop_speeds) / len(desktop_speeds)]
-            plt.bar(labels, speeds, color='purple', alpha=0.7)
-            plt.title('Average Page Speed')
-            plt.xlabel('Device Type')
-            plt.ylabel('Speed Score')
+            labels = ["Mobile", "Desktop"]
+            speeds = [
+                sum(mobile_speeds) / len(mobile_speeds),
+                sum(desktop_speeds) / len(desktop_speeds),
+            ]
+            plt.bar(labels, speeds, color="purple", alpha=0.7)
+            plt.title("Average Page Speed")
+            plt.xlabel("Device Type")
+            plt.ylabel("Speed Score")
             plt.ylim(0, 100)
 
         plt.tight_layout()
@@ -280,7 +306,9 @@ class ScheduledReportingTool:
 
         return vis_path
 
-    def _send_report_email(self, email: str, domain: str, report_type: str, report_path: str, visualization_path: str) -> None:
+    def _send_report_email(
+        self, email: str, domain: str, report_type: str, report_path: str, visualization_path: str
+    ) -> None:
         """
         Send a report by email.
 
@@ -304,9 +332,11 @@ class ScheduledReportingTool:
         try:
             # Create the email
             msg = MIMEMultipart()
-            msg['From'] = smtp_username
-            msg['To'] = email
-            msg['Subject'] = f"SEO Report for {domain} - {report_type.capitalize()} - {datetime.now().strftime('%Y-%m-%d')}"
+            msg["From"] = smtp_username
+            msg["To"] = email
+            msg["Subject"] = (
+                f"SEO Report for {domain} - {report_type.capitalize()} - {datetime.now().strftime('%Y-%m-%d')}"
+            )
 
             # Email body
             body = f"""
@@ -326,18 +356,24 @@ class ScheduledReportingTool:
             </body>
             </html>
             """
-            msg.attach(MIMEText(body, 'html'))
+            msg.attach(MIMEText(body, "html"))
 
             # Attach the report file
-            with open(report_path, 'rb') as f:
-                attachment = MIMEApplication(f.read(), _subtype='json')
-                attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(report_path))
+            with open(report_path, "rb") as f:
+                attachment = MIMEApplication(f.read(), _subtype="json")
+                attachment.add_header(
+                    "Content-Disposition", "attachment", filename=os.path.basename(report_path)
+                )
                 msg.attach(attachment)
 
             # Attach the visualization file
-            with open(visualization_path, 'rb') as f:
-                attachment = MIMEApplication(f.read(), _subtype='pdf')
-                attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(visualization_path))
+            with open(visualization_path, "rb") as f:
+                attachment = MIMEApplication(f.read(), _subtype="pdf")
+                attachment.add_header(
+                    "Content-Disposition",
+                    "attachment",
+                    filename=os.path.basename(visualization_path),
+                )
                 msg.attach(attachment)
 
             # Send the email
@@ -366,7 +402,11 @@ class ScheduledReportingTool:
                 "report_type": report["report_type"],
                 "email": report["email"],
                 "last_run": report["last_run"],
-                "next_run": report["next_run"].isoformat() if isinstance(report["next_run"], datetime) else report["next_run"]
+                "next_run": (
+                    report["next_run"].isoformat()
+                    if isinstance(report["next_run"], datetime)
+                    else report["next_run"]
+                ),
             }
             for report_id, report in self.scheduled_reports.items()
         ]
@@ -387,16 +427,18 @@ class ScheduledReportingTool:
                 "success": True,
                 "report_id": report_id,
                 "domain": report["domain"],
-                "message": f"Report for {report['domain']} with {report['frequency']} frequency deleted"
+                "message": f"Report for {report['domain']} with {report['frequency']} frequency deleted",
             }
         else:
             return {
                 "success": False,
                 "report_id": report_id,
-                "message": f"Report {report_id} not found"
+                "message": f"Report {report_id} not found",
             }
 
-    def run(self, domain: str, frequency: str, report_type: str, email: Optional[str] = None) -> str:
+    def run(
+        self, domain: str, frequency: str, report_type: str, email: Optional[str] = None
+    ) -> str:
         """
         Run the scheduled reporting tool and return formatted results.
 
@@ -415,29 +457,30 @@ class ScheduledReportingTool:
             return f"Error scheduling report: {result['error']}"
 
         # Format the results as a readable string
-        output = f"# Scheduled SEO Report\n\n"
+        output = "# Scheduled SEO Report\n\n"
 
-        output += f"## Report Details\n"
+        output += "## Report Details\n"
         output += f"- Domain: {result['domain']}\n"
         output += f"- Frequency: {result['frequency']}\n"
         output += f"- Report Type: {result['report_type']}\n"
 
-        if result.get('email'):
+        if result.get("email"):
             output += f"- Email: {result['email']}\n"
 
         output += f"- Next Run: {result['next_run']}\n\n"
 
-        output += f"## Report ID\n"
+        output += "## Report ID\n"
         output += f"`{result['report_id']}`\n\n"
 
-        output += f"This report has been scheduled successfully. "
+        output += "This report has been scheduled successfully. "
 
-        if result.get('email'):
+        if result.get("email"):
             output += f"The report will be sent to {result['email']} {result['frequency']}."
         else:
             output += f"The report will be generated {result['frequency']} and saved to the reports directory."
 
         return output
+
 
 # Create tool instance
 scheduled_reporting = ScheduledReportingTool()

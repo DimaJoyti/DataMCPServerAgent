@@ -5,9 +5,10 @@ This module provides mechanisms for tracking and analyzing agent performance.
 
 import json
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class AgentPerformanceTracker:
     """Tracker for agent performance metrics."""
@@ -24,7 +25,8 @@ class AgentPerformanceTracker:
     def _initialize_tables(self) -> None:
         """Initialize the database tables for performance tracking."""
         # Create agent performance table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS agent_performance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_name TEXT NOT NULL,
@@ -33,10 +35,12 @@ class AgentPerformanceTracker:
             execution_time REAL NOT NULL,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
         # Create agent metrics table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS agent_metrics (
             agent_name TEXT NOT NULL,
             metric_name TEXT NOT NULL,
@@ -44,10 +48,12 @@ class AgentPerformanceTracker:
             timestamp REAL NOT NULL,
             PRIMARY KEY (agent_name, metric_name, timestamp)
         )
-        """)
+        """
+        )
 
         # Create collaborative metrics table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS collaborative_metrics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             metric_name TEXT NOT NULL,
@@ -55,14 +61,11 @@ class AgentPerformanceTracker:
             agents TEXT NOT NULL,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
     def record_agent_execution(
-        self,
-        agent_name: str,
-        success: bool,
-        execution_time: float,
-        task_id: Optional[str] = None
+        self, agent_name: str, success: bool, execution_time: float, task_id: Optional[str] = None
     ) -> None:
         """Record an agent execution.
 
@@ -77,15 +80,10 @@ class AgentPerformanceTracker:
             INSERT INTO agent_performance (agent_name, task_id, success, execution_time, timestamp)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (agent_name, task_id, success, execution_time, time.time())
+            (agent_name, task_id, success, execution_time, time.time()),
         )
 
-    def record_agent_metric(
-        self,
-        agent_name: str,
-        metric_name: str,
-        metric_value: float
-    ) -> None:
+    def record_agent_metric(self, agent_name: str, metric_name: str, metric_value: float) -> None:
         """Record an agent metric.
 
         Args:
@@ -98,14 +96,11 @@ class AgentPerformanceTracker:
             INSERT INTO agent_metrics (agent_name, metric_name, metric_value, timestamp)
             VALUES (?, ?, ?, ?)
             """,
-            (agent_name, metric_name, metric_value, time.time())
+            (agent_name, metric_name, metric_value, time.time()),
         )
 
     def record_collaborative_metric(
-        self,
-        metric_name: str,
-        metric_value: float,
-        agents: List[str]
+        self, metric_name: str, metric_value: float, agents: List[str]
     ) -> None:
         """Record a collaborative metric.
 
@@ -119,14 +114,10 @@ class AgentPerformanceTracker:
             INSERT INTO collaborative_metrics (metric_name, metric_value, agents, timestamp)
             VALUES (?, ?, ?, ?)
             """,
-            (metric_name, metric_value, json.dumps(agents), time.time())
+            (metric_name, metric_value, json.dumps(agents), time.time()),
         )
 
-    def get_agent_success_rate(
-        self,
-        agent_name: str,
-        time_window: Optional[float] = None
-    ) -> float:
+    def get_agent_success_rate(self, agent_name: str, time_window: Optional[float] = None) -> float:
         """Get an agent's success rate.
 
         Args:
@@ -158,9 +149,7 @@ class AgentPerformanceTracker:
         return success_count / total_count
 
     def get_agent_average_execution_time(
-        self,
-        agent_name: str,
-        time_window: Optional[float] = None
+        self, agent_name: str, time_window: Optional[float] = None
     ) -> float:
         """Get an agent's average execution time.
 
@@ -192,10 +181,7 @@ class AgentPerformanceTracker:
         return result[0]
 
     def get_agent_metric_history(
-        self,
-        agent_name: str,
-        metric_name: str,
-        limit: int = 10
+        self, agent_name: str, metric_name: str, limit: int = 10
     ) -> List[Tuple[float, float]]:
         """Get an agent's metric history.
 
@@ -216,15 +202,13 @@ class AgentPerformanceTracker:
             ORDER BY timestamp DESC
             LIMIT ?
             """,
-            (agent_name, metric_name, limit)
+            (agent_name, metric_name, limit),
         ).fetchall()
 
         return [(ts, val) for ts, val in history]
 
     def get_agent_performance_summary(
-        self,
-        agent_name: str,
-        time_window: Optional[float] = None
+        self, agent_name: str, time_window: Optional[float] = None
     ) -> Dict[str, Any]:
         """Get a summary of an agent's performance.
 
@@ -263,7 +247,7 @@ class AgentPerformanceTracker:
             WHERE agent_name = ?
             GROUP BY metric_name
             """,
-            (agent_name,)
+            (agent_name,),
         ).fetchall()
 
         return {
@@ -271,13 +255,11 @@ class AgentPerformanceTracker:
             "success_rate": success_rate,
             "average_execution_time": avg_execution_time,
             "execution_count": execution_count,
-            "metrics": {name: value for name, value in metrics}
+            "metrics": {name: value for name, value in metrics},
         }
 
     def get_collaborative_performance(
-        self,
-        agents: List[str],
-        time_window: Optional[float] = None
+        self, agents: List[str], time_window: Optional[float] = None
     ) -> Dict[str, Any]:
         """Get collaborative performance metrics for a group of agents.
 
@@ -312,13 +294,11 @@ class AgentPerformanceTracker:
         return {
             "agents": agents,
             "collaborative_metrics": {name: value for name, value in metrics},
-            "individual_performance": agent_performance
+            "individual_performance": agent_performance,
         }
 
     def compare_agents(
-        self,
-        agent_names: List[str],
-        time_window: Optional[float] = None
+        self, agent_names: List[str], time_window: Optional[float] = None
     ) -> Dict[str, Any]:
         """Compare performance between multiple agents.
 
@@ -341,22 +321,26 @@ class AgentPerformanceTracker:
             max_success_rate = max(success_rates.values()) if success_rates else 0.0
 
             # Execution time comparison
-            execution_times = {name: summary["average_execution_time"] for name, summary in summaries.items()}
+            execution_times = {
+                name: summary["average_execution_time"] for name, summary in summaries.items()
+            }
             min_execution_time = min(execution_times.values()) if execution_times else 0.0
 
             # Calculate relative performance scores
             relative_performance = {}
             for name in agent_names:
-                success_score = success_rates[name] / max_success_rate if max_success_rate > 0 else 0.0
-                time_score = min_execution_time / execution_times[name] if execution_times[name] > 0 else 0.0
+                success_score = (
+                    success_rates[name] / max_success_rate if max_success_rate > 0 else 0.0
+                )
+                time_score = (
+                    min_execution_time / execution_times[name] if execution_times[name] > 0 else 0.0
+                )
                 relative_performance[name] = (success_score + time_score) / 2
         else:
             relative_performance = {agent_names[0]: 1.0} if agent_names else {}
 
-        return {
-            "agent_summaries": summaries,
-            "relative_performance": relative_performance
-        }
+        return {"agent_summaries": summaries, "relative_performance": relative_performance}
+
 
 class MultiAgentPerformanceAnalyzer:
     """Analyzer for multi-agent performance."""
@@ -385,8 +369,7 @@ class MultiAgentPerformanceAnalyzer:
 
         # Get individual performance
         individual = {
-            agent: self.performance_tracker.get_agent_performance_summary(agent)
-            for agent in agents
+            agent: self.performance_tracker.get_agent_performance_summary(agent) for agent in agents
         }
 
         # Calculate synergy metrics
@@ -394,20 +377,32 @@ class MultiAgentPerformanceAnalyzer:
 
         # Success rate synergy
         individual_success_rates = [perf["success_rate"] for perf in individual.values()]
-        avg_individual_success = sum(individual_success_rates) / len(individual_success_rates) if individual_success_rates else 0.0
+        avg_individual_success = (
+            sum(individual_success_rates) / len(individual_success_rates)
+            if individual_success_rates
+            else 0.0
+        )
 
         collaborative_success = 0.0
-        if "collaborative_metrics" in collaborative and "success_rate" in collaborative["collaborative_metrics"]:
+        if (
+            "collaborative_metrics" in collaborative
+            and "success_rate" in collaborative["collaborative_metrics"]
+        ):
             collaborative_success = collaborative["collaborative_metrics"]["success_rate"]
 
         synergy_metrics["success_rate_synergy"] = collaborative_success - avg_individual_success
 
         # Execution time synergy
         individual_times = [perf["average_execution_time"] for perf in individual.values()]
-        avg_individual_time = sum(individual_times) / len(individual_times) if individual_times else 0.0
+        avg_individual_time = (
+            sum(individual_times) / len(individual_times) if individual_times else 0.0
+        )
 
         collaborative_time = 0.0
-        if "collaborative_metrics" in collaborative and "execution_time" in collaborative["collaborative_metrics"]:
+        if (
+            "collaborative_metrics" in collaborative
+            and "execution_time" in collaborative["collaborative_metrics"]
+        ):
             collaborative_time = collaborative["collaborative_metrics"]["execution_time"]
 
         synergy_metrics["execution_time_synergy"] = avg_individual_time - collaborative_time
@@ -416,13 +411,11 @@ class MultiAgentPerformanceAnalyzer:
             "agents": agents,
             "synergy_metrics": synergy_metrics,
             "collaborative_performance": collaborative,
-            "individual_performance": individual
+            "individual_performance": individual,
         }
 
     def identify_optimal_agent_combinations(
-        self,
-        all_agents: List[str],
-        max_combination_size: int = 3
+        self, all_agents: List[str], max_combination_size: int = 3
     ) -> List[Dict[str, Any]]:
         """Identify optimal combinations of agents.
 
@@ -455,12 +448,14 @@ class MultiAgentPerformanceAnalyzer:
 
             overall_score = success_synergy + normalized_time_synergy
 
-            combination_results.append({
-                "agents": agents,
-                "synergy_score": overall_score,
-                "success_rate_synergy": success_synergy,
-                "execution_time_synergy": time_synergy
-            })
+            combination_results.append(
+                {
+                    "agents": agents,
+                    "synergy_score": overall_score,
+                    "success_rate_synergy": success_synergy,
+                    "execution_time_synergy": time_synergy,
+                }
+            )
 
         # Sort by synergy score
         combination_results.sort(key=lambda x: x["synergy_score"], reverse=True)
@@ -468,10 +463,7 @@ class MultiAgentPerformanceAnalyzer:
         return combination_results
 
     def analyze_learning_impact(
-        self,
-        agent_name: str,
-        before_timestamp: float,
-        after_timestamp: float
+        self, agent_name: str, before_timestamp: float, after_timestamp: float
     ) -> Dict[str, Any]:
         """Analyze the impact of learning on agent performance.
 
@@ -490,7 +482,9 @@ class MultiAgentPerformanceAnalyzer:
         WHERE agent_name = ? AND timestamp < ? AND timestamp >= ?
         """
         before_window_start = before_timestamp - (after_timestamp - before_timestamp)
-        before_result = self.db.execute(query_before, (agent_name, before_timestamp, before_window_start)).fetchone()
+        before_result = self.db.execute(
+            query_before, (agent_name, before_timestamp, before_window_start)
+        ).fetchone()
 
         # Get performance after learning
         query_after = """
@@ -499,7 +493,9 @@ class MultiAgentPerformanceAnalyzer:
         WHERE agent_name = ? AND timestamp >= ? AND timestamp < ?
         """
         after_window_end = after_timestamp + (after_timestamp - before_timestamp)
-        after_result = self.db.execute(query_after, (agent_name, after_timestamp, after_window_end)).fetchone()
+        after_result = self.db.execute(
+            query_after, (agent_name, after_timestamp, after_window_end)
+        ).fetchone()
 
         # Calculate metrics
         before_count, before_success, before_time = before_result if before_result else (0, 0, 0)
@@ -518,18 +514,19 @@ class MultiAgentPerformanceAnalyzer:
             "before_metrics": {
                 "execution_count": before_count,
                 "success_rate": before_success_rate,
-                "average_execution_time": before_time
+                "average_execution_time": before_time,
             },
             "after_metrics": {
                 "execution_count": after_count,
                 "success_rate": after_success_rate,
-                "average_execution_time": after_time
+                "average_execution_time": after_time,
             },
             "changes": {
                 "success_rate_change": success_rate_change,
-                "execution_time_change": execution_time_change
-            }
+                "execution_time_change": execution_time_change,
+            },
         }
+
 
 # Factory function to create agent performance tracker
 def create_agent_performance_tracker(db: MemoryDatabase) -> AgentPerformanceTracker:
@@ -543,10 +540,10 @@ def create_agent_performance_tracker(db: MemoryDatabase) -> AgentPerformanceTrac
     """
     return AgentPerformanceTracker(db)
 
+
 # Factory function to create multi-agent performance analyzer
 def create_multi_agent_performance_analyzer(
-    db: MemoryDatabase,
-    performance_tracker: AgentPerformanceTracker
+    db: MemoryDatabase, performance_tracker: AgentPerformanceTracker
 ) -> MultiAgentPerformanceAnalyzer:
     """Create a multi-agent performance analyzer.
 

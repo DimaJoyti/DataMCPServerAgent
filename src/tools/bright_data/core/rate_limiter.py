@@ -11,22 +11,26 @@ This module provides sophisticated rate limiting with:
 """
 
 import asyncio
-import time
 import logging
-from typing import Dict, Optional, Any, Callable
-from dataclasses import dataclass
+import time
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, Optional
+
 
 class ThrottleStrategy(Enum):
     """Throttling strategies"""
+
     FIXED = "fixed"
     ADAPTIVE = "adaptive"
     EXPONENTIAL = "exponential"
 
+
 @dataclass
 class RateLimitInfo:
     """Rate limit information"""
+
     requests_per_minute: int
     burst_size: int
     current_tokens: float
@@ -35,14 +39,17 @@ class RateLimitInfo:
     rejected_requests: int
     queue_size: int
 
+
 @dataclass
 class RequestInfo:
     """Request information for tracking"""
+
     timestamp: float
     user_id: Optional[str]
     endpoint: str
     success: bool
     response_time: Optional[float] = None
+
 
 class TokenBucket:
     """Token bucket implementation for rate limiting"""
@@ -96,6 +103,7 @@ class TokenBucket:
         time_passed = now - self.last_refill
         return min(self.capacity, self.tokens + time_passed * self.refill_rate)
 
+
 class AdaptiveThrottler:
     """Adaptive throttling based on response times and error rates"""
 
@@ -147,11 +155,16 @@ class AdaptiveThrottler:
         self.total_requests = 0
         self.throttle_factor = 1.0
 
+
 class RateLimiter:
     """Advanced rate limiter with multiple strategies and monitoring"""
 
-    def __init__(self, requests_per_minute: int = 60, burst_size: int = 10,
-                 strategy: ThrottleStrategy = ThrottleStrategy.ADAPTIVE):
+    def __init__(
+        self,
+        requests_per_minute: int = 60,
+        burst_size: int = 10,
+        strategy: ThrottleStrategy = ThrottleStrategy.ADAPTIVE,
+    ):
         self.logger = logging.getLogger(__name__)
         self.requests_per_minute = requests_per_minute
         self.burst_size = burst_size
@@ -187,16 +200,13 @@ class RateLimiter:
             last_refill=time.time(),
             total_requests=0,
             rejected_requests=0,
-            queue_size=0
+            queue_size=0,
         )
 
     def _get_bucket(self, user_id: str) -> TokenBucket:
         """Get or create token bucket for user"""
         if user_id not in self.buckets:
-            self.buckets[user_id] = TokenBucket(
-                self.burst_size,
-                self.requests_per_minute / 60.0
-            )
+            self.buckets[user_id] = TokenBucket(self.burst_size, self.requests_per_minute / 60.0)
         return self.buckets[user_id]
 
     def _get_throttler(self, user_id: str) -> AdaptiveThrottler:
@@ -205,8 +215,9 @@ class RateLimiter:
             self.throttlers[user_id] = AdaptiveThrottler()
         return self.throttlers[user_id]
 
-    async def acquire(self, user_id: str = "default", endpoint: str = "default",
-                     timeout: Optional[float] = None) -> bool:
+    async def acquire(
+        self, user_id: str = "default", endpoint: str = "default", timeout: Optional[float] = None
+    ) -> bool:
         """Acquire permission to make a request"""
         self.total_requests += 1
 
@@ -236,17 +247,15 @@ class RateLimiter:
 
         # Record request
         request_info = RequestInfo(
-            timestamp=time.time(),
-            user_id=user_id,
-            endpoint=endpoint,
-            success=True
+            timestamp=time.time(), user_id=user_id, endpoint=endpoint, success=True
         )
         self.request_history.append(request_info)
 
         return True
 
-    async def acquire_with_wait(self, user_id: str = "default", endpoint: str = "default",
-                               timeout: Optional[float] = 30.0) -> bool:
+    async def acquire_with_wait(
+        self, user_id: str = "default", endpoint: str = "default", timeout: Optional[float] = 30.0
+    ) -> bool:
         """Acquire permission with waiting if necessary"""
         # Try immediate acquisition first
         if await self.acquire(user_id, endpoint):
@@ -264,10 +273,7 @@ class RateLimiter:
 
             # Record request
             request_info = RequestInfo(
-                timestamp=time.time(),
-                user_id=user_id,
-                endpoint=endpoint,
-                success=True
+                timestamp=time.time(), user_id=user_id, endpoint=endpoint, success=True
             )
             self.request_history.append(request_info)
 
@@ -304,8 +310,7 @@ class RateLimiter:
     def get_global_stats(self) -> Dict[str, Any]:
         """Get global rate limiting statistics"""
         recent_requests = [
-            r for r in self.request_history
-            if time.time() - r.timestamp < 3600  # Last hour
+            r for r in self.request_history if time.time() - r.timestamp < 3600  # Last hour
         ]
 
         successful_requests = sum(1 for r in recent_requests if r.success)
@@ -327,7 +332,11 @@ class RateLimiter:
             "average_response_time": avg_response_time,
             "active_users": len(self.buckets),
             "global_tokens_available": self.global_bucket.get_available_tokens(),
-            "throttle_factor": self.global_throttler.throttle_factor if self.strategy == ThrottleStrategy.ADAPTIVE else 1.0
+            "throttle_factor": (
+                self.global_throttler.throttle_factor
+                if self.strategy == ThrottleStrategy.ADAPTIVE
+                else 1.0
+            ),
         }
 
     def reset_user_limits(self, user_id: str) -> None:

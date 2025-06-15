@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.enhanced_main import chat_with_enhanced_agent
 
+
 async def run_example():
     """Run the enhanced agent example."""
     print("Running enhanced agent example with memory persistence and learning capabilities...")

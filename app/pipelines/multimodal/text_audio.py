@@ -9,22 +9,23 @@ This module provides comprehensive text and audio processing capabilities:
 - Audio content understanding and classification
 """
 
-import asyncio
 import io
 import wave
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from app.core.logging import get_logger
+
 from .base import (
-    MultiModalProcessor,
+    ModalityType,
     MultiModalContent,
+    MultiModalProcessor,
     ProcessedResult,
     ProcessingMetrics,
-    ModalityType,
-    ProcessorFactory
+    ProcessorFactory,
 )
-from app.core.logging import get_logger
+
 
 class AudioAnalyzer:
     """Analyzer for audio content and properties."""
@@ -65,30 +66,28 @@ class AudioAnalyzer:
             # Try to parse as WAV file
             audio_io = io.BytesIO(audio_data)
 
-            properties = {
-                "size_bytes": len(audio_data),
-                "format": "unknown"
-            }
+            properties = {"size_bytes": len(audio_data), "format": "unknown"}
 
             try:
                 # Attempt to read as WAV
-                with wave.open(audio_io, 'rb') as wav_file:
-                    properties.update({
-                        "format": "wav",
-                        "channels": wav_file.getnchannels(),
-                        "sample_rate": wav_file.getframerate(),
-                        "sample_width": wav_file.getsampwidth(),
-                        "frames": wav_file.getnframes(),
-                        "duration": wav_file.getnframes() / wav_file.getframerate()
-                    })
+                with wave.open(audio_io, "rb") as wav_file:
+                    properties.update(
+                        {
+                            "format": "wav",
+                            "channels": wav_file.getnchannels(),
+                            "sample_rate": wav_file.getframerate(),
+                            "sample_width": wav_file.getsampwidth(),
+                            "frames": wav_file.getnframes(),
+                            "duration": wav_file.getnframes() / wav_file.getframerate(),
+                        }
+                    )
             except:
                 # If not WAV, estimate properties
                 # This is a very basic estimation
                 estimated_duration = len(audio_data) / (44100 * 2)  # Assume 44.1kHz, 16-bit
-                properties.update({
-                    "estimated_duration": estimated_duration,
-                    "estimated_sample_rate": 44100
-                })
+                properties.update(
+                    {"estimated_duration": estimated_duration, "estimated_sample_rate": 44100}
+                )
 
             return properties
 
@@ -104,7 +103,7 @@ class AudioAnalyzer:
             features = {
                 "duration": properties.get("duration", 0),
                 "sample_rate": properties.get("sample_rate", 0),
-                "channels": properties.get("channels", 0)
+                "channels": properties.get("channels", 0),
             }
 
             # Placeholder for advanced audio features
@@ -116,12 +115,14 @@ class AudioAnalyzer:
 
             if features["duration"] > 0:
                 # Simulate feature extraction
-                features.update({
-                    "energy_level": "medium",  # Placeholder
-                    "dominant_frequency": 440.0,  # Placeholder
-                    "speech_probability": 0.8,  # Placeholder
-                    "music_probability": 0.2   # Placeholder
-                })
+                features.update(
+                    {
+                        "energy_level": "medium",  # Placeholder
+                        "dominant_frequency": 440.0,  # Placeholder
+                        "speech_probability": 0.8,  # Placeholder
+                        "music_probability": 0.2,  # Placeholder
+                    }
+                )
 
             return features
 
@@ -146,7 +147,7 @@ class AudioAnalyzer:
                 "confidence": 0.8,
                 "language": "en",  # Placeholder
                 "speaker_count": 1,  # Placeholder
-                "emotion": "neutral"  # Placeholder
+                "emotion": "neutral",  # Placeholder
             }
 
             return classification
@@ -154,6 +155,7 @@ class AudioAnalyzer:
         except Exception as e:
             self.logger.error(f"Audio classification failed: {e}")
             return {}
+
 
 class TextAudioProcessor(MultiModalProcessor):
     """Processor for combined text and audio content."""
@@ -175,9 +177,11 @@ class TextAudioProcessor(MultiModalProcessor):
         self.max_audio_size = self.get_config("max_audio_size", 50 * 1024 * 1024)  # 50MB
         self.max_audio_duration = self.get_config("max_audio_duration", 300)  # 5 minutes
 
-        self.logger.info(f"TextAudioProcessor initialized with Transcription: {self.enable_transcription}, "
-                        f"Synthesis: {self.enable_synthesis}, "
-                        f"Analysis: {self.enable_analysis}")
+        self.logger.info(
+            f"TextAudioProcessor initialized with Transcription: {self.enable_transcription}, "
+            f"Synthesis: {self.enable_synthesis}, "
+            f"Analysis: {self.enable_analysis}"
+        )
 
     def get_supported_modalities(self) -> List[ModalityType]:
         """Get supported modalities."""
@@ -192,7 +196,9 @@ class TextAudioProcessor(MultiModalProcessor):
         # Check audio size if present
         if content.audio:
             if len(content.audio) > self.max_audio_size:
-                self.logger.warning(f"Audio size {len(content.audio)} exceeds limit {self.max_audio_size}")
+                self.logger.warning(
+                    f"Audio size {len(content.audio)} exceeds limit {self.max_audio_size}"
+                )
                 return False
 
             # Check duration if possible
@@ -200,7 +206,9 @@ class TextAudioProcessor(MultiModalProcessor):
                 properties = await self.audio_analyzer.analyze_audio_properties(content.audio)
                 duration = properties.get("duration", 0)
                 if duration > self.max_audio_duration:
-                    self.logger.warning(f"Audio duration {duration}s exceeds limit {self.max_audio_duration}s")
+                    self.logger.warning(
+                        f"Audio duration {duration}s exceeds limit {self.max_audio_duration}s"
+                    )
                     return False
             except:
                 pass  # Continue if duration check fails
@@ -227,11 +235,13 @@ class TextAudioProcessor(MultiModalProcessor):
             features = await self.audio_analyzer.extract_audio_features(audio_data)
             classification = await self.audio_analyzer.classify_audio_content(audio_data)
 
-            results.update({
-                "audio_properties": properties,
-                "audio_features": features,
-                "audio_classification": classification
-            })
+            results.update(
+                {
+                    "audio_properties": properties,
+                    "audio_features": features,
+                    "audio_classification": classification,
+                }
+            )
 
         return results
 
@@ -240,7 +250,7 @@ class TextAudioProcessor(MultiModalProcessor):
         results = {
             "processed_text": text,
             "text_length": len(text),
-            "word_count": len(text.split()) if text else 0
+            "word_count": len(text.split()) if text else 0,
         }
 
         # Text analysis
@@ -263,10 +273,7 @@ class TextAudioProcessor(MultiModalProcessor):
         audio_results = await self.process_audio_only(audio_data)
 
         # Combine results
-        combined_results = {
-            **text_results,
-            **audio_results
-        }
+        combined_results = {**text_results, **audio_results}
 
         # Cross-modal analysis
         if "transcription" in audio_results and text:
@@ -284,11 +291,7 @@ class TextAudioProcessor(MultiModalProcessor):
         words = text.split()
         for word in words:
             if word.isupper() and len(word) > 2:  # Potential acronym
-                entities.append({
-                    "text": word,
-                    "type": "ACRONYM",
-                    "confidence": 0.7
-                })
+                entities.append({"text": word, "type": "ACRONYM", "confidence": 0.7})
 
         return entities
 
@@ -305,7 +308,7 @@ class TextAudioProcessor(MultiModalProcessor):
             "synthesis_available": True,
             "estimated_duration": len(text.split()) * 0.5,  # Rough estimate
             "voice": "default",
-            "language": "en"
+            "language": "en",
         }
 
     def calculate_text_similarity(self, text1: str, text2: str) -> float:
@@ -382,13 +385,10 @@ class TextAudioProcessor(MultiModalProcessor):
             combined_embedding=embeddings.get("combined_embedding"),
             processing_metrics=ProcessingMetrics(
                 processing_time=0.0,  # Will be set by parent class
-                modalities_processed=modalities_processed
+                modalities_processed=modalities_processed,
             ),
-            metadata={
-                "processor": "TextAudioProcessor",
-                "processing_results": processing_results
-            },
-            status="processing"
+            metadata={"processor": "TextAudioProcessor", "processing_results": processing_results},
+            status="processing",
         )
 
         return result
@@ -413,6 +413,7 @@ class TextAudioProcessor(MultiModalProcessor):
             description_parts.append(f"with {word_count} words of text")
 
         return ", ".join(description_parts) if description_parts else "Audio content"
+
 
 # Register the processor
 ProcessorFactory.register("text_audio", TextAudioProcessor)

@@ -34,6 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class ErrorCluster:
     """Represents a cluster of similar errors."""
 
@@ -84,6 +85,7 @@ class ErrorCluster:
             "first_occurrence": min(self.timestamps) if self.timestamps else 0,
             "error_count": len(self.errors),
         }
+
 
 class AdvancedErrorAnalysis:
     """Advanced error analysis system."""
@@ -242,9 +244,7 @@ Predict potential future errors based on this information.
         error_messages = [e["error_message"] for e in failed_executions]
 
         # Create TF-IDF vectors for error messages
-        vectorizer = TfidfVectorizer(
-            max_features=100, stop_words="english", ngram_range=(1, 2)
-        )
+        vectorizer = TfidfVectorizer(max_features=100, stop_words="english", ngram_range=(1, 2))
 
         try:
             # Transform error messages to TF-IDF vectors
@@ -265,19 +265,14 @@ Predict potential future errors based on this information.
 
                 # Get error type (most common in the cluster)
                 error_types = [
-                    classify_error(
-                        Exception(failed_executions[i]["error_message"])
-                    ).error_type
+                    classify_error(Exception(failed_executions[i]["error_message"])).error_type
                     for i in indices
                 ]
                 error_type = Counter(error_types).most_common(1)[0][0]
 
                 # Get representative error (closest to cluster centroid)
                 centroid = tfidf_matrix[indices].mean(axis=0)
-                distances = [
-                    np.linalg.norm(tfidf_matrix[i].toarray() - centroid)
-                    for i in indices
-                ]
+                distances = [np.linalg.norm(tfidf_matrix[i].toarray() - centroid) for i in indices]
                 representative_idx = indices[distances.index(min(distances))]
                 representative_error = error_messages[representative_idx]
 
@@ -357,9 +352,7 @@ Predict potential future errors based on this information.
                 # Parse the response
                 content = response.content
                 json_str = (
-                    content.split("```json")[1].split("```")[0]
-                    if "```json" in content
-                    else content
+                    content.split("```json")[1].split("```")[0] if "```json" in content else content
                 )
                 json_str = json_str.strip()
 
@@ -490,9 +483,7 @@ Predict potential future errors based on this information.
             # Parse the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 
@@ -581,19 +572,17 @@ Predict potential future errors based on this information.
         current_state = {
             "total_executions": len(executions),
             "recent_executions": len(recent_executions),
-            "recent_success_rate": sum(
-                1 for e in recent_executions if e.get("success", True)
-            )
-            / len(recent_executions)
-            if recent_executions
-            else 0,
-            "total_success_rate": sum(1 for e in executions if e.get("success", True))
-            / len(executions)
-            if executions
-            else 0,
-            "unique_tools_used": len(
-                set(e.get("tool_name", "unknown") for e in executions)
+            "recent_success_rate": (
+                sum(1 for e in recent_executions if e.get("success", True)) / len(recent_executions)
+                if recent_executions
+                else 0
             ),
+            "total_success_rate": (
+                sum(1 for e in executions if e.get("success", True)) / len(executions)
+                if executions
+                else 0
+            ),
+            "unique_tools_used": len(set(e.get("tool_name", "unknown") for e in executions)),
             "error_clusters": len(self.error_clusters) if self.error_clusters else 0,
         }
 
@@ -634,9 +623,7 @@ Predict potential future errors based on this information.
             # Parse the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 

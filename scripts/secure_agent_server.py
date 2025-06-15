@@ -2,18 +2,18 @@
 Secure Integrated Agent Server with environment-based configuration.
 """
 
-from fastapi import FastAPI, Request, HTTPException, Depends, Header
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+import uuid
 from datetime import datetime
 from typing import Optional
-import uuid
 
-from secure_config import config, logger
-from auth_system import auth_system, User, Role
-from mcp_inspector import mcp_inspector
+import uvicorn
+from auth_system import Role, User, auth_system
+from cloudflare_workflows import EventType, WorkflowEvent, workflow_engine
 from durable_objects_agent import durable_manager
-from cloudflare_workflows import workflow_engine, WorkflowEvent, EventType
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from mcp_inspector import mcp_inspector
+from secure_config import config, logger
 
 # Initialize FastAPI with secure configuration
 app = FastAPI(

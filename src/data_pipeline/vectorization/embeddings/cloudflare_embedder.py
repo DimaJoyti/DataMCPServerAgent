@@ -2,17 +2,18 @@
 Cloudflare AI embedder implementation.
 """
 
-import logging
 import time
 from typing import List, Optional
 
 try:
     import httpx
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
 
 from .base_embedder import BaseEmbedder, EmbeddingConfig, EmbeddingResult
+
 
 class CloudflareEmbedder(BaseEmbedder):
     """Cloudflare AI embedder using Cloudflare's embedding models."""
@@ -29,7 +30,7 @@ class CloudflareEmbedder(BaseEmbedder):
         config: EmbeddingConfig,
         account_id: str,
         api_token: str,
-        base_url: Optional[str] = None
+        base_url: Optional[str] = None,
     ):
         """
         Initialize Cloudflare embedder.
@@ -42,8 +43,7 @@ class CloudflareEmbedder(BaseEmbedder):
         """
         if not HAS_HTTPX:
             raise ImportError(
-                "Cloudflare embedder requires httpx package. "
-                "Install with: pip install httpx"
+                "Cloudflare embedder requires httpx package. " "Install with: pip install httpx"
             )
 
         super().__init__(config)
@@ -67,9 +67,9 @@ class CloudflareEmbedder(BaseEmbedder):
         self.client = httpx.Client(
             headers={
                 "Authorization": f"Bearer {self.api_token}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            timeout=30.0
+            timeout=30.0,
         )
 
     def embed_text(self, text: str) -> EmbeddingResult:
@@ -101,9 +101,7 @@ class CloudflareEmbedder(BaseEmbedder):
         processing_time = time.time() - start_time
 
         return self._create_embedding_result(
-            text=text,
-            embedding=embedding,
-            processing_time=processing_time
+            text=text, embedding=embedding, processing_time=processing_time
         )
 
     def embed_batch(self, texts: List[str]) -> List[EmbeddingResult]:
@@ -127,7 +125,7 @@ class CloudflareEmbedder(BaseEmbedder):
         batch_size = min(self.config.batch_size, 100)  # Cloudflare limit
 
         for i in range(0, len(processed_texts), batch_size):
-            batch_texts = processed_texts[i:i + batch_size]
+            batch_texts = processed_texts[i : i + batch_size]
             batch_results = self._embed_batch_chunk(batch_texts)
             results.extend(batch_results)
 
@@ -167,7 +165,7 @@ class CloudflareEmbedder(BaseEmbedder):
             result = self._create_embedding_result(
                 text=text,
                 embedding=embedding,
-                processing_time=processing_time / len(texts)  # Distribute time
+                processing_time=processing_time / len(texts),  # Distribute time
             )
             results.append(result)
 
@@ -185,9 +183,7 @@ class CloudflareEmbedder(BaseEmbedder):
         """
         url = f"{self.base_url}/accounts/{self.account_id}/ai/run/{self.config.model_name}"
 
-        payload = {
-            "text": texts
-        }
+        payload = {"text": texts}
 
         # Add custom options
         payload.update(self.config.custom_options)
@@ -239,5 +235,5 @@ class CloudflareEmbedder(BaseEmbedder):
 
     def __del__(self):
         """Clean up HTTP client."""
-        if hasattr(self, 'client'):
+        if hasattr(self, "client"):
             self.client.close()

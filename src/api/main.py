@@ -1,9 +1,12 @@
 """
-Main entry point for the API.
+Main entry point for the API following Clean Architecture patterns.
+Unified FastAPI application for /src directory components.
 """
 
+import logging
 import os
 import sys
+from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 from fastapi import FastAPI, Request
@@ -12,65 +15,88 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Add the project root to the Python path
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.api.config import config
+from src.api.config import get_settings
 from src.api.middleware.logging import LoggingMiddleware
 from src.api.middleware.rate_limiting import RateLimitingMiddleware
 from src.api.routers import agents, chat, health, memory, tools
 from src.utils.env_config import load_dotenv
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 load_dotenv()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler following Clean Architecture patterns."""
+    logger.info("Starting DataMCPServerAgent /src API")
+    
+    # Initialize services and dependencies
+    settings = get_settings()
+    logger.info(f"Loaded settings: {settings.app_name}")
+    
+    # Initialize Redis if distributed mode is enabled
+    if settings.enable_distributed:
+        from src.api.services.redis_service import RedisService
+        redis_service = RedisService()
+        await redis_service.connect()
+        app.state.redis = redis_service
+    
+    yield
+    
+    # Cleanup
+    if hasattr(app.state, "redis"):
+        await app.state.redis.disconnect()
+    
+    logger.info("Shutting down DataMCPServerAgent /src API")
+
+
 # Create the FastAPI application
-app = FastAPI(
-    title=config.title,
-    description=config.description,
-    version=config.version,
-    openapi_url=config.openapi_url,
-    docs_url=config.docs_url,
-    redoc_url=config.redoc_url,
-)
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    settings = get_settings()
+    
+    app = FastAPI(
+        title=settings.app_name,
+        description="DataMCPServerAgent - Unified API for /src components",
+        version="1.0.0",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan,
+    )
+    
+    return app
+
+
+app = create_app()
+settings = get_settings()
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.allow_origins,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=config.allow_methods,
-    allow_headers=config.allow_headers,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
 # Add rate limiting middleware if enabled
-if config.enable_rate_limiting:
+if settings.enable_rate_limiting:
     app.add_middleware(RateLimitingMiddleware)
 
-# Initialize Redis connection if distributed mode is enabled
-if config.enable_distributed:
-    from src.api.services.redis_service import RedisService
-
-    @app.on_event("startup")
-    async def startup_redis_client():
-        redis_service = RedisService()
-        await redis_service.connect()
-        app.state.redis = redis_service
-
-    @app.on_event("shutdown")
-    async def shutdown_redis_client():
-        if hasattr(app.state, "redis"):
-            await app.state.redis.disconnect()
 
 # Add exception handlers
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """
     Handle HTTP exceptions.
 
@@ -90,6 +116,7 @@ async def http_exception_handler(
             "request_id": getattr(request.state, "request_id", None),
         },
     )
+
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -113,12 +140,14 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         },
     )
 
+
 # Include routers
 app.include_router(health.router)
 app.include_router(agents.router)
 app.include_router(chat.router)
 app.include_router(memory.router)
 app.include_router(tools.router)
+
 
 @app.get("/", tags=["root"])
 async def root() -> Dict[str, Any]:
@@ -129,12 +158,13 @@ async def root() -> Dict[str, Any]:
         Dict[str, Any]: API information
     """
     return {
-        "name": config.title,
-        "version": config.version,
-        "description": config.description,
-        "docs_url": config.docs_url,
-        "redoc_url": config.redoc_url,
+        "name": settings.app_name,
+        "version": "1.0.0",
+        "description": "DataMCPServerAgent - Unified API for /src components",
+        "docs_url": "/docs",
+        "redoc_url": "/redoc",
     }
+
 
 def start_api():
     """Start the API server."""
@@ -142,10 +172,11 @@ def start_api():
 
     uvicorn.run(
         "src.api.main:app",
-        host=config.host,
-        port=config.port,
-        reload=config.reload,
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug,
     )
+
 
 if __name__ == "__main__":
     start_api()

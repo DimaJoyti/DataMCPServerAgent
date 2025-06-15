@@ -3,25 +3,24 @@ Playground router for agent-ui compatibility.
 This router provides endpoints that match the agent-ui expectations.
 """
 
+import asyncio
+import json
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
-from fastapi.responses import StreamingResponse
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
-import json
-import asyncio
+from typing import Any, Dict, List, Optional
 
-from ..models.request_models import AgentRequest
-from ..models.response_models import AgentResponse, ErrorResponse
-from ..services.agent_service import AgentService
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+
 from ..middleware.auth import get_api_key
-from ..config import config
+from ..services.agent_service import AgentService
 
 router = APIRouter(prefix="/v1/playground", tags=["playground"])
 
 # In-memory storage for sessions (in production, use Redis or database)
 sessions_storage = {}
+
 
 @router.post("/clear_sessions")
 async def clear_all_sessions(api_key: Optional[str] = Depends(get_api_key)):
@@ -31,12 +30,14 @@ async def clear_all_sessions(api_key: Optional[str] = Depends(get_api_key)):
     sessions_storage.clear()
     return {"message": "All sessions cleared successfully"}
 
+
 @router.get("/status")
 async def get_playground_status():
     """
     Get playground status.
     """
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
 
 @router.get("/agents")
 async def get_playground_agents(
@@ -55,14 +56,16 @@ async def get_playground_agents(
         # Transform to agent-ui format
         playground_agents = []
         for agent in agents:
-            playground_agents.append({
-                "agent_id": agent.agent_id,
-                "name": agent.name,
-                "model": agent.model,
-                "storage": True,  # Enable storage for all agents
-                "description": agent.description,
-                "status": "active"
-            })
+            playground_agents.append(
+                {
+                    "agent_id": agent.agent_id,
+                    "name": agent.name,
+                    "model": agent.model,
+                    "storage": True,  # Enable storage for all agents
+                    "description": agent.description,
+                    "status": "active",
+                }
+            )
 
         return playground_agents
     except Exception as e:
@@ -70,6 +73,7 @@ async def get_playground_agents(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.post("/agents/{agent_id}/runs")
 async def create_agent_run(
@@ -119,7 +123,7 @@ async def create_agent_run(
                 "id": session_id,
                 "agent_id": agent_id,
                 "created_at": datetime.utcnow().isoformat(),
-                "messages": []
+                "messages": [],
             }
 
         # Add user message to session
@@ -130,16 +134,14 @@ async def create_agent_run(
             try:
                 # Get agent response
                 response = await agent_service.chat_with_agent(
-                    agent_mode=agent_id,
-                    message=user_message,
-                    session_id=session_id
+                    agent_mode=agent_id, message=user_message, session_id=session_id
                 )
 
                 # Create response message
                 assistant_message = {
                     "role": "assistant",
                     "content": response.get("response", ""),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
 
                 # Add to session
@@ -150,14 +152,10 @@ async def create_agent_run(
                 chunk_size = 50  # Characters per chunk
 
                 for i in range(0, len(content), chunk_size):
-                    chunk = content[i:i + chunk_size]
+                    chunk = content[i : i + chunk_size]
 
                     # Format as server-sent event
-                    event_data = {
-                        "type": "content",
-                        "content": chunk,
-                        "session_id": session_id
-                    }
+                    event_data = {"type": "content", "content": chunk, "session_id": session_id}
 
                     yield f"data: {json.dumps(event_data)}\n\n"
                     await asyncio.sleep(0.05)  # Small delay for streaming effect
@@ -166,16 +164,12 @@ async def create_agent_run(
                 completion_data = {
                     "type": "completion",
                     "session_id": session_id,
-                    "message": assistant_message
+                    "message": assistant_message,
                 }
                 yield f"data: {json.dumps(completion_data)}\n\n"
 
             except Exception as e:
-                error_data = {
-                    "type": "error",
-                    "error": str(e),
-                    "session_id": session_id
-                }
+                error_data = {"type": "error", "error": str(e), "session_id": session_id}
                 yield f"data: {json.dumps(error_data)}\n\n"
 
         return StreamingResponse(
@@ -186,7 +180,7 @@ async def create_agent_run(
                 "Connection": "keep-alive",
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Headers": "*",
-            }
+            },
         )
 
     except HTTPException:
@@ -196,6 +190,7 @@ async def create_agent_run(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.get("/agents/{agent_id}/sessions")
 async def get_agent_sessions(
@@ -210,13 +205,19 @@ async def get_agent_sessions(
         agent_sessions = []
         for session_id, session_data in sessions_storage.items():
             if session_data.get("agent_id") == agent_id:
-                agent_sessions.append({
-                    "id": session_id,
-                    "agent_id": agent_id,
-                    "created_at": session_data.get("created_at"),
-                    "message_count": len(session_data.get("messages", [])),
-                    "last_message": session_data.get("messages", [])[-1] if session_data.get("messages") else None
-                })
+                agent_sessions.append(
+                    {
+                        "id": session_id,
+                        "agent_id": agent_id,
+                        "created_at": session_data.get("created_at"),
+                        "message_count": len(session_data.get("messages", [])),
+                        "last_message": (
+                            session_data.get("messages", [])[-1]
+                            if session_data.get("messages")
+                            else None
+                        ),
+                    }
+                )
 
         return agent_sessions
     except Exception as e:
@@ -224,6 +225,7 @@ async def get_agent_sessions(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.get("/agents/{agent_id}/sessions/{session_id}")
 async def get_agent_session(
@@ -257,6 +259,7 @@ async def get_agent_session(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.delete("/agents/{agent_id}/sessions/{session_id}")
 async def delete_agent_session(

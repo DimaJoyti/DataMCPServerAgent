@@ -4,7 +4,6 @@ This script tests the basic functionality of the visualization tools.
 """
 
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -14,18 +13,15 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.tools.research_visualization_tools import (
     ChartData,
-    MapData,
     NetworkData,
     TimelineData,
     VisualizationConfig,
     VisualizationGenerator,
     WordCloudData,
     generate_chart_tool,
-    generate_map_tool,
     generate_network_diagram_tool,
-    generate_timeline_tool,
-    generate_wordcloud_tool,
 )
+
 
 def test_chart_visualization():
     """Test chart visualization."""
@@ -40,15 +36,12 @@ def test_chart_visualization():
         x_data=["A", "B", "C", "D", "E"],
         y_data=[10, 20, 15, 25, 30],
         x_label="Categories",
-        y_label="Values"
+        y_label="Values",
     )
 
     # Create chart configuration
     chart_config = VisualizationConfig(
-        title="Test Bar Chart",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test Bar Chart", width=800, height=600, interactive=True
     )
 
     # Generate chart
@@ -64,14 +57,9 @@ def test_chart_visualization():
             "x_data": [1, 2, 3, 4, 5],
             "y_data": [10, 20, 15, 25, 30],
             "x_label": "X Axis",
-            "y_label": "Y Axis"
+            "y_label": "Y Axis",
         },
-        "config": {
-            "title": "Test Line Chart",
-            "width": 800,
-            "height": 600,
-            "interactive": True
-        }
+        "config": {"title": "Test Line Chart", "width": 800, "height": 600, "interactive": True},
     }
 
     tool_result = generate_chart_tool(json.dumps(tool_input))
@@ -79,6 +67,7 @@ def test_chart_visualization():
 
     print(f"Chart tool result: {tool_result_dict['filepath']}")
     print(f"Chart tool URL: {tool_result_dict['url']}")
+
 
 def test_network_visualization():
     """Test network visualization."""
@@ -94,24 +83,21 @@ def test_network_visualization():
             {"id": 2, "label": "Node 2"},
             {"id": 3, "label": "Node 3"},
             {"id": 4, "label": "Node 4"},
-            {"id": 5, "label": "Node 5"}
+            {"id": 5, "label": "Node 5"},
         ],
         edges=[
             {"source": 1, "target": 2, "label": "Edge 1-2"},
             {"source": 1, "target": 3, "label": "Edge 1-3"},
             {"source": 2, "target": 4, "label": "Edge 2-4"},
             {"source": 3, "target": 5, "label": "Edge 3-5"},
-            {"source": 4, "target": 5, "label": "Edge 4-5"}
+            {"source": 4, "target": 5, "label": "Edge 4-5"},
         ],
-        layout="force"
+        layout="force",
     )
 
     # Create network configuration
     network_config = VisualizationConfig(
-        title="Test Network Diagram",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test Network Diagram", width=800, height=600, interactive=True
     )
 
     # Generate network
@@ -126,21 +112,21 @@ def test_network_visualization():
             "nodes": [
                 {"id": 1, "label": "Node 1"},
                 {"id": 2, "label": "Node 2"},
-                {"id": 3, "label": "Node 3"}
+                {"id": 3, "label": "Node 3"},
             ],
             "edges": [
                 {"source": 1, "target": 2, "label": "Edge 1-2"},
                 {"source": 2, "target": 3, "label": "Edge 2-3"},
-                {"source": 3, "target": 1, "label": "Edge 3-1"}
+                {"source": 3, "target": 1, "label": "Edge 3-1"},
             ],
-            "layout": "circular"
+            "layout": "circular",
         },
         "config": {
             "title": "Test Network Diagram (Tool)",
             "width": 800,
             "height": 600,
-            "interactive": True
-        }
+            "interactive": True,
+        },
     }
 
     tool_result = generate_network_diagram_tool(json.dumps(tool_input))
@@ -148,6 +134,7 @@ def test_network_visualization():
 
     print(f"Network tool result: {tool_result_dict['filepath']}")
     print(f"Network tool URL: {tool_result_dict['url']}")
+
 
 def test_wordcloud_visualization():
     """Test word cloud visualization."""
@@ -159,17 +146,13 @@ def test_wordcloud_visualization():
     # Create word cloud data
     wordcloud_data = WordCloudData(
         text="This is a test word cloud visualization. It should show the most frequent words in larger font sizes. "
-             "The more times a word appears, the larger it will be in the word cloud. "
-             "Word clouds are useful for visualizing text data and identifying the most important terms. "
-             "They can be used for research summaries, content analysis, and more."
+        "The more times a word appears, the larger it will be in the word cloud. "
+        "Word clouds are useful for visualizing text data and identifying the most important terms. "
+        "They can be used for research summaries, content analysis, and more."
     )
 
     # Create word cloud configuration
-    wordcloud_config = VisualizationConfig(
-        title="Test Word Cloud",
-        width=800,
-        height=600
-    )
+    wordcloud_config = VisualizationConfig(title="Test Word Cloud", width=800, height=600)
 
     # Generate word cloud
     try:
@@ -179,6 +162,7 @@ def test_wordcloud_visualization():
         print(f"Word cloud URL: {result['url']}")
     except ImportError:
         print("WordCloud library not available. Skipping word cloud test.")
+
 
 def test_timeline_visualization():
     """Test timeline visualization."""
@@ -194,19 +178,16 @@ def test_timeline_visualization():
             {"date": "2020-02-15", "description": "Event 2", "category": "Category B"},
             {"date": "2020-03-10", "description": "Event 3", "category": "Category A"},
             {"date": "2020-04-20", "description": "Event 4", "category": "Category C"},
-            {"date": "2020-05-05", "description": "Event 5", "category": "Category B"}
+            {"date": "2020-05-05", "description": "Event 5", "category": "Category B"},
         ],
         date_field="date",
         description_field="description",
-        category_field="category"
+        category_field="category",
     )
 
     # Create timeline configuration
     timeline_config = VisualizationConfig(
-        title="Test Timeline",
-        width=800,
-        height=600,
-        interactive=True
+        title="Test Timeline", width=800, height=600, interactive=True
     )
 
     # Generate timeline
@@ -217,6 +198,7 @@ def test_timeline_visualization():
         print(f"Timeline URL: {result['url']}")
     except ImportError:
         print("Plotly library not available. Skipping timeline test.")
+
 
 def main():
     """Run the tests."""
@@ -237,6 +219,7 @@ def main():
         test_timeline_visualization()
 
         print("\nAll tests completed.")
+
 
 if __name__ == "__main__":
     main()

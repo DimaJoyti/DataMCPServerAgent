@@ -4,16 +4,15 @@ Regulatory Compliance Agent for the Fetch.ai Advanced Crypto Trading System.
 This agent manages Swiss tax reporting and banking regulations.
 """
 
-import asyncio
-import json
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class RegulationType(str, Enum):
     """Types of regulations."""
@@ -24,6 +23,7 @@ class RegulationType(str, Enum):
     KYC = "know_your_customer"
     TRADING = "trading_regulations"
 
+
 class ComplianceStatus(str, Enum):
     """Compliance status."""
 
@@ -31,6 +31,7 @@ class ComplianceStatus(str, Enum):
     NON_COMPLIANT = "non_compliant"
     NEEDS_REVIEW = "needs_review"
     UNKNOWN = "unknown"
+
 
 class RegulatoryRequirement(Model):
     """Model for a regulatory requirement."""
@@ -43,6 +44,7 @@ class RegulatoryRequirement(Model):
     last_checked: Optional[str] = None
     next_check_due: Optional[str] = None
 
+
 class Transaction(Model):
     """Model for a transaction."""
 
@@ -54,6 +56,7 @@ class Transaction(Model):
     type: str  # "buy" or "sell"
     user_id: str
 
+
 class ComplianceCheck(Model):
     """Model for a compliance check."""
 
@@ -62,6 +65,7 @@ class ComplianceCheck(Model):
     status: ComplianceStatus
     issues: List[str] = []
     timestamp: str
+
 
 class TaxReport(Model):
     """Model for a tax report."""
@@ -75,6 +79,7 @@ class TaxReport(Model):
     status: ComplianceStatus
     timestamp: str
 
+
 class RegulatoryAgentState(BaseAgentState):
     """State model for the Regulatory Compliance Agent."""
 
@@ -82,6 +87,7 @@ class RegulatoryAgentState(BaseAgentState):
     recent_checks: List[ComplianceCheck] = []
     tax_reports: List[TaxReport] = []
     check_interval: int = 86400  # 24 hours in seconds
+
 
 class RegulatoryComplianceAgent(BaseAgent):
     """Agent for managing regulatory compliance."""
@@ -92,7 +98,7 @@ class RegulatoryComplianceAgent(BaseAgent):
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the Regulatory Compliance Agent.
 
@@ -117,59 +123,69 @@ class RegulatoryComplianceAgent(BaseAgent):
     def _initialize_requirements(self):
         """Initialize regulatory requirements."""
         # Swiss tax reporting requirements
-        self.state.requirements.append(RegulatoryRequirement(
-            name="Swiss Annual Tax Reporting",
-            description="Annual reporting of crypto trading profits and losses for Swiss tax authorities",
-            type=RegulationType.TAX,
-            jurisdiction="Switzerland",
-            status=ComplianceStatus.COMPLIANT,
-            last_checked=datetime.now().isoformat(),
-            next_check_due=(datetime.now() + timedelta(days=365)).isoformat()
-        ))
+        self.state.requirements.append(
+            RegulatoryRequirement(
+                name="Swiss Annual Tax Reporting",
+                description="Annual reporting of crypto trading profits and losses for Swiss tax authorities",
+                type=RegulationType.TAX,
+                jurisdiction="Switzerland",
+                status=ComplianceStatus.COMPLIANT,
+                last_checked=datetime.now().isoformat(),
+                next_check_due=(datetime.now() + timedelta(days=365)).isoformat(),
+            )
+        )
 
         # Swiss banking regulations
-        self.state.requirements.append(RegulatoryRequirement(
-            name="FINMA Crypto Asset Guidelines",
-            description="Compliance with Swiss Financial Market Supervisory Authority guidelines for crypto assets",
-            type=RegulationType.BANKING,
-            jurisdiction="Switzerland",
-            status=ComplianceStatus.COMPLIANT,
-            last_checked=datetime.now().isoformat(),
-            next_check_due=(datetime.now() + timedelta(days=90)).isoformat()
-        ))
+        self.state.requirements.append(
+            RegulatoryRequirement(
+                name="FINMA Crypto Asset Guidelines",
+                description="Compliance with Swiss Financial Market Supervisory Authority guidelines for crypto assets",
+                type=RegulationType.BANKING,
+                jurisdiction="Switzerland",
+                status=ComplianceStatus.COMPLIANT,
+                last_checked=datetime.now().isoformat(),
+                next_check_due=(datetime.now() + timedelta(days=90)).isoformat(),
+            )
+        )
 
         # Anti-money laundering requirements
-        self.state.requirements.append(RegulatoryRequirement(
-            name="AML Transaction Monitoring",
-            description="Monitoring transactions for suspicious activity in compliance with AML regulations",
-            type=RegulationType.AML,
-            jurisdiction="Switzerland",
-            status=ComplianceStatus.COMPLIANT,
-            last_checked=datetime.now().isoformat(),
-            next_check_due=(datetime.now() + timedelta(days=30)).isoformat()
-        ))
+        self.state.requirements.append(
+            RegulatoryRequirement(
+                name="AML Transaction Monitoring",
+                description="Monitoring transactions for suspicious activity in compliance with AML regulations",
+                type=RegulationType.AML,
+                jurisdiction="Switzerland",
+                status=ComplianceStatus.COMPLIANT,
+                last_checked=datetime.now().isoformat(),
+                next_check_due=(datetime.now() + timedelta(days=30)).isoformat(),
+            )
+        )
 
         # KYC requirements
-        self.state.requirements.append(RegulatoryRequirement(
-            name="KYC Verification",
-            description="Verification of customer identity in compliance with KYC regulations",
-            type=RegulationType.KYC,
-            jurisdiction="Switzerland",
-            status=ComplianceStatus.COMPLIANT,
-            last_checked=datetime.now().isoformat(),
-            next_check_due=(datetime.now() + timedelta(days=180)).isoformat()
-        ))
+        self.state.requirements.append(
+            RegulatoryRequirement(
+                name="KYC Verification",
+                description="Verification of customer identity in compliance with KYC regulations",
+                type=RegulationType.KYC,
+                jurisdiction="Switzerland",
+                status=ComplianceStatus.COMPLIANT,
+                last_checked=datetime.now().isoformat(),
+                next_check_due=(datetime.now() + timedelta(days=180)).isoformat(),
+            )
+        )
 
         # Trading regulations
-        self.state.requirements.append(RegulatoryRequirement(
-            name="Leverage Trading Limits",
-            description="Compliance with Swiss regulations on leverage trading limits",
-            type=RegulationType.TRADING,
-            jurisdiction="Switzerland",
-            status=ComplianceStatus.COMPLIANT,
-            last_checked=datetime.now().isoformat(),
-            next_check_due=(datetime.now() + timedelta(days=90)).isoformat()
-        ))
+        self.state.requirements.append(
+            RegulatoryRequirement(
+                name="Leverage Trading Limits",
+                description="Compliance with Swiss regulations on leverage trading limits",
+                type=RegulationType.TRADING,
+                jurisdiction="Switzerland",
+                status=ComplianceStatus.COMPLIANT,
+                last_checked=datetime.now().isoformat(),
+                next_check_due=(datetime.now() + timedelta(days=90)).isoformat(),
+            )
+        )
 
     def _register_handlers(self):
         """Register handlers for the agent."""
@@ -186,7 +202,9 @@ class RegulatoryComplianceAgent(BaseAgent):
                     next_check = datetime.fromisoformat(requirement.next_check_due)
                     if datetime.now() >= next_check:
                         # Update requirement
-                        self.state.requirements[i].status = await self._check_requirement(requirement)
+                        self.state.requirements[i].status = await self._check_requirement(
+                            requirement
+                        )
                         self.state.requirements[i].last_checked = datetime.now().isoformat()
                         self.state.requirements[i].next_check_due = (
                             datetime.now() + timedelta(days=90)
@@ -228,6 +246,7 @@ class RegulatoryComplianceAgent(BaseAgent):
         # Simulate compliance check
         # For demonstration, we'll randomly determine compliance
         import random
+
         statuses = [
             ComplianceStatus.COMPLIANT,
             ComplianceStatus.NEEDS_REVIEW,
@@ -271,7 +290,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             requirements_checked=requirements_checked,
             status=status,
             issues=issues,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     async def generate_tax_report(self, user_id: str, year: int) -> TaxReport:
@@ -301,7 +320,7 @@ class RegulatoryComplianceAgent(BaseAgent):
             realized_profit_loss=realized_profit_loss,
             tax_liability=tax_liability,
             status=ComplianceStatus.COMPLIANT,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
         # Update state

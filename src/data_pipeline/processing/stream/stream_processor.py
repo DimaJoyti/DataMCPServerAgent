@@ -7,19 +7,23 @@ continuous data streams with low-latency processing.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Callable
-from datetime import datetime, timezone
-from collections import deque
 import time
+from collections import deque
+from datetime import datetime, timezone
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from pydantic import BaseModel, Field
 
+
 class StreamProcessingConfig(BaseModel):
     """Configuration for stream processing."""
+
     # Processing options
     window_size: int = Field(default=1000, description="Window size for processing")
-    window_type: str = Field(default="tumbling", description="Window type (tumbling, sliding, session)")
+    window_type: str = Field(
+        default="tumbling", description="Window type (tumbling, sliding, session)"
+    )
     window_duration: float = Field(default=60.0, description="Window duration in seconds")
 
     # Performance options
@@ -35,8 +39,10 @@ class StreamProcessingConfig(BaseModel):
     continue_on_error: bool = Field(default=True, description="Continue processing on errors")
     max_error_rate: float = Field(default=0.1, description="Maximum acceptable error rate")
 
+
 class StreamMetrics(BaseModel):
     """Metrics for stream processing."""
+
     messages_received: int = 0
     messages_processed: int = 0
     messages_failed: int = 0
@@ -59,14 +65,17 @@ class StreamMetrics(BaseModel):
     start_time: Optional[datetime] = None
     last_update_time: Optional[datetime] = None
 
+
 class StreamWindow(BaseModel):
     """Represents a processing window."""
+
     window_id: str
     window_type: str
     start_time: datetime
     end_time: Optional[datetime] = None
     messages: List[Any] = Field(default_factory=list)
     is_closed: bool = False
+
 
 class StreamProcessor:
     """
@@ -79,7 +88,7 @@ class StreamProcessor:
     def __init__(
         self,
         config: Optional[StreamProcessingConfig] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the stream processor.
@@ -110,11 +119,7 @@ class StreamProcessor:
 
         self.logger.info("Stream processor initialized")
 
-    def register_message_handler(
-        self,
-        message_type: str,
-        handler: Callable[[Any], Any]
-    ) -> None:
+    def register_message_handler(self, message_type: str, handler: Callable[[Any], Any]) -> None:
         """
         Register a message handler.
 
@@ -126,9 +131,7 @@ class StreamProcessor:
         self.logger.info("Message handler registered", message_type=message_type)
 
     def register_window_handler(
-        self,
-        window_type: str,
-        handler: Callable[[StreamWindow], Any]
+        self, window_type: str, handler: Callable[[StreamWindow], Any]
     ) -> None:
         """
         Register a window handler.
@@ -195,7 +198,7 @@ class StreamProcessor:
                 "data": message,
                 "type": message_type,
                 "timestamp": time.time(),
-                "received_at": datetime.now(timezone.utc)
+                "received_at": datetime.now(timezone.utc),
             }
 
             # Add to buffer
@@ -279,9 +282,7 @@ class StreamProcessor:
                 self.window_counter += 1
 
                 window = StreamWindow(
-                    window_id=window_id,
-                    window_type="tumbling",
-                    start_time=current_time
+                    window_id=window_id, window_type="tumbling", start_time=current_time
                 )
                 self.active_windows[window_id] = window
 
@@ -314,8 +315,10 @@ class StreamProcessor:
                         # Check if window should be closed
                         window_age = (current_time - window.start_time).total_seconds()
 
-                        if (window_age >= self.config.window_duration or
-                            len(window.messages) >= self.config.window_size):
+                        if (
+                            window_age >= self.config.window_duration
+                            or len(window.messages) >= self.config.window_size
+                        ):
                             windows_to_close.append(window_id)
 
                 # Close windows and process them
@@ -354,15 +357,11 @@ class StreamProcessor:
                 "Window processed",
                 window_id=window.window_id,
                 message_count=len(window.messages),
-                duration=(window.end_time - window.start_time).total_seconds()
+                duration=(window.end_time - window.start_time).total_seconds(),
             )
 
         except Exception as e:
-            self.logger.error(
-                "Window processing failed",
-                window_id=window.window_id,
-                error=str(e)
-            )
+            self.logger.error("Window processing failed", window_id=window.window_id, error=str(e))
 
     async def _metrics_loop(self) -> None:
         """Metrics collection loop."""
@@ -399,8 +398,12 @@ class StreamProcessor:
             p95_index = int(0.95 * len(sorted_samples))
             p99_index = int(0.99 * len(sorted_samples))
 
-            self.metrics.p95_latency = sorted_samples[p95_index] if p95_index < len(sorted_samples) else 0
-            self.metrics.p99_latency = sorted_samples[p99_index] if p99_index < len(sorted_samples) else 0
+            self.metrics.p95_latency = (
+                sorted_samples[p95_index] if p95_index < len(sorted_samples) else 0
+            )
+            self.metrics.p99_latency = (
+                sorted_samples[p99_index] if p99_index < len(sorted_samples) else 0
+            )
 
         # Calculate buffer utilization
         self.metrics.buffer_utilization = len(self.message_buffer) / self.config.buffer_size
@@ -417,7 +420,7 @@ class StreamProcessor:
             messages_processed=self.metrics.messages_processed,
             throughput_mps=self.metrics.throughput_messages_per_second,
             average_latency=self.metrics.average_latency,
-            buffer_utilization=self.metrics.buffer_utilization
+            buffer_utilization=self.metrics.buffer_utilization,
         )
 
     async def get_metrics(self) -> StreamMetrics:
@@ -435,7 +438,7 @@ class StreamProcessor:
             "buffer_size": len(self.message_buffer),
             "registered_handlers": {
                 "message_handlers": list(self.message_handlers.keys()),
-                "window_handlers": list(self.window_handlers.keys())
+                "window_handlers": list(self.window_handlers.keys()),
             },
-            "processor": "stream_processor"
+            "processor": "stream_processor",
         }

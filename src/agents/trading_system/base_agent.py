@@ -4,10 +4,11 @@ Base agent class for the Fetch.ai Advanced Crypto Trading System.
 This module provides the foundation for all specialized agents in the system.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, Optional
-from uagents import Agent, Context, Model, Protocol
+from typing import Optional
+
+from uagents import Agent, Context, Model
+
 
 class BaseAgentState(Model):
     """Base state model for all agents."""
@@ -16,6 +17,7 @@ class BaseAgentState(Model):
     last_update: Optional[str] = None
     message_count: int = 0
     error_count: int = 0
+
 
 class BaseAgent:
     """Base class for all specialized agents in the trading system."""
@@ -26,7 +28,7 @@ class BaseAgent:
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the base agent.
 
@@ -45,18 +47,13 @@ class BaseAgent:
         # Set up logging
         self.logger = logger or logging.getLogger(name)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
 
         # Create the agent
-        self.agent = Agent(
-            name=name,
-            seed=seed,
-            port=port,
-            endpoint=endpoint
-        )
+        self.agent = Agent(name=name, seed=seed, port=port, endpoint=endpoint)
 
         # Set up the agent state
         self.state = BaseAgentState()

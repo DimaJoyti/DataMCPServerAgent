@@ -5,9 +5,8 @@ Demonstrates the new web interface capabilities for integrated semantic agents.
 """
 
 import asyncio
-import time
 import webbrowser
-from pathlib import Path
+
 
 def print_banner():
     """Print demo banner."""

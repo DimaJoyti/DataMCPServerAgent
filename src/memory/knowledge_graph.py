@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 # Try to import networkx, make it optional
 try:
     import networkx as nx
+
     NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False
@@ -21,6 +22,7 @@ except ImportError:
 try:
     from rdflib import RDF, Graph, Literal, Namespace, URIRef
     from rdflib.namespace import FOAF
+
     RDFLIB_AVAILABLE = True
 except ImportError:
     RDFLIB_AVAILABLE = False
@@ -31,6 +33,7 @@ from src.utils.error_handlers import format_error_for_user
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 class KnowledgeGraph:
     """Knowledge graph for representing entities and their relationships."""
@@ -86,23 +89,15 @@ class KnowledgeGraph:
                 # Add to RDF graph (if available)
                 if self.rdf_graph is not None and self.ns is not None:
                     node_uri = URIRef(f"{self.ns}{node_id}")
-                    self.rdf_graph.add(
-                        (node_uri, RDF.type, URIRef(f"{self.ns}{node_type}"))
-                    )
+                    self.rdf_graph.add((node_uri, RDF.type, URIRef(f"{self.ns}{node_type}")))
 
                 for prop, value in properties_dict.items():
                     if isinstance(value, str):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, (int, float)):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, bool):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, dict):
                         self.rdf_graph.add(
                             (
@@ -142,9 +137,7 @@ class KnowledgeGraph:
                     elif isinstance(value, bool):
                         self.rdf_graph.add((edge_uri, edge_prop_uri, Literal(value)))
 
-            logger.info(
-                f"Loaded knowledge graph with {len(nodes)} nodes and {len(edges)} edges"
-            )
+            logger.info(f"Loaded knowledge graph with {len(nodes)} nodes and {len(edges)} edges")
         except Exception as e:
             error_message = format_error_for_user(e)
             logger.error(f"Failed to load knowledge graph: {error_message}")
@@ -194,9 +187,7 @@ class KnowledgeGraph:
             logger.info("Initialized knowledge graph tables")
         except Exception as e:
             error_message = format_error_for_user(e)
-            logger.error(
-                f"Failed to initialize knowledge graph tables: {error_message}"
-            )
+            logger.error(f"Failed to initialize knowledge graph tables: {error_message}")
             raise
 
     def add_node(
@@ -233,17 +224,11 @@ class KnowledgeGraph:
 
                 for prop, value in properties.items():
                     if isinstance(value, str):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, (int, float)):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, bool):
-                        self.rdf_graph.add(
-                            (node_uri, URIRef(f"{self.ns}{prop}"), Literal(value))
-                        )
+                        self.rdf_graph.add((node_uri, URIRef(f"{self.ns}{prop}"), Literal(value)))
                     elif isinstance(value, dict):
                         self.rdf_graph.add(
                             (
@@ -324,9 +309,7 @@ class KnowledgeGraph:
                 (source_id, target_id, edge_type, json.dumps(properties), time.time()),
             )
 
-            logger.debug(
-                f"Added edge from {source_id} to {target_id} of type {edge_type}"
-            )
+            logger.debug(f"Added edge from {source_id} to {target_id} of type {edge_type}")
         except Exception as e:
             error_message = format_error_for_user(e)
             logger.error(f"Failed to add edge: {error_message}")
@@ -354,7 +337,7 @@ class KnowledgeGraph:
             # Fallback to database query if NetworkX not available
             result = self.db.execute(
                 "SELECT node_type, properties, timestamp FROM knowledge_graph_nodes WHERE node_id = ?",
-                (node_id,)
+                (node_id,),
             ).fetchone()
 
             if result:
@@ -400,7 +383,7 @@ class KnowledgeGraph:
                 # Fallback to database query
                 results = self.db.execute(
                     "SELECT node_id, properties, timestamp FROM knowledge_graph_nodes WHERE node_type = ?",
-                    (node_type,)
+                    (node_type,),
                 ).fetchall()
 
                 for node_id, properties_json, timestamp in results:
@@ -490,13 +473,8 @@ class KnowledgeGraph:
             neighbors = []
 
             if direction == "outgoing" or direction == "both":
-                for _, neighbor_id, edge_data in self.nx_graph.out_edges(
-                    node_id, data=True
-                ):
-                    if (
-                        edge_type is not None
-                        and edge_data.get("edge_type") != edge_type
-                    ):
+                for _, neighbor_id, edge_data in self.nx_graph.out_edges(node_id, data=True):
+                    if edge_type is not None and edge_data.get("edge_type") != edge_type:
                         continue
 
                     neighbor_data = self.nx_graph.nodes[neighbor_id]
@@ -512,13 +490,8 @@ class KnowledgeGraph:
                     )
 
             if direction == "incoming" or direction == "both":
-                for neighbor_id, _, edge_data in self.nx_graph.in_edges(
-                    node_id, data=True
-                ):
-                    if (
-                        edge_type is not None
-                        and edge_data.get("edge_type") != edge_type
-                    ):
+                for neighbor_id, _, edge_data in self.nx_graph.in_edges(node_id, data=True):
+                    if edge_type is not None and edge_data.get("edge_type") != edge_type:
                         continue
 
                     neighbor_data = self.nx_graph.nodes[neighbor_id]
@@ -562,10 +535,7 @@ class KnowledgeGraph:
 
             for node_id, node_data in self.nx_graph.nodes(data=True):
                 # Filter by node type
-                if (
-                    node_types is not None
-                    and node_data.get("node_type") not in node_types
-                ):
+                if node_types is not None and node_data.get("node_type") not in node_types:
                     continue
 
                 # Filter by properties
@@ -635,9 +605,7 @@ class KnowledgeGraph:
             logger.error(f"Failed to execute SPARQL query: {error_message}")
             return []
 
-    def find_path(
-        self, source_id: str, target_id: str
-    ) -> Optional[List[Dict[str, Any]]]:
+    def find_path(self, source_id: str, target_id: str) -> Optional[List[Dict[str, Any]]]:
         """Find a path between two nodes in the knowledge graph.
 
         Args:
@@ -659,9 +627,7 @@ class KnowledgeGraph:
 
             # Find shortest path
             try:
-                path = nx.shortest_path(
-                    self.nx_graph, source=source_id, target=target_id
-                )
+                path = nx.shortest_path(self.nx_graph, source=source_id, target=target_id)
 
                 # Convert path to edges
                 edges = []
@@ -690,9 +656,7 @@ class KnowledgeGraph:
             logger.error(f"Failed to find path: {error_message}")
             return None
 
-    def get_subgraph(
-        self, node_ids: List[str], include_neighbors: bool = False
-    ) -> Dict[str, Any]:
+    def get_subgraph(self, node_ids: List[str], include_neighbors: bool = False) -> Dict[str, Any]:
         """Get a subgraph of the knowledge graph.
 
         Args:

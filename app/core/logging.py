@@ -34,6 +34,7 @@ request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=Non
 # Global console for rich output
 console = Console()
 
+
 class ContextFilter(logging.Filter):
     """Add context variables to log records."""
 
@@ -44,6 +45,7 @@ class ContextFilter(logging.Filter):
         record.agent_id = agent_id_var.get()
         record.request_id = request_id_var.get()
         return True
+
 
 class PerformanceFilter(logging.Filter):
     """Add performance metrics to log records."""
@@ -58,12 +60,14 @@ class PerformanceFilter(logging.Filter):
         record.timestamp = time.time()
         return True
 
+
 def add_correlation_id(_logger, _method_name, event_dict):
     """Add correlation ID to log events."""
     correlation_id = correlation_id_var.get()
     if correlation_id:
         event_dict["correlation_id"] = correlation_id
     return event_dict
+
 
 def add_user_context(_logger, _method_name, event_dict):
     """Add user context to log events."""
@@ -80,10 +84,12 @@ def add_user_context(_logger, _method_name, event_dict):
 
     return event_dict
 
+
 def add_performance_metrics(_logger, _method_name, event_dict):
     """Add performance metrics to log events."""
     event_dict["timestamp"] = time.time()
     return event_dict
+
 
 def setup_logging(settings: Settings) -> None:
     """Setup comprehensive logging system."""
@@ -194,45 +200,56 @@ def setup_logging(settings: Settings) -> None:
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("asyncio").setLevel(logging.WARNING)
 
+
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a structured logger instance."""
     return structlog.get_logger(name)
+
 
 def set_correlation_id(correlation_id: str) -> None:
     """Set correlation ID for the current context."""
     correlation_id_var.set(correlation_id)
 
+
 def get_correlation_id() -> Optional[str]:
     """Get correlation ID from the current context."""
     return correlation_id_var.get()
+
 
 def set_user_id(user_id: str) -> None:
     """Set user ID for the current context."""
     user_id_var.set(user_id)
 
+
 def get_user_id() -> Optional[str]:
     """Get user ID from the current context."""
     return user_id_var.get()
+
 
 def set_agent_id(agent_id: str) -> None:
     """Set agent ID for the current context."""
     agent_id_var.set(agent_id)
 
+
 def get_agent_id() -> Optional[str]:
     """Get agent ID from the current context."""
     return agent_id_var.get()
+
 
 def set_request_id(request_id: str) -> None:
     """Set request ID for the current context."""
     request_id_var.set(request_id)
 
+
 def get_request_id() -> Optional[str]:
     """Get request ID from the current context."""
     return request_id_var.get()
 
+
 def generate_correlation_id() -> str:
     """Generate a new correlation ID."""
     return str(uuid.uuid4())
+
 
 class LoggerMixin:
     """Mixin to add logging capabilities to classes."""
@@ -241,6 +258,7 @@ class LoggerMixin:
     def logger(self) -> structlog.stdlib.BoundLogger:
         """Get logger for this class."""
         return get_logger(self.__class__.__name__)
+
 
 class PerformanceLogger:
     """Context manager for performance logging."""
@@ -267,6 +285,7 @@ class PerformanceLogger:
                 error=str(exc_val),
             )
 
+
 def log_function_call(func):
     """Decorator to log function calls."""
 
@@ -277,6 +296,7 @@ def log_function_call(func):
             return func(*args, **kwargs)
 
     return wrapper
+
 
 async def log_async_function_call(func):
     """Decorator to log async function calls."""

@@ -2,19 +2,20 @@
 DOCX file parser implementation.
 """
 
-import logging
 from pathlib import Path
-from typing import List, Union, Dict, Any
+from typing import Dict, List, Union
 
 try:
     from docx import Document
+
     HAS_DOCX = True
 except ImportError:
     HAS_DOCX = False
 
-from .base_parser import BaseParser, ParsedDocument
-from ..metadata.models import DocumentMetadata, DocumentType
 from ..metadata.extractor import MetadataExtractor
+from ..metadata.models import DocumentMetadata, DocumentType
+from .base_parser import BaseParser, ParsedDocument
+
 
 class DOCXParser(BaseParser):
     """Parser for DOCX files."""
@@ -25,8 +26,7 @@ class DOCXParser(BaseParser):
 
         if not HAS_DOCX:
             raise ImportError(
-                "DOCX parsing requires python-docx. "
-                "Install with: pip install python-docx"
+                "DOCX parsing requires python-docx. " "Install with: pip install python-docx"
             )
 
     @property
@@ -37,7 +37,7 @@ class DOCXParser(BaseParser):
     @property
     def supported_extensions(self) -> List[str]:
         """Return list of supported file extensions."""
-        return ['docx', 'docm']
+        return ["docx", "docm"]
 
     def _parse_file_impl(self, file_path: Path) -> ParsedDocument:
         """
@@ -80,23 +80,27 @@ class DOCXParser(BaseParser):
                         row_data = [cell.text.strip() for cell in row.cells]
                         table_data.append(row_data)
 
-                    tables.append({
-                        'table_index': table_idx,
-                        'data': table_data,
-                        'rows': len(table_data),
-                        'columns': len(table_data[0]) if table_data else 0
-                    })
+                    tables.append(
+                        {
+                            "table_index": table_idx,
+                            "data": table_data,
+                            "rows": len(table_data),
+                            "columns": len(table_data[0]) if table_data else 0,
+                        }
+                    )
 
             # Extract images if configured
             if self.config.extract_images:
                 # Get image relationships
                 for rel in doc.part.rels.values():
                     if "image" in rel.target_ref:
-                        images.append({
-                            'relationship_id': rel.rId,
-                            'target': rel.target_ref,
-                            'type': rel.reltype
-                        })
+                        images.append(
+                            {
+                                "relationship_id": rel.rId,
+                                "target": rel.target_ref,
+                                "type": rel.reltype,
+                            }
+                        )
 
         except Exception as e:
             error_msg = f"Error parsing DOCX file: {str(e)}"
@@ -105,7 +109,7 @@ class DOCXParser(BaseParser):
                 raise
 
         # Combine all text
-        full_text = '\n\n'.join(text_content)
+        full_text = "\n\n".join(text_content)
 
         # Normalize text if configured
         if self.config.normalize_whitespace:
@@ -120,7 +124,7 @@ class DOCXParser(BaseParser):
             metadata.word_count = len(full_text.split())
 
             # Count paragraphs (non-empty)
-            paragraphs = [p for p in full_text.split('\n\n') if p.strip()]
+            paragraphs = [p for p in full_text.split("\n\n") if p.strip()]
             metadata.paragraph_count = len(paragraphs)
 
         # Create result
@@ -134,7 +138,7 @@ class DOCXParser(BaseParser):
             errors=errors,
             parsing_time=0.0,
             parser_name=self._parser_name,
-            parser_version=self._parser_version
+            parser_version=self._parser_version,
         )
 
         return result
@@ -144,7 +148,7 @@ class DOCXParser(BaseParser):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Parse DOCX content directly.
@@ -163,7 +167,8 @@ class DOCXParser(BaseParser):
 
         # Create temporary file for parsing
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp_file:
+
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_file:
             tmp_file.write(content)
             tmp_path = Path(tmp_file.name)
 
@@ -204,7 +209,9 @@ class DOCXParser(BaseParser):
 
             if core_props.keywords:
                 # Split keywords by common separators
-                keywords = [k.strip() for k in core_props.keywords.replace(',', ';').split(';') if k.strip()]
+                keywords = [
+                    k.strip() for k in core_props.keywords.replace(",", ";").split(";") if k.strip()
+                ]
                 metadata.keywords = keywords
 
             # Extract dates
@@ -216,31 +223,31 @@ class DOCXParser(BaseParser):
 
             # Add additional properties as custom fields
             if core_props.category:
-                metadata.add_custom_field('category', core_props.category)
+                metadata.add_custom_field("category", core_props.category)
 
             if core_props.comments:
-                metadata.add_custom_field('comments', core_props.comments)
+                metadata.add_custom_field("comments", core_props.comments)
 
             if core_props.content_status:
-                metadata.add_custom_field('content_status', core_props.content_status)
+                metadata.add_custom_field("content_status", core_props.content_status)
 
             if core_props.identifier:
-                metadata.add_custom_field('identifier', core_props.identifier)
+                metadata.add_custom_field("identifier", core_props.identifier)
 
             if core_props.language:
                 metadata.language = core_props.language
 
             if core_props.last_modified_by:
-                metadata.add_custom_field('last_modified_by', core_props.last_modified_by)
+                metadata.add_custom_field("last_modified_by", core_props.last_modified_by)
 
             if core_props.last_printed:
-                metadata.add_custom_field('last_printed', core_props.last_printed)
+                metadata.add_custom_field("last_printed", core_props.last_printed)
 
             if core_props.revision:
-                metadata.add_custom_field('revision', core_props.revision)
+                metadata.add_custom_field("revision", core_props.revision)
 
             if core_props.version:
-                metadata.add_custom_field('version', core_props.version)
+                metadata.add_custom_field("version", core_props.version)
 
         except Exception as e:
             self.logger.warning(f"Failed to extract DOCX properties: {e}")
@@ -252,12 +259,13 @@ class DOCXParser(BaseParser):
         try:
             # Get hyperlink relationships
             for rel in doc.part.rels.values():
-                if rel.reltype == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink":
-                    links.append({
-                        'url': rel.target_ref,
-                        'type': 'hyperlink',
-                        'relationship_id': rel.rId
-                    })
+                if (
+                    rel.reltype
+                    == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+                ):
+                    links.append(
+                        {"url": rel.target_ref, "type": "hyperlink", "relationship_id": rel.rId}
+                    )
         except Exception as e:
             self.logger.warning(f"Failed to extract hyperlinks: {e}")
 

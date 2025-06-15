@@ -2,17 +2,18 @@
 Memory router for the API.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from ..models.request_models import MemoryRequest
-from ..models.response_models import MemoryResponse, ErrorResponse
-from ..services.memory_service import MemoryService
 from ..middleware.auth import get_api_key
+from ..models.request_models import MemoryRequest
+from ..models.response_models import MemoryResponse
+from ..services.memory_service import MemoryService
 
 router = APIRouter(prefix="/memory", tags=["memory"])
+
 
 @router.post("/", response_model=MemoryResponse)
 async def store_memory(
@@ -50,6 +51,7 @@ async def store_memory(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.get("/{session_id}", response_model=MemoryResponse)
 async def retrieve_memory(
@@ -96,6 +98,7 @@ async def retrieve_memory(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.delete("/{session_id}", response_model=MemoryResponse)
 async def clear_memory(

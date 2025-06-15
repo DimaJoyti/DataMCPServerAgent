@@ -9,7 +9,6 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from ..config import config
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for logging requests and responses."""

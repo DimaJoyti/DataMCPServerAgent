@@ -17,15 +17,15 @@ from datetime import datetime, timezone
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.data_pipeline.core.orchestrator import PipelineOrchestrator, OrchestratorConfig
+from src.data_pipeline.core.orchestrator import OrchestratorConfig, PipelineOrchestrator
 from src.data_pipeline.core.pipeline_models import (
     PipelineConfig,
     TaskConfig,
     TaskType,
-    DataSourceType,
 )
 from src.data_pipeline.ingestion.batch.batch_ingestion import BatchIngestionEngine
 from src.data_pipeline.ingestion.streaming.stream_ingestion import StreamIngestionEngine
+
 
 async def create_sample_csv_data():
     """Create sample CSV data for testing."""
@@ -85,7 +85,7 @@ async def example_batch_ingestion():
             destination_config=destination_config
         )
 
-        print(f"Ingestion completed successfully!")
+        print("Ingestion completed successfully!")
         print(f"Total records: {metrics.total_records}")
         print(f"Processed records: {metrics.processed_records}")
         print(f"Failed records: {metrics.failed_records}")
@@ -240,7 +240,7 @@ async def example_pipeline_creation():
         # Get final status
         final_status = await orchestrator.get_pipeline_status(run_id)
         if final_status:
-            print(f"\nFinal Pipeline Status:")
+            print("\nFinal Pipeline Status:")
             print(f"Status: {final_status.status}")
             print(f"Duration: {final_status.duration:.2f} seconds" if final_status.duration else "Duration: N/A")
             print(f"Tasks completed: {len([t for t in final_status.tasks if t.status.value == 'success'])}/{len(final_status.tasks)}")
@@ -301,7 +301,7 @@ async def example_streaming_ingestion():
 
         # Get metrics
         metrics = await streaming_engine.get_metrics()
-        print(f"\nStreaming Metrics:")
+        print("\nStreaming Metrics:")
         print(f"Messages received: {metrics.messages_received}")
         print(f"Messages processed: {metrics.messages_processed}")
         print(f"Messages failed: {metrics.messages_failed}")

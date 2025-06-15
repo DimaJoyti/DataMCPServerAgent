@@ -4,12 +4,11 @@ This example demonstrates the use of the DistributedMemoryManager for scalable m
 """
 
 import asyncio
+import logging
 import os
+import random
 import sys
 import time
-import random
-import logging
-from typing import Dict, Any, Optional
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

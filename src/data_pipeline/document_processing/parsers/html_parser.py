@@ -2,26 +2,27 @@
 HTML file parser implementation.
 """
 
-import logging
-import re
 from pathlib import Path
-from typing import List, Union, Dict, Any
+from typing import Any, Dict, List, Union
 
 try:
     from bs4 import BeautifulSoup
+
     HAS_BS4 = True
 except ImportError:
     HAS_BS4 = False
 
 try:
     import html2text
+
     HAS_HTML2TEXT = True
 except ImportError:
     HAS_HTML2TEXT = False
 
-from .base_parser import BaseParser, ParsedDocument
-from ..metadata.models import DocumentMetadata, DocumentType
 from ..metadata.extractor import MetadataExtractor
+from ..metadata.models import DocumentMetadata, DocumentType
+from .base_parser import BaseParser, ParsedDocument
+
 
 class HTMLParser(BaseParser):
     """Parser for HTML files."""
@@ -32,8 +33,7 @@ class HTMLParser(BaseParser):
 
         if not HAS_BS4:
             raise ImportError(
-                "HTML parsing requires BeautifulSoup4. "
-                "Install with: pip install beautifulsoup4"
+                "HTML parsing requires BeautifulSoup4. " "Install with: pip install beautifulsoup4"
             )
 
     @property
@@ -44,7 +44,7 @@ class HTMLParser(BaseParser):
     @property
     def supported_extensions(self) -> List[str]:
         """Return list of supported file extensions."""
-        return ['html', 'htm', 'xhtml']
+        return ["html", "htm", "xhtml"]
 
     def _parse_file_impl(self, file_path: Path) -> ParsedDocument:
         """
@@ -63,11 +63,11 @@ class HTMLParser(BaseParser):
 
         # Read file content
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 html_content = f.read()
         except UnicodeDecodeError:
             # Try with different encoding
-            with open(file_path, 'r', encoding='latin-1', errors='ignore') as f:
+            with open(file_path, encoding="latin-1", errors="ignore") as f:
                 html_content = f.read()
 
         return self._parse_html_content(html_content, metadata)
@@ -77,7 +77,7 @@ class HTMLParser(BaseParser):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Parse HTML content directly.
@@ -94,17 +94,14 @@ class HTMLParser(BaseParser):
         # Convert bytes to string if needed
         if isinstance(content, bytes):
             try:
-                content = content.decode('utf-8')
+                content = content.decode("utf-8")
             except UnicodeDecodeError:
-                content = content.decode('utf-8', errors='ignore')
+                content = content.decode("utf-8", errors="ignore")
 
         # Create metadata
         extractor = MetadataExtractor()
         metadata = extractor.extract_from_content(
-            content,
-            document_id,
-            document_type,
-            **metadata_kwargs
+            content, document_id, document_type, **metadata_kwargs
         )
         metadata.document_type = DocumentType.HTML
 
@@ -120,7 +117,7 @@ class HTMLParser(BaseParser):
 
         try:
             # Parse HTML with BeautifulSoup
-            soup = BeautifulSoup(html_content, 'html.parser')
+            soup = BeautifulSoup(html_content, "html.parser")
 
             # Extract HTML metadata
             self._extract_html_metadata(soup, metadata)
@@ -178,7 +175,7 @@ class HTMLParser(BaseParser):
             errors=errors,
             parsing_time=0.0,
             parser_name=self._parser_name,
-            parser_version=self._parser_version
+            parser_version=self._parser_version,
         )
 
         return result
@@ -187,37 +184,37 @@ class HTMLParser(BaseParser):
         """Extract metadata from HTML head section."""
         try:
             # Extract title
-            title_tag = soup.find('title')
+            title_tag = soup.find("title")
             if title_tag and title_tag.string:
                 metadata.title = title_tag.string.strip()
 
             # Extract meta tags
-            meta_tags = soup.find_all('meta')
+            meta_tags = soup.find_all("meta")
             for meta in meta_tags:
-                name = meta.get('name', '').lower()
-                content = meta.get('content', '')
+                name = meta.get("name", "").lower()
+                content = meta.get("content", "")
 
-                if name == 'author':
+                if name == "author":
                     metadata.author = content
-                elif name == 'description':
+                elif name == "description":
                     metadata.subject = content
-                elif name == 'keywords':
-                    keywords = [k.strip() for k in content.split(',') if k.strip()]
+                elif name == "keywords":
+                    keywords = [k.strip() for k in content.split(",") if k.strip()]
                     metadata.keywords = keywords
-                elif name == 'language':
+                elif name == "language":
                     metadata.language = content
-                elif name in ['generator', 'creator']:
+                elif name in ["generator", "creator"]:
                     metadata.add_custom_field(name, content)
 
                 # Handle property-based meta tags (Open Graph, etc.)
-                property_name = meta.get('property', '').lower()
+                property_name = meta.get("property", "").lower()
                 if property_name:
-                    metadata.add_custom_field(f'meta_{property_name}', content)
+                    metadata.add_custom_field(f"meta_{property_name}", content)
 
             # Extract language from html tag
-            html_tag = soup.find('html')
-            if html_tag and html_tag.get('lang'):
-                metadata.language = html_tag.get('lang')
+            html_tag = soup.find("html")
+            if html_tag and html_tag.get("lang"):
+                metadata.language = html_tag.get("lang")
 
         except Exception as e:
             self.logger.warning(f"Failed to extract HTML metadata: {e}")
@@ -227,25 +224,27 @@ class HTMLParser(BaseParser):
         tables = []
 
         try:
-            table_tags = soup.find_all('table')
+            table_tags = soup.find_all("table")
             for table_idx, table in enumerate(table_tags):
-                rows = table.find_all('tr')
+                rows = table.find_all("tr")
                 table_data = []
 
                 for row in rows:
-                    cells = row.find_all(['td', 'th'])
+                    cells = row.find_all(["td", "th"])
                     row_data = [cell.get_text(strip=True) for cell in cells]
                     if row_data:  # Only add non-empty rows
                         table_data.append(row_data)
 
                 if table_data:
-                    tables.append({
-                        'table_index': table_idx,
-                        'data': table_data,
-                        'rows': len(table_data),
-                        'columns': len(table_data[0]) if table_data else 0,
-                        'has_header': bool(table.find('th'))
-                    })
+                    tables.append(
+                        {
+                            "table_index": table_idx,
+                            "data": table_data,
+                            "rows": len(table_data),
+                            "columns": len(table_data[0]) if table_data else 0,
+                            "has_header": bool(table.find("th")),
+                        }
+                    )
 
         except Exception as e:
             self.logger.warning(f"Failed to extract tables: {e}")
@@ -257,15 +256,15 @@ class HTMLParser(BaseParser):
         images = []
 
         try:
-            img_tags = soup.find_all('img')
+            img_tags = soup.find_all("img")
             for img_idx, img in enumerate(img_tags):
                 image_info = {
-                    'image_index': img_idx,
-                    'src': img.get('src', ''),
-                    'alt': img.get('alt', ''),
-                    'title': img.get('title', ''),
-                    'width': img.get('width'),
-                    'height': img.get('height')
+                    "image_index": img_idx,
+                    "src": img.get("src", ""),
+                    "alt": img.get("alt", ""),
+                    "title": img.get("title", ""),
+                    "width": img.get("width"),
+                    "height": img.get("height"),
                 }
                 images.append(image_info)
 
@@ -280,32 +279,24 @@ class HTMLParser(BaseParser):
 
         try:
             # Extract anchor tags
-            a_tags = soup.find_all('a', href=True)
+            a_tags = soup.find_all("a", href=True)
             for link in a_tags:
-                href = link.get('href', '')
+                href = link.get("href", "")
                 text = link.get_text(strip=True)
-                title = link.get('title', '')
+                title = link.get("title", "")
 
-                links.append({
-                    'url': href,
-                    'text': text,
-                    'title': title,
-                    'type': 'html_anchor'
-                })
+                links.append({"url": href, "text": text, "title": title, "type": "html_anchor"})
 
             # Extract link tags (stylesheets, etc.)
-            link_tags = soup.find_all('link', href=True)
+            link_tags = soup.find_all("link", href=True)
             for link in link_tags:
-                href = link.get('href', '')
-                rel = link.get('rel', [])
-                link_type = link.get('type', '')
+                href = link.get("href", "")
+                rel = link.get("rel", [])
+                link_type = link.get("type", "")
 
-                links.append({
-                    'url': href,
-                    'text': f"{rel} - {link_type}",
-                    'rel': rel,
-                    'type': 'html_link'
-                })
+                links.append(
+                    {"url": href, "text": f"{rel} - {link_type}", "rel": rel, "type": "html_link"}
+                )
 
         except Exception as e:
             self.logger.warning(f"Failed to extract links: {e}")

@@ -5,9 +5,7 @@ Example script demonstrating the hierarchical reinforcement learning capabilitie
 import asyncio
 import os
 import sys
-import time
-import uuid
-from typing import Dict, List, Any, Optional
+from typing import Dict, List
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,18 +16,13 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 
-from src.agents.agent_architecture import (
-    SpecializedSubAgent,
-    create_specialized_sub_agents
-)
+from src.agents.agent_architecture import SpecializedSubAgent
 from src.agents.hierarchical_rl import (
-    HierarchicalRLCoordinatorAgent,
     HierarchicalRewardSystem,
+    HierarchicalRLCoordinatorAgent,
     Option,
-    create_hierarchical_rl_agent_architecture
 )
 from src.memory.hierarchical_memory_persistence import HierarchicalMemoryDatabase
-from src.utils.error_handlers import format_error_for_user
 
 load_dotenv()
 
@@ -171,9 +164,7 @@ async def create_options(
         termination_states = ["task_completed", "error_state"]
 
         # Define policy mapping
-        policy_mapping = {
-            state: sub_agent_name for state in initiation_states
-        }
+        policy_mapping = dict.fromkeys(initiation_states, sub_agent_name)
 
         # Create the option
         option = Option.create_option(
@@ -314,10 +305,10 @@ Extract a state identifier for this request.
 
         # Decompose task
         task_decomposition = await hierarchical_rl_coordinator._decompose_task(request, [])
-        print(f"Task decomposition:")
+        print("Task decomposition:")
         print(f"- Task ID: {task_decomposition['task_id']}")
         print(f"- Task name: {task_decomposition['task_name']}")
-        print(f"- Subtasks:")
+        print("- Subtasks:")
         for subtask in task_decomposition['subtasks']:
             print(f"  - {subtask['name']}: {subtask['description']}")
 

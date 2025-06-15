@@ -5,6 +5,7 @@ API request models.
 from fastapi import Query
 from pydantic import BaseModel, Field
 
+
 class PaginationParams(BaseModel):
     """Pagination parameters."""
 
@@ -20,6 +21,7 @@ class PaginationParams(BaseModel):
     def limit(self) -> int:
         """Get limit (same as size)."""
         return self.size
+
 
 def get_pagination_params(
     page: int = Query(1, ge=1, description="Page number"),

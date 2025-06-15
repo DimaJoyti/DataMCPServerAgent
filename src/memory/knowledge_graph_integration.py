@@ -3,21 +3,19 @@ Knowledge graph integration for DataMCPServerAgent.
 This module integrates the knowledge graph with the distributed memory manager.
 """
 
-import asyncio
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 
 from src.memory.distributed_memory_manager import DistributedMemoryManager
-from src.memory.knowledge_graph import KnowledgeGraph
 from src.memory.knowledge_graph_manager import KnowledgeGraphManager
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 class KnowledgeGraphIntegration:
     """Integration of knowledge graph with distributed memory manager."""
@@ -27,7 +25,7 @@ class KnowledgeGraphIntegration:
         memory_manager: DistributedMemoryManager,
         db: MemoryDatabase,
         model: Optional[ChatAnthropic] = None,
-        namespace: str = "datamcp"
+        namespace: str = "datamcp",
     ):
         """Initialize the knowledge graph integration.
 
@@ -54,10 +52,7 @@ class KnowledgeGraphIntegration:
         original_save_entity = self.memory_manager.save_entity
 
         async def save_entity_with_kg(
-            entity_type: str,
-            entity_id: str,
-            entity_data: Dict[str, Any],
-            cache: bool = True
+            entity_type: str, entity_id: str, entity_data: Dict[str, Any], cache: bool = True
         ) -> None:
             # Call original method
             await original_save_entity(entity_type, entity_id, entity_data, cache)
@@ -73,8 +68,7 @@ class KnowledgeGraphIntegration:
         original_save_conversation_message = self.memory_manager.save_conversation_message
 
         async def save_conversation_message_with_kg(
-            message: Dict[str, Any],
-            conversation_id: str = "default"
+            message: Dict[str, Any], conversation_id: str = "default"
         ) -> None:
             # Call original method
             await original_save_conversation_message(message, conversation_id)
@@ -84,15 +78,15 @@ class KnowledgeGraphIntegration:
                 await self.kg_manager.process_conversation_message(message, conversation_id)
             except Exception as e:
                 error_message = format_error_for_user(e)
-                logger.error(f"Failed to process conversation message for knowledge graph: {error_message}")
+                logger.error(
+                    f"Failed to process conversation message for knowledge graph: {error_message}"
+                )
 
         # Override save_tool_usage method
         original_save_tool_usage = self.memory_manager.save_tool_usage
 
         async def save_tool_usage_with_kg(
-            tool_name: str,
-            args: Dict[str, Any],
-            result: Any
+            tool_name: str, args: Dict[str, Any], result: Any
         ) -> None:
             # Call original method
             await original_save_tool_usage(tool_name, args, result)
@@ -110,10 +104,7 @@ class KnowledgeGraphIntegration:
         self.memory_manager.save_tool_usage = save_tool_usage_with_kg
 
     async def get_context_for_request(
-        self,
-        request: str,
-        max_entities: int = 10,
-        max_relationships: int = 20
+        self, request: str, max_entities: int = 10, max_relationships: int = 20
     ) -> Dict[str, Any]:
         """Get relevant context from the knowledge graph for a request.
 
@@ -158,17 +149,12 @@ class KnowledgeGraphIntegration:
                 "total_nodes": total_nodes,
                 "total_edges": total_edges,
                 "node_types": node_types,
-                "edge_types": edge_types
+                "edge_types": edge_types,
             }
         except Exception as e:
             error_message = format_error_for_user(e)
             logger.error(f"Failed to get knowledge graph summary: {error_message}")
-            return {
-                "total_nodes": 0,
-                "total_edges": 0,
-                "node_types": {},
-                "edge_types": {}
-            }
+            return {"total_nodes": 0, "total_edges": 0, "node_types": {}, "edge_types": {}}
 
     async def execute_sparql_query(self, query: str) -> List[Dict[str, Any]]:
         """Execute a SPARQL query on the knowledge graph.
@@ -182,10 +168,7 @@ class KnowledgeGraphIntegration:
         return self.kg_manager.knowledge_graph.execute_sparql_query(query)
 
     async def get_entity_context(
-        self,
-        entity_type: str,
-        entity_id: str,
-        max_depth: int = 2
+        self, entity_type: str, entity_id: str, max_depth: int = 2
     ) -> Dict[str, Any]:
         """Get context for an entity from the knowledge graph.
 
@@ -248,11 +231,7 @@ class KnowledgeGraphIntegration:
                 )
                 relationships.extend(incoming)
 
-            return {
-                "entity": node,
-                "neighbors": unique_neighbors,
-                "relationships": relationships
-            }
+            return {"entity": node, "neighbors": unique_neighbors, "relationships": relationships}
         except Exception as e:
             error_message = format_error_for_user(e)
             logger.error(f"Failed to get entity context: {error_message}")

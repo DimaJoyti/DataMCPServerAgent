@@ -6,9 +6,8 @@ and performance monitoring.
 """
 
 import asyncio
+
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.agents.semantic.base_semantic_agent import (
     BaseSemanticAgent,
@@ -19,19 +18,16 @@ from src.agents.semantic.communication import (
     AgentMessage,
     MessageBus,
     MessageType,
-    MessagePriority,
-    AgentCommunicationHub,
 )
 from src.agents.semantic.coordinator import SemanticCoordinator
-from src.agents.semantic.performance import PerformanceTracker, CacheManager
-from src.agents.semantic.scaling import AutoScaler, LoadBalancer
+from src.agents.semantic.performance import CacheManager, PerformanceTracker
+from src.agents.semantic.scaling import LoadBalancer
 from src.agents.semantic.specialized_agents import (
     DataAnalysisAgent,
     DocumentProcessingAgent,
     KnowledgeExtractionAgent,
-    ReasoningAgent,
-    SearchAgent,
 )
+
 
 class TestSemanticAgent(BaseSemanticAgent):
     """Test implementation of BaseSemanticAgent."""

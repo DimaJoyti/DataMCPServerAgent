@@ -8,20 +8,23 @@ This module provides intelligent document chunking strategies:
 - Overlap optimization
 """
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
-from app.core.logging import get_logger, LoggerMixin
+from app.core.logging import LoggerMixin, get_logger
+
 
 class ChunkingStrategy(str, Enum):
     """Chunking strategies."""
+
     FIXED_SIZE = "fixed_size"
     SEMANTIC = "semantic"
     ADAPTIVE = "adaptive"
     SENTENCE_BASED = "sentence_based"
+
 
 @dataclass
 class ChunkMetadata:
@@ -35,6 +38,7 @@ class ChunkMetadata:
     strategy_used: ChunkingStrategy
     confidence_score: float = 0.0
 
+
 class ChunkedDocument(BaseModel):
     """Document divided into chunks."""
 
@@ -45,6 +49,7 @@ class ChunkedDocument(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class AdaptiveChunker(LoggerMixin):
     """Adaptive document chunker."""
@@ -62,8 +67,9 @@ class AdaptiveChunker(LoggerMixin):
 
         self.logger.info("AdaptiveChunker initialized")
 
-    async def chunk_document(self, text: str, document_id: str,
-                           strategy: ChunkingStrategy = ChunkingStrategy.ADAPTIVE) -> ChunkedDocument:
+    async def chunk_document(
+        self, text: str, document_id: str, strategy: ChunkingStrategy = ChunkingStrategy.ADAPTIVE
+    ) -> ChunkedDocument:
         """Chunk a document using the specified strategy."""
 
         if strategy == ChunkingStrategy.FIXED_SIZE:
@@ -76,13 +82,12 @@ class AdaptiveChunker(LoggerMixin):
             chunks, metadata = await self._adaptive_chunking(text, document_id)
 
         return ChunkedDocument(
-            document_id=document_id,
-            chunks=chunks,
-            metadata=metadata,
-            total_chunks=len(chunks)
+            document_id=document_id, chunks=chunks, metadata=metadata, total_chunks=len(chunks)
         )
 
-    async def _fixed_size_chunking(self, text: str, document_id: str) -> tuple[List[str], List[ChunkMetadata]]:
+    async def _fixed_size_chunking(
+        self, text: str, document_id: str
+    ) -> tuple[List[str], List[ChunkMetadata]]:
         """Fixed size chunking."""
         chunks = []
         metadata = []
@@ -96,25 +101,29 @@ class AdaptiveChunker(LoggerMixin):
                 continue
 
             chunks.append(chunk_text)
-            metadata.append(ChunkMetadata(
-                chunk_id=f"{document_id}_chunk_{len(chunks)}",
-                start_position=chunk_start,
-                end_position=chunk_end,
-                chunk_size=len(chunk_text),
-                overlap_size=self.overlap_size if i > 0 else 0,
-                strategy_used=ChunkingStrategy.FIXED_SIZE,
-                confidence_score=1.0
-            ))
+            metadata.append(
+                ChunkMetadata(
+                    chunk_id=f"{document_id}_chunk_{len(chunks)}",
+                    start_position=chunk_start,
+                    end_position=chunk_end,
+                    chunk_size=len(chunk_text),
+                    overlap_size=self.overlap_size if i > 0 else 0,
+                    strategy_used=ChunkingStrategy.FIXED_SIZE,
+                    confidence_score=1.0,
+                )
+            )
 
         return chunks, metadata
 
-    async def _semantic_chunking(self, text: str, document_id: str) -> tuple[List[str], List[ChunkMetadata]]:
+    async def _semantic_chunking(
+        self, text: str, document_id: str
+    ) -> tuple[List[str], List[ChunkMetadata]]:
         """Semantic boundary-based chunking."""
         # Placeholder implementation
         # In production, use NLP models to detect semantic boundaries
 
         # Simple sentence-based approach for now
-        sentences = text.split('. ')
+        sentences = text.split(". ")
         chunks = []
         metadata = []
 
@@ -125,15 +134,17 @@ class AdaptiveChunker(LoggerMixin):
             if len(current_chunk) + len(sentence) > self.default_chunk_size and current_chunk:
                 # Finalize current chunk
                 chunks.append(current_chunk.strip())
-                metadata.append(ChunkMetadata(
-                    chunk_id=f"{document_id}_chunk_{len(chunks)}",
-                    start_position=chunk_start,
-                    end_position=chunk_start + len(current_chunk),
-                    chunk_size=len(current_chunk),
-                    overlap_size=0,
-                    strategy_used=ChunkingStrategy.SEMANTIC,
-                    confidence_score=0.8
-                ))
+                metadata.append(
+                    ChunkMetadata(
+                        chunk_id=f"{document_id}_chunk_{len(chunks)}",
+                        start_position=chunk_start,
+                        end_position=chunk_start + len(current_chunk),
+                        chunk_size=len(current_chunk),
+                        overlap_size=0,
+                        strategy_used=ChunkingStrategy.SEMANTIC,
+                        confidence_score=0.8,
+                    )
+                )
 
                 # Start new chunk
                 chunk_start += len(current_chunk)
@@ -144,21 +155,25 @@ class AdaptiveChunker(LoggerMixin):
         # Add final chunk
         if current_chunk.strip():
             chunks.append(current_chunk.strip())
-            metadata.append(ChunkMetadata(
-                chunk_id=f"{document_id}_chunk_{len(chunks)}",
-                start_position=chunk_start,
-                end_position=chunk_start + len(current_chunk),
-                chunk_size=len(current_chunk),
-                overlap_size=0,
-                strategy_used=ChunkingStrategy.SEMANTIC,
-                confidence_score=0.8
-            ))
+            metadata.append(
+                ChunkMetadata(
+                    chunk_id=f"{document_id}_chunk_{len(chunks)}",
+                    start_position=chunk_start,
+                    end_position=chunk_start + len(current_chunk),
+                    chunk_size=len(current_chunk),
+                    overlap_size=0,
+                    strategy_used=ChunkingStrategy.SEMANTIC,
+                    confidence_score=0.8,
+                )
+            )
 
         return chunks, metadata
 
-    async def _sentence_based_chunking(self, text: str, document_id: str) -> tuple[List[str], List[ChunkMetadata]]:
+    async def _sentence_based_chunking(
+        self, text: str, document_id: str
+    ) -> tuple[List[str], List[ChunkMetadata]]:
         """Sentence-based chunking."""
-        sentences = text.split('. ')
+        sentences = text.split(". ")
         chunks = []
         metadata = []
 
@@ -168,15 +183,17 @@ class AdaptiveChunker(LoggerMixin):
         for sentence in sentences:
             if len(current_chunk) + len(sentence) > self.default_chunk_size and current_chunk:
                 chunks.append(current_chunk.strip())
-                metadata.append(ChunkMetadata(
-                    chunk_id=f"{document_id}_chunk_{len(chunks)}",
-                    start_position=chunk_start,
-                    end_position=chunk_start + len(current_chunk),
-                    chunk_size=len(current_chunk),
-                    overlap_size=0,
-                    strategy_used=ChunkingStrategy.SENTENCE_BASED,
-                    confidence_score=0.9
-                ))
+                metadata.append(
+                    ChunkMetadata(
+                        chunk_id=f"{document_id}_chunk_{len(chunks)}",
+                        start_position=chunk_start,
+                        end_position=chunk_start + len(current_chunk),
+                        chunk_size=len(current_chunk),
+                        overlap_size=0,
+                        strategy_used=ChunkingStrategy.SENTENCE_BASED,
+                        confidence_score=0.9,
+                    )
+                )
 
                 chunk_start += len(current_chunk)
                 current_chunk = sentence + ". "
@@ -185,19 +202,23 @@ class AdaptiveChunker(LoggerMixin):
 
         if current_chunk.strip():
             chunks.append(current_chunk.strip())
-            metadata.append(ChunkMetadata(
-                chunk_id=f"{document_id}_chunk_{len(chunks)}",
-                start_position=chunk_start,
-                end_position=chunk_start + len(current_chunk),
-                chunk_size=len(current_chunk),
-                overlap_size=0,
-                strategy_used=ChunkingStrategy.SENTENCE_BASED,
-                confidence_score=0.9
-            ))
+            metadata.append(
+                ChunkMetadata(
+                    chunk_id=f"{document_id}_chunk_{len(chunks)}",
+                    start_position=chunk_start,
+                    end_position=chunk_start + len(current_chunk),
+                    chunk_size=len(current_chunk),
+                    overlap_size=0,
+                    strategy_used=ChunkingStrategy.SENTENCE_BASED,
+                    confidence_score=0.9,
+                )
+            )
 
         return chunks, metadata
 
-    async def _adaptive_chunking(self, text: str, document_id: str) -> tuple[List[str], List[ChunkMetadata]]:
+    async def _adaptive_chunking(
+        self, text: str, document_id: str
+    ) -> tuple[List[str], List[ChunkMetadata]]:
         """Adaptive chunking that combines multiple strategies."""
         # For now, use semantic chunking as the adaptive approach
         # In production, this would analyze the text and choose the best strategy

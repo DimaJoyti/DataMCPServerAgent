@@ -5,32 +5,35 @@ Metadata extraction utilities for documents.
 import hashlib
 import logging
 import mimetypes
-import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Optional, Union
 
 try:
     import magic
+
     HAS_MAGIC = True
 except ImportError:
     HAS_MAGIC = False
 
 try:
     import chardet
+
     HAS_CHARDET = True
 except ImportError:
     HAS_CHARDET = False
 
 try:
     import langdetect
+
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
 
 try:
     import textstat
+
     HAS_TEXTSTAT = True
 except ImportError:
     HAS_TEXTSTAT = False
@@ -38,6 +41,7 @@ except ImportError:
 from .models import DocumentMetadata, DocumentType, ProcessingStatus
 
 logger = logging.getLogger(__name__)
+
 
 class MetadataExtractor:
     """Extract metadata from documents and files."""
@@ -100,7 +104,7 @@ class MetadataExtractor:
         content: str,
         document_id: str,
         document_type: DocumentType = DocumentType.TEXT,
-        **kwargs
+        **kwargs,
     ) -> DocumentMetadata:
         """
         Extract metadata from text content.
@@ -114,11 +118,7 @@ class MetadataExtractor:
         Returns:
             DocumentMetadata: Extracted metadata
         """
-        metadata = DocumentMetadata(
-            document_id=document_id,
-            document_type=document_type,
-            **kwargs
-        )
+        metadata = DocumentMetadata(document_id=document_id, document_type=document_type, **kwargs)
 
         try:
             # Extract text properties
@@ -167,7 +167,7 @@ class MetadataExtractor:
         """Extract file content hash."""
         try:
             hasher = hashlib.sha256()
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     hasher.update(chunk)
             metadata.file_hash = hasher.hexdigest()
@@ -182,7 +182,7 @@ class MetadataExtractor:
             DocumentType.HTML,
             DocumentType.CSV,
             DocumentType.JSON,
-            DocumentType.XML
+            DocumentType.XML,
         }
         return document_type in text_types
 
@@ -190,15 +190,15 @@ class MetadataExtractor:
         """Read file content as text."""
         try:
             # Detect encoding if chardet is available
-            encoding = 'utf-8'
+            encoding = "utf-8"
             if HAS_CHARDET:
-                with open(path, 'rb') as f:
+                with open(path, "rb") as f:
                     raw_data = f.read(10000)  # Read first 10KB for detection
                     result = chardet.detect(raw_data)
-                    if result['encoding']:
-                        encoding = result['encoding']
+                    if result["encoding"]:
+                        encoding = result["encoding"]
 
-            with open(path, 'r', encoding=encoding, errors='ignore') as f:
+            with open(path, encoding=encoding, errors="ignore") as f:
                 return f.read()
         except Exception as e:
             self.logger.warning(f"Failed to read file content: {e}")
@@ -210,11 +210,11 @@ class MetadataExtractor:
         metadata.word_count = len(content.split())
 
         # Count sentences (simple approach)
-        sentences = re.split(r'[.!?]+', content)
+        sentences = re.split(r"[.!?]+", content)
         metadata.sentence_count = len([s for s in sentences if s.strip()])
 
         # Count paragraphs
-        paragraphs = content.split('\n\n')
+        paragraphs = content.split("\n\n")
         metadata.paragraph_count = len([p for p in paragraphs if p.strip()])
 
     def _extract_language(self, content: str, metadata: DocumentMetadata) -> None:

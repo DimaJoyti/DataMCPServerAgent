@@ -7,36 +7,33 @@ and a self-healing system that learns from errors.
 import asyncio
 import logging
 import os
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.tools import load_mcp_tools
-from mcp import ClientSession, StdioServerParameters
+from mcp import StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from src.agents.agent_architecture import create_specialized_sub_agents
-from src.agents.enhanced_agent_architecture import (
-    EnhancedCoordinatorAgent,
-    create_enhanced_agent_architecture
-)
+from src.agents.enhanced_agent_architecture import create_enhanced_agent_architecture
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.bright_data_tools import BrightDataToolkit
 from src.tools.enhanced_tool_selection import EnhancedToolSelector, ToolPerformanceTracker
-from src.utils.error_handlers import format_error_for_user
-from src.utils.error_recovery import ErrorRecoverySystem, RetryStrategy
 from src.utils.env_config import get_mcp_server_params, get_model_config
+from src.utils.error_handlers import format_error_for_user
+from src.utils.error_recovery import ErrorRecoverySystem
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
 
 class ErrorRecoveryCoordinatorAgent:
     """Coordinator agent with enhanced error recovery capabilities."""
@@ -46,7 +43,7 @@ class ErrorRecoveryCoordinatorAgent:
         model: ChatAnthropic,
         tools: List[BaseTool],
         db: MemoryDatabase,
-        error_recovery: ErrorRecoverySystem
+        error_recovery: ErrorRecoverySystem,
     ):
         """Initialize the error recovery coordinator agent.
 
@@ -65,9 +62,7 @@ class ErrorRecoveryCoordinatorAgent:
         self.tool_performance_tracker = ToolPerformanceTracker(db)
 
         # Create enhanced tool selector
-        self.tool_selector = EnhancedToolSelector(
-            model, tools, db, self.tool_performance_tracker
-        )
+        self.tool_selector = EnhancedToolSelector(model, tools, db, self.tool_performance_tracker)
 
         # Create specialized sub-agents
         self.sub_agents = create_specialized_sub_agents(model, tools)
@@ -95,7 +90,12 @@ class ErrorRecoveryCoordinatorAgent:
 
             # Get tool selection
             tool_selection = await self.tool_selector.select_tools(
-                request, self.conversation_history[-5:] if len(self.conversation_history) > 5 else self.conversation_history
+                request,
+                (
+                    self.conversation_history[-5:]
+                    if len(self.conversation_history) > 5
+                    else self.conversation_history
+                ),
             )
 
             # Log tool selection
@@ -111,7 +111,7 @@ class ErrorRecoveryCoordinatorAgent:
                     "request": request,
                     "selected_tools": tool_selection["selected_tools"],
                     "fallback_tools": tool_selection["fallback_tools"],
-                    "reasoning": tool_selection["reasoning"]
+                    "reasoning": tool_selection["reasoning"],
                 }
 
                 # Try with fallbacks
@@ -124,7 +124,7 @@ class ErrorRecoveryCoordinatorAgent:
                         primary_tool,
                         tool_args,
                         context,
-                        max_fallbacks=len(tool_selection["fallback_tools"])
+                        max_fallbacks=len(tool_selection["fallback_tools"]),
                     )
 
                     # Log the result
@@ -151,7 +151,9 @@ class ErrorRecoveryCoordinatorAgent:
             error_message = format_error_for_user(e)
 
             # Add error to conversation history
-            self.conversation_history.append({"role": "assistant", "content": f"Error: {error_message}"})
+            self.conversation_history.append(
+                {"role": "assistant", "content": f"Error: {error_message}"}
+            )
 
             return f"An error occurred: {error_message}"
 
@@ -169,6 +171,7 @@ class ErrorRecoveryCoordinatorAgent:
         if "scrape" in tool_name.lower() or "web_data" in tool_name.lower():
             # Extract URL from request
             import re
+
             url_match = re.search(r'https?://[^\s"\']+', request)
             if url_match:
                 return {"url": url_match.group(0)}
@@ -198,10 +201,12 @@ class ErrorRecoveryCoordinatorAgent:
         elif isinstance(result, dict):
             # Convert dictionary to string
             import json
+
             return json.dumps(result, indent=2)
         else:
             # Default formatting
             return f"Result from {tool_used}: {str(result)}"
+
 
 async def setup_error_recovery_agent():
     """Set up the error recovery agent.
@@ -246,6 +251,7 @@ async def setup_error_recovery_agent():
 
         return coordinator, model, session
 
+
 async def chat_with_error_recovery_agent():
     """Chat with the error recovery agent."""
     print("Starting DataMCPServerAgent with Enhanced Error Recovery...")
@@ -284,6 +290,7 @@ async def chat_with_error_recovery_agent():
                 print(f"\nAgent: An error occurred: {error_message}")
     except Exception as e:
         print(f"Error setting up agent: {str(e)}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_error_recovery_agent())

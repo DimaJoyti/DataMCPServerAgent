@@ -6,24 +6,18 @@ This example shows context-aware memory, adaptive learning, and user preference 
 import asyncio
 import os
 import sys
-import time
-from typing import Dict
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from advanced_enhanced_main import create_advanced_enhanced_agent
+from bright_data_tools import BrightDataToolkit
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-
-from adaptive_learning import AdaptiveLearningSystem, UserPreferenceModel
-from advanced_enhanced_main import create_advanced_enhanced_agent
-from bright_data_tools import BrightDataToolkit
-from context_aware_memory import ContextManager, MemoryRetriever
-from error_handlers import format_error_for_user
 
 load_dotenv()
 

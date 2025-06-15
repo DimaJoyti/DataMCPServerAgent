@@ -5,29 +5,32 @@ This module provides comprehensive safety controls and ethical guidelines
 for penetration testing operations, ensuring responsible and legal testing.
 """
 
-import asyncio
-import logging
 import ipaddress
-from typing import Dict, List, Any, Optional, Set
-from datetime import datetime, timedelta
+import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
-from .target_validator import TargetValidator, ValidationResult
-from .command_filter import CommandFilter
 from .audit_logger import AuditLogger
+from .command_filter import CommandFilter
 from .resource_monitor import ResourceMonitor
+from .target_validator import TargetValidator
+
 
 class SafetyLevel(Enum):
     """Safety levels for penetration testing operations"""
-    LOW = "low"           # Basic safety checks
-    MEDIUM = "medium"     # Standard safety checks
-    HIGH = "high"         # Strict safety checks
-    CRITICAL = "critical" # Maximum safety checks
+
+    LOW = "low"  # Basic safety checks
+    MEDIUM = "medium"  # Standard safety checks
+    HIGH = "high"  # Strict safety checks
+    CRITICAL = "critical"  # Maximum safety checks
+
 
 @dataclass
 class SafetyCheck:
     """Represents a safety check result"""
+
     approved: bool
     reason: str
     safety_level: SafetyLevel
@@ -38,9 +41,11 @@ class SafetyCheck:
         if self.additional_info is None:
             self.additional_info = {}
 
+
 @dataclass
 class SafetyLimits:
     """Safety limits for penetration testing operations"""
+
     max_concurrent_scans: int = 5
     max_scan_rate: int = 100  # packets per second
     max_session_duration: int = 3600  # seconds
@@ -54,15 +59,49 @@ class SafetyLimits:
         if self.allowed_ports is None:
             # Common safe ports for testing
             self.allowed_ports = {
-                21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995,
-                8080, 8443, 3389, 5432, 3306, 1433, 27017
+                21,
+                22,
+                23,
+                25,
+                53,
+                80,
+                110,
+                143,
+                443,
+                993,
+                995,
+                8080,
+                8443,
+                3389,
+                5432,
+                3306,
+                1433,
+                27017,
             }
 
         if self.blocked_ports is None:
             # Critical system ports to avoid
             self.blocked_ports = {
-                0, 1, 7, 9, 13, 17, 19, 20, 37, 42, 43, 49, 135, 136, 137, 138, 139, 445
+                0,
+                1,
+                7,
+                9,
+                13,
+                17,
+                19,
+                20,
+                37,
+                42,
+                43,
+                49,
+                135,
+                136,
+                137,
+                138,
+                139,
+                445,
             }
+
 
 class SafetyController:
     """
@@ -83,7 +122,7 @@ class SafetyController:
         target_validator: Optional[TargetValidator] = None,
         command_filter: Optional[CommandFilter] = None,
         audit_logger: Optional[AuditLogger] = None,
-        resource_monitor: Optional[ResourceMonitor] = None
+        resource_monitor: Optional[ResourceMonitor] = None,
     ):
         self.safety_level = safety_level
         self.safety_limits = safety_limits or SafetyLimits()
@@ -123,7 +162,7 @@ class SafetyController:
                 approved=False,
                 reason="Emergency stop is active",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Validate target authorization
@@ -133,7 +172,7 @@ class SafetyController:
                 approved=False,
                 reason=f"Target validation failed: {target_validation.reason}",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Check if target is blocked
@@ -143,7 +182,7 @@ class SafetyController:
                     approved=False,
                     reason=f"Target {ip} is in emergency blacklist",
                     safety_level=self.safety_level,
-                    timestamp=timestamp
+                    timestamp=timestamp,
                 )
 
         # Phase-specific checks
@@ -172,8 +211,8 @@ class SafetyController:
             additional_info={
                 "session_id": session.session_id,
                 "phase": phase,
-                "target": session.target.name
-            }
+                "target": session.target.name,
+            },
         )
 
     async def validate_target(self, target: str) -> SafetyCheck:
@@ -194,13 +233,13 @@ class SafetyController:
                 approved=False,
                 reason=f"Target {target} is in emergency blacklist",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Validate IP address/range
         try:
             # Try to parse as IP address or network
-            if '/' in target:
+            if "/" in target:
                 network = ipaddress.ip_network(target, strict=False)
                 # Check for private networks
                 if network.is_private:
@@ -209,7 +248,7 @@ class SafetyController:
                             approved=False,
                             reason="Private network scanning requires explicit authorization",
                             safety_level=self.safety_level,
-                            timestamp=timestamp
+                            timestamp=timestamp,
                         )
             else:
                 ip = ipaddress.ip_address(target)
@@ -220,7 +259,7 @@ class SafetyController:
                             approved=False,
                             reason="Special IP address requires explicit authorization",
                             safety_level=self.safety_level,
-                            timestamp=timestamp
+                            timestamp=timestamp,
                         )
         except ValueError:
             # Not an IP address, might be hostname
@@ -229,7 +268,7 @@ class SafetyController:
                     approved=False,
                     reason="Hostname targets require explicit authorization in critical mode",
                     safety_level=self.safety_level,
-                    timestamp=timestamp
+                    timestamp=timestamp,
                 )
 
         # Additional target validation through TargetValidator
@@ -239,14 +278,14 @@ class SafetyController:
                 approved=False,
                 reason=validation_result.reason,
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         return SafetyCheck(
             approved=True,
             reason="Target validation passed",
             safety_level=self.safety_level,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     async def validate_command(self, command: str, context: Dict[str, Any] = None) -> SafetyCheck:
@@ -270,7 +309,7 @@ class SafetyController:
                 approved=False,
                 reason=f"Command blocked: {filter_result.reason}",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Log command validation
@@ -280,7 +319,7 @@ class SafetyController:
             approved=True,
             reason="Command validation passed",
             safety_level=self.safety_level,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     async def emergency_stop(self, session_id: str, reason: str):
@@ -342,7 +381,7 @@ class SafetyController:
                 approved=False,
                 reason=f"Session duration exceeded limit ({self.safety_limits.max_session_duration}s)",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Phase-specific validations
@@ -352,14 +391,14 @@ class SafetyController:
                     approved=False,
                     reason="Exploitation phase blocked in critical safety mode",
                     safety_level=self.safety_level,
-                    timestamp=timestamp
+                    timestamp=timestamp,
                 )
 
         return SafetyCheck(
             approved=True,
             reason="Phase validation passed",
             safety_level=self.safety_level,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     async def _check_resources(self) -> SafetyCheck:
@@ -374,7 +413,7 @@ class SafetyController:
                 approved=False,
                 reason=f"Memory usage exceeded limit ({resource_status.memory_usage_mb}MB > {self.safety_limits.max_memory_usage}MB)",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Check CPU usage
@@ -383,14 +422,14 @@ class SafetyController:
                 approved=False,
                 reason=f"CPU usage exceeded limit ({resource_status.cpu_usage:.1%} > {self.safety_limits.max_cpu_usage:.1%})",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         return SafetyCheck(
             approved=True,
             reason="Resource check passed",
             safety_level=self.safety_level,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     async def _check_rate_limits(self) -> SafetyCheck:
@@ -407,7 +446,7 @@ class SafetyController:
                 approved=False,
                 reason=f"Scan rate limit exceeded ({len(self.scan_history)} > {self.safety_limits.max_scan_rate} per minute)",
                 safety_level=self.safety_level,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
         # Add current scan to history
@@ -417,7 +456,7 @@ class SafetyController:
             approved=True,
             reason="Rate limit check passed",
             safety_level=self.safety_level,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     async def _stop_session(self, session_id: str, reason: str):

@@ -11,6 +11,7 @@ from typing import Dict
 
 from langchain.tools import Tool
 
+
 class MarkdownExporter:
     """Tool for exporting research results to Markdown."""
 
@@ -57,9 +58,7 @@ class MarkdownExporter:
             markdown += f"- {tool}\n"
 
         # Add timestamp
-        markdown += (
-            f"\n\n---\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        )
+        markdown += f"\n\n---\nGenerated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
 
         return markdown
 
@@ -105,6 +104,7 @@ class MarkdownExporter:
             return self.save_markdown_to_file(markdown, filename)
         except Exception as e:
             return f"Error exporting to Markdown: {str(e)}"
+
 
 class HTMLExporter:
     """Tool for exporting research results to HTML."""
@@ -232,6 +232,7 @@ class HTMLExporter:
             return self.save_html_to_file(html, filename)
         except Exception as e:
             return f"Error exporting to HTML: {str(e)}"
+
 
 class PDFExporter:
     """Tool for exporting research results to PDF."""
@@ -370,6 +371,7 @@ class PDFExporter:
         except Exception as e:
             return f"Error exporting to PDF: {str(e)}"
 
+
 class DOCXExporter:
     """Tool for exporting research results to DOCX."""
 
@@ -393,9 +395,7 @@ class DOCXExporter:
                 DOCX_AVAILABLE = True
             except ImportError:
                 DOCX_AVAILABLE = False
-                print(
-                    "Warning: python-docx library not available. Using mock DOCX generation."
-                )
+                print("Warning: python-docx library not available. Using mock DOCX generation.")
 
             # Ensure the filename has the .docx extension
             if not filename.endswith(".docx"):
@@ -488,6 +488,7 @@ class DOCXExporter:
         except Exception as e:
             return f"Error exporting to DOCX: {str(e)}"
 
+
 class PresentationExporter:
     """Tool for exporting research results to a presentation format."""
 
@@ -565,9 +566,7 @@ class PresentationExporter:
                 title.text = "Sources"
                 text_frame = content.text_frame
 
-                for i, source in enumerate(
-                    sources[:5], 1
-                ):  # Limit to 5 sources to fit on slide
+                for i, source in enumerate(sources[:5], 1):  # Limit to 5 sources to fit on slide
                     if i == 1:
                         p = text_frame.paragraphs[0]
                     else:
@@ -636,6 +635,7 @@ class PresentationExporter:
             return self.export_to_presentation(research_data, filename)
         except Exception as e:
             return f"Error exporting to presentation: {str(e)}"
+
 
 # Create tool instances
 markdown_exporter = MarkdownExporter()

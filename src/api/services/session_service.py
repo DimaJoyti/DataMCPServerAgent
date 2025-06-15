@@ -2,14 +2,14 @@
 Session service for the API.
 """
 
-import json
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from ..config import config
 from .redis_service import RedisService
+
 
 class SessionService:
     """Service for session operations."""
@@ -304,11 +304,13 @@ class SessionService:
         if tool_name not in tool_usage:
             tool_usage[tool_name] = []
 
-        tool_usage[tool_name].append({
-            "args": args,
-            "result": result,
-            "timestamp": time.time(),
-        })
+        tool_usage[tool_name].append(
+            {
+                "args": args,
+                "result": result,
+                "timestamp": time.time(),
+            }
+        )
 
         # Save tool usage
         await self.set_session_data(session_id, "tool_usage", tool_usage)

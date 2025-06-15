@@ -8,12 +8,13 @@ event broadcasting, and coordination protocols.
 import asyncio
 import logging
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field
+
 
 class MessageType(str, Enum):
     """Types of messages that can be sent between agents."""
@@ -29,6 +30,7 @@ class MessageType(str, Enum):
     HEARTBEAT = "heartbeat"
     ERROR_REPORT = "error_report"
 
+
 class MessagePriority(str, Enum):
     """Message priority levels."""
 
@@ -36,6 +38,7 @@ class MessagePriority(str, Enum):
     NORMAL = "normal"
     HIGH = "high"
     URGENT = "urgent"
+
 
 class AgentMessage(BaseModel):
     """Message structure for inter-agent communication."""
@@ -52,6 +55,7 @@ class AgentMessage(BaseModel):
     requires_response: bool = False
     correlation_id: Optional[str] = None  # For request-response correlation
 
+
 @dataclass
 class MessageHandler:
     """Message handler configuration."""
@@ -60,6 +64,7 @@ class MessageHandler:
     message_types: Set[MessageType]
     priority_filter: Optional[MessagePriority] = None
     sender_filter: Optional[Set[str]] = None
+
 
 class MessageBus:
     """
@@ -152,7 +157,8 @@ class MessageBus:
         if message_types:
             # Remove specific handlers
             self.subscribers[agent_id] = [
-                handler for handler in self.subscribers[agent_id]
+                handler
+                for handler in self.subscribers[agent_id]
                 if not handler.message_types.intersection(message_types)
             ]
         else:
@@ -285,14 +291,14 @@ class MessageBus:
 
         if agent_id:
             messages = [
-                msg for msg in messages
-                if msg.sender_id == agent_id or msg.recipient_id == agent_id
+                msg for msg in messages if msg.sender_id == agent_id or msg.recipient_id == agent_id
             ]
 
         if message_type:
             messages = [msg for msg in messages if msg.message_type == message_type]
 
         return messages[-limit:]
+
 
 class AgentCommunicationHub:
     """

@@ -16,11 +16,11 @@ Key Features:
 - Integration with knowledge graph and distributed memory
 """
 
-from .core.enhanced_client import EnhancedBrightDataClient
 from .core.cache_manager import CacheManager
+from .core.config import BrightDataConfig
+from .core.enhanced_client import EnhancedBrightDataClient
 from .core.error_handler import BrightDataErrorHandler
 from .core.rate_limiter import RateLimiter
-from .core.config import BrightDataConfig
 
 __version__ = "2.0.0"
 __author__ = "DataMCPServerAgent Team"

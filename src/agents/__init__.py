@@ -25,12 +25,12 @@ except ImportError:
 
 # Import infinite loop system
 from .infinite_loop import (
+    AgentPoolManager,
+    ContextMonitor,
+    DirectoryAnalyzer,
     InfiniteAgenticLoopOrchestrator,
     SpecificationParser,
-    DirectoryAnalyzer,
-    AgentPoolManager,
     WaveManager,
-    ContextMonitor,
 )
 
 __all__ = [

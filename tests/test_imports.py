@@ -5,8 +5,9 @@ Tests both app/ (new structure) and src/ (legacy) modules.
 """
 
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 # Add both app and src to path for compatibility
 project_root = Path(__file__).parent.parent
@@ -24,7 +25,7 @@ def test_core_app_imports():
         assert Settings is not None
 
         # Test logging
-        from app.core.logging import setup_logging, get_logger
+        from app.core.logging import get_logger, setup_logging
         assert setup_logging is not None
         assert get_logger is not None
 
@@ -123,7 +124,7 @@ def test_pydantic_models():
     """Test that Pydantic models work correctly."""
 
     try:
-        from app.domain.models.agent import Agent, AgentType, AgentConfiguration
+        from app.domain.models.agent import Agent, AgentConfiguration, AgentType
 
         # Test model creation
         config = AgentConfiguration(

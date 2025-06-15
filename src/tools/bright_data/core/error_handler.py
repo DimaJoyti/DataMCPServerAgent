@@ -12,13 +12,15 @@ This module provides comprehensive error handling with:
 import logging
 import time
 import traceback
-from typing import Dict, Any, Optional, Callable, List
-from enum import Enum
-from dataclasses import dataclass
 from collections import defaultdict, deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
 
 class ErrorCategory(Enum):
     """Error categories for classification"""
+
     NETWORK = "network"
     AUTHENTICATION = "authentication"
     RATE_LIMIT = "rate_limit"
@@ -28,16 +30,20 @@ class ErrorCategory(Enum):
     TIMEOUT = "timeout"
     UNKNOWN = "unknown"
 
+
 class ErrorSeverity(Enum):
     """Error severity levels"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 @dataclass
 class ErrorInfo:
     """Error information container"""
+
     exception: Exception
     category: ErrorCategory
     severity: ErrorSeverity
@@ -47,16 +53,23 @@ class ErrorInfo:
     retry_count: int = 0
     recoverable: bool = True
 
+
 class BrightDataException(Exception):
     """Base exception for Bright Data operations"""
 
-    def __init__(self, message: str, category: ErrorCategory = ErrorCategory.UNKNOWN,
-                 severity: ErrorSeverity = ErrorSeverity.MEDIUM, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        category: ErrorCategory = ErrorCategory.UNKNOWN,
+        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message)
         self.category = category
         self.severity = severity
         self.context = context or {}
         self.timestamp = time.time()
+
 
 class NetworkException(BrightDataException):
     """Network-related errors"""
@@ -64,18 +77,26 @@ class NetworkException(BrightDataException):
     def __init__(self, message: str, context: Optional[Dict[str, Any]] = None):
         super().__init__(message, ErrorCategory.NETWORK, ErrorSeverity.MEDIUM, context)
 
+
 class AuthenticationException(BrightDataException):
     """Authentication-related errors"""
 
     def __init__(self, message: str, context: Optional[Dict[str, Any]] = None):
         super().__init__(message, ErrorCategory.AUTHENTICATION, ErrorSeverity.HIGH, context)
 
+
 class RateLimitException(BrightDataException):
     """Rate limiting errors"""
 
-    def __init__(self, message: str, retry_after: Optional[int] = None, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        retry_after: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, ErrorCategory.RATE_LIMIT, ErrorSeverity.MEDIUM, context)
         self.retry_after = retry_after
+
 
 class ValidationException(BrightDataException):
     """Validation errors"""
@@ -83,19 +104,32 @@ class ValidationException(BrightDataException):
     def __init__(self, message: str, context: Optional[Dict[str, Any]] = None):
         super().__init__(message, ErrorCategory.VALIDATION, ErrorSeverity.LOW, context)
 
+
 class ServerException(BrightDataException):
     """Server-side errors"""
 
-    def __init__(self, message: str, status_code: Optional[int] = None, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, ErrorCategory.SERVER_ERROR, ErrorSeverity.HIGH, context)
         self.status_code = status_code
+
 
 class TimeoutException(BrightDataException):
     """Timeout errors"""
 
-    def __init__(self, message: str, timeout_duration: Optional[float] = None, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        timeout_duration: Optional[float] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, ErrorCategory.TIMEOUT, ErrorSeverity.MEDIUM, context)
         self.timeout_duration = timeout_duration
+
 
 class BrightDataErrorHandler:
     """Advanced error handler with analytics and recovery strategies"""
@@ -117,7 +151,9 @@ class BrightDataErrorHandler:
         self.recovery_strategies[ErrorCategory.TIMEOUT] = self._handle_timeout
         self.recovery_strategies[ErrorCategory.SERVER_ERROR] = self._handle_server_error
 
-    def categorize_error(self, exception: Exception, context: Optional[Dict[str, Any]] = None) -> ErrorInfo:
+    def categorize_error(
+        self, exception: Exception, context: Optional[Dict[str, Any]] = None
+    ) -> ErrorInfo:
         """Categorize an exception and create ErrorInfo"""
         category = self._determine_category(exception)
         severity = self._determine_severity(exception, category)
@@ -129,7 +165,7 @@ class BrightDataErrorHandler:
             timestamp=time.time(),
             context=context or {},
             traceback_str=traceback.format_exc(),
-            recoverable=self._is_recoverable(exception, category)
+            recoverable=self._is_recoverable(exception, category),
         )
 
         # Add to history and update counts
@@ -147,31 +183,40 @@ class BrightDataErrorHandler:
         exception_message = str(exception).lower()
 
         # Network errors
-        if any(keyword in exception_name for keyword in ['connection', 'network', 'socket']):
+        if any(keyword in exception_name for keyword in ["connection", "network", "socket"]):
             return ErrorCategory.NETWORK
 
         # Timeout errors
-        if any(keyword in exception_name for keyword in ['timeout', 'read']):
+        if any(keyword in exception_name for keyword in ["timeout", "read"]):
             return ErrorCategory.TIMEOUT
 
         # Authentication errors
-        if any(keyword in exception_message for keyword in ['unauthorized', 'forbidden', 'authentication', 'api key']):
+        if any(
+            keyword in exception_message
+            for keyword in ["unauthorized", "forbidden", "authentication", "api key"]
+        ):
             return ErrorCategory.AUTHENTICATION
 
         # Rate limiting
-        if any(keyword in exception_message for keyword in ['rate limit', 'too many requests', '429']):
+        if any(
+            keyword in exception_message for keyword in ["rate limit", "too many requests", "429"]
+        ):
             return ErrorCategory.RATE_LIMIT
 
         # Server errors
-        if any(keyword in exception_message for keyword in ['500', '502', '503', '504', 'server error']):
+        if any(
+            keyword in exception_message for keyword in ["500", "502", "503", "504", "server error"]
+        ):
             return ErrorCategory.SERVER_ERROR
 
         # Client errors
-        if any(keyword in exception_message for keyword in ['400', '404', 'bad request', 'not found']):
+        if any(
+            keyword in exception_message for keyword in ["400", "404", "bad request", "not found"]
+        ):
             return ErrorCategory.CLIENT_ERROR
 
         # Validation errors
-        if any(keyword in exception_name for keyword in ['validation', 'value', 'type']):
+        if any(keyword in exception_name for keyword in ["validation", "value", "type"]):
             return ErrorCategory.VALIDATION
 
         return ErrorCategory.UNKNOWN
@@ -199,12 +244,14 @@ class BrightDataErrorHandler:
         non_recoverable_categories = {
             ErrorCategory.AUTHENTICATION,
             ErrorCategory.VALIDATION,
-            ErrorCategory.CLIENT_ERROR
+            ErrorCategory.CLIENT_ERROR,
         }
 
         return category not in non_recoverable_categories
 
-    async def handle_error(self, exception: Exception, context: Optional[Dict[str, Any]] = None) -> Optional[Any]:
+    async def handle_error(
+        self, exception: Exception, context: Optional[Dict[str, Any]] = None
+    ) -> Optional[Any]:
         """Handle an error with recovery strategies"""
         error_info = self.categorize_error(exception, context)
 
@@ -241,41 +288,44 @@ class BrightDataErrorHandler:
             log_level,
             f"Error [{error_info.category.value}]: {error_info.exception}",
             extra={
-                'error_category': error_info.category.value,
-                'error_severity': error_info.severity.value,
-                'error_context': error_info.context,
-                'error_traceback': error_info.traceback_str,
-                'retry_count': error_info.retry_count,
-                'recoverable': error_info.recoverable,
-            }
+                "error_category": error_info.category.value,
+                "error_severity": error_info.severity.value,
+                "error_context": error_info.context,
+                "error_traceback": error_info.traceback_str,
+                "retry_count": error_info.retry_count,
+                "recoverable": error_info.recoverable,
+            },
         )
 
     async def _handle_rate_limit(self, error_info: ErrorInfo) -> None:
         """Handle rate limit errors"""
-        if isinstance(error_info.exception, RateLimitException) and error_info.exception.retry_after:
+        if (
+            isinstance(error_info.exception, RateLimitException)
+            and error_info.exception.retry_after
+        ):
             wait_time = error_info.exception.retry_after
         else:
             # Default exponential backoff
-            wait_time = min(2 ** error_info.retry_count, 60)
+            wait_time = min(2**error_info.retry_count, 60)
 
         self.logger.info(f"Rate limited, waiting {wait_time} seconds")
         await asyncio.sleep(wait_time)
 
     async def _handle_network_error(self, error_info: ErrorInfo) -> None:
         """Handle network errors"""
-        wait_time = min(2 ** error_info.retry_count, 30)
+        wait_time = min(2**error_info.retry_count, 30)
         self.logger.info(f"Network error, waiting {wait_time} seconds before retry")
         await asyncio.sleep(wait_time)
 
     async def _handle_timeout(self, error_info: ErrorInfo) -> None:
         """Handle timeout errors"""
-        wait_time = min(1.5 ** error_info.retry_count, 15)
+        wait_time = min(1.5**error_info.retry_count, 15)
         self.logger.info(f"Timeout error, waiting {wait_time} seconds before retry")
         await asyncio.sleep(wait_time)
 
     async def _handle_server_error(self, error_info: ErrorInfo) -> None:
         """Handle server errors"""
-        wait_time = min(3 ** error_info.retry_count, 120)
+        wait_time = min(3**error_info.retry_count, 120)
         self.logger.info(f"Server error, waiting {wait_time} seconds before retry")
         await asyncio.sleep(wait_time)
 
@@ -293,13 +343,15 @@ class BrightDataErrorHandler:
         if total_errors == 0:
             return {"total_errors": 0}
 
-        recent_errors = [e for e in self.error_history if time.time() - e.timestamp < 3600]  # Last hour
+        recent_errors = [
+            e for e in self.error_history if time.time() - e.timestamp < 3600
+        ]  # Last hour
 
         category_stats = {}
         for category, count in self.error_counts.items():
             category_stats[category.value] = {
                 "total": count,
-                "percentage": (count / total_errors) * 100
+                "percentage": (count / total_errors) * 100,
             }
 
         severity_counts = defaultdict(int)
@@ -320,6 +372,7 @@ class BrightDataErrorHandler:
         """Clear error history"""
         self.error_history.clear()
         self.error_counts.clear()
+
 
 # Import asyncio at the end to avoid circular imports
 import asyncio

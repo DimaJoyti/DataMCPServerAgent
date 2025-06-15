@@ -3,12 +3,11 @@ Collaborative knowledge base for DataMCPServerAgent.
 This module provides mechanisms for storing and retrieving shared knowledge between agents.
 """
 
-import json
-import sqlite3
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class CollaborativeKnowledgeBase:
     """Knowledge base for collaborative learning between agents."""
@@ -25,7 +24,8 @@ class CollaborativeKnowledgeBase:
     def _initialize_tables(self) -> None:
         """Initialize the database tables for collaborative knowledge."""
         # Create knowledge items table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS knowledge_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             content TEXT NOT NULL,
@@ -34,30 +34,36 @@ class CollaborativeKnowledgeBase:
             source_agent TEXT,
             timestamp REAL NOT NULL
         )
-        """)
+        """
+        )
 
         # Create knowledge applicability table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS knowledge_applicability (
             knowledge_id INTEGER NOT NULL,
             agent_type TEXT NOT NULL,
             PRIMARY KEY (knowledge_id, agent_type),
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
-        """)
+        """
+        )
 
         # Create knowledge prerequisites table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS knowledge_prerequisites (
             knowledge_id INTEGER NOT NULL,
             prerequisite TEXT NOT NULL,
             PRIMARY KEY (knowledge_id, prerequisite),
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
-        """)
+        """
+        )
 
         # Create knowledge transfers table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS knowledge_transfers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_agent TEXT NOT NULL,
@@ -67,10 +73,12 @@ class CollaborativeKnowledgeBase:
             timestamp REAL NOT NULL,
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
-        """)
+        """
+        )
 
         # Create agent knowledge table
-        self.db.execute("""
+        self.db.execute(
+            """
         CREATE TABLE IF NOT EXISTS agent_knowledge (
             agent_name TEXT NOT NULL,
             knowledge_id INTEGER NOT NULL,
@@ -79,7 +87,8 @@ class CollaborativeKnowledgeBase:
             PRIMARY KEY (agent_name, knowledge_id),
             FOREIGN KEY (knowledge_id) REFERENCES knowledge_items (id)
         )
-        """)
+        """
+        )
 
     def store_knowledge(self, knowledge: Dict[str, Any], source_agent: Optional[str] = None) -> int:
         """Store knowledge in the knowledge base.
@@ -119,7 +128,7 @@ class CollaborativeKnowledgeBase:
                 INSERT INTO knowledge_items (content, confidence, domain, source_agent, timestamp)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (item, confidence, domain, source_agent, time.time())
+                (item, confidence, domain, source_agent, time.time()),
             )
 
             # Get the ID of the inserted knowledge item
@@ -133,7 +142,7 @@ class CollaborativeKnowledgeBase:
                     INSERT INTO knowledge_applicability (knowledge_id, agent_type)
                     VALUES (?, ?)
                     """,
-                    (knowledge_id, agent_type)
+                    (knowledge_id, agent_type),
                 )
 
             # Insert prerequisites
@@ -143,7 +152,7 @@ class CollaborativeKnowledgeBase:
                     INSERT INTO knowledge_prerequisites (knowledge_id, prerequisite)
                     VALUES (?, ?)
                     """,
-                    (knowledge_id, prerequisite)
+                    (knowledge_id, prerequisite),
                 )
 
         return knowledge_ids[0] if knowledge_ids else -1
@@ -164,7 +173,7 @@ class CollaborativeKnowledgeBase:
             FROM knowledge_items
             WHERE id = ?
             """,
-            (knowledge_id,)
+            (knowledge_id,),
         ).fetchone()
 
         if not knowledge_item:
@@ -179,7 +188,7 @@ class CollaborativeKnowledgeBase:
             FROM knowledge_applicability
             WHERE knowledge_id = ?
             """,
-            (knowledge_id,)
+            (knowledge_id,),
         ).fetchall()
 
         # Get prerequisites
@@ -189,7 +198,7 @@ class CollaborativeKnowledgeBase:
             FROM knowledge_prerequisites
             WHERE knowledge_id = ?
             """,
-            (knowledge_id,)
+            (knowledge_id,),
         ).fetchall()
 
         return {
@@ -200,10 +209,12 @@ class CollaborativeKnowledgeBase:
             "source_agent": source_agent,
             "timestamp": timestamp,
             "applicability": [a[0] for a in applicability],
-            "prerequisites": [p[0] for p in prerequisites]
+            "prerequisites": [p[0] for p in prerequisites],
         }
 
-    def get_applicable_knowledge(self, agent_type: str, domain: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_applicable_knowledge(
+        self, agent_type: str, domain: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Get knowledge applicable to a specific agent type.
 
         Args:
@@ -237,11 +248,7 @@ class CollaborativeKnowledgeBase:
         return knowledge_items
 
     def record_knowledge_transfer(
-        self,
-        source_agent: str,
-        target_agent: str,
-        knowledge_id: int,
-        success: bool
+        self, source_agent: str, target_agent: str, knowledge_id: int, success: bool
     ) -> None:
         """Record a knowledge transfer between agents.
 
@@ -256,14 +263,11 @@ class CollaborativeKnowledgeBase:
             INSERT INTO knowledge_transfers (source_agent, target_agent, knowledge_id, success, timestamp)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (source_agent, target_agent, knowledge_id, success, time.time())
+            (source_agent, target_agent, knowledge_id, success, time.time()),
         )
 
     def assign_knowledge_to_agent(
-        self,
-        agent_name: str,
-        knowledge_id: int,
-        proficiency: float = 0.5
+        self, agent_name: str, knowledge_id: int, proficiency: float = 0.5
     ) -> None:
         """Assign knowledge to an agent.
 
@@ -279,7 +283,7 @@ class CollaborativeKnowledgeBase:
             FROM agent_knowledge
             WHERE agent_name = ? AND knowledge_id = ?
             """,
-            (agent_name, knowledge_id)
+            (agent_name, knowledge_id),
         ).fetchone()
 
         if existing:
@@ -290,7 +294,7 @@ class CollaborativeKnowledgeBase:
                 SET proficiency = ?, last_used = ?
                 WHERE agent_name = ? AND knowledge_id = ?
                 """,
-                (max(existing[0], proficiency), time.time(), agent_name, knowledge_id)
+                (max(existing[0], proficiency), time.time(), agent_name, knowledge_id),
             )
         else:
             # Insert new knowledge
@@ -299,10 +303,12 @@ class CollaborativeKnowledgeBase:
                 INSERT INTO agent_knowledge (agent_name, knowledge_id, proficiency, last_used)
                 VALUES (?, ?, ?, ?)
                 """,
-                (agent_name, knowledge_id, proficiency, time.time())
+                (agent_name, knowledge_id, proficiency, time.time()),
             )
 
-    def get_agent_knowledge(self, agent_name: str, min_proficiency: float = 0.0) -> List[Dict[str, Any]]:
+    def get_agent_knowledge(
+        self, agent_name: str, min_proficiency: float = 0.0
+    ) -> List[Dict[str, Any]]:
         """Get knowledge assigned to an agent.
 
         Args:
@@ -319,7 +325,7 @@ class CollaborativeKnowledgeBase:
             FROM agent_knowledge
             WHERE agent_name = ? AND proficiency >= ?
             """,
-            (agent_name, min_proficiency)
+            (agent_name, min_proficiency),
         ).fetchall()
 
         # Get knowledge items
@@ -332,10 +338,7 @@ class CollaborativeKnowledgeBase:
         return knowledge_items
 
     def update_agent_proficiency(
-        self,
-        agent_name: str,
-        knowledge_id: int,
-        proficiency_delta: float
+        self, agent_name: str, knowledge_id: int, proficiency_delta: float
     ) -> None:
         """Update an agent's proficiency with a knowledge item.
 
@@ -351,7 +354,7 @@ class CollaborativeKnowledgeBase:
             FROM agent_knowledge
             WHERE agent_name = ? AND knowledge_id = ?
             """,
-            (agent_name, knowledge_id)
+            (agent_name, knowledge_id),
         ).fetchone()
 
         if current:
@@ -363,13 +366,11 @@ class CollaborativeKnowledgeBase:
                 SET proficiency = ?, last_used = ?
                 WHERE agent_name = ? AND knowledge_id = ?
                 """,
-                (new_proficiency, time.time(), agent_name, knowledge_id)
+                (new_proficiency, time.time(), agent_name, knowledge_id),
             )
 
     def get_knowledge_transfer_history(
-        self,
-        source_agent: Optional[str] = None,
-        target_agent: Optional[str] = None
+        self, source_agent: Optional[str] = None, target_agent: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get history of knowledge transfers.
 
@@ -403,13 +404,15 @@ class CollaborativeKnowledgeBase:
         transfer_history = []
         for source, target, knowledge_id, success, timestamp in transfers:
             knowledge = self.get_knowledge(knowledge_id)
-            transfer_history.append({
-                "source_agent": source,
-                "target_agent": target,
-                "knowledge": knowledge,
-                "success": bool(success),
-                "timestamp": timestamp
-            })
+            transfer_history.append(
+                {
+                    "source_agent": source,
+                    "target_agent": target,
+                    "knowledge": knowledge,
+                    "success": bool(success),
+                    "timestamp": timestamp,
+                }
+            )
 
         return transfer_history
 
@@ -429,18 +432,21 @@ class CollaborativeKnowledgeBase:
             FROM agent_knowledge
             WHERE agent_name = ?
             """,
-            (agent_name,)
+            (agent_name,),
         ).fetchone()[0]
 
         # Get average proficiency
-        avg_proficiency = self.db.execute(
-            """
+        avg_proficiency = (
+            self.db.execute(
+                """
             SELECT AVG(proficiency)
             FROM agent_knowledge
             WHERE agent_name = ?
             """,
-            (agent_name,)
-        ).fetchone()[0] or 0.0
+                (agent_name,),
+            ).fetchone()[0]
+            or 0.0
+        )
 
         # Get domain distribution
         domains = self.db.execute(
@@ -451,7 +457,7 @@ class CollaborativeKnowledgeBase:
             WHERE a.agent_name = ?
             GROUP BY k.domain
             """,
-            (agent_name,)
+            (agent_name,),
         ).fetchall()
 
         # Get source distribution
@@ -463,15 +469,16 @@ class CollaborativeKnowledgeBase:
             WHERE a.agent_name = ?
             GROUP BY k.source_agent
             """,
-            (agent_name,)
+            (agent_name,),
         ).fetchall()
 
         return {
             "total_knowledge": total_count,
             "average_proficiency": avg_proficiency,
             "domain_distribution": {d: c for d, c in domains},
-            "source_distribution": {s if s else "unknown": c for s, c in sources}
+            "source_distribution": {s if s else "unknown": c for s, c in sources},
         }
+
 
 # Factory function to create collaborative knowledge base
 def create_collaborative_knowledge_base(db: MemoryDatabase) -> CollaborativeKnowledgeBase:

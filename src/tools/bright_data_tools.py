@@ -3,12 +3,12 @@ Custom Bright Data MCP tools and utilities for enhanced web scraping and data co
 This module extends the basic MCP tools with specialized functions for common scraping tasks.
 """
 
-import json
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from langchain_core.tools import BaseTool
 from mcp import ClientSession
+
 
 class BrightDataToolkit:
     """A toolkit for specialized Bright Data MCP operations."""
@@ -62,7 +62,7 @@ class BrightDataToolkit:
         social_media_tools = [
             "web_data_instagram_profiles_Bright_Data",
             "web_data_facebook_posts_Bright_Data",
-            "web_data_x_posts_Bright_Data"
+            "web_data_x_posts_Bright_Data",
         ]
 
         available_social_tools = [t for t in social_media_tools if t in available_tools]
@@ -84,6 +84,7 @@ class BrightDataToolkit:
         Returns:
             An enhanced search tool
         """
+
         async def _run(query: str, count: int = 10) -> str:
             """Run the enhanced search with better result formatting."""
             results = await base_tool.invoke({"query": query, "count": count})
@@ -111,10 +112,14 @@ class BrightDataToolkit:
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "The search query"},
-                    "count": {"type": "integer", "description": "Number of results (1-20)", "default": 10}
+                    "count": {
+                        "type": "integer",
+                        "description": "Number of results (1-20)",
+                        "default": 10,
+                    },
                 },
-                "required": ["query"]
-            }
+                "required": ["query"],
+            },
         )
 
     def _create_enhanced_scraping_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -126,6 +131,7 @@ class BrightDataToolkit:
         Returns:
             An enhanced scraping tool
         """
+
         async def _run(url: str, extract_type: str = "all") -> str:
             """Run the enhanced scraper with content type filtering."""
             result = await base_tool.invoke({"url": url})
@@ -172,11 +178,11 @@ class BrightDataToolkit:
                         "type": "string",
                         "description": "Type of content to extract: 'all', 'main_content', 'tables', or 'links'",
                         "default": "all",
-                        "enum": ["all", "main_content", "tables", "links"]
-                    }
+                        "enum": ["all", "main_content", "tables", "links"],
+                    },
                 },
-                "required": ["url"]
-            }
+                "required": ["url"],
+            },
         )
 
     def _create_product_comparison_tool(self, base_tool: BaseTool) -> BaseTool:
@@ -188,6 +194,7 @@ class BrightDataToolkit:
         Returns:
             A product comparison tool
         """
+
         async def _run(urls: List[str]) -> str:
             """Run the product comparison on multiple URLs."""
             if not urls:
@@ -219,11 +226,11 @@ class BrightDataToolkit:
                     "urls": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of product URLs to compare"
+                        "description": "List of product URLs to compare",
                     }
                 },
-                "required": ["urls"]
-            }
+                "required": ["urls"],
+            },
         )
 
     def _format_product_data(self, product_data: Dict[str, Any]) -> str:
@@ -289,7 +296,7 @@ class BrightDataToolkit:
         # Add each product to the table
         for product in products:
             if "error" in product:
-                output += f"| Error retrieving product | - | - | - |\n"
+                output += "| Error retrieving product | - | - | - |\n"
                 continue
 
             title = product.get("title", "Unknown Product")
@@ -329,6 +336,7 @@ class BrightDataToolkit:
         Returns:
             A social media analyzer tool
         """
+
         async def _run(url: str, analysis_type: str = "basic") -> str:
             """Run social media analysis on the provided URL."""
             # Determine which platform tool to use based on the URL
@@ -341,7 +349,9 @@ class BrightDataToolkit:
                     return "No appropriate Instagram tool available."
             elif "facebook.com" in url and "web_data_facebook_posts_Bright_Data" in tools:
                 tool = tools["web_data_facebook_posts_Bright_Data"]
-            elif ("twitter.com" in url or "x.com" in url) and "web_data_x_posts_Bright_Data" in tools:
+            elif (
+                "twitter.com" in url or "x.com" in url
+            ) and "web_data_x_posts_Bright_Data" in tools:
                 tool = tools["web_data_x_posts_Bright_Data"]
             else:
                 return "Unsupported social media platform or URL format."
@@ -360,16 +370,19 @@ class BrightDataToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "url": {"type": "string", "description": "URL of the social media post or profile"},
+                    "url": {
+                        "type": "string",
+                        "description": "URL of the social media post or profile",
+                    },
                     "analysis_type": {
                         "type": "string",
                         "description": "Type of analysis to perform",
                         "enum": ["basic", "detailed", "engagement"],
-                        "default": "basic"
-                    }
+                        "default": "basic",
+                    },
                 },
-                "required": ["url"]
-            }
+                "required": ["url"],
+            },
         )
 
     def _format_social_media_data(self, data: Dict[str, Any], analysis_type: str) -> str:
@@ -538,6 +551,7 @@ class BrightDataToolkit:
 
     def _create_social_media_intel_tool(self) -> BaseTool:
         """Create social media intelligence gathering tool"""
+
         async def _run(target_name: str, platforms: str = "all") -> str:
             """Gather social media intelligence about a target"""
             try:
@@ -553,20 +567,24 @@ class BrightDataToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "target_name": {"type": "string", "description": "Target name or company to investigate"},
+                    "target_name": {
+                        "type": "string",
+                        "description": "Target name or company to investigate",
+                    },
                     "platforms": {
                         "type": "string",
                         "description": "Social media platforms to search",
                         "enum": ["all", "linkedin", "twitter", "facebook", "instagram"],
-                        "default": "all"
-                    }
+                        "default": "all",
+                    },
                 },
-                "required": ["target_name"]
-            }
+                "required": ["target_name"],
+            },
         )
 
     def _create_domain_intel_tool(self) -> BaseTool:
         """Create domain intelligence tool"""
+
         async def _run(domain: str, intel_type: str = "comprehensive") -> str:
             """Gather comprehensive domain intelligence"""
             try:
@@ -587,15 +605,16 @@ class BrightDataToolkit:
                         "type": "string",
                         "description": "Type of intelligence to gather",
                         "enum": ["comprehensive", "subdomains", "certificates", "history"],
-                        "default": "comprehensive"
-                    }
+                        "default": "comprehensive",
+                    },
                 },
-                "required": ["domain"]
-            }
+                "required": ["domain"],
+            },
         )
 
     def _create_dark_web_monitor_tool(self) -> BaseTool:
         """Create dark web monitoring tool"""
+
         async def _run(keywords: str, search_type: str = "mentions") -> str:
             """Monitor dark web for specific keywords or indicators"""
             try:
@@ -611,20 +630,24 @@ class BrightDataToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "keywords": {"type": "string", "description": "Keywords, domains, or indicators to monitor"},
+                    "keywords": {
+                        "type": "string",
+                        "description": "Keywords, domains, or indicators to monitor",
+                    },
                     "search_type": {
                         "type": "string",
                         "description": "Type of search to perform",
                         "enum": ["mentions", "credentials", "data_breaches", "threats"],
-                        "default": "mentions"
-                    }
+                        "default": "mentions",
+                    },
                 },
-                "required": ["keywords"]
-            }
+                "required": ["keywords"],
+            },
         )
 
     def _create_threat_intel_tool(self) -> BaseTool:
         """Create threat intelligence tool"""
+
         async def _run(indicator: str, indicator_type: str = "auto") -> str:
             """Gather threat intelligence about an indicator"""
             try:
@@ -640,20 +663,24 @@ class BrightDataToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "indicator": {"type": "string", "description": "Indicator to investigate (IP, domain, hash)"},
+                    "indicator": {
+                        "type": "string",
+                        "description": "Indicator to investigate (IP, domain, hash)",
+                    },
                     "indicator_type": {
                         "type": "string",
                         "description": "Type of indicator",
                         "enum": ["auto", "ip", "domain", "hash", "url"],
-                        "default": "auto"
-                    }
+                        "default": "auto",
+                    },
                 },
-                "required": ["indicator"]
-            }
+                "required": ["indicator"],
+            },
         )
 
     def _create_company_intel_tool(self) -> BaseTool:
         """Create company intelligence tool"""
+
         async def _run(company_name: str, intel_type: str = "comprehensive") -> str:
             """Gather comprehensive company intelligence"""
             try:
@@ -669,20 +696,30 @@ class BrightDataToolkit:
             args_schema={
                 "type": "object",
                 "properties": {
-                    "company_name": {"type": "string", "description": "Company name to investigate"},
+                    "company_name": {
+                        "type": "string",
+                        "description": "Company name to investigate",
+                    },
                     "intel_type": {
                         "type": "string",
                         "description": "Type of intelligence to gather",
-                        "enum": ["comprehensive", "employees", "technologies", "news", "financials"],
-                        "default": "comprehensive"
-                    }
+                        "enum": [
+                            "comprehensive",
+                            "employees",
+                            "technologies",
+                            "news",
+                            "financials",
+                        ],
+                        "default": "comprehensive",
+                    },
                 },
-                "required": ["company_name"]
-            }
+                "required": ["company_name"],
+            },
         )
 
     def _create_email_intel_tool(self) -> BaseTool:
         """Create email intelligence tool"""
+
         async def _run(email: str, intel_type: str = "comprehensive") -> str:
             """Gather intelligence about an email address"""
             try:
@@ -703,16 +740,18 @@ class BrightDataToolkit:
                         "type": "string",
                         "description": "Type of intelligence to gather",
                         "enum": ["comprehensive", "breaches", "social_media", "professional"],
-                        "default": "comprehensive"
-                    }
+                        "default": "comprehensive",
+                    },
                 },
-                "required": ["email"]
-            }
+                "required": ["email"],
+            },
         )
 
     # OSINT Intelligence Gathering Methods
 
-    async def _gather_social_media_intelligence(self, target_name: str, platforms: str) -> Dict[str, Any]:
+    async def _gather_social_media_intelligence(
+        self, target_name: str, platforms: str
+    ) -> Dict[str, Any]:
         """Gather social media intelligence using Bright Data"""
         from datetime import datetime
 
@@ -720,7 +759,7 @@ class BrightDataToolkit:
             "target": target_name,
             "platforms": {},
             "timestamp": datetime.now().isoformat(),
-            "summary": {}
+            "summary": {},
         }
 
         # Use Bright Data's social media scraping capabilities
@@ -761,7 +800,7 @@ class BrightDataToolkit:
             "domain": domain,
             "intelligence_type": intel_type,
             "data": {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -802,7 +841,7 @@ class BrightDataToolkit:
             "search_type": search_type,
             "findings": [],
             "timestamp": datetime.now().isoformat(),
-            "risk_level": "low"
+            "risk_level": "low",
         }
 
         try:
@@ -833,7 +872,9 @@ class BrightDataToolkit:
 
         return monitoring_result
 
-    async def _gather_threat_intelligence(self, indicator: str, indicator_type: str) -> Dict[str, Any]:
+    async def _gather_threat_intelligence(
+        self, indicator: str, indicator_type: str
+    ) -> Dict[str, Any]:
         """Gather threat intelligence using Bright Data"""
         from datetime import datetime
 
@@ -842,7 +883,7 @@ class BrightDataToolkit:
             "indicator_type": indicator_type,
             "threat_data": {},
             "risk_score": 0,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -871,7 +912,9 @@ class BrightDataToolkit:
 
         return intelligence
 
-    async def _gather_company_intelligence(self, company_name: str, intel_type: str) -> Dict[str, Any]:
+    async def _gather_company_intelligence(
+        self, company_name: str, intel_type: str
+    ) -> Dict[str, Any]:
         """Gather company intelligence using Bright Data"""
         from datetime import datetime
 
@@ -879,7 +922,7 @@ class BrightDataToolkit:
             "company_name": company_name,
             "intelligence_type": intel_type,
             "data": {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:

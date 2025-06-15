@@ -5,30 +5,33 @@ This module provides comprehensive batch data ingestion capabilities
 for processing large datasets from various sources.
 """
 
-import asyncio
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Union, AsyncGenerator
+from typing import Any, Dict, Optional, Union
+
 import pandas as pd
 import polars as pl
-from pathlib import Path
-
 import structlog
 from pydantic import BaseModel, Field
 
-from ...core.pipeline_models import DataSource, DataDestination, QualityMetrics
+from ...core.pipeline_models import QualityMetrics
+from ..connectors.api_connector import APIConnector
 from ..connectors.database_connector import DatabaseConnector
 from ..connectors.file_connector import FileConnector
-from ..connectors.api_connector import APIConnector
 from ..connectors.object_storage_connector import ObjectStorageConnector
+
 
 class BatchIngestionConfig(BaseModel):
     """Configuration for batch ingestion."""
+
     batch_size: int = Field(default=10000, description="Number of records per batch")
     max_workers: int = Field(default=4, description="Maximum number of worker threads")
     chunk_size: int = Field(default=1000, description="Chunk size for processing")
     enable_parallel_processing: bool = Field(default=True, description="Enable parallel processing")
-    data_format: str = Field(default="auto", description="Data format (auto, csv, json, parquet, etc.)")
+    data_format: str = Field(
+        default="auto", description="Data format (auto, csv, json, parquet, etc.)"
+    )
     compression: Optional[str] = Field(None, description="Compression type")
     encoding: str = Field(default="utf-8", description="Text encoding")
 
@@ -41,8 +44,10 @@ class BatchIngestionConfig(BaseModel):
     memory_limit: Optional[str] = Field(None, description="Memory limit (e.g., '1GB')")
     timeout: Optional[int] = Field(None, description="Timeout in seconds")
 
+
 class IngestionMetrics(BaseModel):
     """Metrics for ingestion operations."""
+
     total_records: int = 0
     processed_records: int = 0
     failed_records: int = 0
@@ -59,6 +64,7 @@ class IngestionMetrics(BaseModel):
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
 
+
 class BatchIngestionEngine:
     """
     Engine for batch data ingestion.
@@ -68,9 +74,7 @@ class BatchIngestionEngine:
     """
 
     def __init__(
-        self,
-        config: Optional[BatchIngestionConfig] = None,
-        logger: Optional[logging.Logger] = None
+        self, config: Optional[BatchIngestionConfig] = None, logger: Optional[logging.Logger] = None
     ):
         """
         Initialize the batch ingestion engine.
@@ -96,7 +100,7 @@ class BatchIngestionEngine:
         self,
         source_config: Dict[str, Any],
         destination_config: Dict[str, Any],
-        transformation_config: Optional[Dict[str, Any]] = None
+        transformation_config: Optional[Dict[str, Any]] = None,
     ) -> IngestionMetrics:
         """
         Ingest data from source to destination.
@@ -115,7 +119,7 @@ class BatchIngestionEngine:
             self.logger.info(
                 "Starting batch ingestion",
                 source_type=source_config.get("type"),
-                destination_type=destination_config.get("type")
+                destination_type=destination_config.get("type"),
             )
 
             # Get source connector
@@ -128,25 +132,18 @@ class BatchIngestionEngine:
             async for batch_data in self._read_data_batches(source_connector, source_config):
                 # Process batch
                 processed_batch = await self._process_batch(
-                    batch_data,
-                    transformation_config,
-                    metrics
+                    batch_data, transformation_config, metrics
                 )
 
                 # Write batch to destination
                 await self._write_batch(
-                    destination_connector,
-                    destination_config,
-                    processed_batch,
-                    metrics
+                    destination_connector, destination_config, processed_batch, metrics
                 )
 
             # Finalize metrics
             metrics.end_time = datetime.now(timezone.utc)
             if metrics.start_time:
-                metrics.processing_time = (
-                    metrics.end_time - metrics.start_time
-                ).total_seconds()
+                metrics.processing_time = (metrics.end_time - metrics.start_time).total_seconds()
 
                 if metrics.processing_time > 0:
                     metrics.throughput_records_per_second = (
@@ -165,24 +162,18 @@ class BatchIngestionEngine:
                 processed_records=metrics.processed_records,
                 failed_records=metrics.failed_records,
                 processing_time=metrics.processing_time,
-                throughput_rps=metrics.throughput_records_per_second
+                throughput_rps=metrics.throughput_records_per_second,
             )
 
             return metrics
 
         except Exception as e:
             metrics.end_time = datetime.now(timezone.utc)
-            self.logger.error(
-                "Batch ingestion failed",
-                error=str(e),
-                exc_info=True
-            )
+            self.logger.error("Batch ingestion failed", error=str(e), exc_info=True)
             raise e
 
     async def _read_data_batches(
-        self,
-        connector: Any,
-        source_config: Dict[str, Any]
+        self, connector: Any, source_config: Dict[str, Any]
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read data in batches from source."""
         try:
@@ -191,8 +182,7 @@ class BatchIngestionEngine:
 
             # Read data in batches
             async for batch in connector.read_batches(
-                batch_size=self.config.batch_size,
-                **source_config.get("read_options", {})
+                batch_size=self.config.batch_size, **source_config.get("read_options", {})
             ):
                 yield batch
 
@@ -204,7 +194,7 @@ class BatchIngestionEngine:
         self,
         batch_data: Union[pd.DataFrame, pl.DataFrame],
         transformation_config: Optional[Dict[str, Any]],
-        metrics: IngestionMetrics
+        metrics: IngestionMetrics,
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Process a batch of data."""
         try:
@@ -222,10 +212,7 @@ class BatchIngestionEngine:
 
             # Apply transformations if configured
             if transformation_config:
-                batch_data = await self._apply_transformations(
-                    batch_data,
-                    transformation_config
-                )
+                batch_data = await self._apply_transformations(batch_data, transformation_config)
 
             # Data quality checks
             if self.config.enable_data_profiling:
@@ -241,11 +228,7 @@ class BatchIngestionEngine:
 
         except Exception as e:
             metrics.failed_records += len(batch_data)
-            self.logger.error(
-                "Batch processing failed",
-                batch_size=len(batch_data),
-                error=str(e)
-            )
+            self.logger.error("Batch processing failed", batch_size=len(batch_data), error=str(e))
 
             # Check error rate
             if metrics.total_records > 0:
@@ -267,7 +250,7 @@ class BatchIngestionEngine:
         connector: Any,
         destination_config: Dict[str, Any],
         batch_data: Union[pd.DataFrame, pl.DataFrame],
-        metrics: IngestionMetrics
+        metrics: IngestionMetrics,
     ) -> None:
         """Write batch to destination."""
         if len(batch_data) == 0:
@@ -278,19 +261,14 @@ class BatchIngestionEngine:
             await connector.connect(destination_config)
 
             # Write batch
-            await connector.write_batch(
-                batch_data,
-                **destination_config.get("write_options", {})
-            )
+            await connector.write_batch(batch_data, **destination_config.get("write_options", {}))
 
         finally:
             # Disconnect from destination
             await connector.disconnect()
 
     async def _apply_transformations(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        transformation_config: Dict[str, Any]
+        self, data: Union[pd.DataFrame, pl.DataFrame], transformation_config: Dict[str, Any]
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Apply transformations to data."""
         # This would integrate with the transformation engine
@@ -298,9 +276,7 @@ class BatchIngestionEngine:
         return data
 
     async def _profile_batch(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        metrics: IngestionMetrics
+        self, data: Union[pd.DataFrame, pl.DataFrame], metrics: IngestionMetrics
     ) -> None:
         """Profile batch data for quality metrics."""
         try:
@@ -326,7 +302,7 @@ class BatchIngestionEngine:
                     validity_score=0.0,
                     consistency_score=0.0,
                     null_count=0,
-                    duplicate_count=0
+                    duplicate_count=0,
                 )
 
             # Accumulate metrics
@@ -337,25 +313,21 @@ class BatchIngestionEngine:
             # Calculate scores
             if metrics.quality_metrics.total_records > 0:
                 metrics.quality_metrics.completeness_score = 1.0 - (
-                    metrics.quality_metrics.null_count /
-                    (metrics.quality_metrics.total_records * len(data.columns))
+                    metrics.quality_metrics.null_count
+                    / (metrics.quality_metrics.total_records * len(data.columns))
                 )
 
                 metrics.quality_metrics.validity_score = (
-                    metrics.quality_metrics.total_records -
-                    metrics.quality_metrics.duplicate_count
+                    metrics.quality_metrics.total_records - metrics.quality_metrics.duplicate_count
                 ) / metrics.quality_metrics.total_records
 
         except Exception as e:
-            self.logger.warning(
-                "Data profiling failed",
-                error=str(e)
-            )
+            self.logger.warning("Data profiling failed", error=str(e))
 
     async def _validate_batch_schema(
         self,
         data: Union[pd.DataFrame, pl.DataFrame],
-        transformation_config: Optional[Dict[str, Any]]
+        transformation_config: Optional[Dict[str, Any]],
     ) -> None:
         """Validate batch schema."""
         # This would implement schema validation logic
@@ -380,5 +352,5 @@ class BatchIngestionEngine:
             "engine": "batch_ingestion",
             "config": self.config.model_dump(),
             "connectors": list(self.connectors.keys()),
-            "status": "ready"
+            "status": "ready",
         }

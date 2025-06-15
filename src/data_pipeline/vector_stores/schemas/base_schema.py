@@ -11,8 +11,10 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, validator
 
+
 class VectorStoreType(str, Enum):
     """Supported vector store types."""
+
     CHROMA = "chroma"
     FAISS = "faiss"
     PINECONE = "pinecone"
@@ -20,19 +22,24 @@ class VectorStoreType(str, Enum):
     QDRANT = "qdrant"
     MILVUS = "milvus"
 
+
 class DistanceMetric(str, Enum):
     """Distance metrics for vector similarity."""
+
     COSINE = "cosine"
     EUCLIDEAN = "euclidean"
     DOT_PRODUCT = "dot_product"
     MANHATTAN = "manhattan"
 
+
 class IndexType(str, Enum):
     """Vector index types."""
+
     FLAT = "flat"
     IVF = "ivf"
     HNSW = "hnsw"
     LSH = "lsh"
+
 
 class VectorStoreConfig(BaseModel):
     """Configuration for vector stores."""
@@ -43,7 +50,9 @@ class VectorStoreConfig(BaseModel):
 
     # Vector configuration
     embedding_dimension: int = Field(..., description="Dimension of embedding vectors")
-    distance_metric: DistanceMetric = Field(default=DistanceMetric.COSINE, description="Distance metric")
+    distance_metric: DistanceMetric = Field(
+        default=DistanceMetric.COSINE, description="Distance metric"
+    )
     index_type: IndexType = Field(default=IndexType.HNSW, description="Index type")
 
     # Connection settings
@@ -57,27 +66,32 @@ class VectorStoreConfig(BaseModel):
     timeout: float = Field(default=30.0, description="Operation timeout in seconds")
 
     # Index settings
-    index_params: Dict[str, Any] = Field(default_factory=dict, description="Index-specific parameters")
+    index_params: Dict[str, Any] = Field(
+        default_factory=dict, description="Index-specific parameters"
+    )
 
     # Storage settings
     persist_directory: Optional[str] = Field(None, description="Directory for persistent storage")
 
     # Custom settings
-    custom_config: Dict[str, Any] = Field(default_factory=dict, description="Store-specific configuration")
+    custom_config: Dict[str, Any] = Field(
+        default_factory=dict, description="Store-specific configuration"
+    )
 
-    @validator('embedding_dimension')
+    @validator("embedding_dimension")
     def validate_embedding_dimension(cls, v):
         """Validate embedding dimension."""
         if v <= 0:
             raise ValueError("Embedding dimension must be positive")
         return v
 
-    @validator('batch_size')
+    @validator("batch_size")
     def validate_batch_size(cls, v):
         """Validate batch size."""
         if v <= 0:
             raise ValueError("Batch size must be positive")
         return v
+
 
 class VectorRecord(BaseModel):
     """Base vector record for storage."""
@@ -102,7 +116,7 @@ class VectorRecord(BaseModel):
     source: Optional[str] = Field(None, description="Source identifier")
     source_type: Optional[str] = Field(None, description="Type of source")
 
-    @validator('vector')
+    @validator("vector")
     def validate_vector(cls, v):
         """Validate vector."""
         if not v:
@@ -121,6 +135,7 @@ class VectorRecord(BaseModel):
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """Get metadata field."""
         return self.metadata.get(key, default)
+
 
 class BaseVectorSchema(ABC):
     """Abstract base class for vector store schemas."""
@@ -203,7 +218,7 @@ class BaseVectorSchema(ABC):
             "metadata": record.metadata.copy(),
             "created_at": record.created_at.isoformat(),
             "source": record.source,
-            "source_type": record.source_type
+            "source_type": record.source_type,
         }
 
         if record.updated_at:
@@ -238,7 +253,7 @@ class BaseVectorSchema(ABC):
             created_at=created_at,
             updated_at=updated_at,
             source=storage_data.get("source"),
-            source_type=storage_data.get("source_type")
+            source_type=storage_data.get("source_type"),
         )
 
     def get_schema_info(self) -> Dict[str, Any]:
@@ -253,5 +268,5 @@ class BaseVectorSchema(ABC):
             "embedding_dimension": self.config.embedding_dimension,
             "distance_metric": self.config.distance_metric,
             "required_fields": self.get_required_fields(),
-            "searchable_fields": self.get_searchable_fields()
+            "searchable_fields": self.get_searchable_fields(),
         }

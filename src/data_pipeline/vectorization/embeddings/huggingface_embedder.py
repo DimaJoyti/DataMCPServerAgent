@@ -2,24 +2,26 @@
 HuggingFace embedder implementation.
 """
 
-import logging
 import time
 from typing import List, Optional
 
 try:
     from sentence_transformers import SentenceTransformer
+
     HAS_SENTENCE_TRANSFORMERS = True
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
 
 try:
-    from transformers import AutoTokenizer, AutoModel
     import torch
+    from transformers import AutoModel, AutoTokenizer
+
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
 
 from .base_embedder import BaseEmbedder, EmbeddingConfig, EmbeddingResult
+
 
 class HuggingFaceEmbedder(BaseEmbedder):
     """HuggingFace embedder using sentence-transformers or transformers."""
@@ -38,7 +40,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
         self,
         config: EmbeddingConfig,
         device: Optional[str] = None,
-        use_sentence_transformers: bool = True
+        use_sentence_transformers: bool = True,
     ):
         """
         Initialize HuggingFace embedder.
@@ -72,19 +74,17 @@ class HuggingFaceEmbedder(BaseEmbedder):
         """Get the best available device."""
         if HAS_TRANSFORMERS:
             import torch
+
             if torch.cuda.is_available():
                 return "cuda"
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 return "mps"
         return "cpu"
 
     def _init_sentence_transformer(self):
         """Initialize sentence transformer model."""
         try:
-            self.model = SentenceTransformer(
-                self.config.model_name,
-                device=self.device
-            )
+            self.model = SentenceTransformer(self.config.model_name, device=self.device)
 
             # Get embedding dimension
             if not self.config.embedding_dimension:
@@ -102,7 +102,6 @@ class HuggingFaceEmbedder(BaseEmbedder):
     def _init_transformer(self):
         """Initialize transformer model and tokenizer."""
         try:
-            import torch
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
             self.model = AutoModel.from_pretrained(self.config.model_name)
@@ -147,9 +146,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
         processing_time = time.time() - start_time
 
         return self._create_embedding_result(
-            text=text,
-            embedding=embedding,
-            processing_time=processing_time
+            text=text, embedding=embedding, processing_time=processing_time
         )
 
     def embed_batch(self, texts: List[str]) -> List[EmbeddingResult]:
@@ -173,7 +170,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
         batch_size = self.config.batch_size
 
         for i in range(0, len(processed_texts), batch_size):
-            batch_texts = processed_texts[i:i + batch_size]
+            batch_texts = processed_texts[i : i + batch_size]
             batch_results = self._embed_batch_chunk(batch_texts)
             results.extend(batch_results)
 
@@ -210,7 +207,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
             result = self._create_embedding_result(
                 text=text,
                 embedding=embedding,
-                processing_time=processing_time / len(texts)  # Distribute time
+                processing_time=processing_time / len(texts),  # Distribute time
             )
             results.append(result)
 
@@ -227,10 +224,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
             List[List[float]]: List of embedding vectors
         """
         embeddings = self.model.encode(
-            texts,
-            batch_size=self.config.batch_size,
-            show_progress_bar=False,
-            convert_to_numpy=True
+            texts, batch_size=self.config.batch_size, show_progress_bar=False, convert_to_numpy=True
         )
 
         # Convert to list of lists
@@ -254,7 +248,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
             padding=True,
             truncation=True,
             max_length=self.config.max_input_length,
-            return_tensors='pt'
+            return_tensors="pt",
         )
 
         # Move to device
@@ -265,7 +259,7 @@ class HuggingFaceEmbedder(BaseEmbedder):
             outputs = self.model(**encoded)
 
             # Use mean pooling of last hidden states
-            embeddings = self._mean_pooling(outputs.last_hidden_state, encoded['attention_mask'])
+            embeddings = self._mean_pooling(outputs.last_hidden_state, encoded["attention_mask"])
 
         # Convert to list
         embeddings = embeddings.cpu().numpy()

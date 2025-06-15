@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.memory.distributed_memory import DistributedMemoryFactory
 
+
 async def run_example():
     """Run the distributed memory example."""
     print("Running distributed memory example...")

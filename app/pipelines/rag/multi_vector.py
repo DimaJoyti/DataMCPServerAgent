@@ -8,20 +8,23 @@ This module provides multi-vector storage capabilities:
 - Unified interface
 """
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
-from app.core.logging import get_logger, LoggerMixin
+from app.core.logging import LoggerMixin, get_logger
+
 
 class EmbeddingModel(str, Enum):
     """Supported embedding models."""
+
     OPENAI_ADA = "openai_ada"
     SENTENCE_TRANSFORMERS = "sentence_transformers"
     HUGGINGFACE = "huggingface"
     CLOUDFLARE = "cloudflare"
+
 
 @dataclass
 class VectorIndex:
@@ -37,6 +40,7 @@ class VectorIndex:
         if self.metadata is None:
             self.metadata = {}
 
+
 class VectorStoreConfig(BaseModel):
     """Configuration for vector store."""
 
@@ -46,6 +50,7 @@ class VectorStoreConfig(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class MultiVectorStore(LoggerMixin):
     """Multi-vector store with multiple embedding models."""
@@ -71,15 +76,16 @@ class MultiVectorStore(LoggerMixin):
         self.indexes[index_config.index_name] = {
             "config": index_config,
             "vector_count": 0,
-            "created_at": 0.0
+            "created_at": 0.0,
         }
         self.vectors[index_config.index_name] = []
         self.metadata[index_config.index_name] = []
 
         self.logger.info(f"Created index: {index_config.index_name}")
 
-    async def add_vectors(self, index_name: str, vectors: List[List[float]],
-                         metadata: List[Dict[str, Any]]) -> bool:
+    async def add_vectors(
+        self, index_name: str, vectors: List[List[float]], metadata: List[Dict[str, Any]]
+    ) -> bool:
         """Add vectors to an index."""
         if index_name not in self.indexes:
             self.logger.error(f"Index {index_name} does not exist")
@@ -99,8 +105,9 @@ class MultiVectorStore(LoggerMixin):
         self.logger.debug(f"Added {len(vectors)} vectors to index {index_name}")
         return True
 
-    async def search(self, index_name: str, query_vector: List[float],
-                    top_k: int = 10) -> List[Tuple[float, Dict[str, Any]]]:
+    async def search(
+        self, index_name: str, query_vector: List[float], top_k: int = 10
+    ) -> List[Tuple[float, Dict[str, Any]]]:
         """Search for similar vectors."""
         if index_name not in self.indexes:
             self.logger.error(f"Index {index_name} does not exist")
@@ -147,7 +154,7 @@ class MultiVectorStore(LoggerMixin):
             "vector_count": index_info["vector_count"],
             "embedding_model": index_info["config"].embedding_model,
             "dimension": index_info["config"].dimension,
-            "metric": index_info["config"].metric
+            "metric": index_info["config"].metric,
         }
 
     def list_indexes(self) -> List[str]:

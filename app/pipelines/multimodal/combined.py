@@ -8,22 +8,23 @@ This module provides comprehensive processing for all modality combinations:
 - Advanced multimodal reasoning
 """
 
-import asyncio
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from app.core.logging import get_logger
+
 from .base import (
-    MultiModalProcessor,
+    ModalityType,
     MultiModalContent,
+    MultiModalProcessor,
     ProcessedResult,
     ProcessingMetrics,
-    ModalityType,
-    ProcessorFactory
+    ProcessorFactory,
 )
-from .text_image import TextImageProcessor
 from .text_audio import TextAudioProcessor
-from app.core.logging import get_logger
+from .text_image import TextImageProcessor
+
 
 class ModalityFusion:
     """Handles fusion of multiple modalities."""
@@ -45,7 +46,9 @@ class ModalityFusion:
                 return []
 
             # Simple fusion strategies
-            fusion_method = "concatenation"  # Could be: concatenation, average, weighted_average, attention
+            fusion_method = (
+                "concatenation"  # Could be: concatenation, average, weighted_average, attention
+            )
 
             if fusion_method == "concatenation":
                 # Concatenate all embeddings
@@ -59,7 +62,9 @@ class ModalityFusion:
                 # Default to concatenation
                 fused = np.concatenate(available_embeddings)
 
-            self.logger.debug(f"Fused {len(available_embeddings)} embeddings into {len(fused)} dimensions")
+            self.logger.debug(
+                f"Fused {len(available_embeddings)} embeddings into {len(fused)} dimensions"
+            )
             return fused.tolist()
 
         except Exception as e:
@@ -100,8 +105,13 @@ class ModalityFusion:
                 analysis["overall_sentiment"] = np.mean(sentiment_scores)
 
             # Content coherence
-            modalities_count = len([k for k in results.keys()
-                                  if k in ["processed_text", "description", "transcription"]])
+            modalities_count = len(
+                [
+                    k
+                    for k in results.keys()
+                    if k in ["processed_text", "description", "transcription"]
+                ]
+            )
             analysis["modality_richness"] = modalities_count / 3.0  # Normalized
 
             return analysis
@@ -129,6 +139,7 @@ class ModalityFusion:
 
         return len(intersection) / len(union) if union else 0.0
 
+
 class CombinedProcessor(MultiModalProcessor):
     """Processor for all multimodal combinations."""
 
@@ -150,9 +161,11 @@ class CombinedProcessor(MultiModalProcessor):
         self.enable_fusion = self.get_config("enable_fusion", True)
         self.enable_reasoning = self.get_config("enable_reasoning", True)
 
-        self.logger.info(f"CombinedProcessor initialized with Cross-modal: {self.enable_cross_modal}, "
-                        f"Fusion: {self.enable_fusion}, "
-                        f"Reasoning: {self.enable_reasoning}")
+        self.logger.info(
+            f"CombinedProcessor initialized with Cross-modal: {self.enable_cross_modal}, "
+            f"Fusion: {self.enable_fusion}, "
+            f"Reasoning: {self.enable_reasoning}"
+        )
 
     def get_supported_modalities(self) -> List[ModalityType]:
         """Get supported modalities."""
@@ -165,11 +178,7 @@ class CombinedProcessor(MultiModalProcessor):
             return False
 
         # Must have at least two modalities for combined processing
-        modality_count = sum([
-            bool(content.text),
-            bool(content.image),
-            bool(content.audio)
-        ])
+        modality_count = sum([bool(content.text), bool(content.image), bool(content.audio)])
 
         if modality_count < 2:
             self.logger.warning("Combined processor requires at least 2 modalities")
@@ -187,7 +196,7 @@ class CombinedProcessor(MultiModalProcessor):
             text=content.text,
             image=content.image,
             modalities=[ModalityType.TEXT, ModalityType.IMAGE],
-            metadata=content.metadata
+            metadata=content.metadata,
         )
 
         text_image_result = await self.text_image_processor.process(text_image_content)
@@ -199,7 +208,7 @@ class CombinedProcessor(MultiModalProcessor):
             text=content.text,
             audio=content.audio,
             modalities=[ModalityType.TEXT, ModalityType.AUDIO],
-            metadata=content.metadata
+            metadata=content.metadata,
         )
 
         text_audio_result = await self.text_audio_processor.process(text_audio_content)
@@ -248,7 +257,7 @@ class CombinedProcessor(MultiModalProcessor):
                 content_id=f"{content.content_id}_image",
                 image=content.image,
                 modalities=[ModalityType.IMAGE],
-                metadata=content.metadata
+                metadata=content.metadata,
             )
             image_result = await self.text_image_processor.process_image_only(content.image)
             results.update(image_result)
@@ -295,7 +304,9 @@ class CombinedProcessor(MultiModalProcessor):
             analysis = results["cross_modal_analysis"]
             if "overall_sentiment" in analysis:
                 sentiment = analysis["overall_sentiment"]
-                sentiment_label = "positive" if sentiment > 0.6 else "negative" if sentiment < 0.4 else "neutral"
+                sentiment_label = (
+                    "positive" if sentiment > 0.6 else "negative" if sentiment < 0.4 else "neutral"
+                )
                 description_parts.append(f"Overall sentiment: {sentiment_label}")
 
         return "; ".join(description_parts) if description_parts else "Multimodal content"
@@ -305,11 +316,7 @@ class CombinedProcessor(MultiModalProcessor):
         self.logger.info(f"Processing combined multimodal content: {content.content_id}")
 
         # Count modalities
-        modality_count = sum([
-            bool(content.text),
-            bool(content.image),
-            bool(content.audio)
-        ])
+        modality_count = sum([bool(content.text), bool(content.image), bool(content.audio)])
 
         # Process based on modality count
         if modality_count == 3:
@@ -317,14 +324,18 @@ class CombinedProcessor(MultiModalProcessor):
             modalities_processed = [ModalityType.TEXT, ModalityType.IMAGE, ModalityType.AUDIO]
         elif modality_count == 2:
             processing_results = await self.process_two_modalities(content)
-            modalities_processed = [m for m in content.modalities if m in self.get_supported_modalities()]
+            modalities_processed = [
+                m for m in content.modalities if m in self.get_supported_modalities()
+            ]
         else:
             raise ValueError("Combined processor requires at least 2 modalities")
 
         # Cross-modal analysis
         cross_modal_results = {}
         if self.enable_cross_modal:
-            cross_modal_results = await self.modality_fusion.cross_modal_analysis(processing_results)
+            cross_modal_results = await self.modality_fusion.cross_modal_analysis(
+                processing_results
+            )
             processing_results["cross_modal_analysis"] = cross_modal_results
 
         # Embedding fusion
@@ -341,7 +352,8 @@ class CombinedProcessor(MultiModalProcessor):
         result = ProcessedResult(
             content_id=content.content_id,
             input_modalities=content.modalities,
-            extracted_text=processing_results.get("extracted_text") or processing_results.get("transcription"),
+            extracted_text=processing_results.get("extracted_text")
+            or processing_results.get("transcription"),
             generated_description=unified_description,
             extracted_entities=processing_results.get("entities", []),
             text_embedding=processing_results.get("embeddings", {}).get("text_embedding"),
@@ -351,17 +363,18 @@ class CombinedProcessor(MultiModalProcessor):
             processing_metrics=ProcessingMetrics(
                 processing_time=0.0,  # Will be set by parent class
                 modalities_processed=modalities_processed,
-                confidence_score=cross_modal_results.get("overall_sentiment")
+                confidence_score=cross_modal_results.get("overall_sentiment"),
             ),
             metadata={
                 "processor": "CombinedProcessor",
                 "processing_results": processing_results,
-                "cross_modal_analysis": cross_modal_results
+                "cross_modal_analysis": cross_modal_results,
             },
-            status="processing"
+            status="processing",
         )
 
         return result
+
 
 # Register the processor
 ProcessorFactory.register("combined", CombinedProcessor)

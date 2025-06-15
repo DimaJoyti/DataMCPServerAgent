@@ -6,26 +6,23 @@ news, social media, and other relevant information.
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-import pandas as pd
-import requests
 from dotenv import load_dotenv
-from uagents import Agent, Context, Model, Protocol
+from uagents import Model
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class DataSourceType(str, Enum):
     """Types of data sources."""
@@ -36,6 +33,7 @@ class DataSourceType(str, Enum):
     ECONOMIC_CALENDAR = "economic_calendar"
     ON_CHAIN = "on_chain"
     ALTERNATIVE = "alternative"
+
 
 class DataSource(Model):
     """Model for a data source."""
@@ -48,6 +46,7 @@ class DataSource(Model):
     rate_limit: Optional[int] = None  # Requests per minute
     last_request: Optional[str] = None
 
+
 class NewsArticle(Model):
     """Model for a news article."""
 
@@ -58,6 +57,7 @@ class NewsArticle(Model):
     published_at: str
     sentiment_score: Optional[float] = None
     relevance_score: Optional[float] = None
+
 
 class SocialMediaPost(Model):
     """Model for a social media post."""
@@ -72,6 +72,7 @@ class SocialMediaPost(Model):
     sentiment_score: Optional[float] = None
     relevance_score: Optional[float] = None
 
+
 class EconomicEvent(Model):
     """Model for an economic event."""
 
@@ -84,6 +85,7 @@ class EconomicEvent(Model):
     previous: Optional[str] = None
     actual: Optional[str] = None
 
+
 class OnChainMetric(Model):
     """Model for an on-chain metric."""
 
@@ -94,6 +96,7 @@ class OnChainMetric(Model):
     change_24h: Optional[float] = None
     change_7d: Optional[float] = None
 
+
 class AlternativeDataPoint(Model):
     """Model for an alternative data point."""
 
@@ -103,13 +106,11 @@ class AlternativeDataPoint(Model):
     source: str
     metadata: Dict[str, Any] = {}
 
+
 class DataSourceManager:
     """Manager for data sources."""
 
-    def __init__(
-        self,
-        logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, logger: Optional[logging.Logger] = None):
         """Initialize the data source manager.
 
         Args:
@@ -126,7 +127,7 @@ class DataSourceManager:
             "social_media": [],
             "economic_calendar": [],
             "on_chain": {},
-            "alternative": {}
+            "alternative": {},
         }
 
         # Initialize default data sources
@@ -135,64 +136,78 @@ class DataSourceManager:
     def _initialize_default_data_sources(self):
         """Initialize default data sources."""
         # CoinGecko for market data
-        self.add_data_source(DataSource(
-            name="CoinGecko",
-            type=DataSourceType.MARKET_DATA,
-            url="https://api.coingecko.com/api/v3",
-            rate_limit=50
-        ))
+        self.add_data_source(
+            DataSource(
+                name="CoinGecko",
+                type=DataSourceType.MARKET_DATA,
+                url="https://api.coingecko.com/api/v3",
+                rate_limit=50,
+            )
+        )
 
         # CryptoCompare for market data
-        self.add_data_source(DataSource(
-            name="CryptoCompare",
-            type=DataSourceType.MARKET_DATA,
-            url="https://min-api.cryptocompare.com/data",
-            api_key=os.getenv("CRYPTOCOMPARE_API_KEY"),
-            rate_limit=100
-        ))
+        self.add_data_source(
+            DataSource(
+                name="CryptoCompare",
+                type=DataSourceType.MARKET_DATA,
+                url="https://min-api.cryptocompare.com/data",
+                api_key=os.getenv("CRYPTOCOMPARE_API_KEY"),
+                rate_limit=100,
+            )
+        )
 
         # CryptoPanic for news
-        self.add_data_source(DataSource(
-            name="CryptoPanic",
-            type=DataSourceType.NEWS,
-            url="https://cryptopanic.com/api/v1",
-            api_key=os.getenv("CRYPTOPANIC_API_KEY"),
-            rate_limit=10
-        ))
+        self.add_data_source(
+            DataSource(
+                name="CryptoPanic",
+                type=DataSourceType.NEWS,
+                url="https://cryptopanic.com/api/v1",
+                api_key=os.getenv("CRYPTOPANIC_API_KEY"),
+                rate_limit=10,
+            )
+        )
 
         # Lunarcrush for social media
-        self.add_data_source(DataSource(
-            name="LunarCrush",
-            type=DataSourceType.SOCIAL_MEDIA,
-            url="https://api.lunarcrush.com/v2",
-            api_key=os.getenv("LUNARCRUSH_API_KEY"),
-            rate_limit=10
-        ))
+        self.add_data_source(
+            DataSource(
+                name="LunarCrush",
+                type=DataSourceType.SOCIAL_MEDIA,
+                url="https://api.lunarcrush.com/v2",
+                api_key=os.getenv("LUNARCRUSH_API_KEY"),
+                rate_limit=10,
+            )
+        )
 
         # ForexFactory for economic calendar
-        self.add_data_source(DataSource(
-            name="ForexFactory",
-            type=DataSourceType.ECONOMIC_CALENDAR,
-            url="https://forexfactory.com/calendar",
-            rate_limit=1
-        ))
+        self.add_data_source(
+            DataSource(
+                name="ForexFactory",
+                type=DataSourceType.ECONOMIC_CALENDAR,
+                url="https://forexfactory.com/calendar",
+                rate_limit=1,
+            )
+        )
 
         # Glassnode for on-chain metrics
-        self.add_data_source(DataSource(
-            name="Glassnode",
-            type=DataSourceType.ON_CHAIN,
-            url="https://api.glassnode.com/v1",
-            api_key=os.getenv("GLASSNODE_API_KEY"),
-            rate_limit=10
-        ))
+        self.add_data_source(
+            DataSource(
+                name="Glassnode",
+                type=DataSourceType.ON_CHAIN,
+                url="https://api.glassnode.com/v1",
+                api_key=os.getenv("GLASSNODE_API_KEY"),
+                rate_limit=10,
+            )
+        )
 
         # Alternative.me for Fear & Greed Index
-        self.add_data_source(DataSource(
-            name="Alternative.me",
-            type=DataSourceType.ALTERNATIVE,
-            url="https://api.alternative.me/fng",
-            rate_limit=10
-        ))
+        self.add_data_source(
+            DataSource(
+                name="Alternative.me",
+                type=DataSourceType.ALTERNATIVE,
+                url="https://api.alternative.me/fng",
+                rate_limit=10,
+            )
+        )
 
     def add_data_source(self, data_source: DataSource):
         """Add a data source.
@@ -227,7 +242,8 @@ class DataSourceManager:
             List of data sources
         """
         return [
-            source for key, source in self.data_sources.items()
+            source
+            for key, source in self.data_sources.items()
             if source.type == type and source.active
         ]
 
@@ -309,13 +325,17 @@ class DataSourceManager:
                         "change_7d": market_data.get("price_change_percentage_7d"),
                         "change_30d": market_data.get("price_change_percentage_30d"),
                         "timestamp": datetime.now().isoformat(),
-                        "source": "CoinGecko"
+                        "source": "CoinGecko",
                     }
                 else:
-                    self.logger.error(f"Error fetching data from CoinGecko: Status {response.status}")
+                    self.logger.error(
+                        f"Error fetching data from CoinGecko: Status {response.status}"
+                    )
                     return {}
 
-    async def _fetch_cryptocompare_market_data(self, source: DataSource, symbol: str) -> Dict[str, Any]:
+    async def _fetch_cryptocompare_market_data(
+        self, source: DataSource, symbol: str
+    ) -> Dict[str, Any]:
         """Fetch market data from CryptoCompare.
 
         Args:
@@ -362,10 +382,12 @@ class DataSourceManager:
                         "volume_24h": raw.get("VOLUME24HOUR"),
                         "change_24h": raw.get("CHANGEPCT24HOUR"),
                         "timestamp": datetime.now().isoformat(),
-                        "source": "CryptoCompare"
+                        "source": "CryptoCompare",
                     }
                 else:
-                    self.logger.error(f"Error fetching data from CryptoCompare: Status {response.status}")
+                    self.logger.error(
+                        f"Error fetching data from CryptoCompare: Status {response.status}"
+                    )
                     return {}
 
     async def fetch_news(self, symbol: Optional[str] = None, limit: int = 10) -> List[NewsArticle]:
@@ -403,7 +425,9 @@ class DataSourceManager:
 
         return articles[:limit]
 
-    async def _fetch_cryptopanic_news(self, source: DataSource, symbol: Optional[str], limit: int) -> List[NewsArticle]:
+    async def _fetch_cryptopanic_news(
+        self, source: DataSource, symbol: Optional[str], limit: int
+    ) -> List[NewsArticle]:
         """Fetch news from CryptoPanic.
 
         Args:
@@ -450,16 +474,20 @@ class DataSourceManager:
                             title=result.get("title", ""),
                             url=result.get("url", ""),
                             source=result.get("source", {}).get("title", "CryptoPanic"),
-                            content=result.get("title", ""),  # Use title as content since full content is not provided
+                            content=result.get(
+                                "title", ""
+                            ),  # Use title as content since full content is not provided
                             published_at=result.get("published_at", datetime.now().isoformat()),
                             sentiment_score=None,  # Will be calculated later
-                            relevance_score=None  # Will be calculated later
+                            relevance_score=None,  # Will be calculated later
                         )
                         articles.append(article)
 
                     return articles
                 else:
-                    self.logger.error(f"Error fetching data from CryptoPanic: Status {response.status}")
+                    self.logger.error(
+                        f"Error fetching data from CryptoPanic: Status {response.status}"
+                    )
                     return []
 
     async def fetch_social_media(self, symbol: str, limit: int = 10) -> List[SocialMediaPost]:
@@ -497,7 +525,9 @@ class DataSourceManager:
 
         return posts[:limit]
 
-    async def _fetch_lunarcrush_social(self, source: DataSource, symbol: str, limit: int) -> List[SocialMediaPost]:
+    async def _fetch_lunarcrush_social(
+        self, source: DataSource, symbol: str, limit: int
+    ) -> List[SocialMediaPost]:
         """Fetch social media posts from LunarCrush.
 
         Args:
@@ -537,18 +567,22 @@ class DataSourceManager:
                             platform=item.get("type", "twitter"),
                             user=item.get("user_name", ""),
                             content=item.get("body", ""),
-                            published_at=datetime.fromtimestamp(item.get("time", time.time())).isoformat(),
+                            published_at=datetime.fromtimestamp(
+                                item.get("time", time.time())
+                            ).isoformat(),
                             likes=item.get("likes", 0),
                             shares=item.get("retweets", 0),
                             comments=item.get("replies", 0),
                             sentiment_score=None,  # Will be calculated later
-                            relevance_score=None  # Will be calculated later
+                            relevance_score=None,  # Will be calculated later
                         )
                         posts.append(post)
 
                     return posts
                 else:
-                    self.logger.error(f"Error fetching data from LunarCrush: Status {response.status}")
+                    self.logger.error(
+                        f"Error fetching data from LunarCrush: Status {response.status}"
+                    )
                     return []
 
     async def fetch_fear_greed_index(self) -> Optional[AlternativeDataPoint]:
@@ -590,14 +624,16 @@ class DataSourceManager:
                             data_point = AlternativeDataPoint(
                                 name="Fear & Greed Index",
                                 value=int(item.get("value", 0)),
-                                timestamp=datetime.fromtimestamp(int(item.get("timestamp", time.time()))).isoformat(),
+                                timestamp=datetime.fromtimestamp(
+                                    int(item.get("timestamp", time.time()))
+                                ).isoformat(),
                                 source="Alternative.me",
                                 metadata={
                                     "classification": item.get("value_classification", ""),
                                     "previous_close": int(item.get("previous_close", 0)),
                                     "previous_1_week": int(item.get("previous_1_week", 0)),
-                                    "previous_1_month": int(item.get("previous_1_month", 0))
-                                }
+                                    "previous_1_month": int(item.get("previous_1_month", 0)),
+                                },
                             )
 
                             # Update cache
@@ -605,11 +641,14 @@ class DataSourceManager:
 
                             return data_point
                     else:
-                        self.logger.error(f"Error fetching data from Alternative.me: Status {response.status}")
+                        self.logger.error(
+                            f"Error fetching data from Alternative.me: Status {response.status}"
+                        )
                         return None
         except Exception as e:
             self.logger.error(f"Error fetching Fear & Greed Index: {str(e)}")
             return None
+
 
 # Example usage
 async def main():
@@ -634,6 +673,7 @@ async def main():
     # Fetch Fear & Greed Index
     fear_greed = await manager.fetch_fear_greed_index()
     print(f"Fear & Greed Index: {fear_greed}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -2,20 +2,19 @@
 Agents router for the API.
 """
 
-import uuid
-from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+from fastapi import APIRouter, Depends, HTTPException, Path
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from ..models.request_models import AgentRequest
-from ..models.response_models import AgentResponse, ErrorResponse
-from ..services.agent_service import AgentService
-from ..middleware.auth import get_api_key
 from ..config import config
+from ..middleware.auth import get_api_key
+from ..models.request_models import AgentRequest
+from ..models.response_models import AgentResponse
+from ..services.agent_service import AgentService
 
 router = APIRouter(prefix="/agents", tags=["agents"])
+
 
 @router.get("/", response_model=List[AgentResponse])
 async def list_agents(
@@ -37,6 +36,7 @@ async def list_agents(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.get("/{agent_mode}", response_model=AgentResponse)
 async def get_agent(
@@ -76,6 +76,7 @@ async def get_agent(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.post("/", response_model=AgentResponse)
 async def create_agent(

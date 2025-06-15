@@ -4,14 +4,15 @@ This module provides utilities for explaining reinforcement learning-based decis
 """
 
 import json
-from typing import Any, Dict, List, Optional, Tuple, Union
+import time
+from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class DecisionExplainer:
     """Utility for explaining reinforcement learning-based decisions."""
@@ -109,6 +110,7 @@ Explain this decision in a way that is understandable to the user.
 
         # Return the explanation
         return response.content.strip()
+
 
 class QValueVisualizer:
     """Utility for visualizing Q-values for better understanding."""
@@ -213,6 +215,7 @@ class QValueVisualizer:
             "best_actions": best_actions,
         }
 
+
 class PolicyExplainer:
     """Utility for explaining reinforcement learning policies."""
 
@@ -296,6 +299,7 @@ Explain this reinforcement learning policy in a way that is understandable to th
         # Return the explanation
         return response.content.strip()
 
+
 class DecisionTracker:
     """Utility for tracking and analyzing reinforcement learning decisions over time."""
 
@@ -358,9 +362,7 @@ class DecisionTracker:
             },
         )
 
-    def get_decision_history(
-        self, agent_name: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_decision_history(self, agent_name: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent decisions for an agent.
 
         Args:
@@ -373,9 +375,7 @@ class DecisionTracker:
         # Get from database
         return self.db.get_agent_decisions(agent_name, limit=limit)
 
-    def analyze_decision_patterns(
-        self, agent_name: str, window: int = 20
-    ) -> Dict[str, Any]:
+    def analyze_decision_patterns(self, agent_name: str, window: int = 20) -> Dict[str, Any]:
         """Analyze patterns in recent decisions.
 
         Args:
@@ -419,8 +419,7 @@ class DecisionTracker:
             action_rewards[action].append(reward)
 
         avg_rewards = {
-            action: sum(rewards) / len(rewards)
-            for action, rewards in action_rewards.items()
+            action: sum(rewards) / len(rewards) for action, rewards in action_rewards.items()
         }
 
         # Identify most and least used actions
@@ -428,12 +427,8 @@ class DecisionTracker:
         least_used = min(action_counts, key=action_counts.get) if action_counts else ""
 
         # Identify best and worst performing actions
-        best_performing = (
-            max(avg_rewards, key=avg_rewards.get) if avg_rewards else ""
-        )
-        worst_performing = (
-            min(avg_rewards, key=avg_rewards.get) if avg_rewards else ""
-        )
+        best_performing = max(avg_rewards, key=avg_rewards.get) if avg_rewards else ""
+        worst_performing = min(avg_rewards, key=avg_rewards.get) if avg_rewards else ""
 
         # Return analysis
         return {

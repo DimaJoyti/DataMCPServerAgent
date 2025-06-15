@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from ..schemas.base_schema import VectorRecord, VectorStoreConfig
 from ..schemas.search_models import SearchQuery, SearchResults
 
+
 class VectorStoreStats(BaseModel):
     """Vector store statistics."""
 
@@ -30,6 +31,7 @@ class VectorStoreStats(BaseModel):
     # Timestamps
     created_at: Optional[datetime] = Field(None, description="Store creation time")
     last_updated: Optional[datetime] = Field(None, description="Last update time")
+
 
 class BaseVectorStore(ABC):
     """Abstract base class for vector stores."""
@@ -201,9 +203,7 @@ class BaseVectorStore(ABC):
         return inserted_ids + updated_ids
 
     async def batch_insert(
-        self,
-        records: List[VectorRecord],
-        batch_size: Optional[int] = None
+        self, records: List[VectorRecord], batch_size: Optional[int] = None
     ) -> List[str]:
         """
         Insert records in batches.
@@ -222,7 +222,7 @@ class BaseVectorStore(ABC):
         all_ids = []
 
         for i in range(0, len(records), batch_size):
-            batch = records[i:i + batch_size]
+            batch = records[i : i + batch_size]
             batch_ids = await self.insert_vectors(batch)
             all_ids.extend(batch_ids)
 
@@ -314,7 +314,7 @@ class BaseVectorStore(ABC):
                 "metadata": record.metadata.copy(),
                 "created_at": record.created_at.isoformat(),
                 "source": record.source,
-                "source_type": record.source_type
+                "source_type": record.source_type,
             }
 
             if record.updated_at:
@@ -324,7 +324,9 @@ class BaseVectorStore(ABC):
 
         return prepared
 
-    def _restore_records_from_storage(self, storage_records: List[Dict[str, Any]]) -> List[VectorRecord]:
+    def _restore_records_from_storage(
+        self, storage_records: List[Dict[str, Any]]
+    ) -> List[VectorRecord]:
         """
         Restore records from storage format.
 
@@ -354,7 +356,7 @@ class BaseVectorStore(ABC):
                 created_at=created_at,
                 updated_at=updated_at,
                 source=storage_record.get("source"),
-                source_type=storage_record.get("source_type")
+                source_type=storage_record.get("source_type"),
             )
 
             restored.append(record)

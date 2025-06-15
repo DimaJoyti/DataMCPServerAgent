@@ -2,21 +2,22 @@
 Markdown file parser implementation.
 """
 
-import logging
 import re
 from pathlib import Path
-from typing import List, Union, Dict, Any
+from typing import Any, Dict, List, Union
 
 try:
     import markdown
-    from markdown.extensions import toc, tables, codehilite
+    from markdown.extensions import codehilite, tables, toc
+
     HAS_MARKDOWN = True
 except ImportError:
     HAS_MARKDOWN = False
 
-from .base_parser import BaseParser, ParsedDocument
-from ..metadata.models import DocumentMetadata, DocumentType
 from ..metadata.extractor import MetadataExtractor
+from ..metadata.models import DocumentMetadata, DocumentType
+from .base_parser import BaseParser, ParsedDocument
+
 
 class MarkdownParser(BaseParser):
     """Parser for Markdown files."""
@@ -27,8 +28,7 @@ class MarkdownParser(BaseParser):
 
         if not HAS_MARKDOWN:
             self.logger.warning(
-                "Markdown parsing library not available. "
-                "Install with: pip install markdown"
+                "Markdown parsing library not available. " "Install with: pip install markdown"
             )
 
     @property
@@ -39,7 +39,7 @@ class MarkdownParser(BaseParser):
     @property
     def supported_extensions(self) -> List[str]:
         """Return list of supported file extensions."""
-        return ['md', 'markdown', 'mdown', 'mkd', 'mkdn']
+        return ["md", "markdown", "mdown", "mkd", "mkdn"]
 
     def _parse_file_impl(self, file_path: Path) -> ParsedDocument:
         """
@@ -58,11 +58,11 @@ class MarkdownParser(BaseParser):
 
         # Read file content
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 markdown_content = f.read()
         except UnicodeDecodeError:
             # Try with different encoding
-            with open(file_path, 'r', encoding='latin-1', errors='ignore') as f:
+            with open(file_path, encoding="latin-1", errors="ignore") as f:
                 markdown_content = f.read()
 
         return self._parse_markdown_content(markdown_content, metadata)
@@ -72,7 +72,7 @@ class MarkdownParser(BaseParser):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Parse Markdown content directly.
@@ -89,23 +89,22 @@ class MarkdownParser(BaseParser):
         # Convert bytes to string if needed
         if isinstance(content, bytes):
             try:
-                content = content.decode('utf-8')
+                content = content.decode("utf-8")
             except UnicodeDecodeError:
-                content = content.decode('utf-8', errors='ignore')
+                content = content.decode("utf-8", errors="ignore")
 
         # Create metadata
         extractor = MetadataExtractor()
         metadata = extractor.extract_from_content(
-            content,
-            document_id,
-            document_type,
-            **metadata_kwargs
+            content, document_id, document_type, **metadata_kwargs
         )
         metadata.document_type = DocumentType.MARKDOWN
 
         return self._parse_markdown_content(content, metadata)
 
-    def _parse_markdown_content(self, markdown_content: str, metadata: DocumentMetadata) -> ParsedDocument:
+    def _parse_markdown_content(
+        self, markdown_content: str, metadata: DocumentMetadata
+    ) -> ParsedDocument:
         """Parse Markdown content."""
         warnings = []
         errors = []
@@ -128,11 +127,11 @@ class MarkdownParser(BaseParser):
             if HAS_MARKDOWN:
                 try:
                     md = markdown.Markdown(
-                        extensions=['toc', 'tables', 'codehilite', 'fenced_code'],
+                        extensions=["toc", "tables", "codehilite", "fenced_code"],
                         extension_configs={
-                            'toc': {'permalink': True},
-                            'codehilite': {'css_class': 'highlight'}
-                        }
+                            "toc": {"permalink": True},
+                            "codehilite": {"css_class": "highlight"},
+                        },
                     )
                     html_content = md.convert(markdown_content)
                 except Exception as e:
@@ -176,9 +175,9 @@ class MarkdownParser(BaseParser):
         # Store HTML content if generated
         raw_data = {}
         if html_content:
-            raw_data['html'] = html_content
+            raw_data["html"] = html_content
         if front_matter:
-            raw_data['front_matter'] = front_matter
+            raw_data["front_matter"] = front_matter
 
         # Create result
         result = ParsedDocument(
@@ -192,7 +191,7 @@ class MarkdownParser(BaseParser):
             raw_data=raw_data if raw_data else None,
             parsing_time=0.0,
             parser_name=self._parser_name,
-            parser_version=self._parser_version
+            parser_version=self._parser_version,
         )
 
         return result
@@ -202,10 +201,11 @@ class MarkdownParser(BaseParser):
         front_matter = {}
 
         # Check for YAML front matter
-        if content.startswith('---\n'):
+        if content.startswith("---\n"):
             try:
                 import yaml
-                end_marker = content.find('\n---\n', 4)
+
+                end_marker = content.find("\n---\n", 4)
                 if end_marker != -1:
                     yaml_content = content[4:end_marker]
                     front_matter = yaml.safe_load(yaml_content)
@@ -213,19 +213,19 @@ class MarkdownParser(BaseParser):
                     # Update metadata with front matter
                     if isinstance(front_matter, dict):
                         for key, value in front_matter.items():
-                            if key.lower() == 'title':
+                            if key.lower() == "title":
                                 metadata.title = str(value)
-                            elif key.lower() == 'author':
+                            elif key.lower() == "author":
                                 metadata.author = str(value)
-                            elif key.lower() == 'description':
+                            elif key.lower() == "description":
                                 metadata.subject = str(value)
-                            elif key.lower() in ['tags', 'keywords']:
+                            elif key.lower() in ["tags", "keywords"]:
                                 if isinstance(value, list):
                                     metadata.keywords = [str(v) for v in value]
                                 else:
                                     metadata.keywords = [str(value)]
-                            elif key.lower() == 'date':
-                                metadata.add_custom_field('date', str(value))
+                            elif key.lower() == "date":
+                                metadata.add_custom_field("date", str(value))
                             else:
                                 metadata.add_custom_field(key, value)
             except ImportError:
@@ -237,79 +237,81 @@ class MarkdownParser(BaseParser):
 
     def _remove_front_matter(self, content: str) -> str:
         """Remove front matter from markdown content."""
-        if content.startswith('---\n'):
-            end_marker = content.find('\n---\n', 4)
+        if content.startswith("---\n"):
+            end_marker = content.find("\n---\n", 4)
             if end_marker != -1:
-                return content[end_marker + 5:]
+                return content[end_marker + 5 :]
         return content
 
     def _extract_markdown_metadata(self, content: str, metadata: DocumentMetadata) -> None:
         """Extract metadata from markdown structure."""
         # Extract title from first heading if not already set
         if not metadata.title:
-            title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+            title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
             if title_match:
                 metadata.title = title_match.group(1).strip()
 
         # Count different heading levels
-        h1_count = len(re.findall(r'^#\s+', content, re.MULTILINE))
-        h2_count = len(re.findall(r'^##\s+', content, re.MULTILINE))
-        h3_count = len(re.findall(r'^###\s+', content, re.MULTILINE))
-        h4_count = len(re.findall(r'^####\s+', content, re.MULTILINE))
-        h5_count = len(re.findall(r'^#####\s+', content, re.MULTILINE))
-        h6_count = len(re.findall(r'^######\s+', content, re.MULTILINE))
+        h1_count = len(re.findall(r"^#\s+", content, re.MULTILINE))
+        h2_count = len(re.findall(r"^##\s+", content, re.MULTILINE))
+        h3_count = len(re.findall(r"^###\s+", content, re.MULTILINE))
+        h4_count = len(re.findall(r"^####\s+", content, re.MULTILINE))
+        h5_count = len(re.findall(r"^#####\s+", content, re.MULTILINE))
+        h6_count = len(re.findall(r"^######\s+", content, re.MULTILINE))
 
-        metadata.add_custom_field('h1_count', h1_count)
-        metadata.add_custom_field('h2_count', h2_count)
-        metadata.add_custom_field('h3_count', h3_count)
-        metadata.add_custom_field('h4_count', h4_count)
-        metadata.add_custom_field('h5_count', h5_count)
-        metadata.add_custom_field('h6_count', h6_count)
-        metadata.add_custom_field('total_headings', h1_count + h2_count + h3_count + h4_count + h5_count + h6_count)
+        metadata.add_custom_field("h1_count", h1_count)
+        metadata.add_custom_field("h2_count", h2_count)
+        metadata.add_custom_field("h3_count", h3_count)
+        metadata.add_custom_field("h4_count", h4_count)
+        metadata.add_custom_field("h5_count", h5_count)
+        metadata.add_custom_field("h6_count", h6_count)
+        metadata.add_custom_field(
+            "total_headings", h1_count + h2_count + h3_count + h4_count + h5_count + h6_count
+        )
 
         # Count code blocks
-        code_blocks = len(re.findall(r'```[\s\S]*?```', content))
-        inline_code = len(re.findall(r'`[^`\n]+`', content))
+        code_blocks = len(re.findall(r"```[\s\S]*?```", content))
+        inline_code = len(re.findall(r"`[^`\n]+`", content))
 
-        metadata.add_custom_field('code_blocks', code_blocks)
-        metadata.add_custom_field('inline_code', inline_code)
+        metadata.add_custom_field("code_blocks", code_blocks)
+        metadata.add_custom_field("inline_code", inline_code)
 
         # Count lists
-        bullet_lists = len(re.findall(r'^\s*[-*+]\s+', content, re.MULTILINE))
-        numbered_lists = len(re.findall(r'^\s*\d+\.\s+', content, re.MULTILINE))
+        bullet_lists = len(re.findall(r"^\s*[-*+]\s+", content, re.MULTILINE))
+        numbered_lists = len(re.findall(r"^\s*\d+\.\s+", content, re.MULTILINE))
 
-        metadata.add_custom_field('bullet_lists', bullet_lists)
-        metadata.add_custom_field('numbered_lists', numbered_lists)
+        metadata.add_custom_field("bullet_lists", bullet_lists)
+        metadata.add_custom_field("numbered_lists", numbered_lists)
 
     def _markdown_to_text(self, content: str) -> str:
         """Convert markdown to plain text."""
         # Remove code blocks
-        content = re.sub(r'```[\s\S]*?```', '', content)
+        content = re.sub(r"```[\s\S]*?```", "", content)
 
         # Remove inline code
-        content = re.sub(r'`[^`\n]+`', '', content)
+        content = re.sub(r"`[^`\n]+`", "", content)
 
         # Remove headers markup
-        content = re.sub(r'^#{1,6}\s+', '', content, flags=re.MULTILINE)
+        content = re.sub(r"^#{1,6}\s+", "", content, flags=re.MULTILINE)
 
         # Remove emphasis markup
-        content = re.sub(r'\*\*([^*]+)\*\*', r'\1', content)  # Bold
-        content = re.sub(r'\*([^*]+)\*', r'\1', content)      # Italic
-        content = re.sub(r'__([^_]+)__', r'\1', content)      # Bold
-        content = re.sub(r'_([^_]+)_', r'\1', content)        # Italic
+        content = re.sub(r"\*\*([^*]+)\*\*", r"\1", content)  # Bold
+        content = re.sub(r"\*([^*]+)\*", r"\1", content)  # Italic
+        content = re.sub(r"__([^_]+)__", r"\1", content)  # Bold
+        content = re.sub(r"_([^_]+)_", r"\1", content)  # Italic
 
         # Remove links but keep text
-        content = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', content)
+        content = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", content)
 
         # Remove images
-        content = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', content)
+        content = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", content)
 
         # Remove horizontal rules
-        content = re.sub(r'^---+$', '', content, flags=re.MULTILINE)
+        content = re.sub(r"^---+$", "", content, flags=re.MULTILINE)
 
         # Remove list markers
-        content = re.sub(r'^\s*[-*+]\s+', '', content, flags=re.MULTILINE)
-        content = re.sub(r'^\s*\d+\.\s+', '', content, flags=re.MULTILINE)
+        content = re.sub(r"^\s*[-*+]\s+", "", content, flags=re.MULTILINE)
+        content = re.sub(r"^\s*\d+\.\s+", "", content, flags=re.MULTILINE)
 
         return content
 
@@ -318,28 +320,32 @@ class MarkdownParser(BaseParser):
         tables = []
 
         # Find markdown tables
-        table_pattern = r'(\|.+\|\n)+(\|[-\s|:]+\|\n)?(\|.+\|\n)+'
+        table_pattern = r"(\|.+\|\n)+(\|[-\s|:]+\|\n)?(\|.+\|\n)+"
         table_matches = re.finditer(table_pattern, content)
 
         for table_idx, match in enumerate(table_matches):
             table_text = match.group(0)
-            lines = [line.strip() for line in table_text.split('\n') if line.strip()]
+            lines = [line.strip() for line in table_text.split("\n") if line.strip()]
 
             table_data = []
             for line in lines:
-                if '|' in line and not re.match(r'\|[-\s|:]+\|', line):  # Skip separator line
-                    cells = [cell.strip() for cell in line.split('|')[1:-1]]  # Remove empty first/last
+                if "|" in line and not re.match(r"\|[-\s|:]+\|", line):  # Skip separator line
+                    cells = [
+                        cell.strip() for cell in line.split("|")[1:-1]
+                    ]  # Remove empty first/last
                     if cells:
                         table_data.append(cells)
 
             if table_data:
-                tables.append({
-                    'table_index': table_idx,
-                    'data': table_data,
-                    'rows': len(table_data),
-                    'columns': len(table_data[0]) if table_data else 0,
-                    'has_header': True  # Markdown tables typically have headers
-                })
+                tables.append(
+                    {
+                        "table_index": table_idx,
+                        "data": table_data,
+                        "rows": len(table_data),
+                        "columns": len(table_data[0]) if table_data else 0,
+                        "has_header": True,  # Markdown tables typically have headers
+                    }
+                )
 
         return tables
 
@@ -356,12 +362,7 @@ class MarkdownParser(BaseParser):
             src = match.group(2)
             title = match.group(3) or ""
 
-            images.append({
-                'image_index': img_idx,
-                'src': src,
-                'alt': alt_text,
-                'title': title
-            })
+            images.append({"image_index": img_idx, "src": src, "alt": alt_text, "title": title})
 
         return images
 
@@ -378,11 +379,6 @@ class MarkdownParser(BaseParser):
             url = match.group(2)
             title = match.group(3) or ""
 
-            links.append({
-                'text': text,
-                'url': url,
-                'title': title,
-                'type': 'markdown'
-            })
+            links.append({"text": text, "url": url, "title": title, "type": "markdown"})
 
         return links

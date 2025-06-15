@@ -13,14 +13,15 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.agents.semantic.base_semantic_agent import SemanticAgentConfig
+from src.agents.semantic.communication import MessageBus
 from src.agents.semantic.integrated_agents import (
+    IntegratedSemanticCoordinator,
     MultimodalSemanticAgent,
     RAGSemanticAgent,
     StreamingSemanticAgent,
-    IntegratedSemanticCoordinator,
 )
-from src.agents.semantic.base_semantic_agent import SemanticAgentConfig
-from src.agents.semantic.communication import MessageBus
+
 
 async def test_multimodal_agent():
     """Test multimodal semantic agent."""

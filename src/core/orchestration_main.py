@@ -5,7 +5,6 @@ systems into a cohesive orchestrated agent architecture.
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -20,9 +19,13 @@ from mcp.client.stdio import stdio_client
 
 from src.agents.advanced_planning import AdvancedPlanningEngine, Plan
 from src.agents.advanced_reasoning import AdvancedReasoningEngine, ReasoningChain
-from src.agents.agent_architecture import AgentMemory, CoordinatorAgent, create_specialized_sub_agents
+from src.agents.agent_architecture import (
+    AgentMemory,
+    CoordinatorAgent,
+    create_specialized_sub_agents,
+)
 from src.agents.meta_reasoning import MetaReasoningEngine
-from src.agents.reflection_systems import AdvancedReflectionEngine, ReflectionType
+from src.agents.reflection_systems import AdvancedReflectionEngine
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.bright_data_tools import create_bright_data_tools
 from src.utils.env_config import load_dotenv
@@ -34,15 +37,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class OrchestrationCoordinator:
     """Advanced coordinator that orchestrates multiple reasoning and planning systems."""
 
-    def __init__(
-        self,
-        model: ChatAnthropic,
-        tools: List[BaseTool],
-        db: MemoryDatabase
-    ):
+    def __init__(self, model: ChatAnthropic, tools: List[BaseTool], db: MemoryDatabase):
         """Initialize the orchestration coordinator.
 
         Args:
@@ -66,9 +65,7 @@ class OrchestrationCoordinator:
 
         # Initialize base coordinator
         self.base_coordinator = CoordinatorAgent(
-            model=model,
-            sub_agents=self.sub_agents,
-            memory=self.memory
+            model=model, sub_agents=self.sub_agents, memory=self.memory
         )
 
         # Orchestration state
@@ -93,18 +90,20 @@ class OrchestrationCoordinator:
             strategy_recommendation = await self.meta_reasoning_engine.select_reasoning_strategy(
                 problem=request,
                 problem_type=self._classify_problem_type(request),
-                confidence_requirement=0.8
+                confidence_requirement=0.8,
             )
 
             # Step 2: Create reasoning chain based on strategy
-            logger.info(f"Step 2: Starting reasoning chain with strategy: {strategy_recommendation['recommended_strategy']}")
+            logger.info(
+                f"Step 2: Starting reasoning chain with strategy: {strategy_recommendation['recommended_strategy']}"
+            )
             reasoning_chain_id = await self.reasoning_engine.start_reasoning_chain(
                 goal=request,
                 initial_context={
                     "strategy": strategy_recommendation["recommended_strategy"],
                     "user_request": request,
-                    "timestamp": start_time
-                }
+                    "timestamp": start_time,
+                },
             )
 
             # Step 3: Create execution plan
@@ -113,9 +112,7 @@ class OrchestrationCoordinator:
 
             # Step 4: Execute orchestrated reasoning and planning
             logger.info("Step 4: Executing orchestrated reasoning")
-            result = await self._execute_orchestrated_reasoning(
-                request, reasoning_chain_id, plan
-            )
+            result = await self._execute_orchestrated_reasoning(request, reasoning_chain_id, plan)
 
             # Step 5: Monitor performance and adapt
             logger.info("Step 5: Monitoring performance")
@@ -126,15 +123,17 @@ class OrchestrationCoordinator:
             await self._conduct_reflection(request, result)
 
             # Record orchestration history
-            self.orchestration_history.append({
-                "request": request,
-                "strategy": strategy_recommendation["recommended_strategy"],
-                "reasoning_chain_id": reasoning_chain_id,
-                "plan_id": plan.plan_id if plan else None,
-                "result": result,
-                "duration": time.time() - start_time,
-                "timestamp": start_time
-            })
+            self.orchestration_history.append(
+                {
+                    "request": request,
+                    "strategy": strategy_recommendation["recommended_strategy"],
+                    "reasoning_chain_id": reasoning_chain_id,
+                    "plan_id": plan.plan_id if plan else None,
+                    "result": result,
+                    "duration": time.time() - start_time,
+                    "timestamp": start_time,
+                }
+            )
 
             return result["response"]
 
@@ -143,17 +142,14 @@ class OrchestrationCoordinator:
 
             # Trigger error reflection
             await self.reflection_engine.trigger_reflection(
-                trigger_event=f"Orchestration error: {str(e)}",
-                focus_areas=["errors", "strategy"]
+                trigger_event=f"Orchestration error: {str(e)}", focus_areas=["errors", "strategy"]
             )
 
             # Fallback to base coordinator
             return await self.base_coordinator.process_request(request)
 
     async def _create_execution_plan(
-        self,
-        request: str,
-        strategy_recommendation: Dict[str, Any]
+        self, request: str, strategy_recommendation: Dict[str, Any]
     ) -> Optional[Plan]:
         """Create an execution plan for the request.
 
@@ -174,7 +170,7 @@ class OrchestrationCoordinator:
                 plan = await self.planning_engine.create_strips_plan(
                     goal=request,
                     initial_state=self._get_current_state(),
-                    goal_conditions=goal_conditions
+                    goal_conditions=goal_conditions,
                 )
 
                 # Validate plan
@@ -192,10 +188,7 @@ class OrchestrationCoordinator:
             return None
 
     async def _execute_orchestrated_reasoning(
-        self,
-        request: str,
-        reasoning_chain_id: str,
-        plan: Optional[Plan]
+        self, request: str, reasoning_chain_id: str, plan: Optional[Plan]
     ) -> Dict[str, Any]:
         """Execute orchestrated reasoning combining multiple systems.
 
@@ -212,15 +205,14 @@ class OrchestrationCoordinator:
             "reasoning_steps": [],
             "plan_execution": None,
             "confidence": 0.0,
-            "metadata": {}
+            "metadata": {},
         }
 
         try:
             # Execute plan if available
             if plan:
                 plan_result = await self.planning_engine.execute_plan(
-                    plan.plan_id,
-                    {"request": request}
+                    plan.plan_id, {"request": request}
                 )
                 results["plan_execution"] = plan_result
 
@@ -229,13 +221,14 @@ class OrchestrationCoordinator:
             max_steps = 10
 
             for step in range(max_steps):
-                reasoning_step = await self.reasoning_engine.continue_reasoning(
-                    reasoning_chain_id
-                )
+                reasoning_step = await self.reasoning_engine.continue_reasoning(reasoning_chain_id)
                 reasoning_steps.append(reasoning_step)
 
                 # Check if reasoning is complete
-                if reasoning_step.confidence > 0.9 or "conclusion" in reasoning_step.content.lower():
+                if (
+                    reasoning_step.confidence > 0.9
+                    or "conclusion" in reasoning_step.content.lower()
+                ):
                     break
 
                 # Monitor performance
@@ -246,8 +239,10 @@ class OrchestrationCoordinator:
                     # Adapt if performance is poor
                     if performance["performance_score"] < 60:
                         await self.meta_reasoning_engine.adapt_strategy(
-                            current_performance={"accuracy": performance["performance_score"] / 100},
-                            target_performance={"accuracy": 0.8}
+                            current_performance={
+                                "accuracy": performance["performance_score"] / 100
+                            },
+                            target_performance={"accuracy": 0.8},
                         )
 
             results["reasoning_steps"] = [step.__dict__ for step in reasoning_steps]
@@ -258,7 +253,9 @@ class OrchestrationCoordinator:
 
             # Calculate overall confidence
             if reasoning_steps:
-                avg_confidence = sum(step.confidence for step in reasoning_steps) / len(reasoning_steps)
+                avg_confidence = sum(step.confidence for step in reasoning_steps) / len(
+                    reasoning_steps
+                )
                 results["confidence"] = avg_confidence
             else:
                 results["confidence"] = 0.5
@@ -267,7 +264,7 @@ class OrchestrationCoordinator:
                 "reasoning_chain_id": reasoning_chain_id,
                 "plan_id": plan.plan_id if plan else None,
                 "steps_count": len(reasoning_steps),
-                "execution_time": time.time()
+                "execution_time": time.time(),
             }
 
             return results
@@ -278,11 +275,7 @@ class OrchestrationCoordinator:
             results["confidence"] = 0.0
             return results
 
-    async def _monitor_and_adapt(
-        self,
-        reasoning_chain_id: str,
-        result: Dict[str, Any]
-    ):
+    async def _monitor_and_adapt(self, reasoning_chain_id: str, result: Dict[str, Any]):
         """Monitor performance and adapt strategies.
 
         Args:
@@ -302,21 +295,19 @@ class OrchestrationCoordinator:
                     error_analysis = await self.meta_reasoning_engine.detect_errors(
                         reasoning_steps=result["reasoning_steps"],
                         context={"request": chain.goal},
-                        goal=chain.goal
+                        goal=chain.goal,
                     )
 
                     # Log any detected errors
                     if error_analysis["errors_detected"]:
-                        logger.warning(f"Detected errors in reasoning: {error_analysis['errors_detected']}")
+                        logger.warning(
+                            f"Detected errors in reasoning: {error_analysis['errors_detected']}"
+                        )
 
         except Exception as e:
             logger.error(f"Error in monitoring and adaptation: {str(e)}")
 
-    async def _conduct_reflection(
-        self,
-        request: str,
-        result: Dict[str, Any]
-    ):
+    async def _conduct_reflection(self, request: str, result: Dict[str, Any]):
         """Conduct reflection on the orchestration process.
 
         Args:
@@ -336,7 +327,7 @@ class OrchestrationCoordinator:
             # Trigger reflection
             reflection_session = await self.reflection_engine.trigger_reflection(
                 trigger_event=f"Orchestration completed for: {request[:100]}...",
-                focus_areas=focus_areas
+                focus_areas=focus_areas,
             )
 
             logger.info(f"Reflection completed with {len(reflection_session.insights)} insights")
@@ -376,8 +367,15 @@ class OrchestrationCoordinator:
             True if planning is needed
         """
         planning_keywords = [
-            "plan", "strategy", "organize", "schedule", "coordinate",
-            "multi-step", "complex", "project", "workflow"
+            "plan",
+            "strategy",
+            "organize",
+            "schedule",
+            "coordinate",
+            "multi-step",
+            "complex",
+            "project",
+            "workflow",
         ]
 
         return any(keyword in request.lower() for keyword in planning_keywords)
@@ -410,11 +408,8 @@ class OrchestrationCoordinator:
             Current state predicates
         """
         # Simplified state representation
-        return {
-            "agent_ready",
-            "tools_available",
-            "memory_accessible"
-        }
+        return {"agent_ready", "tools_available", "memory_accessible"}
+
 
 async def chat_with_orchestrated_agent():
     """Main chat function for the orchestrated agent system."""
@@ -455,34 +450,42 @@ async def chat_with_orchestrated_agent():
                 coordinator = OrchestrationCoordinator(model, tools, db)
 
                 print("🤖 Advanced Orchestrated Agent System Ready!")
-                print("This system combines advanced reasoning, planning, meta-reasoning, and reflection.")
+                print(
+                    "This system combines advanced reasoning, planning, meta-reasoning, and reflection."
+                )
                 print("Type 'quit' to exit, 'help' for commands.\n")
 
                 while True:
                     try:
                         user_input = input("You: ").strip()
 
-                        if user_input.lower() in ['quit', 'exit']:
+                        if user_input.lower() in ["quit", "exit"]:
                             break
-                        elif user_input.lower() == 'help':
+                        elif user_input.lower() == "help":
                             print("\nAvailable commands:")
                             print("- quit/exit: Exit the system")
                             print("- help: Show this help message")
                             print("- stats: Show orchestration statistics")
                             print("- reflect: Trigger manual reflection")
                             continue
-                        elif user_input.lower() == 'stats':
-                            print(f"\nOrchestration Statistics:")
-                            print(f"- Total requests processed: {len(coordinator.orchestration_history)}")
-                            print(f"- Active reasoning chains: {len(coordinator.active_reasoning_chains)}")
+                        elif user_input.lower() == "stats":
+                            print("\nOrchestration Statistics:")
+                            print(
+                                f"- Total requests processed: {len(coordinator.orchestration_history)}"
+                            )
+                            print(
+                                f"- Active reasoning chains: {len(coordinator.active_reasoning_chains)}"
+                            )
                             print(f"- Active plans: {len(coordinator.active_plans)}")
-                            print(f"- Reflection sessions: {len(coordinator.reflection_engine.reflection_sessions)}")
+                            print(
+                                f"- Reflection sessions: {len(coordinator.reflection_engine.reflection_sessions)}"
+                            )
                             continue
-                        elif user_input.lower() == 'reflect':
+                        elif user_input.lower() == "reflect":
                             print("Triggering manual reflection...")
                             session = await coordinator.reflection_engine.trigger_reflection(
                                 trigger_event="Manual reflection requested",
-                                focus_areas=["performance", "strategy", "learning"]
+                                focus_areas=["performance", "strategy", "learning"],
                             )
                             print(f"Reflection completed with {len(session.insights)} insights")
                             continue
@@ -507,6 +510,7 @@ async def chat_with_orchestrated_agent():
     except Exception as e:
         logger.error(f"Failed to initialize orchestrated agent: {str(e)}")
         print(f"❌ Failed to start orchestrated agent: {str(e)}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_orchestrated_agent())

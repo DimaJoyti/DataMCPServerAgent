@@ -5,21 +5,22 @@ This module provides object storage connectivity for S3-compatible storage,
 Azure Blob Storage, Google Cloud Storage, and other object storage systems.
 """
 
-import asyncio
+import io
 import logging
-from typing import Any, Dict, List, Optional, AsyncGenerator, Union
+from collections.abc import AsyncGenerator
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import polars as pl
-from pathlib import Path
-import io
-
 import structlog
-from pydantic import BaseModel, Field
 from minio import Minio
 from minio.error import S3Error
+from pydantic import BaseModel, Field
+
 
 class ObjectStorageConfig(BaseModel):
     """Object storage connection configuration."""
+
     storage_type: str = Field(..., description="Storage type (s3, minio, azure, gcs)")
     endpoint: Optional[str] = Field(None, description="Storage endpoint URL")
     access_key: str = Field(..., description="Access key")
@@ -38,6 +39,7 @@ class ObjectStorageConfig(BaseModel):
     file_format: str = Field(default="auto", description="File format (csv, json, parquet, etc.)")
     compression: Optional[str] = Field(None, description="Compression type")
     encoding: str = Field(default="utf-8", description="Text encoding")
+
 
 class ObjectStorageConnector:
     """
@@ -81,7 +83,7 @@ class ObjectStorageConnector:
                     access_key=self.config.access_key,
                     secret_key=self.config.secret_key,
                     secure=self.config.secure,
-                    region=self.config.region
+                    region=self.config.region,
                 )
 
                 # Test connection by checking if bucket exists
@@ -100,7 +102,7 @@ class ObjectStorageConnector:
                 "Object storage connected",
                 storage_type=self.config.storage_type,
                 bucket=self.config.bucket_name,
-                object_count=len(self.object_list)
+                object_count=len(self.object_list),
             )
 
         except Exception as e:
@@ -108,7 +110,7 @@ class ObjectStorageConnector:
                 "Object storage connection failed",
                 error=str(e),
                 storage_type=self.config.storage_type,
-                bucket=self.config.bucket_name
+                bucket=self.config.bucket_name,
             )
             raise e
 
@@ -120,9 +122,7 @@ class ObjectStorageConnector:
         self.logger.info("Object storage disconnected")
 
     async def read_batches(
-        self,
-        batch_size: int = 10000,
-        **kwargs
+        self, batch_size: int = 10000, **kwargs
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """
         Read data in batches from object storage.
@@ -161,7 +161,9 @@ class ObjectStorageConnector:
                         yield batch
 
                 elif file_format == "parquet":
-                    async for batch in self._parse_parquet_data(object_data, batch_size, use_polars):
+                    async for batch in self._parse_parquet_data(
+                        object_data, batch_size, use_polars
+                    ):
                         yield batch
 
                 else:
@@ -169,17 +171,12 @@ class ObjectStorageConnector:
 
         except Exception as e:
             self.logger.error(
-                "Object storage read error",
-                error=str(e),
-                bucket=self.config.bucket_name
+                "Object storage read error", error=str(e), bucket=self.config.bucket_name
             )
             raise e
 
     async def write_batch(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        object_key: str,
-        **kwargs
+        self, data: Union[pd.DataFrame, pl.DataFrame], object_key: str, **kwargs
     ) -> None:
         """
         Write a batch of data to object storage.
@@ -208,15 +205,12 @@ class ObjectStorageConnector:
                 "Batch written to object storage",
                 object_key=object_key,
                 records=len(data),
-                format=file_format
+                format=file_format,
             )
 
         except Exception as e:
             self.logger.error(
-                "Object storage write error",
-                error=str(e),
-                object_key=object_key,
-                records=len(data)
+                "Object storage write error", error=str(e), object_key=object_key, records=len(data)
             )
             raise e
 
@@ -227,9 +221,7 @@ class ObjectStorageConnector:
 
             # List objects with prefix
             for obj in self.client.list_objects(
-                self.config.bucket_name,
-                prefix=self.config.prefix,
-                recursive=True
+                self.config.bucket_name, prefix=self.config.prefix, recursive=True
             ):
                 # Apply file pattern filter if specified
                 if self.config.file_pattern:
@@ -255,11 +247,7 @@ class ObjectStorageConnector:
             return data
 
         except S3Error as e:
-            self.logger.error(
-                "Failed to download object",
-                error=str(e),
-                object_key=object_key
-            )
+            self.logger.error("Failed to download object", error=str(e), object_key=object_key)
             raise e
 
     async def _upload_object(self, object_key: str, data: bytes) -> None:
@@ -268,25 +256,15 @@ class ObjectStorageConnector:
             data_stream = io.BytesIO(data)
 
             self.client.put_object(
-                self.config.bucket_name,
-                object_key,
-                data_stream,
-                length=len(data)
+                self.config.bucket_name, object_key, data_stream, length=len(data)
             )
 
         except S3Error as e:
-            self.logger.error(
-                "Failed to upload object",
-                error=str(e),
-                object_key=object_key
-            )
+            self.logger.error("Failed to upload object", error=str(e), object_key=object_key)
             raise e
 
     async def _parse_csv_data(
-        self,
-        data: bytes,
-        batch_size: int,
-        use_polars: bool
+        self, data: bytes, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Parse CSV data in batches."""
         data_str = data.decode(self.config.encoding)
@@ -304,10 +282,7 @@ class ObjectStorageConnector:
                 yield chunk
 
     async def _parse_json_data(
-        self,
-        data: bytes,
-        batch_size: int,
-        use_polars: bool
+        self, data: bytes, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Parse JSON data in batches."""
         import json
@@ -321,7 +296,7 @@ class ObjectStorageConnector:
             if isinstance(json_data, list):
                 # Process in batches
                 for i in range(0, len(json_data), batch_size):
-                    batch = json_data[i:i + batch_size]
+                    batch = json_data[i : i + batch_size]
                     if use_polars:
                         yield pl.DataFrame(batch)
                     else:
@@ -335,7 +310,7 @@ class ObjectStorageConnector:
 
         except json.JSONDecodeError:
             # Try line-delimited JSON
-            lines = data_str.strip().split('\n')
+            lines = data_str.strip().split("\n")
             batch_data = []
 
             for line in lines:
@@ -361,10 +336,7 @@ class ObjectStorageConnector:
                     yield pd.DataFrame(batch_data)
 
     async def _parse_parquet_data(
-        self,
-        data: bytes,
-        batch_size: int,
-        use_polars: bool
+        self, data: bytes, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Parse Parquet data in batches."""
         data_io = io.BytesIO(data)
@@ -380,12 +352,10 @@ class ObjectStorageConnector:
             df = pd.read_parquet(data_io)
 
             for i in range(0, len(df), batch_size):
-                yield df.iloc[i:i + batch_size]
+                yield df.iloc[i : i + batch_size]
 
     async def _serialize_data(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        file_format: str
+        self, data: Union[pd.DataFrame, pl.DataFrame], file_format: str
     ) -> bytes:
         """Serialize data to bytes."""
         if file_format == "csv":
@@ -417,11 +387,11 @@ class ObjectStorageConnector:
         """Detect file format from object key."""
         key_lower = object_key.lower()
 
-        if key_lower.endswith('.csv'):
+        if key_lower.endswith(".csv"):
             return "csv"
-        elif key_lower.endswith('.json') or key_lower.endswith('.jsonl'):
+        elif key_lower.endswith(".json") or key_lower.endswith(".jsonl"):
             return "json"
-        elif key_lower.endswith('.parquet'):
+        elif key_lower.endswith(".parquet"):
             return "parquet"
         else:
             # Default to CSV
@@ -430,6 +400,7 @@ class ObjectStorageConnector:
     def _matches_pattern(self, object_key: str, pattern: str) -> bool:
         """Check if object key matches pattern."""
         import fnmatch
+
         return fnmatch.fnmatch(object_key, pattern)
 
     async def get_storage_info(self) -> Dict[str, Any]:
@@ -453,5 +424,5 @@ class ObjectStorageConnector:
             "total_size": total_size,
             "prefix": self.config.prefix,
             "file_pattern": self.config.file_pattern,
-            "connected": self.is_connected
+            "connected": self.is_connected,
         }

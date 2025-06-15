@@ -6,18 +6,19 @@ including charts, mind maps, timelines, and network diagrams.
 """
 
 import json
-import os
-from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict
 
 from langchain.tools import Tool
 
-from src.models.research_models import ChartType, Visualization, VisualizationType
+from src.models.research_models import Visualization, VisualizationType
+
 
 class ChartGenerator:
     """Tool for generating charts from research data."""
 
-    def generate_chart(self, data: Dict, chart_type: str = "bar", title: str = "Chart") -> Visualization:
+    def generate_chart(
+        self, data: Dict, chart_type: str = "bar", title: str = "Chart"
+    ) -> Visualization:
         """
         Generate a chart visualization.
 
@@ -38,10 +39,7 @@ class ChartGenerator:
             title=title,
             description=f"A {chart_type} chart of the data",
             type=VisualizationType.CHART,
-            data={
-                "chart_type": chart_type,
-                "chart_data": data
-            }
+            data={"chart_type": chart_type, "chart_data": data},
         )
 
         return visualization
@@ -126,6 +124,7 @@ class ChartGenerator:
         except Exception as e:
             return f"Error generating chart: {str(e)}"
 
+
 class MindMapGenerator:
     """Tool for generating mind maps from research data."""
 
@@ -148,7 +147,7 @@ class MindMapGenerator:
             title=title,
             description="A mind map of the data",
             type=VisualizationType.MIND_MAP,
-            data=data
+            data=data,
         )
 
         return visualization
@@ -209,6 +208,7 @@ class MindMapGenerator:
         except Exception as e:
             return f"Error generating mind map: {str(e)}"
 
+
 class TimelineGenerator:
     """Tool for generating timelines from research data."""
 
@@ -231,7 +231,7 @@ class TimelineGenerator:
             title=title,
             description="A timeline of events",
             type=VisualizationType.TIMELINE,
-            data=data
+            data=data,
         )
 
         return visualization
@@ -289,6 +289,7 @@ class TimelineGenerator:
         except Exception as e:
             return f"Error generating timeline: {str(e)}"
 
+
 class NetworkDiagramGenerator:
     """Tool for generating network diagrams from research data."""
 
@@ -311,7 +312,7 @@ class NetworkDiagramGenerator:
             title=title,
             description="A network diagram of the data",
             type=VisualizationType.NETWORK,
-            data=data
+            data=data,
         )
 
         return visualization
@@ -350,8 +351,14 @@ class NetworkDiagramGenerator:
             label = edge.get("label", "")
 
             # Find the source and target node labels
-            source_label = next((node.get("label", f"Node {source}") for node in nodes if node.get("id") == source), f"Node {source}")
-            target_label = next((node.get("label", f"Node {target}") for node in nodes if node.get("id") == target), f"Node {target}")
+            source_label = next(
+                (node.get("label", f"Node {source}") for node in nodes if node.get("id") == source),
+                f"Node {source}",
+            )
+            target_label = next(
+                (node.get("label", f"Node {target}") for node in nodes if node.get("id") == target),
+                f"Node {target}",
+            )
 
             result += f"- {source_label} --[{label}]--> {target_label}\n"
 
@@ -377,6 +384,7 @@ class NetworkDiagramGenerator:
         except Exception as e:
             return f"Error generating network diagram: {str(e)}"
 
+
 # Create tool instances
 chart_generator = ChartGenerator()
 mind_map_generator = MindMapGenerator()
@@ -387,23 +395,23 @@ network_diagram_generator = NetworkDiagramGenerator()
 generate_chart_tool = Tool(
     name="generate_chart",
     func=chart_generator.run,
-    description="Generate a chart visualization from data. Input should be a JSON string with 'data', 'type', and 'title' fields."
+    description="Generate a chart visualization from data. Input should be a JSON string with 'data', 'type', and 'title' fields.",
 )
 
 generate_mind_map_tool = Tool(
     name="generate_mind_map",
     func=mind_map_generator.run,
-    description="Generate a mind map visualization from data. Input should be a JSON string with 'data' and 'title' fields."
+    description="Generate a mind map visualization from data. Input should be a JSON string with 'data' and 'title' fields.",
 )
 
 generate_timeline_tool = Tool(
     name="generate_timeline",
     func=timeline_generator.run,
-    description="Generate a timeline visualization from data. Input should be a JSON string with 'data' and 'title' fields."
+    description="Generate a timeline visualization from data. Input should be a JSON string with 'data' and 'title' fields.",
 )
 
 generate_network_diagram_tool = Tool(
     name="generate_network_diagram",
     func=network_diagram_generator.run,
-    description="Generate a network diagram visualization from data. Input should be a JSON string with 'data' and 'title' fields."
+    description="Generate a network diagram visualization from data. Input should be a JSON string with 'data' and 'title' fields.",
 )

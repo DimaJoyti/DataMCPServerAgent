@@ -4,13 +4,13 @@ Base chunker interface for text chunking.
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 from ..metadata.models import ChunkMetadata, DocumentMetadata
+
 
 class ChunkingConfig(BaseModel):
     """Configuration for text chunking."""
@@ -20,11 +20,17 @@ class ChunkingConfig(BaseModel):
     chunk_overlap: int = Field(default=200, description="Overlap between chunks in characters")
 
     # Chunking strategy
-    strategy: str = Field(default="text", description="Chunking strategy (text, semantic, adaptive)")
+    strategy: str = Field(
+        default="text", description="Chunking strategy (text, semantic, adaptive)"
+    )
 
     # Text processing options
-    preserve_sentences: bool = Field(default=True, description="Try to preserve sentence boundaries")
-    preserve_paragraphs: bool = Field(default=True, description="Try to preserve paragraph boundaries")
+    preserve_sentences: bool = Field(
+        default=True, description="Try to preserve sentence boundaries"
+    )
+    preserve_paragraphs: bool = Field(
+        default=True, description="Try to preserve paragraph boundaries"
+    )
     preserve_sections: bool = Field(default=True, description="Try to preserve section boundaries")
 
     # Size constraints
@@ -35,18 +41,27 @@ class ChunkingConfig(BaseModel):
     language: Optional[str] = Field(default=None, description="Document language for processing")
 
     # Semantic chunking options (if applicable)
-    similarity_threshold: float = Field(default=0.7, description="Similarity threshold for semantic chunking")
+    similarity_threshold: float = Field(
+        default=0.7, description="Similarity threshold for semantic chunking"
+    )
     use_embeddings: bool = Field(default=False, description="Use embeddings for semantic chunking")
 
     # Custom options
-    custom_separators: List[str] = Field(default_factory=list, description="Custom chunk separators")
-    custom_options: Dict[str, Any] = Field(default_factory=dict, description="Strategy-specific options")
+    custom_separators: List[str] = Field(
+        default_factory=list, description="Custom chunk separators"
+    )
+    custom_options: Dict[str, Any] = Field(
+        default_factory=dict, description="Strategy-specific options"
+    )
+
 
 class TextChunk(BaseModel):
     """Represents a text chunk."""
 
     # Identification
-    chunk_id: str = Field(default_factory=lambda: str(uuid4()), description="Unique chunk identifier")
+    chunk_id: str = Field(
+        default_factory=lambda: str(uuid4()), description="Unique chunk identifier"
+    )
     document_id: str = Field(..., description="Parent document identifier")
     chunk_index: int = Field(..., description="Chunk index in document")
 
@@ -86,6 +101,7 @@ class TextChunk(BaseModel):
         # For now, just return the chunk text
         return self.text
 
+
 class BaseChunker(ABC):
     """Abstract base class for text chunkers."""
 
@@ -101,10 +117,7 @@ class BaseChunker(ABC):
 
     @abstractmethod
     def chunk_text(
-        self,
-        text: str,
-        document_metadata: DocumentMetadata,
-        **kwargs
+        self, text: str, document_metadata: DocumentMetadata, **kwargs
     ) -> List[TextChunk]:
         """
         Chunk text into smaller pieces.
@@ -119,12 +132,7 @@ class BaseChunker(ABC):
         """
         pass
 
-    def chunk_document(
-        self,
-        text: str,
-        document_id: str,
-        **metadata_kwargs
-    ) -> List[TextChunk]:
+    def chunk_document(self, text: str, document_id: str, **metadata_kwargs) -> List[TextChunk]:
         """
         Chunk a document with minimal metadata.
 
@@ -138,13 +146,10 @@ class BaseChunker(ABC):
         """
         # Create minimal document metadata
         from ..metadata.extractor import MetadataExtractor
+
         extractor = MetadataExtractor()
 
-        document_metadata = extractor.extract_from_content(
-            text,
-            document_id,
-            **metadata_kwargs
-        )
+        document_metadata = extractor.extract_from_content(text, document_id, **metadata_kwargs)
 
         return self.chunk_text(text, document_metadata)
 
@@ -155,7 +160,7 @@ class BaseChunker(ABC):
         start_char: int,
         end_char: int,
         document_metadata: DocumentMetadata,
-        **additional_metadata
+        **additional_metadata,
     ) -> TextChunk:
         """
         Create a text chunk with metadata.
@@ -181,13 +186,13 @@ class BaseChunker(ABC):
             text=text,
             character_count=len(text),
             word_count=len(text.split()),
-            sentence_count=len([s for s in text.split('.') if s.strip()]),
+            sentence_count=len([s for s in text.split(".") if s.strip()]),
             start_char=start_char,
             end_char=end_char,
             chunking_strategy=self.__class__.__name__,
             chunk_size=self.config.chunk_size,
             overlap_size=self.config.chunk_overlap,
-            **additional_metadata
+            **additional_metadata,
         )
 
         return TextChunk(
@@ -197,7 +202,7 @@ class BaseChunker(ABC):
             text=text,
             start_char=start_char,
             end_char=end_char,
-            metadata=chunk_metadata
+            metadata=chunk_metadata,
         )
 
     def _link_chunks(self, chunks: List[TextChunk]) -> List[TextChunk]:
@@ -244,7 +249,7 @@ class BaseChunker(ABC):
         import re
 
         # Simple sentence boundary detection
-        sentence_endings = r'[.!?]+\s+'
+        sentence_endings = r"[.!?]+\s+"
         boundaries = [0]
 
         for match in re.finditer(sentence_endings, text):
@@ -269,7 +274,8 @@ class BaseChunker(ABC):
 
         # Find double newlines (paragraph separators)
         import re
-        for match in re.finditer(r'\n\s*\n', text):
+
+        for match in re.finditer(r"\n\s*\n", text):
             boundaries.append(match.end())
 
         if boundaries[-1] != len(text):
@@ -291,7 +297,8 @@ class BaseChunker(ABC):
 
         # Find markdown-style headers
         import re
-        header_pattern = r'^#{1,6}\s+.+$'
+
+        header_pattern = r"^#{1,6}\s+.+$"
 
         for match in re.finditer(header_pattern, text, re.MULTILINE):
             boundaries.append(match.start())
@@ -302,10 +309,7 @@ class BaseChunker(ABC):
         return sorted(set(boundaries))
 
     def _get_optimal_split_point(
-        self,
-        text: str,
-        target_position: int,
-        search_window: int = 100
+        self, text: str, target_position: int, search_window: int = 100
     ) -> int:
         """
         Find optimal split point near target position.
@@ -325,37 +329,31 @@ class BaseChunker(ABC):
         # Look for sentence boundaries first
         if self.config.preserve_sentences:
             import re
-            sentence_endings = list(re.finditer(r'[.!?]+\s+', search_text))
+
+            sentence_endings = list(re.finditer(r"[.!?]+\s+", search_text))
             if sentence_endings:
                 # Find closest to target
                 target_in_window = target_position - start
-                closest = min(
-                    sentence_endings,
-                    key=lambda m: abs(m.end() - target_in_window)
-                )
+                closest = min(sentence_endings, key=lambda m: abs(m.end() - target_in_window))
                 return start + closest.end()
 
         # Look for paragraph boundaries
         if self.config.preserve_paragraphs:
             import re
-            para_breaks = list(re.finditer(r'\n\s*\n', search_text))
+
+            para_breaks = list(re.finditer(r"\n\s*\n", search_text))
             if para_breaks:
                 target_in_window = target_position - start
-                closest = min(
-                    para_breaks,
-                    key=lambda m: abs(m.end() - target_in_window)
-                )
+                closest = min(para_breaks, key=lambda m: abs(m.end() - target_in_window))
                 return start + closest.end()
 
         # Look for word boundaries
         import re
-        word_boundaries = list(re.finditer(r'\s+', search_text))
+
+        word_boundaries = list(re.finditer(r"\s+", search_text))
         if word_boundaries:
             target_in_window = target_position - start
-            closest = min(
-                word_boundaries,
-                key=lambda m: abs(m.start() - target_in_window)
-            )
+            closest = min(word_boundaries, key=lambda m: abs(m.start() - target_in_window))
             return start + closest.start()
 
         # Fallback to target position

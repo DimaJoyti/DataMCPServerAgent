@@ -5,7 +5,7 @@ This module provides the main entry point for the SEO agent.
 
 import asyncio
 import os
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -37,6 +37,7 @@ server_params = StdioServerParameters(
 # Initialize the language model
 model = ChatAnthropic(model=os.getenv("MODEL_NAME", "claude-3-5-sonnet-20240620"))
 
+
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load both standard MCP tools and custom Bright Data tools.
 
@@ -61,6 +62,7 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
         tool_dict[tool.name] = tool
 
     return list(tool_dict.values())
+
 
 async def chat_with_seo_agent(config: Optional[Dict[str, Any]] = None):
     """Run the SEO agent.
@@ -111,6 +113,7 @@ async def chat_with_seo_agent(config: Optional[Dict[str, Any]] = None):
                     error_message = format_error_for_user(e)
                     print(f"\nError: {error_message}")
                     print("Please try again with a different request.")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_seo_agent())

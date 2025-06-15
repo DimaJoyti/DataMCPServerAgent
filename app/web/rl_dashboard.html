@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL System Dashboard - DataMCPServerAgent</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-excellent { background-color: #10b981; }
+        .status-good { background-color: #3b82f6; }
+        .status-acceptable { background-color: #f59e0b; }
+        .status-poor { background-color: #ef4444; }
+        .status-unknown { background-color: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">🧠 RL System Dashboard</h1>
+                    <span class="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                        DataMCPServerAgent
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="refreshBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        🔄 Refresh
+                    </button>
+                    <div class="flex items-center">
+                        <span class="status-indicator" id="systemStatus"></span>
+                        <span id="systemStatusText">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Uptime Card -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            ⏱️
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">System Uptime</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="uptime">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Card -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            📊
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Requests Processed</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="requestsProcessed">--</p>
+                        <p class="text-xs text-gray-500" id="requestsPerHour">-- req/h</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Time Card -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            ⚡
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Avg Response Time</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="avgResponseTime">--</p>
+                        <p class="text-xs" id="performanceClass">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Score Card -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                            🛡️
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Safety Score</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="safetyScore">--</p>
+                        <p class="text-xs" id="safetyClass">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Response Time Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Response Time Trends</h3>
+                <canvas id="responseTimeChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Training Progress Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Training Progress</h3>
+                <canvas id="trainingChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- System Configuration -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🔧 System Configuration</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">RL Mode:</span>
+                        <span class="text-sm font-medium" id="rlMode">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Algorithm:</span>
+                        <span class="text-sm font-medium" id="algorithm">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Training:</span>
+                        <span class="text-sm font-medium" id="trainingEnabled">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Safety:</span>
+                        <span class="text-sm font-medium" id="safetyEnabled">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Explanations:</span>
+                        <span class="text-sm font-medium" id="explanationEnabled">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Recent Events</h3>
+                <div id="recentEvents" class="space-y-2 max-h-64 overflow-y-auto">
+                    <p class="text-sm text-gray-500">Loading events...</p>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">📈 Performance Metrics</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Error Rate:</span>
+                        <span class="text-sm font-medium" id="errorRate">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">P95 Response:</span>
+                        <span class="text-sm font-medium" id="p95ResponseTime">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">SLA Compliance:</span>
+                        <span class="text-sm font-medium" id="slaCompliance">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Training Episodes:</span>
+                        <span class="text-sm font-medium" id="trainingEpisodes">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Safety Violations:</span>
+                        <span class="text-sm font-medium" id="safetyViolations">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">🎮 System Actions</h3>
+            <div class="flex flex-wrap gap-4">
+                <button id="trainBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    🏋️ Train Episode
+                </button>
+                <button id="saveModelBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    💾 Save Model
+                </button>
+                <button id="resetBtn" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    🔄 Reset Metrics
+                </button>
+                <button id="exportBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    📊 Export Data
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let responseTimeChart, trainingChart;
+        let dashboardData = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadDashboardData();
+            setupEventListeners();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+
+        // Initialize charts
+        function initializeCharts() {
+            // Response Time Chart
+            const responseCtx = document.getElementById('responseTimeChart').getContext('2d');
+            responseTimeChart = new Chart(responseCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Time (ms)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Training Chart
+            const trainingCtx = document.getElementById('trainingChart').getContext('2d');
+            trainingChart = new Chart(trainingCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Training Episodes',
+                        data: [],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Episodes'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/rl/dashboard');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                dashboardData = await response.json();
+                updateDashboard(dashboardData);
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                updateSystemStatus('error', 'Error loading data');
+            }
+        }
+
+        // Update dashboard with new data
+        function updateDashboard(data) {
+            if (data.error) {
+                updateSystemStatus('error', data.error);
+                return;
+            }
+
+            const status = data.status || {};
+            const performance = data.performance || {};
+            const safety = data.safety || {};
+            const training = data.training || {};
+
+            // Update status cards
+            document.getElementById('uptime').textContent = status.uptime || '--';
+            document.getElementById('requestsProcessed').textContent = status.requests_processed || 0;
+            document.getElementById('requestsPerHour').textContent = `${Math.round(status.requests_per_hour || 0)} req/h`;
+            
+            // Response time
+            const avgTime = performance.avg_response_time || 0;
+            document.getElementById('avgResponseTime').textContent = `${(avgTime * 1000).toFixed(0)}ms`;
+            
+            const perfClass = performance.performance_class || 'unknown';
+            const perfElement = document.getElementById('performanceClass');
+            perfElement.textContent = perfClass;
+            perfElement.className = `text-xs status-${perfClass}`;
+
+            // Safety
+            const safetyScore = safety.safety_score || 0;
+            document.getElementById('safetyScore').textContent = (safetyScore * 100).toFixed(1) + '%';
+            
+            const safetyClass = safety.safety_class || 'unknown';
+            const safetyElement = document.getElementById('safetyClass');
+            safetyElement.textContent = safetyClass;
+            safetyElement.className = `text-xs status-${safetyClass}`;
+
+            // Configuration
+            updateConfiguration(data);
+
+            // Performance metrics
+            updatePerformanceMetrics(status, performance, safety);
+
+            // Recent events
+            updateRecentEvents(data.recent_events || []);
+
+            // Update system status
+            updateSystemStatus('good', 'System operational');
+        }
+
+        // Update configuration section
+        function updateConfiguration(data) {
+            const config = data.full_report?.session_summary || {};
+            
+            document.getElementById('rlMode').textContent = 'Modern Deep RL';
+            document.getElementById('algorithm').textContent = 'DQN/PPO';
+            document.getElementById('trainingEnabled').textContent = '✅ Enabled';
+            document.getElementById('safetyEnabled').textContent = '✅ Enabled';
+            document.getElementById('explanationEnabled').textContent = '✅ Enabled';
+        }
+
+        // Update performance metrics
+        function updatePerformanceMetrics(status, performance, safety) {
+            const errorRate = status.error_rate || 0;
+            document.getElementById('errorRate').textContent = (errorRate * 100).toFixed(2) + '%';
+            
+            const p95Time = performance.p95_response_time || 0;
+            document.getElementById('p95ResponseTime').textContent = `${(p95Time * 1000).toFixed(0)}ms`;
+            
+            const slaCompliance = performance.sla_compliance || 0;
+            document.getElementById('slaCompliance').textContent = (slaCompliance * 100).toFixed(1) + '%';
+            
+            document.getElementById('trainingEpisodes').textContent = status.training_episodes || 0;
+            document.getElementById('safetyViolations').textContent = safety.recent_violations || 0;
+        }
+
+        // Update recent events
+        function updateRecentEvents(events) {
+            const container = document.getElementById('recentEvents');
+            
+            if (!events || events.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">No recent events</p>';
+                return;
+            }
+
+            container.innerHTML = events.slice(0, 5).map(event => {
+                const time = new Date(event.timestamp * 1000).toLocaleTimeString();
+                const severityColor = {
+                    'info': 'text-blue-600',
+                    'warning': 'text-yellow-600',
+                    'error': 'text-red-600'
+                }[event.severity] || 'text-gray-600';
+                
+                return `
+                    <div class="text-sm">
+                        <span class="text-gray-500">${time}</span>
+                        <span class="${severityColor} font-medium">${event.event_type}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update system status indicator
+        function updateSystemStatus(status, message) {
+            const indicator = document.getElementById('systemStatus');
+            const text = document.getElementById('systemStatusText');
+            
+            indicator.className = `status-indicator status-${status}`;
+            text.textContent = message;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('refreshBtn').addEventListener('click', loadDashboardData);
+            
+            document.getElementById('trainBtn').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/rl/train', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ episodes: 1 })
+                    });
+                    
+                    if (response.ok) {
+                        alert('Training episode started!');
+                        setTimeout(loadDashboardData, 2000);
+                    } else {
+                        alert('Failed to start training');
+                    }
+                } catch (error) {
+                    alert('Error starting training: ' + error.message);
+                }
+            });
+
+            document.getElementById('saveModelBtn').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/rl/save-model', { method: 'POST' });
+                    
+                    if (response.ok) {
+                        alert('Model save initiated!');
+                    } else {
+                        alert('Failed to save model');
+                    }
+                } catch (error) {
+                    alert('Error saving model: ' + error.message);
+                }
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', async () => {
+                if (confirm('Are you sure you want to reset metrics?')) {
+                    try {
+                        const response = await fetch('/api/rl/reset', { method: 'POST' });
+                        
+                        if (response.ok) {
+                            alert('Metrics reset successfully!');
+                            loadDashboardData();
+                        } else {
+                            alert('Failed to reset metrics');
+                        }
+                    } catch (error) {
+                        alert('Error resetting metrics: ' + error.message);
+                    }
+                }
+            });
+
+            document.getElementById('exportBtn').addEventListener('click', () => {
+                const dataStr = JSON.stringify(dashboardData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `rl_dashboard_data_${new Date().toISOString().slice(0, 19)}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+            });
+        }
+    </script>
+</body>
+</html>

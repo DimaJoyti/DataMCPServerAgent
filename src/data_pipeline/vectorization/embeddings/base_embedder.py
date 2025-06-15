@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+
 class EmbeddingConfig(BaseModel):
     """Configuration for embedding generation."""
 
@@ -34,7 +35,10 @@ class EmbeddingConfig(BaseModel):
     retry_delay: float = Field(default=1.0, description="Delay between retries in seconds")
 
     # Custom options
-    custom_options: Dict[str, Any] = Field(default_factory=dict, description="Provider-specific options")
+    custom_options: Dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific options"
+    )
+
 
 class EmbeddingResult(BaseModel):
     """Result of embedding generation."""
@@ -75,6 +79,7 @@ class EmbeddingResult(BaseModel):
     def calculate_norm(self) -> float:
         """Calculate and return L2 norm of embedding."""
         import math
+
         norm = math.sqrt(sum(x * x for x in self.embedding))
         self.embedding_norm = norm
         return norm
@@ -112,6 +117,7 @@ class EmbeddingResult(BaseModel):
             return 0.0
 
         return dot_product / (norm_a * norm_b)
+
 
 class BaseEmbedder(ABC):
     """Abstract base class for text embedders."""
@@ -192,8 +198,10 @@ class BaseEmbedder(ABC):
 
         # Truncate if too long
         if len(text) > self.config.max_input_length:
-            self.logger.warning(f"Text truncated from {len(text)} to {self.config.max_input_length} characters")
-            text = text[:self.config.max_input_length]
+            self.logger.warning(
+                f"Text truncated from {len(text)} to {self.config.max_input_length} characters"
+            )
+            text = text[: self.config.max_input_length]
 
         # Basic cleaning
         text = text.strip()
@@ -212,7 +220,7 @@ class BaseEmbedder(ABC):
         """
         # Include model info in hash to avoid conflicts between models
         hash_input = f"{self.config.model_name}:{self.config.model_provider}:{text}"
-        return hashlib.sha256(hash_input.encode('utf-8')).hexdigest()
+        return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
     def _post_process_embedding(self, embedding: List[float], text: str) -> List[float]:
         """
@@ -231,6 +239,7 @@ class BaseEmbedder(ABC):
         # Normalize if configured
         if self.config.normalize_embeddings:
             import math
+
             norm = math.sqrt(sum(x * x for x in embedding))
             if norm > 0:
                 embedding = [x / norm for x in embedding]
@@ -243,7 +252,7 @@ class BaseEmbedder(ABC):
         embedding: List[float],
         processing_time: float,
         token_count: Optional[int] = None,
-        from_cache: bool = False
+        from_cache: bool = False,
     ) -> EmbeddingResult:
         """
         Create embedding result object.
@@ -269,7 +278,7 @@ class BaseEmbedder(ABC):
             model_provider=self.config.model_provider,
             processing_time=processing_time,
             token_count=token_count,
-            from_cache=from_cache
+            from_cache=from_cache,
         )
 
         # Calculate norm
@@ -300,10 +309,9 @@ class BaseEmbedder(ABC):
                 last_exception = e
 
                 if attempt < self.config.max_retries:
-                    delay = self.config.retry_delay * (2 ** attempt)
+                    delay = self.config.retry_delay * (2**attempt)
                     self.logger.warning(
-                        f"Attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {delay:.1f} seconds..."
+                        f"Attempt {attempt + 1} failed: {e}. " f"Retrying in {delay:.1f} seconds..."
                     )
                     time.sleep(delay)
                 else:

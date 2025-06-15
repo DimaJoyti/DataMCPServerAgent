@@ -5,20 +5,18 @@ This module provides tools for analyzing multiple pages or websites at once,
 generating comprehensive reports, and performing site-wide analysis.
 """
 
-import os
-import json
-import re
-import csv
-import asyncio
 import concurrent.futures
-from typing import Dict, List, Any, Optional
+import json
 from datetime import datetime
-import requests
+from typing import Any, Dict, List
 from urllib.parse import urlparse
-from bs4 import BeautifulSoup
 
+import requests
+from bs4 import BeautifulSoup
 from langchain.tools import Tool
+
 from src.tools.seo_tools import SEOAnalyzerTool
+
 
 class BulkAnalysisManager:
     """Manager for bulk SEO analysis tasks."""
@@ -58,28 +56,32 @@ class BulkAnalysisManager:
 
                 try:
                     # Fetch the page
-                    response = requests.get(current_url, headers={
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }, timeout=10)
+                    response = requests.get(
+                        current_url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                        },
+                        timeout=10,
+                    )
                     response.raise_for_status()
 
                     # Parse the HTML
-                    soup = BeautifulSoup(response.text, 'html.parser')
+                    soup = BeautifulSoup(response.text, "html.parser")
 
                     # Find all links
-                    links = soup.find_all('a', href=True)
+                    links = soup.find_all("a", href=True)
 
                     # Process each link
                     for link in links:
-                        href = link['href']
+                        href = link["href"]
 
                         # Skip empty links, anchors, javascript, etc.
-                        if not href or href.startswith(('#', 'javascript:', 'mailto:', 'tel:')):
+                        if not href or href.startswith(("#", "javascript:", "mailto:", "tel:")):
                             continue
 
                         # Resolve relative URLs
-                        if not href.startswith(('http://', 'https://')):
-                            if href.startswith('/'):
+                        if not href.startswith(("http://", "https://")):
+                            if href.startswith("/"):
                                 # Absolute path
                                 parsed_url = urlparse(current_url)
                                 href = f"{parsed_url.scheme}://{parsed_url.netloc}{href}"
@@ -130,7 +132,9 @@ class BulkAnalysisManager:
         # Use ThreadPoolExecutor for parallel processing
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all analysis tasks
-            future_to_url = {executor.submit(self.seo_analyzer.analyze, url, depth): url for url in urls}
+            future_to_url = {
+                executor.submit(self.seo_analyzer.analyze, url, depth): url for url in urls
+            }
 
             # Process results as they complete
             for future in concurrent.futures.as_completed(future_to_url):
@@ -146,7 +150,9 @@ class BulkAnalysisManager:
 
         # Calculate aggregate statistics
         avg_score = sum(r.get("seo_score", 0) for r in results) / len(results) if results else 0
-        avg_word_count = sum(r.get("word_count", 0) for r in results) / len(results) if results else 0
+        avg_word_count = (
+            sum(r.get("word_count", 0) for r in results) / len(results) if results else 0
+        )
 
         # Count common issues
         issues = {
@@ -156,7 +162,12 @@ class BulkAnalysisManager:
             "missing_h1": sum(1 for r in results if r.get("h1_count", 0) == 0),
             "multiple_h1": sum(1 for r in results if r.get("h1_count", 0) > 1),
             "low_word_count": sum(1 for r in results if r.get("word_count", 0) < 300),
-            "missing_alt_text": sum(1 for r in results if r.get("image_count", 0) > 0 and r.get("images_with_alt", 0) < r.get("image_count", 0))
+            "missing_alt_text": sum(
+                1
+                for r in results
+                if r.get("image_count", 0) > 0
+                and r.get("images_with_alt", 0) < r.get("image_count", 0)
+            ),
         }
 
         # Prepare result
@@ -169,12 +180,14 @@ class BulkAnalysisManager:
             "common_issues": issues,
             "page_results": results,
             "errors": errors,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         return result
 
-    def analyze_site(self, domain: str, max_pages: int = 50, depth: str = "basic") -> Dict[str, Any]:
+    def analyze_site(
+        self, domain: str, max_pages: int = 50, depth: str = "basic"
+    ) -> Dict[str, Any]:
         """
         Analyze an entire website by discovering and analyzing pages.
 
@@ -219,7 +232,16 @@ class BulkAnalysisManager:
             csv_content = []
 
             # Add header row
-            header = ["URL", "SEO Score", "Title Length", "Meta Description Length", "Word Count", "H1 Count", "H2 Count", "Issues"]
+            header = [
+                "URL",
+                "SEO Score",
+                "Title Length",
+                "Meta Description Length",
+                "Word Count",
+                "H1 Count",
+                "H2 Count",
+                "Issues",
+            ]
             csv_content.append(header)
 
             # Add data rows
@@ -246,7 +268,7 @@ class BulkAnalysisManager:
                     page.get("word_count", 0),
                     page.get("h1_count", 0),
                     page.get("h2_count", 0),
-                    "; ".join(issues)
+                    "; ".join(issues),
                 ]
                 csv_content.append(row)
 
@@ -259,7 +281,7 @@ class BulkAnalysisManager:
 
         else:  # Default to markdown
             # Create markdown content
-            output = f"# Bulk SEO Analysis Report\n\n"
+            output = "# Bulk SEO Analysis Report\n\n"
 
             output += "## Overview\n"
             output += f"- Domain: {results.get('domain', 'Multiple URLs')}\n"
@@ -271,7 +293,9 @@ class BulkAnalysisManager:
 
             output += "## Common Issues\n"
             issues = results.get("common_issues", {})
-            output += f"- Missing Meta Descriptions: {issues.get('missing_meta_description', 0)} pages\n"
+            output += (
+                f"- Missing Meta Descriptions: {issues.get('missing_meta_description', 0)} pages\n"
+            )
             output += f"- Titles Too Short: {issues.get('title_too_short', 0)} pages\n"
             output += f"- Titles Too Long: {issues.get('title_too_long', 0)} pages\n"
             output += f"- Missing H1 Tags: {issues.get('missing_h1', 0)} pages\n"
@@ -280,7 +304,9 @@ class BulkAnalysisManager:
             output += f"- Missing Alt Text: {issues.get('missing_alt_text', 0)} pages\n\n"
 
             output += "## Page Analysis\n"
-            output += "| URL | SEO Score | Title Length | Meta Desc Length | Word Count | H1 | H2 |\n"
+            output += (
+                "| URL | SEO Score | Title Length | Meta Desc Length | Word Count | H1 | H2 |\n"
+            )
             output += "|-----|-----------|--------------|------------------|------------|----|----|"
 
             for page in results.get("page_results", [])[:20]:  # Limit to 20 pages in the table
@@ -300,7 +326,14 @@ class BulkAnalysisManager:
 
             return output
 
-    def run(self, domain: str = None, urls: str = None, max_pages: int = 50, depth: str = "basic", format: str = "markdown") -> str:
+    def run(
+        self,
+        domain: str = None,
+        urls: str = None,
+        max_pages: int = 50,
+        depth: str = "basic",
+        format: str = "markdown",
+    ) -> str:
         """
         Run the bulk analysis tool and return formatted results.
 
@@ -320,7 +353,7 @@ class BulkAnalysisManager:
                 results = self.analyze_site(domain, max_pages, depth)
             elif urls:
                 # Multi-page analysis
-                url_list = [url.strip() for url in urls.split(',')]
+                url_list = [url.strip() for url in urls.split(",")]
                 results = self.analyze_multiple_urls(url_list, depth)
             else:
                 return "Error: Either 'domain' or 'urls' parameter must be provided."
@@ -330,6 +363,7 @@ class BulkAnalysisManager:
 
         except Exception as e:
             return f"Error performing bulk analysis: {str(e)}"
+
 
 # Create tool instance
 bulk_analysis = BulkAnalysisManager()

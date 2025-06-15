@@ -10,7 +10,9 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import aiosqlite
 from pydantic import BaseModel, Field
+
 
 class Source(BaseModel):
     """Source model for research results."""
@@ -27,6 +29,7 @@ class Source(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         """Convert source to dictionary."""
         return self.model_dump(exclude_none=True)
+
 
 class ResearchResult(BaseModel):
     """Research result model."""
@@ -49,6 +52,7 @@ class ResearchResult(BaseModel):
         result["created_at"] = result["created_at"].isoformat()
         return result
 
+
 class ResearchQuery(BaseModel):
     """Research query model."""
 
@@ -67,6 +71,7 @@ class ResearchQuery(BaseModel):
     def add_result(self, result: ResearchResult) -> None:
         """Add a result to the query."""
         self.results.append(result)
+
 
 class ResearchProject(BaseModel):
     """Research project model."""
@@ -104,6 +109,7 @@ class ResearchProject(BaseModel):
                 return True
         return False
 
+
 class ResearchMemoryDatabase:
     """Database for persisting research memory."""
 
@@ -122,7 +128,8 @@ class ResearchMemoryDatabase:
         cursor = conn.cursor()
 
         # Create research projects table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_projects (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -131,10 +138,12 @@ class ResearchMemoryDatabase:
             created_at REAL NOT NULL,
             updated_at REAL NOT NULL
         )
-        """)
+        """
+        )
 
         # Create research queries table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_queries (
             id TEXT NOT NULL,
             project_id TEXT NOT NULL,
@@ -143,10 +152,12 @@ class ResearchMemoryDatabase:
             PRIMARY KEY (id, project_id),
             FOREIGN KEY (project_id) REFERENCES research_projects (id) ON DELETE CASCADE
         )
-        """)
+        """
+        )
 
         # Create research results table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_results (
             id TEXT NOT NULL,
             query_id TEXT NOT NULL,
@@ -161,10 +172,12 @@ class ResearchMemoryDatabase:
             PRIMARY KEY (id, query_id, project_id),
             FOREIGN KEY (query_id, project_id) REFERENCES research_queries (id, project_id) ON DELETE CASCADE
         )
-        """)
+        """
+        )
 
         # Create research sources table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_sources (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             result_id TEXT NOT NULL,
@@ -180,10 +193,12 @@ class ResearchMemoryDatabase:
             year INTEGER,
             FOREIGN KEY (result_id, query_id, project_id) REFERENCES research_results (id, query_id, project_id) ON DELETE CASCADE
         )
-        """)
+        """
+        )
 
         # Create research visualizations table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_visualizations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             result_id TEXT NOT NULL,
@@ -192,10 +207,12 @@ class ResearchMemoryDatabase:
             visualization_data TEXT NOT NULL,
             FOREIGN KEY (result_id, query_id, project_id) REFERENCES research_results (id, query_id, project_id) ON DELETE CASCADE
         )
-        """)
+        """
+        )
 
         # Create research tool usage table
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS research_tool_usage (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id TEXT NOT NULL,
@@ -207,7 +224,8 @@ class ResearchMemoryDatabase:
             timestamp REAL NOT NULL,
             FOREIGN KEY (query_id, project_id) REFERENCES research_queries (id, project_id) ON DELETE CASCADE
         )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -252,8 +270,8 @@ class ResearchMemoryDatabase:
             updated_at=datetime.fromtimestamp(now),
         )
 
-    def get_project(self, project_id: str) -> Optional[ResearchProject]:
-        """Get a research project by ID.
+    async def get_project(self, project_id: str) -> Optional[ResearchProject]:
+        """Get a research project by ID with optimized query.
 
         Args:
             project_id: Project ID
@@ -261,41 +279,43 @@ class ResearchMemoryDatabase:
         Returns:
             Project or None if not found
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        # Get project
-        cursor.execute(
-            "SELECT id, name, description, tags, created_at, updated_at FROM research_projects WHERE id = ?",
-            (project_id,),
-        )
-
-        row = cursor.fetchone()
-        if not row:
-            conn.close()
-            return None
-
-        project_id, name, description, tags_json, created_at, updated_at = row
-
-        # Get queries for this project
-        cursor.execute(
-            "SELECT id, query, created_at FROM research_queries WHERE project_id = ?",
-            (project_id,),
-        )
-
-        queries = []
-        for query_row in cursor.fetchall():
-            query_id, query_text, query_created_at = query_row
-
-            # Get results for this query
-            cursor.execute(
-                """
-                SELECT id, topic, summary, tools_used, citation_format, bibliography, tags, created_at
-                FROM research_results
-                WHERE project_id = ? AND query_id = ?
-                """,
-                (project_id, query_id),
+        async with aiosqlite.connect(self.db_path) as conn:
+            # Get project with optimized single query approach
+            cursor = await conn.execute(
+                "SELECT id, name, description, tags, created_at, updated_at FROM research_projects WHERE id = ?",
+                (project_id,),
             )
+
+            row = await cursor.fetchone()
+            if not row:
+                return None
+
+            project_id, name, description, tags_json, created_at, updated_at = row
+
+            # Get queries for this project with optimized query
+            cursor = await conn.execute(
+                "SELECT id, query, created_at FROM research_queries WHERE project_id = ? ORDER BY created_at DESC",
+                (project_id,),
+            )
+
+            query_rows = await cursor.fetchall()
+            
+            queries = []
+            for query_row in query_rows:
+                query_id, query_text, query_created_at = query_row
+
+                # Get results for this query with optimized JOIN query to reduce N+1 problem
+                result_cursor = await conn.execute(
+                    """
+                    SELECT r.id, r.topic, r.summary, r.tools_used, r.citation_format, r.bibliography, r.tags, r.created_at,
+                           GROUP_CONCAT(s.title || '||' || COALESCE(s.url, '') || '||' || COALESCE(s.authors, '') || '||' || s.source_type) as sources
+                    FROM research_results r
+                    LEFT JOIN research_sources s ON r.id = s.result_id AND r.query_id = s.query_id AND r.project_id = s.project_id
+                    WHERE r.project_id = ? AND r.query_id = ?
+                    GROUP BY r.id
+                    """,
+                    (project_id, query_id),
+                )
 
             results = []
             for result_row in cursor.fetchall():
@@ -448,9 +468,7 @@ class ResearchMemoryDatabase:
         cursor = conn.cursor()
 
         # Generate query ID
-        cursor.execute(
-            "SELECT COUNT(*) FROM research_queries WHERE project_id = ?", (project_id,)
-        )
+        cursor.execute("SELECT COUNT(*) FROM research_queries WHERE project_id = ?", (project_id,))
         count = cursor.fetchone()[0]
         query_id = f"query_{count + 1}"
 
@@ -470,13 +488,9 @@ class ResearchMemoryDatabase:
         conn.commit()
         conn.close()
 
-        return ResearchQuery(
-            id=query_id, query=query, created_at=datetime.fromtimestamp(now)
-        )
+        return ResearchQuery(id=query_id, query=query, created_at=datetime.fromtimestamp(now))
 
-    def add_result(
-        self, project_id: str, query_id: str, result: ResearchResult
-    ) -> bool:
+    def add_result(self, project_id: str, query_id: str, result: ResearchResult) -> bool:
         """Add a result to a query.
 
         Args:

@@ -4,9 +4,9 @@ This version implements a scalable distributed memory architecture.
 """
 
 import asyncio
-import os
 import logging
-from typing import Dict, List, Any, Optional
+import os
+from typing import List
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
@@ -19,7 +19,7 @@ from src.agents.agent_architecture import create_specialized_sub_agents
 from src.agents.reinforcement_learning import (
     RewardSystem,
     RLCoordinatorAgent,
-    create_rl_agent_architecture
+    create_rl_agent_architecture,
 )
 from src.memory.distributed_memory_manager import DistributedMemoryManager
 from src.tools.bright_data_tools import BrightDataToolkit
@@ -30,8 +30,7 @@ load_dotenv()
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -48,19 +47,18 @@ if memory_type == "redis":
         "port": int(os.getenv("REDIS_PORT", "6379")),
         "db": int(os.getenv("REDIS_DB", "0")),
         "password": os.getenv("REDIS_PASSWORD", None),
-        "prefix": f"{os.getenv('REDIS_PREFIX', 'datamcp')}:"
+        "prefix": f"{os.getenv('REDIS_PREFIX', 'datamcp')}:",
     }
 elif memory_type == "mongodb":
     memory_config = {
         "connection_string": os.getenv("MONGODB_URI", "mongodb://localhost:27017/"),
-        "database_name": os.getenv("MONGODB_DB", "agent_memory")
+        "database_name": os.getenv("MONGODB_DB", "agent_memory"),
     }
 
 memory_manager = DistributedMemoryManager(
-    memory_type=memory_type,
-    config=memory_config,
-    namespace=os.getenv("MEMORY_NAMESPACE", "agent")
+    memory_type=memory_type, config=memory_config, namespace=os.getenv("MEMORY_NAMESPACE", "agent")
 )
+
 
 async def setup_rl_agent_with_distributed_memory(mcp_tools: List[BaseTool]) -> RLCoordinatorAgent:
     """Set up the reinforcement learning agent with distributed memory.
@@ -82,10 +80,11 @@ async def setup_rl_agent_with_distributed_memory(mcp_tools: List[BaseTool]) -> R
         model=model,
         db=memory_manager,  # Use distributed memory manager instead of local DB
         sub_agents=sub_agents,
-        rl_agent_type=os.getenv("RL_AGENT_TYPE", "q_learning")
+        rl_agent_type=os.getenv("RL_AGENT_TYPE", "q_learning"),
     )
 
     return rl_coordinator
+
 
 async def chat_with_distributed_memory_agent() -> None:
     """Chat with the distributed memory agent."""
@@ -121,7 +120,9 @@ async def chat_with_distributed_memory_agent() -> None:
             rl_agent = await setup_rl_agent_with_distributed_memory(mcp_tools)
 
             print(f"\n=== Distributed Memory Agent ({memory_type.upper()}) ===\n")
-            print("Type 'exit' to quit, 'feedback: <message>' to provide feedback, 'learn' to perform batch learning, or 'memory' to view memory summary.")
+            print(
+                "Type 'exit' to quit, 'feedback: <message>' to provide feedback, 'learn' to perform batch learning, or 'memory' to view memory summary."
+            )
 
             # Initialize conversation history
             history = []
@@ -153,11 +154,16 @@ async def chat_with_distributed_memory_agent() -> None:
                         print("No conversation to provide feedback for.")
                         continue
 
-                    feedback = user_input[len("feedback:"):].strip()
+                    feedback = user_input[len("feedback:") :].strip()
 
                     # Get the last request and response
-                    last_request = next((msg["content"] for msg in reversed(history) if msg["role"] == "user"), None)
-                    last_response = next((msg["content"] for msg in reversed(history) if msg["role"] == "assistant"), None)
+                    last_request = next(
+                        (msg["content"] for msg in reversed(history) if msg["role"] == "user"), None
+                    )
+                    last_response = next(
+                        (msg["content"] for msg in reversed(history) if msg["role"] == "assistant"),
+                        None,
+                    )
 
                     if last_request and last_response:
                         # Update from feedback
@@ -172,8 +178,8 @@ async def chat_with_distributed_memory_agent() -> None:
                                 "request": last_request,
                                 "response": last_response,
                                 "feedback": feedback,
-                                "timestamp": time.time()
-                            }
+                                "timestamp": time.time(),
+                            },
                         )
 
                         print("Feedback recorded. Thank you!")
@@ -201,10 +207,12 @@ async def chat_with_distributed_memory_agent() -> None:
 
                     # Add to history
                     history.append({"role": "user", "content": user_input})
-                    history.append({
-                        "role": "assistant",
-                        "content": result["response"] if result["success"] else result["error"]
-                    })
+                    history.append(
+                        {
+                            "role": "assistant",
+                            "content": result["response"] if result["success"] else result["error"],
+                        }
+                    )
 
                     # Save conversation history to distributed memory
                     await memory_manager.save_conversation_history(history)
@@ -217,6 +225,7 @@ async def chat_with_distributed_memory_agent() -> None:
                 except Exception as e:
                     error_message = format_error_for_user(e)
                     print(f"\nError: {error_message}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_distributed_memory_agent())

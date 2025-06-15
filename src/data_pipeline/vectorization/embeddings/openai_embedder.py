@@ -2,17 +2,18 @@
 OpenAI embedder implementation.
 """
 
-import logging
 import time
 from typing import List, Optional
 
 try:
     import openai
+
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
 
 from .base_embedder import BaseEmbedder, EmbeddingConfig, EmbeddingResult
+
 
 class OpenAIEmbedder(BaseEmbedder):
     """OpenAI embedder using OpenAI's embedding models."""
@@ -34,8 +35,7 @@ class OpenAIEmbedder(BaseEmbedder):
         """
         if not HAS_OPENAI:
             raise ImportError(
-                "OpenAI embedder requires openai package. "
-                "Install with: pip install openai"
+                "OpenAI embedder requires openai package. " "Install with: pip install openai"
             )
 
         super().__init__(config)
@@ -72,9 +72,7 @@ class OpenAIEmbedder(BaseEmbedder):
 
         def _embed():
             response = self.client.embeddings.create(
-                model=self.config.model_name,
-                input=text,
-                **self.config.custom_options
+                model=self.config.model_name, input=text, **self.config.custom_options
             )
             return response
 
@@ -92,13 +90,10 @@ class OpenAIEmbedder(BaseEmbedder):
         processing_time = time.time() - start_time
 
         # Get token count from usage if available
-        token_count = getattr(response, 'usage', {}).get('total_tokens')
+        token_count = getattr(response, "usage", {}).get("total_tokens")
 
         return self._create_embedding_result(
-            text=text,
-            embedding=embedding,
-            processing_time=processing_time,
-            token_count=token_count
+            text=text, embedding=embedding, processing_time=processing_time, token_count=token_count
         )
 
     def embed_batch(self, texts: List[str]) -> List[EmbeddingResult]:
@@ -122,7 +117,7 @@ class OpenAIEmbedder(BaseEmbedder):
         batch_size = min(self.config.batch_size, 2048)  # OpenAI limit
 
         for i in range(0, len(processed_texts), batch_size):
-            batch_texts = processed_texts[i:i + batch_size]
+            batch_texts = processed_texts[i : i + batch_size]
             batch_results = self._embed_batch_chunk(batch_texts)
             results.extend(batch_results)
 
@@ -142,9 +137,7 @@ class OpenAIEmbedder(BaseEmbedder):
 
         def _embed():
             response = self.client.embeddings.create(
-                model=self.config.model_name,
-                input=texts,
-                **self.config.custom_options
+                model=self.config.model_name, input=texts, **self.config.custom_options
             )
             return response
 
@@ -155,7 +148,7 @@ class OpenAIEmbedder(BaseEmbedder):
         processing_time = time.time() - start_time
 
         # Get token count from usage if available
-        total_tokens = getattr(response, 'usage', {}).get('total_tokens', 0)
+        total_tokens = getattr(response, "usage", {}).get("total_tokens", 0)
         avg_tokens_per_text = total_tokens // len(texts) if total_tokens else None
 
         # Create results
@@ -171,7 +164,7 @@ class OpenAIEmbedder(BaseEmbedder):
                 text=text,
                 embedding=embedding,
                 processing_time=processing_time / len(texts),  # Distribute time
-                token_count=avg_tokens_per_text
+                token_count=avg_tokens_per_text,
             )
             results.append(result)
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from src.tools.research_assistant_tools import save_tool, search_tool, wiki_tool
 
+
 # Import mock tools for testing
 class MockTool:
     def __init__(self, name):
@@ -14,6 +15,7 @@ class MockTool:
 
     def run(self, query):
         return f"Mock {self.name} result for: {query}"
+
 
 # Create mock tools for academic sources
 google_scholar_tool = MockTool("Google Scholar")
@@ -38,6 +40,7 @@ generate_chart_tool = MockTool("Chart Generator")
 generate_mind_map_tool = MockTool("Mind Map Generator")
 generate_timeline_tool = MockTool("Timeline Generator")
 generate_network_diagram_tool = MockTool("Network Diagram Generator")
+
 
 # Create mock research project manager
 class MockResearchProjectManager:
@@ -99,8 +102,10 @@ class MockResearchProjectManager:
 
         return False
 
+
 # Create a mock research project manager instance
 research_project_manager = MockResearchProjectManager()
+
 
 # Create mock models
 class Source:
@@ -109,12 +114,14 @@ class Source:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
 class SourceType:
     WEB = "web"
     WIKIPEDIA = "wikipedia"
     ACADEMIC = "academic"
     BOOK = "book"
     JOURNAL = "journal"
+
 
 class ResearchResult:
     def __init__(self, topic, summary, sources, tools_used, tags=None):
@@ -124,7 +131,9 @@ class ResearchResult:
         self.tools_used = tools_used
         self.tags = tags or []
 
+
 load_dotenv()
+
 
 class ResearchResponse(BaseModel):
     """
@@ -135,6 +144,7 @@ class ResearchResponse(BaseModel):
     summary: str
     sources: list[str]
     tools_used: list[str]
+
 
 # Define the enhanced research response model
 class EnhancedResearchResponseModel(BaseModel):
@@ -153,8 +163,10 @@ class EnhancedResearchResponseModel(BaseModel):
     visualizations: List[Dict] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
 
+
 # Use a mock agent for testing purposes
 print("Using an enhanced mock research agent for testing purposes.")
+
 
 # Create an enhanced mock agent that returns predefined responses with advanced features
 class EnhancedMockResearchAgent:
@@ -433,8 +445,10 @@ class EnhancedMockResearchAgent:
         # Return the response in the expected format
         return {"output": json.dumps(response)}
 
+
 # Create the enhanced mock agent
 agent_executor = EnhancedMockResearchAgent()
+
 
 def run_research_assistant():
     """
@@ -451,19 +465,13 @@ def run_research_assistant():
     print("=== Enhanced Research Assistant ===")
     print("Type 'exit' or 'quit' to end the session.")
     print("Type 'save' to save the last research results to a file.")
-    print(
-        "Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx)."
-    )
+    print("Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx).")
     print("Type 'projects' to list all research projects.")
     print("Type 'project create <name>' to create a new project.")
     print("Type 'project select <id>' to select a project.")
     print("Type 'project info' to view current project details.")
-    print(
-        "Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee)."
-    )
-    print(
-        "Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network)."
-    )
+    print("Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee).")
+    print("Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network).")
     print("Type 'help' to see all available commands.")
 
     try:
@@ -471,9 +479,7 @@ def run_research_assistant():
         projects = research_project_manager.get_all_projects()
         if projects:
             current_project = projects[0]
-            print(
-                f"Using project: {current_project['name']} (ID: {current_project['id']})"
-            )
+            print(f"Using project: {current_project['name']} (ID: {current_project['id']})")
         else:
             current_project = research_project_manager.create_project(
                 name="General Research",
@@ -501,16 +507,12 @@ def run_research_assistant():
                 print("\n=== Available Commands ===")
                 print("exit, quit - End the session")
                 print("save - Save the last research results to a file")
-                print(
-                    "export <format> - Export results (formats: md, html, pdf, docx, pptx)"
-                )
+                print("export <format> - Export results (formats: md, html, pdf, docx, pptx)")
                 print("projects - List all research projects")
                 print("project create <name> - Create a new project")
                 print("project select <id> - Select a project")
                 print("project info - View current project details")
-                print(
-                    "citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)"
-                )
+                print("citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)")
                 print(
                     "visualize <type> - Create a visualization (chart, mind_map, timeline, network)"
                 )
@@ -518,9 +520,7 @@ def run_research_assistant():
                 continue
 
             elif command.lower() == "save" and last_response:
-                filename = input(
-                    "Enter filename to save results (default: research_output.txt): "
-                )
+                filename = input("Enter filename to save results (default: research_output.txt): ")
                 if not filename.strip():
                     filename = "research_output.txt"
 
@@ -536,10 +536,7 @@ def run_research_assistant():
                         content += f"{i}. {source}\n"
 
                 # Add bibliography if available
-                if (
-                    hasattr(last_response, "bibliography")
-                    and last_response.bibliography
-                ):
+                if hasattr(last_response, "bibliography") and last_response.bibliography:
                     content += f"\nBibliography ({last_response.citation_format}):\n{last_response.bibliography}\n"
 
                 # Save the content
@@ -550,9 +547,7 @@ def run_research_assistant():
             elif command.lower().startswith("export ") and last_response:
                 parts = command.split()
                 if len(parts) < 2:
-                    print(
-                        "Please specify an export format (md, html, pdf, docx, pptx)."
-                    )
+                    print("Please specify an export format (md, html, pdf, docx, pptx).")
                     continue
 
                 export_format = parts[1].lower()
@@ -571,24 +566,16 @@ def run_research_assistant():
                 }
 
                 # Add bibliography if available
-                if (
-                    hasattr(last_response, "bibliography")
-                    and last_response.bibliography
-                ):
+                if hasattr(last_response, "bibliography") and last_response.bibliography:
                     research_data["bibliography"] = last_response.bibliography
                     research_data["citation_format"] = last_response.citation_format
 
                 # Add visualizations if available
-                if (
-                    hasattr(last_response, "visualizations")
-                    and last_response.visualizations
-                ):
+                if hasattr(last_response, "visualizations") and last_response.visualizations:
                     research_data["visualizations"] = last_response.visualizations
 
                 # Export the research data
-                export_input = json.dumps(
-                    {"research_data": research_data, "filename": filename}
-                )
+                export_input = json.dumps({"research_data": research_data, "filename": filename})
 
                 try:
                     if export_format == "md":
@@ -635,11 +622,7 @@ def run_research_assistant():
 
                 description = input("Enter project description (optional): ")
                 tags_input = input("Enter project tags (comma-separated, optional): ")
-                tags = (
-                    [tag.strip() for tag in tags_input.split(",")]
-                    if tags_input.strip()
-                    else []
-                )
+                tags = [tag.strip() for tag in tags_input.split(",")] if tags_input.strip() else []
 
                 project = research_project_manager.create_project(
                     name=name, description=description, tags=tags
@@ -715,9 +698,7 @@ def run_research_assistant():
                             else:
                                 source_type = "unknown"
 
-                            source_types[source_type] = (
-                                source_types.get(source_type, 0) + 1
-                            )
+                            source_types[source_type] = source_types.get(source_type, 0) + 1
 
                         chart_data = {
                             "labels": list(source_types.keys()),
@@ -743,9 +724,11 @@ def run_research_assistant():
                                 {
                                     "name": "Sources",
                                     "sub_branches": [
-                                        source.get("title", source)
-                                        if isinstance(source, dict)
-                                        else source
+                                        (
+                                            source.get("title", source)
+                                            if isinstance(source, dict)
+                                            else source
+                                        )
                                         for source in last_response.sources[:3]
                                     ],
                                 },
@@ -820,13 +803,9 @@ def run_research_assistant():
                         # Add source nodes
                         for i, source in enumerate(last_response.sources[:3], 3):
                             source_label = (
-                                source.get("title", source)
-                                if isinstance(source, dict)
-                                else source
+                                source.get("title", source) if isinstance(source, dict) else source
                             )
-                            network_data["nodes"].append(
-                                {"id": i, "label": source_label}
-                            )
+                            network_data["nodes"].append({"id": i, "label": source_label})
                             network_data["edges"].append(
                                 {"source": 1, "target": i, "label": "includes"}
                             )
@@ -930,13 +909,9 @@ def run_research_assistant():
 
                 # Print project and query information
                 if enhanced_response.project_id:
-                    project = research_project_manager.get_project(
-                        enhanced_response.project_id
-                    )
+                    project = research_project_manager.get_project(enhanced_response.project_id)
                     if project:
-                        print(
-                            f"\nProject: {project['name']} (ID: {enhanced_response.project_id})"
-                        )
+                        print(f"\nProject: {project['name']} (ID: {enhanced_response.project_id})")
 
                 # Print tags if available
                 if enhanced_response.tags:
@@ -961,6 +936,7 @@ def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the Enhanced Research Assistant!")
+
 
 if __name__ == "__main__":
     run_research_assistant()

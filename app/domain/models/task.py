@@ -17,6 +17,7 @@ from .base import (
     ValidationError,
 )
 
+
 class TaskStatus(str, Enum):
     """Task execution status."""
 
@@ -29,6 +30,7 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
     TIMEOUT = "timeout"
 
+
 class TaskPriority(str, Enum):
     """Task priority levels."""
 
@@ -36,6 +38,7 @@ class TaskPriority(str, Enum):
     NORMAL = "normal"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class TaskType(str, Enum):
     """Types of tasks."""
@@ -47,6 +50,7 @@ class TaskType(str, Enum):
     SCALING_OPERATION = "scaling_operation"
     HEALTH_CHECK = "health_check"
     CUSTOM = "custom"
+
 
 class TaskProgress(BaseValueObject):
     """Task progress information."""
@@ -77,6 +81,7 @@ class TaskProgress(BaseValueObject):
         """Check if task is complete."""
         return self.percentage >= 100.0 or self.completed_steps >= self.total_steps
 
+
 class TaskResult(BaseValueObject):
     """Task execution result."""
 
@@ -95,6 +100,7 @@ class TaskResult(BaseValueObject):
             raise ValidationError("Execution time cannot be negative")
         return v
 
+
 class TaskDependency(BaseValueObject):
     """Task dependency specification."""
 
@@ -107,6 +113,7 @@ class TaskDependency(BaseValueObject):
         if not v or not v.strip():
             raise ValidationError("Task ID cannot be empty")
         return v.strip()
+
 
 class TaskCreatedEvent(DomainEvent):
     """Event raised when a task is created."""
@@ -124,6 +131,7 @@ class TaskCreatedEvent(DomainEvent):
             },
         )
 
+
 class TaskStatusChangedEvent(DomainEvent):
     """Event raised when task status changes."""
 
@@ -138,6 +146,7 @@ class TaskStatusChangedEvent(DomainEvent):
                 "new_status": new_status.value,
             },
         )
+
 
 class TaskProgressUpdatedEvent(DomainEvent):
     """Event raised when task progress is updated."""
@@ -156,6 +165,7 @@ class TaskProgressUpdatedEvent(DomainEvent):
             },
         )
 
+
 class TaskCompletedEvent(DomainEvent):
     """Event raised when a task is completed."""
 
@@ -172,6 +182,7 @@ class TaskCompletedEvent(DomainEvent):
                 "error_code": result.error_code,
             },
         )
+
 
 class Task(AggregateRoot):
     """Task aggregate root."""

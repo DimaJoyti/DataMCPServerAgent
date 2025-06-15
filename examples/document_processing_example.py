@@ -2,9 +2,7 @@
 Example demonstrating document processing pipeline with parsing, chunking, and metadata extraction.
 """
 
-import asyncio
 import logging
-import os
 from pathlib import Path
 
 # Configure logging
@@ -15,14 +13,16 @@ logging.basicConfig(
 
 # Add src to path for imports
 import sys
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.data_pipeline.document_processing import (
-    DocumentProcessor,
+    ChunkingConfig,
     DocumentProcessingConfig,
+    DocumentProcessor,
     ParsingConfig,
-    ChunkingConfig
 )
+
 
 def create_sample_documents():
     """Create sample documents for testing."""

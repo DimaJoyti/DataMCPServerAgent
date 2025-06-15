@@ -12,6 +12,7 @@ from langchain_core.tools import BaseTool
 from src.memory.memory_persistence import MemoryDatabase
 from src.utils.error_handlers import format_error_for_user
 
+
 class ResearchReportsAgent:
     """Agent for generating comprehensive research reports."""
 
@@ -20,7 +21,7 @@ class ResearchReportsAgent:
         model: ChatAnthropic,
         tools: List[BaseTool],
         memory_db: MemoryDatabase,
-        report_templates: Dict[str, Any] = None
+        report_templates: Dict[str, Any] = None,
     ):
         """Initialize the research reports agent.
 
@@ -36,10 +37,10 @@ class ResearchReportsAgent:
         self.report_templates = report_templates or self._get_default_templates()
 
         # Initialize components
-        from src.agents.research_reports.data_collector import DataCollector
         from src.agents.research_reports.data_analyzer import DataAnalyzer
-        from src.agents.research_reports.report_generator import ReportGenerator
+        from src.agents.research_reports.data_collector import DataCollector
         from src.agents.research_reports.report_formatter import ReportFormatter
+        from src.agents.research_reports.report_generator import ReportGenerator
 
         self.data_collector = DataCollector(model, tools, memory_db)
         self.data_analyzer = DataAnalyzer(model, memory_db)
@@ -61,9 +62,9 @@ class ResearchReportsAgent:
                     "Findings",
                     "Analysis",
                     "Conclusion",
-                    "Recommendations"
+                    "Recommendations",
                 ],
-                "description": "Standard research report template with introduction, findings, and recommendations."
+                "description": "Standard research report template with introduction, findings, and recommendations.",
             },
             "academic": {
                 "sections": [
@@ -74,9 +75,9 @@ class ResearchReportsAgent:
                     "Results",
                     "Discussion",
                     "Conclusion",
-                    "References"
+                    "References",
                 ],
-                "description": "Academic research report template following scholarly conventions."
+                "description": "Academic research report template following scholarly conventions.",
             },
             "business": {
                 "sections": [
@@ -87,10 +88,10 @@ class ResearchReportsAgent:
                     "Key Findings",
                     "Strategic Implications",
                     "Recommendations",
-                    "Action Plan"
+                    "Action Plan",
                 ],
-                "description": "Business-oriented research report template focused on market analysis and strategic recommendations."
-            }
+                "description": "Business-oriented research report template focused on market analysis and strategic recommendations.",
+            },
         }
 
     async def generate_research_report(
@@ -99,7 +100,7 @@ class ResearchReportsAgent:
         depth: str = "medium",
         template: str = "standard",
         format_type: str = "markdown",
-        audience: str = "general"
+        audience: str = "general",
     ) -> Dict[str, Any]:
         """Generate a comprehensive research report on a topic.
 
@@ -130,9 +131,7 @@ class ResearchReportsAgent:
 
             # Step 4: Format report
             print(f"Formatting report as {format_type}...")
-            formatted_report = await self.report_formatter.format_report(
-                report, format_type
-            )
+            formatted_report = await self.report_formatter.format_report(report, format_type)
 
             return {
                 "topic": topic,
@@ -143,8 +142,8 @@ class ResearchReportsAgent:
                     "template": template,
                     "format_type": format_type,
                     "audience": audience,
-                    "timestamp": time.time()
-                }
+                    "timestamp": time.time(),
+                },
             }
         except Exception as e:
             error_message = format_error_for_user(e)
@@ -157,8 +156,8 @@ class ResearchReportsAgent:
                     "template": template,
                     "format_type": format_type,
                     "audience": audience,
-                    "timestamp": time.time()
-                }
+                    "timestamp": time.time(),
+                },
             }
 
     async def process_request(self, request: str) -> str:
@@ -174,7 +173,7 @@ class ResearchReportsAgent:
             # Check if this is a research request
             if request.lower().startswith("research "):
                 # Extract the topic
-                topic = request[len("research "):].strip()
+                topic = request[len("research ") :].strip()
 
                 # Generate research report
                 result = await self.generate_research_report(topic)
@@ -188,8 +187,10 @@ class ResearchReportsAgent:
                 from langchain_core.messages import HumanMessage, SystemMessage
 
                 messages = [
-                    SystemMessage(content="You are a research assistant that helps users find information and generate comprehensive research reports."),
-                    HumanMessage(content=request)
+                    SystemMessage(
+                        content="You are a research assistant that helps users find information and generate comprehensive research reports."
+                    ),
+                    HumanMessage(content=request),
                 ]
 
                 response = await self.model.ainvoke(messages)

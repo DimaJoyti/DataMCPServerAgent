@@ -2,11 +2,11 @@
 Monitoring Configuration Management
 """
 
+import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -124,12 +124,12 @@ class DashboardConfig:
 @dataclass
 class MonitoringConfig:
     """Main monitoring configuration"""
-    
+
     # Core settings
     project_root: str = "."
     data_directory: str = "monitoring/data"
     log_level: str = "INFO"
-    
+
     # Component configurations
     github: GitHubConfig = field(default_factory=GitHubConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
@@ -139,7 +139,7 @@ class MonitoringConfig:
     testing: TestingConfig = field(default_factory=TestingConfig)
     documentation: DocumentationConfig = field(default_factory=DocumentationConfig)
     dashboard: DashboardConfig = field(default_factory=DashboardConfig)
-    
+
     @classmethod
     def from_file(cls, config_path: str) -> "MonitoringConfig":
         """Load configuration from JSON file"""
@@ -149,17 +149,17 @@ class MonitoringConfig:
             config = cls()
             config.save_to_file(config_path)
             return config
-        
-        with open(path, 'r') as f:
+
+        with open(path) as f:
             data = json.load(f)
-        
+
         return cls(**data)
-    
+
     @classmethod
     def from_env(cls) -> "MonitoringConfig":
         """Load configuration from environment variables"""
         config = cls()
-        
+
         # GitHub configuration
         if os.getenv("GITHUB_TOKEN"):
             config.github.token = os.getenv("GITHUB_TOKEN")
@@ -167,35 +167,35 @@ class MonitoringConfig:
             config.github.owner = os.getenv("GITHUB_OWNER")
         if os.getenv("GITHUB_REPO"):
             config.github.repo = os.getenv("GITHUB_REPO")
-        
+
         # Notification configuration
         if os.getenv("SLACK_WEBHOOK_URL"):
             config.notifications.slack_enabled = True
             config.notifications.slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-        
+
         if os.getenv("DISCORD_WEBHOOK_URL"):
             config.notifications.discord_enabled = True
             config.notifications.discord_webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
-        
+
         # Dashboard configuration
         if os.getenv("DASHBOARD_HOST"):
             config.dashboard.host = os.getenv("DASHBOARD_HOST")
         if os.getenv("DASHBOARD_PORT"):
             config.dashboard.port = int(os.getenv("DASHBOARD_PORT"))
-        
+
         return config
-    
+
     def save_to_file(self, config_path: str) -> None:
         """Save configuration to JSON file"""
         path = Path(config_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Convert to dict for JSON serialization
         config_dict = self._to_dict()
-        
+
         with open(path, 'w') as f:
             json.dump(config_dict, f, indent=2)
-    
+
     def _to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         def convert_dataclass(obj):
@@ -207,24 +207,24 @@ class MonitoringConfig:
                 return {k: convert_dataclass(v) for k, v in obj.items()}
             else:
                 return obj
-        
+
         return convert_dataclass(self)
-    
+
     def validate(self) -> List[str]:
         """Validate configuration and return list of issues"""
         issues = []
-        
+
         # Check GitHub token if CI/CD monitoring is enabled
         if self.cicd.enabled and not self.github.token:
             issues.append("GitHub token required for CI/CD monitoring")
-        
+
         # Check notification settings
         if self.notifications.slack_enabled and not self.notifications.slack_webhook_url:
             issues.append("Slack webhook URL required when Slack notifications enabled")
-        
+
         if self.notifications.discord_enabled and not self.notifications.discord_webhook_url:
             issues.append("Discord webhook URL required when Discord notifications enabled")
-        
+
         # Check data directory
         data_dir = Path(self.data_directory)
         if not data_dir.exists():
@@ -232,5 +232,5 @@ class MonitoringConfig:
                 data_dir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
                 issues.append(f"Cannot create data directory: {e}")
-        
+
         return issues

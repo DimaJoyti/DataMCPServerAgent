@@ -3,14 +3,14 @@
 Quick fix for basic code issues
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_trailing_whitespace(file_path: Path) -> bool:
     """Remove trailing whitespace from lines"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # Remove trailing whitespace
@@ -33,21 +33,21 @@ def fix_trailing_whitespace(file_path: Path) -> bool:
         return False
 
 def fix_long_lines(file_path: Path) -> bool:
-    """Базове виправлення довгих рядків"""
+    """Basic fix for long lines"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         modified = False
         new_lines = []
 
         for line in lines:
-            # Видалення trailing whitespace
+            # Remove trailing whitespace
             clean_line = line.rstrip() + '\n' if line.strip() else '\n'
 
-            # Базове розбиття довгих рядків з коментарями
+            # Basic splitting of long lines with comments
             if len(clean_line) > 100 and clean_line.strip().startswith('#'):
-                # Розбиття довгих коментарів
+                # Splitting long comments
                 words = clean_line.strip().split()
                 if len(words) > 1:
                     current_line = words[0]
@@ -70,16 +70,16 @@ def fix_long_lines(file_path: Path) -> bool:
 
         return modified
     except Exception as e:
-        print(f"Помилка при обробці довгих рядків в {file_path}: {e}")
+        print(f"Error processing long lines in {file_path}: {e}")
         return False
 
 def fix_blank_lines(file_path: Path) -> bool:
-    """Виправлення пустих рядків з пробілами"""
+    """Fix blank lines with spaces"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
-        # Заміна пустих рядків з пробілами на справді пустіші рядки
+        # Replace blank lines with spaces with truly blank lines
         fixed_content = re.sub(r'^\s+$', '', content, flags=re.MULTILINE)
 
         if content != fixed_content:
@@ -89,26 +89,26 @@ def fix_blank_lines(file_path: Path) -> bool:
 
         return False
     except Exception as e:
-        print(f"Помилка при виправленні пустих рядків в {file_path}: {e}")
+        print(f"Error fixing blank lines in {file_path}: {e}")
         return False
 
 def fix_unused_imports(file_path: Path) -> bool:
-    """Базове видалення очевидно невикористаних імпортів"""
+    """Basic removal of obviously unused imports"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         modified = False
         new_lines = []
 
         for line in lines:
-            # Видалення очевидно невикористаних імпортів
+            # Remove obviously unused imports
             if (line.strip().startswith('from typing import') and
                 ('Union' in line or 'List' in line or 'Type' in line)):
-                # Перевіряємо чи використовуються ці типи в файлі
+                # Check if these types are used in the file
                 content = ''.join(lines)
 
-                # Простий пошук використання
+                # Simple usage search
                 if 'Union' in line and 'Union[' not in content:
                     line = line.replace('Union, ', '').replace(', Union', '').replace('Union', '')
                     modified = True
@@ -121,7 +121,7 @@ def fix_unused_imports(file_path: Path) -> bool:
                     line = line.replace('Type, ', '').replace(', Type', '').replace('Type', '')
                     modified = True
 
-                # Очищення пустих імпортів
+                # Clean up empty imports
                 if line.strip() in ['from typing import', 'from typing import ']:
                     continue
 
@@ -133,15 +133,15 @@ def fix_unused_imports(file_path: Path) -> bool:
 
         return modified
     except Exception as e:
-        print(f"Помилка при видаленні невикористаних імпортів в {file_path}: {e}")
+        print(f"Error removing unused imports in {file_path}: {e}")
         return False
 
 def main():
-    """Головна функція"""
+    """Main function"""
     project_root = Path(__file__).parent.parent
     directories = ["src", "app", "examples", "scripts", "tests"]
 
-    print("🚀 Швидке виправлення проблем коду...")
+    print("🚀 Quick code fixes...")
 
     total_files = 0
     fixed_files = 0
@@ -149,43 +149,43 @@ def main():
     for directory in directories:
         dir_path = project_root / directory
         if not dir_path.exists():
-            print(f"⚠️ Директорія {directory} не існує")
+            print(f"⚠️ Directory {directory} does not exist")
             continue
 
-        print(f"\n📁 Обробка директорії: {directory}")
+        print(f"\n📁 Processing directory: {directory}")
 
         for py_file in dir_path.rglob("*.py"):
             total_files += 1
             file_fixed = False
 
-            # Виправлення trailing whitespace
+            # Fix trailing whitespace
             if fix_trailing_whitespace(py_file):
                 file_fixed = True
 
-            # Виправлення пустих рядків з пробілами
+            # Fix blank lines with spaces
             if fix_blank_lines(py_file):
                 file_fixed = True
 
-            # Базове виправлення довгих рядків
+            # Basic fix for long lines
             if fix_long_lines(py_file):
                 file_fixed = True
 
-            # Видалення невикористаних імпортів
+            # Remove unused imports
             if fix_unused_imports(py_file):
                 file_fixed = True
 
             if file_fixed:
                 fixed_files += 1
-                print(f"  ✅ Виправлено: {py_file.relative_to(project_root)}")
+                print(f"  ✅ Fixed: {py_file.relative_to(project_root)}")
 
-    print(f"\n📊 Підсумок:")
-    print(f"  Всього файлів: {total_files}")
-    print(f"  Виправлено файлів: {fixed_files}")
+    print("\n📊 Summary:")
+    print(f"  Total files: {total_files}")
+    print(f"  Fixed files: {fixed_files}")
 
     if fixed_files > 0:
-        print("✅ Виправлення завершено!")
+        print("✅ Fixing completed!")
     else:
-        print("ℹ️ Проблем не знайдено")
+        print("ℹ️ No issues found")
 
 if __name__ == "__main__":
     main()

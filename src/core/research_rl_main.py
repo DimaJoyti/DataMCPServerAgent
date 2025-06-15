@@ -29,6 +29,7 @@ research_assistant = RLEnhancedResearchAssistant(
     exploration_rate=float(os.getenv("RL_EXPLORATION_RATE", "0.2")),
 )
 
+
 async def run_research_assistant():
     """
     Run the RL-enhanced research assistant with user input and handle the response.
@@ -44,19 +45,13 @@ async def run_research_assistant():
     print("=== RL-Enhanced Research Assistant ===")
     print("Type 'exit' or 'quit' to end the session.")
     print("Type 'save' to save the last research results to a file.")
-    print(
-        "Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx)."
-    )
+    print("Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx).")
     print("Type 'projects' to list all research projects.")
     print("Type 'project create <n>' to create a new project.")
     print("Type 'project select <id>' to select a project.")
     print("Type 'project info' to view current project details.")
-    print(
-        "Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee)."
-    )
-    print(
-        "Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network)."
-    )
+    print("Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee).")
+    print("Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network).")
     print("Type 'search projects <term>' to search for projects.")
     print("Type 'search queries <term>' to search for queries.")
     print("Type 'search results <term>' to search for results.")
@@ -76,9 +71,7 @@ async def run_research_assistant():
                 description="Default project for research queries",
                 tags=["general", "research"],
             )
-            print(
-                f"Created default project: {current_project.name} (ID: {current_project.id})"
-            )
+            print(f"Created default project: {current_project.name} (ID: {current_project.id})")
 
         while True:
             command = input("\nWhat can I help you research? ")
@@ -97,25 +90,19 @@ async def run_research_assistant():
                 print("\n=== Available Commands ===")
                 print("exit, quit - End the session")
                 print("save - Save the last research results to a file")
-                print(
-                    "export <format> - Export results (formats: md, html, pdf, docx, pptx)"
-                )
+                print("export <format> - Export results (formats: md, html, pdf, docx, pptx)")
                 print("projects - List all research projects")
                 print("project create <n> - Create a new project")
                 print("project select <id> - Select a project")
                 print("project info - View current project details")
-                print(
-                    "citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)"
-                )
+                print("citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)")
                 print(
                     "visualize <type> - Create a visualization (chart, mind_map, timeline, network)"
                 )
                 print("search projects <term> - Search for projects")
                 print("search queries <term> - Search for queries")
                 print("search results <term> - Search for results")
-                print(
-                    "feedback <rating> - Provide feedback on the last research result"
-                )
+                print("feedback <rating> - Provide feedback on the last research result")
                 print("rl info - View reinforcement learning information")
                 print("Any other input will be treated as a research query")
                 continue
@@ -143,9 +130,7 @@ async def run_research_assistant():
                     }
 
                     # Get the last query
-                    last_query = (
-                        chat_history[-1][0] if chat_history else "Unknown query"
-                    )
+                    last_query = chat_history[-1][0] if chat_history else "Unknown query"
 
                     # Update from feedback
                     learning_results = await research_assistant.update_from_feedback(
@@ -159,9 +144,7 @@ async def run_research_assistant():
                     print(f"Tools used: {', '.join(learning_results['tools_used'])}")
                     print(f"Reward: {learning_results['reward']}")
                     print("\nReward components:")
-                    for component, value in learning_results[
-                        "reward_components"
-                    ].items():
+                    for component, value in learning_results["reward_components"].items():
                         print(f"- {component}: {value}")
                     print("\nFeedback analysis:")
                     print(learning_results["feedback"])
@@ -185,9 +168,7 @@ async def run_research_assistant():
                             break
                         print(f"- State: {state}")
                         print("  Actions:")
-                        sorted_actions = sorted(
-                            actions.items(), key=lambda x: x[1], reverse=True
-                        )
+                        sorted_actions = sorted(actions.items(), key=lambda x: x[1], reverse=True)
                         for action, value in sorted_actions[:3]:
                             print(f"  - {action}: {value:.2f}")
 
@@ -205,15 +186,9 @@ async def run_research_assistant():
 
                     # Get learning parameters
                     print("\nLearning parameters:")
-                    print(
-                        f"- Learning rate: {research_assistant.rl_agent.learning_rate}"
-                    )
-                    print(
-                        f"- Discount factor: {research_assistant.rl_agent.discount_factor}"
-                    )
-                    print(
-                        f"- Exploration rate: {research_assistant.rl_agent.exploration_rate}"
-                    )
+                    print(f"- Learning rate: {research_assistant.rl_agent.learning_rate}")
+                    print(f"- Discount factor: {research_assistant.rl_agent.discount_factor}")
+                    print(f"- Exploration rate: {research_assistant.rl_agent.exploration_rate}")
 
                 except Exception as e:
                     print(f"Error retrieving RL information: {e}")
@@ -246,11 +221,7 @@ async def run_research_assistant():
 
                 description = input("Enter project description (optional): ")
                 tags_input = input("Enter project tags (comma-separated, optional): ")
-                tags = (
-                    [tag.strip() for tag in tags_input.split(",")]
-                    if tags_input.strip()
-                    else []
-                )
+                tags = [tag.strip() for tag in tags_input.split(",")] if tags_input.strip() else []
 
                 project = research_assistant.create_project(
                     name=name, description=description, tags=tags
@@ -340,9 +311,7 @@ async def run_research_assistant():
                     print(f"\n=== Queries matching '{search_term}' ===")
                     for i, query in enumerate(queries, 1):
                         print(f"{i}. {query['query']} (ID: {query['query_id']})")
-                        print(
-                            f"   Project: {query['project_name']} (ID: {query['project_id']})"
-                        )
+                        print(f"   Project: {query['project_name']} (ID: {query['project_id']})")
                         print(f"   Created: {query['created_at']}")
                         print()
                 continue
@@ -362,9 +331,7 @@ async def run_research_assistant():
                     for i, result in enumerate(results, 1):
                         print(f"{i}. {result['topic']} (ID: {result['result_id']})")
                         print(f"   Query: {result['query']} (ID: {result['query_id']})")
-                        print(
-                            f"   Project: {result['project_name']} (ID: {result['project_id']})"
-                        )
+                        print(f"   Project: {result['project_name']} (ID: {result['project_id']})")
                         print(f"   Summary: {result['summary'][:100]}...")
                         print(f"   Tags: {', '.join(result['tags'])}")
                         print(f"   Created: {result['created_at']}")
@@ -448,22 +415,16 @@ async def run_research_assistant():
 
                 # Print project and query information
                 if enhanced_response.project_id:
-                    project = research_assistant.get_project(
-                        enhanced_response.project_id
-                    )
+                    project = research_assistant.get_project(enhanced_response.project_id)
                     if project:
-                        print(
-                            f"\nProject: {project.name} (ID: {enhanced_response.project_id})"
-                        )
+                        print(f"\nProject: {project.name} (ID: {enhanced_response.project_id})")
 
                 # Print tags if available
                 if enhanced_response.tags:
                     print(f"\nTags: {', '.join(enhanced_response.tags)}")
 
                 # Prompt for feedback
-                print(
-                    "\nYou can provide feedback on this research by typing 'feedback <rating>'."
-                )
+                print("\nYou can provide feedback on this research by typing 'feedback <rating>'.")
 
             except Exception as e:
                 print(f"Error processing response: {e}")
@@ -480,6 +441,7 @@ async def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the RL-Enhanced Research Assistant!")
+
 
 if __name__ == "__main__":
     asyncio.run(run_research_assistant())

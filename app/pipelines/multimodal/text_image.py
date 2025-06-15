@@ -17,12 +17,14 @@ import numpy as np
 # Optional dependencies
 try:
     from PIL import Image
+
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
 
 try:
     import pytesseract
+
     PYTESSERACT_AVAILABLE = True
 except ImportError:
     PYTESSERACT_AVAILABLE = False
@@ -37,6 +39,7 @@ from .base import (
     ProcessingMetrics,
     ProcessorFactory,
 )
+
 
 class ImageAnalyzer:
     """Analyzer for image content and properties."""
@@ -68,11 +71,7 @@ class ImageAnalyzer:
         """Analyze basic image properties."""
         if not PIL_AVAILABLE:
             self.logger.warning("PIL not available, returning basic properties")
-            return {
-                "size_bytes": len(image_data),
-                "format": "unknown",
-                "analysis_available": False
-            }
+            return {"size_bytes": len(image_data), "format": "unknown", "analysis_available": False}
 
         try:
             image = Image.open(io.BytesIO(image_data))
@@ -83,13 +82,13 @@ class ImageAnalyzer:
                 "mode": image.mode,
                 "format": image.format,
                 "size_bytes": len(image_data),
-                "aspect_ratio": image.width / image.height if image.height > 0 else 0
+                "aspect_ratio": image.width / image.height if image.height > 0 else 0,
             }
 
             # Color analysis
             if image.mode == "RGB":
                 # Get dominant colors (simplified)
-                colors = image.getcolors(maxcolors=256*256*256)
+                colors = image.getcolors(maxcolors=256 * 256 * 256)
                 if colors:
                     dominant_color = max(colors, key=lambda x: x[0])[1]
                     properties["dominant_color"] = dominant_color
@@ -135,6 +134,7 @@ class ImageAnalyzer:
             self.logger.error(f"Description generation failed: {e}")
             return "Image content (description unavailable)"
 
+
 class TextImageProcessor(MultiModalProcessor):
     """Processor for combined text and image content."""
 
@@ -153,9 +153,11 @@ class TextImageProcessor(MultiModalProcessor):
         self.enable_embeddings = self.get_config("enable_embeddings", True)
         self.max_image_size = self.get_config("max_image_size", 10 * 1024 * 1024)  # 10MB
 
-        self.logger.info(f"TextImageProcessor initialized with OCR: {self.enable_ocr}, "
-                        f"Description: {self.enable_description}, "
-                        f"Embeddings: {self.enable_embeddings}")
+        self.logger.info(
+            f"TextImageProcessor initialized with OCR: {self.enable_ocr}, "
+            f"Description: {self.enable_description}, "
+            f"Embeddings: {self.enable_embeddings}"
+        )
 
     def get_supported_modalities(self) -> List[ModalityType]:
         """Get supported modalities."""
@@ -169,7 +171,9 @@ class TextImageProcessor(MultiModalProcessor):
 
         # Check image size if present
         if content.image and len(content.image) > self.max_image_size:
-            self.logger.warning(f"Image size {len(content.image)} exceeds limit {self.max_image_size}")
+            self.logger.warning(
+                f"Image size {len(content.image)} exceeds limit {self.max_image_size}"
+            )
             return False
 
         # Must have at least text or image
@@ -204,7 +208,7 @@ class TextImageProcessor(MultiModalProcessor):
         results = {
             "processed_text": text,
             "text_length": len(text),
-            "word_count": len(text.split()) if text else 0
+            "word_count": len(text.split()) if text else 0,
         }
 
         # Basic text analysis
@@ -222,10 +226,7 @@ class TextImageProcessor(MultiModalProcessor):
         image_results = await self.process_image_only(image_data)
 
         # Combine results
-        combined_results = {
-            **text_results,
-            **image_results
-        }
+        combined_results = {**text_results, **image_results}
 
         # Cross-modal analysis
         if self.enable_description and text:
@@ -248,11 +249,7 @@ class TextImageProcessor(MultiModalProcessor):
         words = text.split()
         for word in words:
             if word.isupper() and len(word) > 2:  # Potential acronym
-                entities.append({
-                    "text": word,
-                    "type": "ACRONYM",
-                    "confidence": 0.7
-                })
+                entities.append({"text": word, "type": "ACRONYM", "confidence": 0.7})
 
         return entities
 
@@ -310,24 +307,22 @@ class TextImageProcessor(MultiModalProcessor):
             content_id=content.content_id,
             input_modalities=content.modalities,
             extracted_text=processing_results.get("extracted_text"),
-            generated_description=processing_results.get("description") or
-                                processing_results.get("contextual_description"),
+            generated_description=processing_results.get("description")
+            or processing_results.get("contextual_description"),
             extracted_entities=processing_results.get("entities", []),
             text_embedding=embeddings.get("text_embedding"),
             image_embedding=embeddings.get("image_embedding"),
             combined_embedding=embeddings.get("combined_embedding"),
             processing_metrics=ProcessingMetrics(
                 processing_time=0.0,  # Will be set by parent class
-                modalities_processed=modalities_processed
+                modalities_processed=modalities_processed,
             ),
-            metadata={
-                "processor": "TextImageProcessor",
-                "processing_results": processing_results
-            },
-            status="processing"
+            metadata={"processor": "TextImageProcessor", "processing_results": processing_results},
+            status="processing",
         )
 
         return result
+
 
 # Register the processor
 ProcessorFactory.register("text_image", TextImageProcessor)

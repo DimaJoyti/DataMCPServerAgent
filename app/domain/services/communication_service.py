@@ -11,6 +11,7 @@ from app.domain.models.communication import CallSession, CallStatus, EmailMessag
 
 logger = get_logger(__name__)
 
+
 class EmailService(DomainService, LoggerMixin):
     """Email communication service."""
 
@@ -46,6 +47,7 @@ class EmailService(DomainService, LoggerMixin):
 
         self.logger.info(f"Email sent successfully: {saved_email.id}")
         return saved_email
+
 
 class WebRTCService(DomainService, LoggerMixin):
     """WebRTC communication service."""

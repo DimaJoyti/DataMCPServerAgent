@@ -5,26 +5,30 @@ This module provides a unified interface for accessing various storage
 systems including databases, object storage, and file systems.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
-import json
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 import structlog
 from pydantic import BaseModel, Field
 
 from ...core.pipeline_models import Pipeline, PipelineRun, PipelineTask
 
+
 class DataAccessConfig(BaseModel):
     """Configuration for data access layer."""
+
     # Primary storage
     primary_storage_type: str = Field(default="sqlite", description="Primary storage type")
-    primary_storage_config: Dict[str, Any] = Field(default_factory=dict, description="Primary storage configuration")
+    primary_storage_config: Dict[str, Any] = Field(
+        default_factory=dict, description="Primary storage configuration"
+    )
 
     # Metadata storage
     metadata_storage_type: str = Field(default="sqlite", description="Metadata storage type")
-    metadata_storage_config: Dict[str, Any] = Field(default_factory=dict, description="Metadata storage configuration")
+    metadata_storage_config: Dict[str, Any] = Field(
+        default_factory=dict, description="Metadata storage configuration"
+    )
 
     # Cache configuration
     enable_caching: bool = Field(default=True, description="Enable caching")
@@ -35,6 +39,7 @@ class DataAccessConfig(BaseModel):
     connection_pool_size: int = Field(default=10, description="Connection pool size")
     query_timeout: int = Field(default=30, description="Query timeout in seconds")
 
+
 class DataAccessLayer:
     """
     Unified data access layer for the data pipeline.
@@ -44,9 +49,7 @@ class DataAccessLayer:
     """
 
     def __init__(
-        self,
-        config: Optional[DataAccessConfig] = None,
-        logger: Optional[logging.Logger] = None
+        self, config: Optional[DataAccessConfig] = None, logger: Optional[logging.Logger] = None
     ):
         """
         Initialize the data access layer.
@@ -64,12 +67,7 @@ class DataAccessLayer:
         self.cache = None
 
         # In-memory storage for development/testing
-        self.memory_storage = {
-            "pipelines": {},
-            "pipeline_runs": {},
-            "tasks": {},
-            "metadata": {}
-        }
+        self.memory_storage = {"pipelines": {}, "pipeline_runs": {}, "tasks": {}, "metadata": {}}
 
         self.logger.info("Data access layer initialized")
 
@@ -123,7 +121,9 @@ class DataAccessLayer:
             self.logger.debug("Pipeline saved", pipeline_id=pipeline.pipeline_id)
 
         except Exception as e:
-            self.logger.error("Failed to save pipeline", pipeline_id=pipeline.pipeline_id, error=str(e))
+            self.logger.error(
+                "Failed to save pipeline", pipeline_id=pipeline.pipeline_id, error=str(e)
+            )
             raise e
 
     async def get_pipeline(self, pipeline_id: str) -> Optional[Pipeline]:
@@ -206,7 +206,9 @@ class DataAccessLayer:
             self.logger.debug("Pipeline run saved", run_id=pipeline_run.run_id)
 
         except Exception as e:
-            self.logger.error("Failed to save pipeline run", run_id=pipeline_run.run_id, error=str(e))
+            self.logger.error(
+                "Failed to save pipeline run", run_id=pipeline_run.run_id, error=str(e)
+            )
             raise e
 
     async def get_pipeline_run(self, run_id: str) -> Optional[PipelineRun]:
@@ -233,9 +235,7 @@ class DataAccessLayer:
             return None
 
     async def list_pipeline_runs(
-        self,
-        pipeline_id: Optional[str] = None,
-        limit: int = 100
+        self, pipeline_id: Optional[str] = None, limit: int = 100
     ) -> List[PipelineRun]:
         """
         List pipeline runs.
@@ -324,7 +324,7 @@ class DataAccessLayer:
             # For now, use in-memory storage
             self.memory_storage["metadata"][key] = {
                 "value": value,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             self.logger.debug("Metadata saved", key=key)
@@ -357,9 +357,7 @@ class DataAccessLayer:
             return None
 
     async def query_data(
-        self,
-        query: str,
-        parameters: Optional[Dict[str, Any]] = None
+        self, query: str, parameters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
         Execute a data query.
@@ -453,7 +451,7 @@ class DataAccessLayer:
                 "tasks_count": len(self.memory_storage["tasks"]),
                 "metadata_count": len(self.memory_storage["metadata"]),
                 "storage_type": "memory",
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:

@@ -10,6 +10,7 @@ from .text_chunker import TextChunker
 
 logger = logging.getLogger(__name__)
 
+
 class ChunkerFactory:
     """Factory for creating text chunkers."""
 
@@ -25,6 +26,7 @@ class ChunkerFactory:
         # Register semantic chunker if available
         try:
             from .semantic_chunker import SemanticChunker
+
             self.register_chunker("semantic", SemanticChunker)
         except ImportError:
             logger.warning("Semantic chunker not available - missing dependencies")
@@ -32,6 +34,7 @@ class ChunkerFactory:
         # Register adaptive chunker if available
         try:
             from .adaptive_chunker import AdaptiveChunker
+
             self.register_chunker("adaptive", AdaptiveChunker)
         except ImportError:
             logger.warning("Adaptive chunker not available - missing dependencies")
@@ -48,9 +51,7 @@ class ChunkerFactory:
         logger.debug(f"Registered {chunker_class.__name__} for strategy '{strategy}'")
 
     def get_chunker(
-        self,
-        strategy: str = "text",
-        config: Optional[ChunkingConfig] = None
+        self, strategy: str = "text", config: Optional[ChunkingConfig] = None
     ) -> BaseChunker:
         """
         Get chunker for specified strategy.
@@ -103,6 +104,7 @@ class ChunkerFactory:
             bool: True if strategy is available
         """
         return strategy.lower() in self._chunkers
+
 
 # Global chunker factory instance
 chunker_factory = ChunkerFactory()

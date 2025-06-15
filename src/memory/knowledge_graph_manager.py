@@ -20,6 +20,7 @@ from src.utils.error_handlers import format_error_for_user
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 class KnowledgeGraphManager:
     """Manager for integrating knowledge graph with distributed memory."""
 
@@ -207,9 +208,7 @@ class KnowledgeGraphManager:
             response = await self.model.ainvoke(
                 [
                     SystemMessage(content=system_prompt),
-                    HumanMessage(
-                        content=f"Text: {text}\n\nEntities:\n{entity_context}"
-                    ),
+                    HumanMessage(content=f"Text: {text}\n\nEntities:\n{entity_context}"),
                 ]
             )
 
@@ -226,9 +225,7 @@ class KnowledgeGraphManager:
             logger.error(f"Failed to identify relationships: {error_message}")
             return []
 
-    async def add_entities_to_graph(
-        self, entities: List[Dict[str, Any]]
-    ) -> Dict[str, str]:
+    async def add_entities_to_graph(self, entities: List[Dict[str, Any]]) -> Dict[str, str]:
         """Add entities to the knowledge graph.
 
         Args:
@@ -278,10 +275,7 @@ class KnowledgeGraphManager:
                 target_name = relationship.get("target", "")
 
                 # Skip if source or target not in mapping
-                if (
-                    source_name not in entity_id_mapping
-                    or target_name not in entity_id_mapping
-                ):
+                if source_name not in entity_id_mapping or target_name not in entity_id_mapping:
                     continue
 
                 source_id = entity_id_mapping[source_name]
@@ -512,9 +506,9 @@ class KnowledgeGraphManager:
                 properties={
                     "tool_name": tool_name,
                     "args": args,
-                    "result": result
-                    if isinstance(result, (str, int, float, bool))
-                    else str(result),
+                    "result": (
+                        result if isinstance(result, (str, int, float, bool)) else str(result)
+                    ),
                     "timestamp": time.time(),
                 },
                 node_id=f"tool_usage_{usage_id}",
@@ -533,9 +527,7 @@ class KnowledgeGraphManager:
             result_relationships = []
             if isinstance(result, str):
                 # Process result text
-                processing_results = await self.process_text(
-                    result, context_id=usage_id
-                )
+                processing_results = await self.process_text(result, context_id=usage_id)
                 result_entities = processing_results.get("entities", [])
                 result_relationships = processing_results.get("relationships", [])
 
@@ -588,9 +580,7 @@ class KnowledgeGraphManager:
             related_entities = []
             for entity_name, entity_id in entity_id_mapping.items():
                 # Get neighbors
-                neighbors = self.knowledge_graph.get_neighbors(
-                    entity_id, direction="both"
-                )
+                neighbors = self.knowledge_graph.get_neighbors(entity_id, direction="both")
                 related_entities.extend(neighbors)
 
             # Deduplicate and limit

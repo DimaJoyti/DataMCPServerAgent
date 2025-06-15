@@ -15,7 +15,6 @@ import logging
 import os
 import sys
 import threading
-from typing import Dict, Optional
 
 from dotenv import load_dotenv
 
@@ -29,81 +28,62 @@ from .trading_system import AdvancedCryptoTradingSystem
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('fetch_ai_enhanced.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("fetch_ai_enhanced.log")],
 )
 logger = logging.getLogger(__name__)
 
+
 def parse_arguments():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Enhanced Fetch.ai Advanced Crypto Trading System')
+    parser = argparse.ArgumentParser(description="Enhanced Fetch.ai Advanced Crypto Trading System")
 
     parser.add_argument(
-        '--exchange',
+        "--exchange", type=str, default="binance", help="Exchange to use (default: binance)"
+    )
+
+    parser.add_argument(
+        "--symbols",
         type=str,
-        default='binance',
-        help='Exchange to use (default: binance)'
+        nargs="+",
+        default=["BTC/USDT", "ETH/USDT"],
+        help="Symbols to track (default: BTC/USDT ETH/USDT)",
     )
 
+    parser.add_argument("--api-key", type=str, help="API key for the exchange")
+
+    parser.add_argument("--api-secret", type=str, help="API secret for the exchange")
+
     parser.add_argument(
-        '--symbols',
+        "--n8n-url",
         type=str,
-        nargs='+',
-        default=['BTC/USDT', 'ETH/USDT'],
-        help='Symbols to track (default: BTC/USDT ETH/USDT)'
+        default="http://localhost:5678",
+        help="URL for n8n (default: http://localhost:5678)",
+    )
+
+    parser.add_argument("--n8n-api-key", type=str, help="API key for n8n")
+
+    parser.add_argument(
+        "--dashboard-port", type=int, default=8050, help="Port for the dashboard (default: 8050)"
     )
 
     parser.add_argument(
-        '--api-key',
-        type=str,
-        help='API key for the exchange'
-    )
-
-    parser.add_argument(
-        '--api-secret',
-        type=str,
-        help='API secret for the exchange'
-    )
-
-    parser.add_argument(
-        '--n8n-url',
-        type=str,
-        default='http://localhost:5678',
-        help='URL for n8n (default: http://localhost:5678)'
-    )
-
-    parser.add_argument(
-        '--n8n-api-key',
-        type=str,
-        help='API key for n8n'
-    )
-
-    parser.add_argument(
-        '--dashboard-port',
-        type=int,
-        default=8050,
-        help='Port for the dashboard (default: 8050)'
-    )
-
-    parser.add_argument(
-        '--test-duration',
+        "--test-duration",
         type=int,
         default=3600,
-        help='Duration of the test in seconds (default: 3600)'
+        help="Duration of the test in seconds (default: 3600)",
     )
 
     parser.add_argument(
-        '--components',
+        "--components",
         type=str,
-        nargs='+',
-        default=['trading', 'test', 'n8n', 'ml', 'data', 'dashboard'],
-        help='Components to run (default: all)'
+        nargs="+",
+        default=["trading", "test", "n8n", "ml", "data", "dashboard"],
+        help="Components to run (default: all)",
     )
 
     return parser.parse_args()
+
 
 async def run_trading_system(args):
     """Run the trading system.
@@ -118,7 +98,7 @@ async def run_trading_system(args):
         name="enhanced_trading_system",
         exchange_id=args.exchange,
         api_key=args.api_key,
-        api_secret=args.api_secret
+        api_secret=args.api_secret,
     )
 
     # Update symbols to track
@@ -126,6 +106,7 @@ async def run_trading_system(args):
 
     # Run the trading system
     await trading_system.start_all_agents()
+
 
 async def run_real_data_test(args):
     """Run the real data test.
@@ -141,11 +122,12 @@ async def run_real_data_test(args):
         api_key=args.api_key,
         api_secret=args.api_secret,
         symbols=args.symbols,
-        test_duration=args.test_duration
+        test_duration=args.test_duration,
     )
 
     # Run test
     await tester.run_test()
+
 
 async def run_n8n_integration(args):
     """Run the n8n integration.
@@ -160,7 +142,7 @@ async def run_n8n_integration(args):
         name="n8n_trading_system",
         exchange_id=args.exchange,
         api_key=args.api_key,
-        api_secret=args.api_secret
+        api_secret=args.api_secret,
     )
 
     # Update symbols to track
@@ -171,14 +153,12 @@ async def run_n8n_integration(args):
         name="n8n_integration",
         n8n_base_url=args.n8n_url,
         n8n_api_key=args.n8n_api_key,
-        trading_system=trading_system
+        trading_system=trading_system,
     )
 
     # Start agents
-    await asyncio.gather(
-        trading_system.start_all_agents(),
-        n8n_integration.run_async()
-    )
+    await asyncio.gather(trading_system.start_all_agents(), n8n_integration.run_async())
+
 
 async def run_enhanced_ml(args):
     """Run the enhanced machine learning models.
@@ -192,16 +172,23 @@ async def run_enhanced_ml(args):
     manager = ModelManager()
 
     # Create and train models
-    for model_type in [ModelType.RANDOM_FOREST, ModelType.GRADIENT_BOOSTING, ModelType.NEURAL_NETWORK, ModelType.ENSEMBLE]:
-        for target in [PredictionTarget.PRICE_DIRECTION, PredictionTarget.VOLATILITY, PredictionTarget.SENTIMENT_IMPACT]:
+    for model_type in [
+        ModelType.RANDOM_FOREST,
+        ModelType.GRADIENT_BOOSTING,
+        ModelType.NEURAL_NETWORK,
+        ModelType.ENSEMBLE,
+    ]:
+        for target in [
+            PredictionTarget.PRICE_DIRECTION,
+            PredictionTarget.VOLATILITY,
+            PredictionTarget.SENTIMENT_IMPACT,
+        ]:
             # Create model
-            model = manager.get_model(
-                model_type=model_type,
-                target=target
-            )
+            model = manager.get_model(model_type=model_type, target=target)
 
             # Generate random data for demonstration
             import numpy as np
+
             X = np.random.rand(1000, 10)
             y = np.random.randint(0, 2, size=1000)
 
@@ -211,10 +198,8 @@ async def run_enhanced_ml(args):
             logger.info(f"Training result: {result}")
 
             # Save model
-            manager.save_model(
-                model_type=model_type,
-                target=target
-            )
+            manager.save_model(model_type=model_type, target=target)
+
 
 async def run_data_sources(args):
     """Run the additional data sources.
@@ -249,6 +234,7 @@ async def run_data_sources(args):
     fear_greed = await manager.fetch_fear_greed_index()
     logger.info(f"Fear & Greed Index: {fear_greed}")
 
+
 def run_dashboard(args):
     """Run the visualization dashboard.
 
@@ -262,21 +248,18 @@ def run_dashboard(args):
         name="dashboard_trading_system",
         exchange_id=args.exchange,
         api_key=args.api_key,
-        api_secret=args.api_secret
+        api_secret=args.api_secret,
     )
 
     # Update symbols to track
     trading_system.state.symbols_to_track = args.symbols
 
     # Create dashboard
-    dashboard = Dashboard(
-        trading_system=trading_system,
-        port=args.dashboard_port,
-        debug=True
-    )
+    dashboard = Dashboard(trading_system=trading_system, port=args.dashboard_port, debug=True)
 
     # Run dashboard
     dashboard.run()
+
 
 async def main():
     """Main entry point."""
@@ -287,36 +270,33 @@ async def main():
     args = parse_arguments()
 
     # Get API credentials from environment variables if not provided
-    args.api_key = args.api_key or os.getenv('EXCHANGE_API_KEY')
-    args.api_secret = args.api_secret or os.getenv('EXCHANGE_API_SECRET')
-    args.n8n_api_key = args.n8n_api_key or os.getenv('N8N_API_KEY')
+    args.api_key = args.api_key or os.getenv("EXCHANGE_API_KEY")
+    args.api_secret = args.api_secret or os.getenv("EXCHANGE_API_SECRET")
+    args.n8n_api_key = args.n8n_api_key or os.getenv("N8N_API_KEY")
 
     if not args.api_key or not args.api_secret:
-        logger.warning(
-            "API key and secret not provided. "
-            "The system will run in read-only mode."
-        )
+        logger.warning("API key and secret not provided. " "The system will run in read-only mode.")
 
     try:
         # Run components
         tasks = []
 
-        if 'trading' in args.components:
+        if "trading" in args.components:
             tasks.append(run_trading_system(args))
 
-        if 'test' in args.components:
+        if "test" in args.components:
             tasks.append(run_real_data_test(args))
 
-        if 'n8n' in args.components:
+        if "n8n" in args.components:
             tasks.append(run_n8n_integration(args))
 
-        if 'ml' in args.components:
+        if "ml" in args.components:
             tasks.append(run_enhanced_ml(args))
 
-        if 'data' in args.components:
+        if "data" in args.components:
             tasks.append(run_data_sources(args))
 
-        if 'dashboard' in args.components:
+        if "dashboard" in args.components:
             # Run dashboard in a separate thread
             dashboard_thread = threading.Thread(target=run_dashboard, args=(args,))
             dashboard_thread.daemon = True
@@ -336,6 +316,7 @@ async def main():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

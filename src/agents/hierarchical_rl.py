@@ -6,17 +6,16 @@ This module implements hierarchical reinforcement learning for handling complex,
 import random
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
-import numpy as np
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 
-from src.agents.advanced_rl_decision_making import AdvancedRLCoordinatorAgent
 from src.agents.reinforcement_learning import RewardSystem
 from src.memory.hierarchical_memory_persistence import HierarchicalMemoryDatabase
+
 
 class HierarchicalRewardSystem(RewardSystem):
     """System for calculating rewards in a hierarchical reinforcement learning setting."""
@@ -92,6 +91,7 @@ class HierarchicalRewardSystem(RewardSystem):
         )
 
         return adjusted_reward
+
 
 class Option:
     """Represents a temporally extended action (option) in hierarchical reinforcement learning."""
@@ -232,6 +232,7 @@ class Option:
 
         return option
 
+
 class HierarchicalQLearningAgent:
     """Agent that learns using hierarchical Q-learning algorithm."""
 
@@ -340,10 +341,8 @@ class HierarchicalQLearningAgent:
         """
         # If state not in Q-table, initialize it
         if state not in self.q_tables[level]:
-            actions = (
-                self.top_level_actions if level == 0 else self.bottom_level_actions
-            )
-            self.q_tables[level][state] = {action: 0.0 for action in actions}
+            actions = self.top_level_actions if level == 0 else self.bottom_level_actions
+            self.q_tables[level][state] = dict.fromkeys(actions, 0.0)
 
         # Get action with highest Q-value
         state_actions = self.q_tables[level][state]
@@ -363,17 +362,13 @@ class HierarchicalQLearningAgent:
         """
         # If state not in Q-table, initialize it
         if state not in self.q_tables[level]:
-            actions = (
-                self.top_level_actions if level == 0 else self.bottom_level_actions
-            )
-            self.q_tables[level][state] = {action: 0.0 for action in actions}
+            actions = self.top_level_actions if level == 0 else self.bottom_level_actions
+            self.q_tables[level][state] = dict.fromkeys(actions, 0.0)
 
         # If next_state not in Q-table, initialize it
         if next_state not in self.q_tables[level]:
-            actions = (
-                self.top_level_actions if level == 0 else self.bottom_level_actions
-            )
-            self.q_tables[level][next_state] = {action: 0.0 for action in actions}
+            actions = self.top_level_actions if level == 0 else self.bottom_level_actions
+            self.q_tables[level][next_state] = dict.fromkeys(actions, 0.0)
 
         # Get current Q-value
         current_q = self.q_tables[level][state].get(action, 0.0)
@@ -530,6 +525,7 @@ class HierarchicalQLearningAgent:
             "self_evaluation": {"accuracy": 0.8},
         }
 
+
 class HierarchicalRLCoordinatorAgent:
     """Coordinator agent that uses hierarchical reinforcement learning for decision making."""
 
@@ -641,9 +637,7 @@ Extract a state identifier for this request.
         history = context.get("history", [])
 
         # Format history
-        formatted_history = "\n".join(
-            [f"{msg['role']}: {msg['content']}" for msg in history[-3:]]
-        )
+        formatted_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]])
 
         # Prepare the input for the state extraction prompt
         input_values = {"request": request, "history": formatted_history}
@@ -655,9 +649,7 @@ Extract a state identifier for this request.
         # Return the state identifier
         return response.content.strip()
 
-    async def _decompose_task(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def _decompose_task(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Decompose a task into subtasks.
 
         Args:
@@ -668,9 +660,7 @@ Extract a state identifier for this request.
             Task decomposition result
         """
         # Format history
-        formatted_history = "\n".join(
-            [f"{msg['role']}: {msg['content']}" for msg in history[-3:]]
-        )
+        formatted_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]])
 
         # Prepare the input for the task decomposition prompt
         input_values = {"request": request, "history": formatted_history}
@@ -704,9 +694,7 @@ Extract a state identifier for this request.
             "subtasks": subtasks,
         }
 
-    async def process_request(
-        self, request: str, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def process_request(self, request: str, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process a user request using hierarchical reinforcement learning.
 
         Args:
@@ -766,6 +754,7 @@ Extract a state identifier for this request.
             "task_id": task_id,
             "subtasks": task_decomposition["subtasks"],
         }
+
 
 # Factory function to create hierarchical RL-based agent architecture
 async def create_hierarchical_rl_agent_architecture(

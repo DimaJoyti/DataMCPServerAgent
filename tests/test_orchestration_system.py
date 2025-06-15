@@ -8,15 +8,15 @@ import tempfile
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from langchain_anthropic import ChatAnthropic
 
 from src.agents.advanced_planning import AdvancedPlanningEngine, Condition
 from src.agents.advanced_reasoning import AdvancedReasoningEngine, ReasoningStepType
-from src.agents.meta_reasoning import MetaReasoningEngine, MetaReasoningStrategy
-from src.agents.reflection_systems import AdvancedReflectionEngine, ReflectionType
+from src.agents.meta_reasoning import MetaReasoningEngine
+from src.agents.reflection_systems import AdvancedReflectionEngine
 from src.core.orchestration_main import OrchestrationCoordinator
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class TestAdvancedReasoningEngine(unittest.TestCase):
     """Test cases for the Advanced Reasoning Engine."""
@@ -212,7 +212,7 @@ class TestAdvancedPlanningEngine(unittest.TestCase):
     def test_validate_plan(self):
         """Test plan validation."""
         # Create a simple valid plan
-        from src.agents.advanced_planning import Plan, Action, ActionType
+        from src.agents.advanced_planning import Action, ActionType, Plan
 
         action = Action(
             action_id="test_action",

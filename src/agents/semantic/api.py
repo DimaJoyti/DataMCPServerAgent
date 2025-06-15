@@ -5,17 +5,16 @@ Provides REST API endpoints for interacting with semantic agents,
 managing agent coordination, and monitoring performance.
 """
 
-import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .base_semantic_agent import SemanticAgentConfig, SemanticContext
 from .coordinator import SemanticCoordinator
-from .performance import PerformanceTracker, CacheManager
+from .performance import CacheManager, PerformanceTracker
 from .scaling import AutoScaler, LoadBalancer
 from .specialized_agents import (
     DataAnalysisAgent,
@@ -24,6 +23,7 @@ from .specialized_agents import (
     ReasoningAgent,
     SearchAgent,
 )
+
 
 # Request/Response Models
 class TaskRequest(BaseModel):
@@ -37,6 +37,7 @@ class TaskRequest(BaseModel):
     collaborative: bool = Field(False, description="Use multiple agents")
     session_id: Optional[str] = Field(None, description="Session ID for sticky routing")
 
+
 class TaskResponse(BaseModel):
     """Response model for task execution."""
 
@@ -47,6 +48,7 @@ class TaskResponse(BaseModel):
     agent_id: Optional[str] = None
     execution_time_ms: Optional[float] = None
     collaborative: bool = False
+
 
 class AgentStatusResponse(BaseModel):
     """Response model for agent status."""
@@ -59,6 +61,7 @@ class AgentStatusResponse(BaseModel):
     capabilities: List[str]
     performance_metrics: Dict[str, Any]
 
+
 class SystemStatusResponse(BaseModel):
     """Response model for system status."""
 
@@ -69,6 +72,7 @@ class SystemStatusResponse(BaseModel):
     registered_agents: int
     active_tasks: int
 
+
 class AgentCreateRequest(BaseModel):
     """Request model for creating new agents."""
 
@@ -76,6 +80,7 @@ class AgentCreateRequest(BaseModel):
     name: Optional[str] = Field(None, description="Agent name")
     capabilities: Optional[List[str]] = Field(None, description="Agent capabilities")
     config_overrides: Optional[Dict[str, Any]] = Field(None, description="Configuration overrides")
+
 
 # API Router
 router = APIRouter(prefix="/semantic-agents", tags=["Semantic Agents"])
@@ -89,12 +94,14 @@ _cache_manager: Optional[CacheManager] = None
 
 logger = logging.getLogger("semantic_agents_api")
 
+
 async def get_coordinator() -> SemanticCoordinator:
     """Dependency to get the semantic coordinator."""
     global _coordinator
     if _coordinator is None:
         raise HTTPException(status_code=503, detail="Semantic coordinator not initialized")
     return _coordinator
+
 
 async def get_performance_tracker() -> PerformanceTracker:
     """Dependency to get the performance tracker."""
@@ -103,6 +110,7 @@ async def get_performance_tracker() -> PerformanceTracker:
         raise HTTPException(status_code=503, detail="Performance tracker not initialized")
     return _performance_tracker
 
+
 async def get_cache_manager() -> CacheManager:
     """Dependency to get the cache manager."""
     global _cache_manager
@@ -110,7 +118,9 @@ async def get_cache_manager() -> CacheManager:
         _cache_manager = CacheManager()
     return _cache_manager
 
+
 # API Endpoints
+
 
 @router.post("/tasks/execute", response_model=TaskResponse)
 async def execute_task(
@@ -206,6 +216,7 @@ async def execute_task(
         logger.error(f"Error executing task: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/agents", response_model=List[AgentStatusResponse])
 async def list_agents(
     coordinator: SemanticCoordinator = Depends(get_coordinator),
@@ -219,17 +230,20 @@ async def list_agents(
         # Get performance metrics
         perf_metrics = performance_tracker.get_agent_performance(agent_id)
 
-        agents.append(AgentStatusResponse(
-            agent_id=agent_id,
-            name=agent.config.name,
-            specialization=agent.config.specialization,
-            is_active=agent.is_active,
-            current_tasks=len(agent.current_tasks),
-            capabilities=agent.config.capabilities,
-            performance_metrics=perf_metrics,
-        ))
+        agents.append(
+            AgentStatusResponse(
+                agent_id=agent_id,
+                name=agent.config.name,
+                specialization=agent.config.specialization,
+                is_active=agent.is_active,
+                current_tasks=len(agent.current_tasks),
+                capabilities=agent.config.capabilities,
+                performance_metrics=perf_metrics,
+            )
+        )
 
     return agents
+
 
 @router.get("/agents/{agent_id}", response_model=AgentStatusResponse)
 async def get_agent_status(
@@ -254,6 +268,7 @@ async def get_agent_status(
         capabilities=agent.config.capabilities,
         performance_metrics=perf_metrics,
     )
+
 
 @router.post("/agents", response_model=AgentStatusResponse)
 async def create_agent(
@@ -304,6 +319,7 @@ async def create_agent(
         performance_metrics={},
     )
 
+
 @router.delete("/agents/{agent_id}")
 async def delete_agent(
     agent_id: str,
@@ -320,6 +336,7 @@ async def delete_agent(
     await coordinator.unregister_agent(agent_id)
 
     return {"message": f"Agent {agent_id} deleted successfully"}
+
 
 @router.get("/system/status", response_model=SystemStatusResponse)
 async def get_system_status(
@@ -348,6 +365,7 @@ async def get_system_status(
         active_tasks=len(coordinator.active_tasks),
     )
 
+
 @router.get("/performance/bottlenecks")
 async def get_performance_bottlenecks(
     performance_tracker: PerformanceTracker = Depends(get_performance_tracker),
@@ -363,6 +381,7 @@ async def get_performance_bottlenecks(
         "timestamp": datetime.now(),
     }
 
+
 @router.post("/cache/clear")
 async def clear_cache(
     cache_manager: CacheManager = Depends(get_cache_manager),
@@ -372,6 +391,7 @@ async def clear_cache(
     await cache_manager.clear()
     return {"message": "Cache cleared successfully"}
 
+
 @router.get("/cache/stats")
 async def get_cache_stats(
     cache_manager: CacheManager = Depends(get_cache_manager),
@@ -379,6 +399,7 @@ async def get_cache_stats(
     """Get cache statistics."""
 
     return cache_manager.get_stats()
+
 
 # Initialization function
 async def initialize_semantic_agents_api(

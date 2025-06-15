@@ -12,12 +12,14 @@ from app.domain.services.deployment_service import DeploymentService
 
 router = APIRouter()
 
+
 class CreateDeploymentRequest(BaseModel):
     """Request model for creating deployment."""
 
     name: str = Field(description="Deployment name")
     environment: Environment = Field(description="Target environment")
     deployment_type: str = Field(description="Deployment type")
+
 
 @router.post("/", response_model=SuccessResponse)
 async def create_deployment(

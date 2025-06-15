@@ -3,17 +3,17 @@ Integrated Agent Server with MCP, Authentication, Authorization, and Durable Obj
 The complete Agent Puzzle solution.
 """
 
-from fastapi import FastAPI, Request, HTTPException, Depends, Header
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+import uuid
 from datetime import datetime
 from typing import Optional
-import uuid
 
-from auth_system import auth_system, User, Role
-from mcp_inspector import mcp_inspector
+import uvicorn
+from auth_system import Role, User, auth_system
 from durable_objects_agent import durable_manager
-from secure_mcp_client import secure_mcp_client, ToolCall
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from mcp_inspector import mcp_inspector
+from secure_mcp_client import ToolCall, secure_mcp_client
 
 app = FastAPI(
     title="Integrated Cloudflare AI Agents",

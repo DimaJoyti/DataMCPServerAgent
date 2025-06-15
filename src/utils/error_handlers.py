@@ -5,10 +5,10 @@ These functions help detect, classify, and recover from common errors.
 
 import asyncio
 import re
-import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, List, Optional
 
 import aiohttp
+
 
 class MCPError(Exception):
     """Base exception for MCP-related errors."""
@@ -26,6 +26,7 @@ class MCPError(Exception):
         self.recovery_suggestion = recovery_suggestion
         super().__init__(self.message)
 
+
 class ConnectionError(MCPError):
     """Error for connection issues with MCP services."""
 
@@ -39,8 +40,9 @@ class ConnectionError(MCPError):
         super().__init__(
             message,
             "connection",
-            recovery_suggestion or "Check your internet connection and Bright Data service status."
+            recovery_suggestion or "Check your internet connection and Bright Data service status.",
         )
+
 
 class AuthenticationError(MCPError):
     """Error for authentication issues with MCP services."""
@@ -55,13 +57,20 @@ class AuthenticationError(MCPError):
         super().__init__(
             message,
             "authentication",
-            recovery_suggestion or "Verify your API_TOKEN, BROWSER_AUTH, and WEB_UNLOCKER_ZONE environment variables."
+            recovery_suggestion
+            or "Verify your API_TOKEN, BROWSER_AUTH, and WEB_UNLOCKER_ZONE environment variables.",
         )
+
 
 class RateLimitError(MCPError):
     """Error for rate limiting issues with MCP services."""
 
-    def __init__(self, message: str, retry_after: Optional[int] = None, recovery_suggestion: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        retry_after: Optional[int] = None,
+        recovery_suggestion: Optional[str] = None,
+    ):
         """Initialize the RateLimitError.
 
         Args:
@@ -73,13 +82,19 @@ class RateLimitError(MCPError):
         super().__init__(
             message,
             "rate_limit",
-            recovery_suggestion or f"Wait {retry_after or 60} seconds before retrying."
+            recovery_suggestion or f"Wait {retry_after or 60} seconds before retrying.",
         )
+
 
 class WebsiteError(MCPError):
     """Error for issues with target websites."""
 
-    def __init__(self, message: str, status_code: Optional[int] = None, recovery_suggestion: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        recovery_suggestion: Optional[str] = None,
+    ):
         """Initialize the WebsiteError.
 
         Args:
@@ -89,10 +104,9 @@ class WebsiteError(MCPError):
         """
         self.status_code = status_code
         super().__init__(
-            message,
-            "website",
-            recovery_suggestion or "Try a different URL or website."
+            message, "website", recovery_suggestion or "Try a different URL or website."
         )
+
 
 class ContentExtractionError(MCPError):
     """Error for issues with content extraction."""
@@ -107,8 +121,9 @@ class ContentExtractionError(MCPError):
         super().__init__(
             message,
             "content_extraction",
-            recovery_suggestion or "Try a different extraction method or URL."
+            recovery_suggestion or "Try a different extraction method or URL.",
         )
+
 
 async def with_retry(
     func: Callable,
@@ -116,7 +131,7 @@ async def with_retry(
     max_retries: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 30.0,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """Execute a function with exponential backoff retry logic.
 
@@ -142,13 +157,13 @@ async def with_retry(
         except RateLimitError as e:
             last_exception = e
             # Use the retry_after value if provided, otherwise use exponential backoff
-            delay = e.retry_after if e.retry_after else min(base_delay * (2 ** attempt), max_delay)
+            delay = e.retry_after if e.retry_after else min(base_delay * (2**attempt), max_delay)
             if attempt < max_retries:
                 await asyncio.sleep(delay)
         except (ConnectionError, aiohttp.ClientError) as e:
             last_exception = e
             if attempt < max_retries:
-                delay = min(base_delay * (2 ** attempt), max_delay)
+                delay = min(base_delay * (2**attempt), max_delay)
                 await asyncio.sleep(delay)
         except Exception as e:
             # Don't retry other types of exceptions
@@ -156,6 +171,7 @@ async def with_retry(
 
     # If we've exhausted all retries, raise the last exception
     raise last_exception
+
 
 def classify_error(error: Exception) -> MCPError:
     """Classify an exception into a specific MCP error type.
@@ -169,22 +185,32 @@ def classify_error(error: Exception) -> MCPError:
     error_message = str(error)
 
     # Check for authentication errors
-    if any(term in error_message.lower() for term in ["auth", "unauthorized", "forbidden", "token", "credentials"]):
+    if any(
+        term in error_message.lower()
+        for term in ["auth", "unauthorized", "forbidden", "token", "credentials"]
+    ):
         return AuthenticationError(error_message)
 
     # Check for rate limit errors
-    if any(term in error_message.lower() for term in ["rate limit", "too many requests", "throttle"]):
+    if any(
+        term in error_message.lower() for term in ["rate limit", "too many requests", "throttle"]
+    ):
         # Try to extract retry-after information
         retry_after_match = re.search(r"retry after (\d+)", error_message.lower())
         retry_after = int(retry_after_match.group(1)) if retry_after_match else None
         return RateLimitError(error_message, retry_after)
 
     # Check for connection errors
-    if any(term in error_message.lower() for term in ["connection", "timeout", "network", "unreachable"]):
+    if any(
+        term in error_message.lower()
+        for term in ["connection", "timeout", "network", "unreachable"]
+    ):
         return ConnectionError(error_message)
 
     # Check for website errors
-    if any(term in error_message.lower() for term in ["404", "not found", "403", "blocked", "captcha"]):
+    if any(
+        term in error_message.lower() for term in ["404", "not found", "403", "blocked", "captcha"]
+    ):
         # Try to extract status code
         status_code_match = re.search(r"status[_\s]?code[:\s]+(\d+)", error_message.lower())
         status_code = int(status_code_match.group(1)) if status_code_match else None
@@ -196,6 +222,7 @@ def classify_error(error: Exception) -> MCPError:
 
     # Default to generic MCP error
     return MCPError(error_message, "unknown", "Try a different approach or tool.")
+
 
 def format_error_for_user(error: Exception) -> str:
     """Format an error into a user-friendly message with recovery suggestions.
@@ -241,6 +268,7 @@ def format_error_for_user(error: Exception) -> str:
 
     return message
 
+
 def suggest_alternative_tools(failed_tool: str) -> List[str]:
     """Suggest alternative tools when a specific tool fails.
 
@@ -254,51 +282,41 @@ def suggest_alternative_tools(failed_tool: str) -> List[str]:
         "scrape_as_markdown_Bright_Data": [
             "scrape_as_html_Bright_Data",
             "scraping_browser_get_text_Bright_Data",
-            "enhanced_web_scraper"
+            "enhanced_web_scraper",
         ],
         "scrape_as_html_Bright_Data": [
             "scrape_as_markdown_Bright_Data",
             "scraping_browser_get_html_Bright_Data",
-            "enhanced_web_scraper"
+            "enhanced_web_scraper",
         ],
-        "brave_web_search_Brave": [
-            "enhanced_web_search",
-            "search_engine_Bright_Data"
-        ],
+        "brave_web_search_Brave": ["enhanced_web_search", "search_engine_Bright_Data"],
         "web_data_amazon_product_Bright_Data": [
             "product_comparison",
-            "scrape_as_markdown_Bright_Data"
+            "scrape_as_markdown_Bright_Data",
         ],
         "web_data_instagram_profiles_Bright_Data": [
             "social_media_analyzer",
-            "scrape_as_markdown_Bright_Data"
+            "scrape_as_markdown_Bright_Data",
         ],
         "web_data_facebook_posts_Bright_Data": [
             "social_media_analyzer",
-            "scrape_as_markdown_Bright_Data"
-        ],
-        "web_data_x_posts_Bright_Data": [
-            "social_media_analyzer",
-            "scrape_as_markdown_Bright_Data"
-        ],
-        "enhanced_web_scraper": [
             "scrape_as_markdown_Bright_Data",
-            "scrape_as_html_Bright_Data"
         ],
-        "enhanced_web_search": [
-            "brave_web_search_Brave",
-            "search_engine_Bright_Data"
-        ],
+        "web_data_x_posts_Bright_Data": ["social_media_analyzer", "scrape_as_markdown_Bright_Data"],
+        "enhanced_web_scraper": ["scrape_as_markdown_Bright_Data", "scrape_as_html_Bright_Data"],
+        "enhanced_web_search": ["brave_web_search_Brave", "search_engine_Bright_Data"],
         "product_comparison": [
             "web_data_amazon_product_Bright_Data",
-            "scrape_as_markdown_Bright_Data"
+            "scrape_as_markdown_Bright_Data",
         ],
         "social_media_analyzer": [
             "web_data_instagram_profiles_Bright_Data",
             "web_data_facebook_posts_Bright_Data",
             "web_data_x_posts_Bright_Data",
-            "scrape_as_markdown_Bright_Data"
-        ]
+            "scrape_as_markdown_Bright_Data",
+        ],
     }
 
-    return alternatives.get(failed_tool, ["scrape_as_markdown_Bright_Data", "brave_web_search_Brave"])
+    return alternatives.get(
+        failed_tool, ["scrape_as_markdown_Bright_Data", "brave_web_search_Brave"]
+    )

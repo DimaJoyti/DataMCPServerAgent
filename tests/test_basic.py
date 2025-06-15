@@ -2,9 +2,11 @@
 Basic tests for DataMCPServerAgent CI/CD validation.
 """
 
-import sys
 import os
+import sys
+
 import pytest
+
 
 def test_python_version():
     """Test that we're running on a supported Python version."""
@@ -18,8 +20,8 @@ def test_basic_imports():
     try:
         import json
         import os
-        import sys
         import pathlib
+        import sys
         print("✅ Basic Python modules imported successfully")
         assert True
     except ImportError as e:
@@ -90,7 +92,7 @@ def test_file_operations():
 
     try:
         # Read the file
-        with open(temp_file, 'r') as f:
+        with open(temp_file) as f:
             content = f.read()
 
         assert content == "test content"

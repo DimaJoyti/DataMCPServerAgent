@@ -5,17 +5,16 @@ This module implements specialized sub-agents, tool selection, and agent coordin
 
 import asyncio
 import json
-import os
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import BaseTool
-from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import create_react_agent
 
 from src.utils.error_handlers import format_error_for_user
+
 
 class AgentMemory:
     """Memory system for storing conversation history and agent state."""
@@ -41,7 +40,7 @@ class AgentMemory:
 
         # Trim history if it exceeds the maximum length
         if len(self.conversation_history) > self.max_history_length:
-            self.conversation_history = self.conversation_history[-self.max_history_length:]
+            self.conversation_history = self.conversation_history[-self.max_history_length :]
 
     def add_tool_usage(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Record a tool usage in the history.
@@ -54,11 +53,9 @@ class AgentMemory:
         if tool_name not in self.tool_usage_history:
             self.tool_usage_history[tool_name] = []
 
-        self.tool_usage_history[tool_name].append({
-            "args": args,
-            "result": result,
-            "timestamp": asyncio.get_event_loop().time()
-        })
+        self.tool_usage_history[tool_name].append(
+            {"args": args, "result": result, "timestamp": asyncio.get_event_loop().time()}
+        )
 
     def add_entity(self, entity_type: str, entity_id: str, data: Dict[str, Any]) -> None:
         """Add or update an entity in memory.
@@ -73,7 +70,7 @@ class AgentMemory:
 
         self.entity_memory[entity_type][entity_id] = {
             **data,
-            "last_updated": asyncio.get_event_loop().time()
+            "last_updated": asyncio.get_event_loop().time(),
         }
 
     def get_recent_messages(self, n: int = 5) -> List[Dict[str, str]]:
@@ -132,20 +129,21 @@ class AgentMemory:
         summary = "## Memory Summary\n\n"
 
         # Conversation summary
-        summary += f"### Conversation History\n"
+        summary += "### Conversation History\n"
         summary += f"- {len(self.conversation_history)} messages in history\n"
 
         # Tool usage summary
-        summary += f"\n### Tool Usage\n"
+        summary += "\n### Tool Usage\n"
         for tool_name, usages in self.tool_usage_history.items():
             summary += f"- {tool_name}: {len(usages)} uses\n"
 
         # Entity memory summary
-        summary += f"\n### Entities in Memory\n"
+        summary += "\n### Entities in Memory\n"
         for entity_type, entities in self.entity_memory.items():
             summary += f"- {entity_type}: {len(entities)} entities\n"
 
         return summary
+
 
 class ToolSelectionAgent:
     """Agent responsible for selecting the most appropriate tools for a task."""
@@ -162,8 +160,10 @@ class ToolSelectionAgent:
         self.tool_map = {tool.name: tool for tool in tools}
 
         # Create the tool selection prompt
-        self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a specialized agent responsible for selecting the most appropriate tools for a given task.
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a specialized agent responsible for selecting the most appropriate tools for a given task.
 Your job is to analyze the user's request and determine which tools would be most effective for completing it.
 
 For each request, you should:
@@ -178,19 +178,25 @@ Respond with a JSON object containing:
 - "execution_order": Suggested order to use the tools (array of tool names)
 
 Be strategic in your selection - choose tools that complement each other and cover all aspects of the task.
-"""),
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessage(content="""
+"""
+                ),
+                MessagesPlaceholder(variable_name="history"),
+                HumanMessage(
+                    content="""
 User request: {request}
 
 Available tools:
 {tool_descriptions}
 
 Select the most appropriate tools for this task.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
-    async def select_tools(self, request: str, history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
+    async def select_tools(
+        self, request: str, history: Optional[List[Dict[str, str]]] = None
+    ) -> Dict[str, Any]:
         """Select the most appropriate tools for a request.
 
         Args:
@@ -201,15 +207,15 @@ Select the most appropriate tools for this task.
             Dictionary with selected tools, reasoning, and execution order
         """
         # Format tool descriptions
-        tool_descriptions = "\n\n".join([
-            f"- {tool.name}: {tool.description}" for tool in self.tools
-        ])
+        tool_descriptions = "\n\n".join(
+            [f"- {tool.name}: {tool.description}" for tool in self.tools]
+        )
 
         # Prepare the input for the prompt
         input_values = {
             "request": request,
             "tool_descriptions": tool_descriptions,
-            "history": history or []
+            "history": history or [],
         }
 
         # Get the tool selection from the model
@@ -220,7 +226,9 @@ Select the most appropriate tools for this task.
         try:
             # Try to extract JSON from the response
             content = response.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -250,8 +258,9 @@ Select the most appropriate tools for this task.
             return {
                 "selected_tools": [self.tools[0].name] if self.tools else [],
                 "reasoning": f"Error parsing tool selection: {str(e)}. Defaulting to first available tool.",
-                "execution_order": [self.tools[0].name] if self.tools else []
+                "execution_order": [self.tools[0].name] if self.tools else [],
             }
+
 
 class SpecializedSubAgent:
     """Base class for specialized sub-agents that focus on specific tasks."""
@@ -284,9 +293,7 @@ class SpecializedSubAgent:
             Execution result
         """
         # Prepare the messages with memory context
-        messages = [
-            {"role": "system", "content": self.system_prompt}
-        ]
+        messages = [{"role": "system", "content": self.system_prompt}]
 
         # Add relevant context from memory
         recent_messages = memory.get_recent_messages(3)
@@ -305,25 +312,17 @@ class SpecializedSubAgent:
             # Update memory
             memory.add_message({"role": "assistant", "content": response})
 
-            return {
-                "success": True,
-                "response": response,
-                "agent": self.name
-            }
+            return {"success": True, "response": response, "agent": self.name}
         except Exception as e:
             error_message = format_error_for_user(e)
 
             # Update memory with the error
-            memory.add_message({
-                "role": "assistant",
-                "content": f"Error in {self.name}: {error_message}"
-            })
+            memory.add_message(
+                {"role": "assistant", "content": f"Error in {self.name}: {error_message}"}
+            )
 
-            return {
-                "success": False,
-                "error": error_message,
-                "agent": self.name
-            }
+            return {"success": False, "error": error_message, "agent": self.name}
+
 
 class CoordinatorAgent:
     """Agent responsible for coordinating multiple specialized sub-agents."""
@@ -333,7 +332,7 @@ class CoordinatorAgent:
         model: ChatAnthropic,
         sub_agents: Dict[str, SpecializedSubAgent],
         tool_selector: ToolSelectionAgent,
-        memory: AgentMemory
+        memory: AgentMemory,
     ):
         """Initialize the coordinator agent.
 
@@ -349,8 +348,10 @@ class CoordinatorAgent:
         self.memory = memory
 
         # Create the coordinator prompt
-        self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a coordinator agent responsible for managing multiple specialized sub-agents to complete complex tasks.
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a coordinator agent responsible for managing multiple specialized sub-agents to complete complex tasks.
 Your job is to:
 1. Analyze the user's request
 2. Break it down into subtasks
@@ -361,10 +362,12 @@ Available sub-agents:
 {sub_agent_descriptions}
 
 When responding, first explain your plan for completing the task, then show the results from each sub-agent, and finally provide a synthesized answer.
-"""),
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessage(content="{request}")
-        ])
+"""
+                ),
+                MessagesPlaceholder(variable_name="history"),
+                HumanMessage(content="{request}"),
+            ]
+        )
 
     async def process_request(self, request: str) -> str:
         """Process a user request by coordinating sub-agents.
@@ -396,16 +399,19 @@ When responding, first explain your plan for completing the task, then show the 
             selected_sub_agents.add("default")
 
         # Format sub-agent descriptions
-        sub_agent_descriptions = "\n".join([
-            f"- {name}: {agent.name}" for name, agent in self.sub_agents.items()
-            if name in selected_sub_agents
-        ])
+        sub_agent_descriptions = "\n".join(
+            [
+                f"- {name}: {agent.name}"
+                for name, agent in self.sub_agents.items()
+                if name in selected_sub_agents
+            ]
+        )
 
         # Prepare the input for the coordinator prompt
         input_values = {
             "request": request,
             "sub_agent_descriptions": sub_agent_descriptions,
-            "history": history
+            "history": history,
         }
 
         # Get the coordination plan
@@ -433,8 +439,11 @@ Incorporate information from all sub-agents and resolve any conflicts or inconsi
 """
 
         synthesis_messages = [
-            {"role": "system", "content": "You are a synthesis agent that combines results from multiple sub-agents into a coherent response."},
-            {"role": "user", "content": synthesis_prompt}
+            {
+                "role": "system",
+                "content": "You are a synthesis agent that combines results from multiple sub-agents into a coherent response.",
+            },
+            {"role": "user", "content": synthesis_prompt},
         ]
 
         synthesis_response = await self.model.ainvoke(synthesis_messages)
@@ -445,10 +454,10 @@ Incorporate information from all sub-agents and resolve any conflicts or inconsi
 
         return final_response
 
+
 # Factory function to create specialized sub-agents
 def create_specialized_sub_agents(
-    model: ChatAnthropic,
-    all_tools: List[BaseTool]
+    model: ChatAnthropic, all_tools: List[BaseTool]
 ) -> Dict[str, SpecializedSubAgent]:
     """Create specialized sub-agents for different tasks.
 
@@ -460,10 +469,20 @@ def create_specialized_sub_agents(
         Dictionary of sub-agents by name
     """
     # Categorize tools by type
-    search_tools = [t for t in all_tools if any(term in t.name.lower() for term in ["search", "brave"])]
-    scraping_tools = [t for t in all_tools if any(term in t.name.lower() for term in ["scrape", "extract", "web"])]
-    product_tools = [t for t in all_tools if any(term in t.name.lower() for term in ["product", "amazon"])]
-    social_tools = [t for t in all_tools if any(term in t.name.lower() for term in ["social", "instagram", "facebook", "twitter"])]
+    search_tools = [
+        t for t in all_tools if any(term in t.name.lower() for term in ["search", "brave"])
+    ]
+    scraping_tools = [
+        t for t in all_tools if any(term in t.name.lower() for term in ["scrape", "extract", "web"])
+    ]
+    product_tools = [
+        t for t in all_tools if any(term in t.name.lower() for term in ["product", "amazon"])
+    ]
+    social_tools = [
+        t
+        for t in all_tools
+        if any(term in t.name.lower() for term in ["social", "instagram", "facebook", "twitter"])
+    ]
 
     # Create specialized sub-agents
     sub_agents = {}
@@ -481,7 +500,9 @@ When searching:
 
 Always cite your sources and provide links to where the information was found.
 """
-        sub_agents["search"] = SpecializedSubAgent("Search Agent", model, search_tools, search_prompt)
+        sub_agents["search"] = SpecializedSubAgent(
+            "Search Agent", model, search_tools, search_prompt
+        )
 
     # Scraping agent
     if scraping_tools:
@@ -496,7 +517,9 @@ When scraping:
 
 Always respect website terms of service and be mindful of rate limits.
 """
-        sub_agents["scraping"] = SpecializedSubAgent("Scraping Agent", model, scraping_tools, scraping_prompt)
+        sub_agents["scraping"] = SpecializedSubAgent(
+            "Scraping Agent", model, scraping_tools, scraping_prompt
+        )
 
     # Product research agent
     if product_tools:
@@ -511,7 +534,9 @@ When researching products:
 
 Always present information in a structured, easy-to-compare format.
 """
-        sub_agents["product"] = SpecializedSubAgent("Product Research Agent", model, product_tools, product_prompt)
+        sub_agents["product"] = SpecializedSubAgent(
+            "Product Research Agent", model, product_tools, product_prompt
+        )
 
     # Social media agent
     if social_tools:
@@ -526,7 +551,9 @@ When analyzing social media:
 
 Always respect privacy considerations and focus on public information.
 """
-        sub_agents["social"] = SpecializedSubAgent("Social Media Agent", model, social_tools, social_prompt)
+        sub_agents["social"] = SpecializedSubAgent(
+            "Social Media Agent", model, social_tools, social_prompt
+        )
 
     # Default agent with all tools
     default_prompt = """You are a versatile agent with access to a wide range of tools for web automation and data collection.

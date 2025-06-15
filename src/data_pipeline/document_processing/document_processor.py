@@ -5,13 +5,14 @@ Main document processor that orchestrates parsing, chunking, and metadata extrac
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from .parsers import BaseParser, ParsedDocument, ParsingConfig, ParserFactory
-from .chunking import BaseChunker, ChunkingConfig, TextChunk, ChunkerFactory
-from .metadata import DocumentMetadata, MetadataExtractor, MetadataEnricher
+from .chunking import ChunkerFactory, ChunkingConfig, TextChunk
+from .metadata import DocumentMetadata, MetadataEnricher, MetadataExtractor
+from .parsers import ParsedDocument, ParserFactory, ParsingConfig
+
 
 class DocumentProcessingConfig(BaseModel):
     """Configuration for document processing."""
@@ -33,6 +34,7 @@ class DocumentProcessingConfig(BaseModel):
     # Performance options
     max_file_size: int = Field(default=100 * 1024 * 1024, description="Maximum file size in bytes")
     processing_timeout: int = Field(default=300, description="Processing timeout in seconds")
+
 
 class DocumentProcessingResult(BaseModel):
     """Result of document processing."""
@@ -72,6 +74,7 @@ class DocumentProcessingResult(BaseModel):
     def get_metadata(self) -> DocumentMetadata:
         """Get document metadata."""
         return self.parsed_document.metadata
+
 
 class DocumentProcessor:
     """Main document processor that orchestrates parsing, chunking, and metadata extraction."""
@@ -122,8 +125,7 @@ class DocumentProcessor:
             if self.config.enable_metadata_enrichment:
                 self.logger.debug("Enriching metadata")
                 parsed_document.metadata = self.metadata_enricher.enrich_metadata(
-                    parsed_document.metadata,
-                    parsed_document.text
+                    parsed_document.metadata, parsed_document.text
                 )
 
             # Chunk document if enabled
@@ -149,7 +151,7 @@ class DocumentProcessor:
                 processing_time=processing_time,
                 processing_status="completed" if not errors else "completed_with_errors",
                 warnings=warnings,
-                errors=errors
+                errors=errors,
             )
 
             self.logger.info(
@@ -172,12 +174,13 @@ class DocumentProcessor:
                 metadata = self.metadata_extractor.extract_from_file(path)
             except Exception:
                 from .metadata.models import DocumentType, ProcessingStatus
+
                 metadata = DocumentMetadata(
                     document_id=document_id,
                     source_path=str(path),
                     filename=path.name,
                     document_type=DocumentType.UNKNOWN,
-                    processing_status=ProcessingStatus.FAILED
+                    processing_status=ProcessingStatus.FAILED,
                 )
 
             parsed_document = ParsedDocument(
@@ -186,7 +189,7 @@ class DocumentProcessor:
                 parsing_time=0.0,
                 parser_name="unknown",
                 parser_version="unknown",
-                errors=[error_msg]
+                errors=[error_msg],
             )
 
             return DocumentProcessingResult(
@@ -197,7 +200,7 @@ class DocumentProcessor:
                 processing_time=processing_time,
                 processing_status="failed",
                 warnings=warnings,
-                errors=errors
+                errors=errors,
             )
 
     def process_content(
@@ -205,7 +208,7 @@ class DocumentProcessor:
         content: Union[str, bytes],
         document_id: str,
         document_type: Optional[str] = None,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> DocumentProcessingResult:
         """
         Process document content directly.
@@ -226,14 +229,15 @@ class DocumentProcessor:
         try:
             # Parse content
             self.logger.info(f"Parsing content for document: {document_id}")
-            parsed_document = self._parse_content(content, document_id, document_type, **metadata_kwargs)
+            parsed_document = self._parse_content(
+                content, document_id, document_type, **metadata_kwargs
+            )
 
             # Enrich metadata if enabled
             if self.config.enable_metadata_enrichment:
                 self.logger.debug("Enriching metadata")
                 parsed_document.metadata = self.metadata_enricher.enrich_metadata(
-                    parsed_document.metadata,
-                    parsed_document.text
+                    parsed_document.metadata, parsed_document.text
                 )
 
             # Chunk document if enabled
@@ -259,7 +263,7 @@ class DocumentProcessor:
                 processing_time=processing_time,
                 processing_status="completed" if not errors else "completed_with_errors",
                 warnings=warnings,
-                errors=errors
+                errors=errors,
             )
 
             self.logger.info(
@@ -279,11 +283,12 @@ class DocumentProcessor:
 
             # Create minimal result with error
             from .metadata.models import DocumentType, ProcessingStatus
+
             metadata = DocumentMetadata(
                 document_id=document_id,
                 document_type=DocumentType.UNKNOWN,
                 processing_status=ProcessingStatus.FAILED,
-                **metadata_kwargs
+                **metadata_kwargs,
             )
 
             parsed_document = ParsedDocument(
@@ -292,7 +297,7 @@ class DocumentProcessor:
                 parsing_time=0.0,
                 parser_name="unknown",
                 parser_version="unknown",
-                errors=[error_msg]
+                errors=[error_msg],
             )
 
             return DocumentProcessingResult(
@@ -303,7 +308,7 @@ class DocumentProcessor:
                 processing_time=processing_time,
                 processing_status="failed",
                 warnings=warnings,
-                errors=errors
+                errors=errors,
             )
 
     def _parse_document(self, file_path: Path) -> ParsedDocument:
@@ -323,7 +328,7 @@ class DocumentProcessor:
                 parsing_time=0.0,
                 parser_name="failed",
                 parser_version="unknown",
-                errors=[f"Parsing failed: {str(e)}"]
+                errors=[f"Parsing failed: {str(e)}"],
             )
 
     def _parse_content(
@@ -331,41 +336,49 @@ class DocumentProcessor:
         content: Union[str, bytes],
         document_id: str,
         document_type: Optional[str] = None,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """Parse content using appropriate parser."""
         try:
             # Determine document type
             from .metadata.models import DocumentType
+
             if document_type:
                 doc_type = DocumentType(document_type.lower())
             else:
                 doc_type = DocumentType.TEXT
 
-            parser = self.parser_factory.get_parser(document_type=doc_type, config=self.config.parsing_config)
+            parser = self.parser_factory.get_parser(
+                document_type=doc_type, config=self.config.parsing_config
+            )
             return parser.parse_content(content, document_id, doc_type, **metadata_kwargs)
         except Exception as e:
             if not self.config.ignore_parsing_errors:
                 raise
 
             # Create minimal parsed document with error
-            text_content = str(content) if isinstance(content, str) else content.decode('utf-8', errors='ignore')
-            metadata = self.metadata_extractor.extract_from_content(text_content, document_id, **metadata_kwargs)
+            text_content = (
+                str(content)
+                if isinstance(content, str)
+                else content.decode("utf-8", errors="ignore")
+            )
+            metadata = self.metadata_extractor.extract_from_content(
+                text_content, document_id, **metadata_kwargs
+            )
             return ParsedDocument(
                 text=text_content,
                 metadata=metadata,
                 parsing_time=0.0,
                 parser_name="failed",
                 parser_version="unknown",
-                errors=[f"Parsing failed: {str(e)}"]
+                errors=[f"Parsing failed: {str(e)}"],
             )
 
     def _chunk_document(self, parsed_document: ParsedDocument) -> List[TextChunk]:
         """Chunk parsed document."""
         try:
             chunker = self.chunker_factory.get_chunker(
-                strategy=self.config.chunking_config.strategy,
-                config=self.config.chunking_config
+                strategy=self.config.chunking_config.strategy, config=self.config.chunking_config
             )
             return chunker.chunk_text(parsed_document.text, parsed_document.metadata)
         except Exception as e:

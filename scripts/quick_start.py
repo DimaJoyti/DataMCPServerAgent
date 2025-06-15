@@ -6,9 +6,7 @@ Quick Start Script for DataMCPServerAgent v2.0
 
 import asyncio
 import sys
-import time
 from pathlib import Path
-from typing import Dict, Any
 
 # Add app directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -19,25 +17,25 @@ def print_banner():
     print("🤖 DataMCPServerAgent v2.0 - Quick Start")
     print("=" * 60)
     print("Advanced AI Agent System with MCP Integration")
-    print("Покращена архітектура з Clean Code принципами")
+    print("Enhanced architecture with Clean Code principles")
     print("=" * 60)
 
 def check_dependencies():
     """Перевірка наявності основних залежностей."""
     print("🔍 Перевірка залежностей...")
-    
+
     required_modules = [
         'pydantic',
-        'fastapi', 
+        'fastapi',
         'uvicorn',
         'structlog',
         'typer',
         'rich'
     ]
-    
+
     missing = []
     available = []
-    
+
     for module in required_modules:
         try:
             __import__(module)
@@ -46,20 +44,20 @@ def check_dependencies():
         except ImportError:
             missing.append(module)
             print(f"  ❌ {module}")
-    
+
     if missing:
         print(f"\n⚠️ Відсутні модулі: {', '.join(missing)}")
         print("📦 Встановіть їх командою:")
         print(f"pip install {' '.join(missing)}")
         return False
-    
+
     print("✅ Всі залежності доступні!")
     return True
 
 def test_basic_functionality():
     """Тестування базової функціональності."""
     print("\n🧪 Тестування базової функціональності...")
-    
+
     try:
         # Test configuration
         print("  📋 Тестування конфігурації...")
@@ -67,7 +65,7 @@ def test_basic_functionality():
         settings = Settings()
         print(f"    ✅ Додаток: {settings.app_name} v{settings.app_version}")
         print(f"    ✅ Середовище: {settings.environment}")
-        
+
         # Test logging
         print("  📝 Тестування логування...")
         from app.core.logging_improved import get_logger, setup_logging
@@ -75,7 +73,7 @@ def test_basic_functionality():
         logger = get_logger("quick_start")
         logger.info("Тестове повідомлення логування")
         print("    ✅ Логування працює")
-        
+
         # Test exceptions
         print("  ⚠️ Тестування винятків...")
         from app.core.exceptions_improved import ValidationError
@@ -83,9 +81,9 @@ def test_basic_functionality():
             raise ValidationError("Тестова помилка валідації", field="test_field")
         except ValidationError as e:
             print(f"    ✅ Винятки працюють: {e.error_code}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"    ❌ Помилка: {e}")
         return False
@@ -93,30 +91,30 @@ def test_basic_functionality():
 def test_domain_models():
     """Тестування доменних моделей."""
     print("\n🏗️ Тестування доменних моделей...")
-    
+
     try:
         # Test Agent model
         print("  🤖 Тестування моделі Agent...")
-        from app.domain.models.agent import Agent, AgentType, AgentConfiguration
-        
+        from app.domain.models.agent import Agent, AgentConfiguration, AgentType
+
         config = AgentConfiguration(
             max_concurrent_tasks=5,
             timeout_seconds=300
         )
-        
+
         agent = Agent(
             name="test-agent",
             agent_type=AgentType.WORKER,
             description="Тестовий агент",
             configuration=config
         )
-        
+
         print(f"    ✅ Agent створено: {agent.name} (ID: {agent.id[:8]})")
-        
+
         # Test Task model
         print("  📋 Тестування моделі Task...")
-        from app.domain.models.task import Task, TaskType, TaskPriority
-        
+        from app.domain.models.task import Task, TaskPriority, TaskType
+
         task = Task(
             name="Тестове завдання",
             task_type=TaskType.DATA_ANALYSIS,
@@ -124,11 +122,11 @@ def test_domain_models():
             priority=TaskPriority.NORMAL,
             description="Тестове завдання для перевірки"
         )
-        
+
         print(f"    ✅ Task створено: {task.name} (ID: {task.id[:8]})")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"    ❌ Помилка в доменних моделях: {e}")
         return False
@@ -136,21 +134,21 @@ def test_domain_models():
 async def test_api_server():
     """Тестування API сервера."""
     print("\n🌐 Тестування API сервера...")
-    
+
     try:
         from app.api.server_improved import create_api_server
         from app.core.config_improved import Settings
-        
+
         settings = Settings(debug=True)
         app = create_api_server(settings)
-        
+
         print("    ✅ FastAPI додаток створено")
         print(f"    ✅ Назва: {app.title}")
         print(f"    ✅ Версія: {app.version}")
         print(f"    ✅ Маршрутів: {len(app.routes)}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"    ❌ Помилка API сервера: {e}")
         return False
@@ -179,23 +177,23 @@ def show_next_steps():
 async def main():
     """Головна функція."""
     print_banner()
-    
+
     # Перевірка залежностей
     if not check_dependencies():
         print("\n❌ Не всі залежності доступні. Встановіть їх та спробуйте знову.")
         show_next_steps()
         return 1
-    
+
     # Тестування функціональності
     tests = [
         ("Базова функціональність", test_basic_functionality),
         ("Доменні моделі", test_domain_models),
         ("API сервер", test_api_server),
     ]
-    
+
     passed = 0
     total = len(tests)
-    
+
     for test_name, test_func in tests:
         print(f"\n🧪 Запуск тесту: {test_name}")
         try:
@@ -203,7 +201,7 @@ async def main():
                 result = await test_func()
             else:
                 result = test_func()
-            
+
             if result:
                 passed += 1
                 print(f"✅ Тест '{test_name}' пройдено")
@@ -211,27 +209,27 @@ async def main():
                 print(f"❌ Тест '{test_name}' не пройдено")
         except Exception as e:
             print(f"💥 Тест '{test_name}' завершився з помилкою: {e}")
-    
+
     # Результати
     print("\n" + "=" * 60)
     print(f"📊 Результати тестування: {passed}/{total} тестів пройдено")
-    
+
     if passed == total:
         print("🎉 Всі тести пройшли успішно!")
         print("✅ DataMCPServerAgent v2.0 готовий до роботи!")
-        
+
         print("\n🌟 Система готова! Можете:")
         print("  • Запускати API сервер")
-        print("  • Використовувати CLI інтерфейс") 
+        print("  • Використовувати CLI інтерфейс")
         print("  • Створювати та керувати агентами")
         print("  • Виконувати завдання")
-        
+
     else:
         print("⚠️ Деякі тести не пройшли.")
         print("🔧 Перевірте залежності та конфігурацію.")
-    
+
     show_next_steps()
-    
+
     return 0 if passed == total else 1
 
 if __name__ == "__main__":

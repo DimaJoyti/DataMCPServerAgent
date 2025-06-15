@@ -2,13 +2,13 @@
 Agent service for the API.
 """
 
-import asyncio
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from ..models.response_models import AgentResponse
 from ..config import config
+from ..models.response_models import AgentResponse
+
 
 class AgentService:
     """Service for interacting with agents."""
@@ -41,16 +41,108 @@ class AgentService:
         # Define capabilities for each agent mode
         capabilities = {
             "basic": ["chat", "web_search", "web_browsing"],
-            "advanced": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents"],
-            "enhanced": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning"],
-            "advanced_enhanced": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "context_aware_memory", "adaptive_learning"],
-            "multi_agent": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "context_aware_memory", "adaptive_learning", "collaborative_learning", "knowledge_sharing"],
-            "reinforcement_learning": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "reinforcement_learning"],
-            "distributed_memory": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "distributed_memory"],
-            "knowledge_graph": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "knowledge_graph"],
-            "error_recovery": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "error_recovery"],
-            "research_reports": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "research", "report_generation"],
-            "seo": ["chat", "web_search", "web_browsing", "tool_selection", "specialized_sub_agents", "memory_persistence", "learning", "seo_analysis", "seo_optimization"],
+            "advanced": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+            ],
+            "enhanced": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+            ],
+            "advanced_enhanced": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "context_aware_memory",
+                "adaptive_learning",
+            ],
+            "multi_agent": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "context_aware_memory",
+                "adaptive_learning",
+                "collaborative_learning",
+                "knowledge_sharing",
+            ],
+            "reinforcement_learning": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "reinforcement_learning",
+            ],
+            "distributed_memory": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "distributed_memory",
+            ],
+            "knowledge_graph": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "knowledge_graph",
+            ],
+            "error_recovery": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "error_recovery",
+            ],
+            "research_reports": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "research",
+                "report_generation",
+            ],
+            "seo": [
+                "chat",
+                "web_search",
+                "web_browsing",
+                "tool_selection",
+                "specialized_sub_agents",
+                "memory_persistence",
+                "learning",
+                "seo_analysis",
+                "seo_optimization",
+            ],
         }
 
         # Get capabilities for the agent mode
@@ -67,7 +159,9 @@ class AgentService:
             },
         )
 
-    async def create_agent(self, agent_mode: str, agent_config: Optional[Dict[str, Any]] = None) -> AgentResponse:
+    async def create_agent(
+        self, agent_mode: str, agent_config: Optional[Dict[str, Any]] = None
+    ) -> AgentResponse:
         """
         Create a new agent instance.
 

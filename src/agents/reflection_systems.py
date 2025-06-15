@@ -4,13 +4,12 @@ This module implements sophisticated self-reflection, self-evaluation, and conti
 mechanisms for autonomous improvement and adaptation.
 """
 
-import asyncio
 import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -18,24 +17,30 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
 
+
 class ReflectionType(Enum):
     """Types of reflection processes."""
+
     PERFORMANCE_REFLECTION = "performance_reflection"
     STRATEGY_REFLECTION = "strategy_reflection"
     ERROR_REFLECTION = "error_reflection"
     LEARNING_REFLECTION = "learning_reflection"
     META_REFLECTION = "meta_reflection"
 
+
 class ReflectionDepth(Enum):
     """Depth levels of reflection."""
+
     SURFACE = "surface"  # What happened?
     ANALYTICAL = "analytical"  # Why did it happen?
     CRITICAL = "critical"  # What could be done differently?
     META_COGNITIVE = "meta_cognitive"  # How can I improve my thinking?
 
+
 @dataclass
 class ReflectionInsight:
     """Represents an insight gained from reflection."""
+
     insight_id: str
     reflection_type: ReflectionType
     depth: ReflectionDepth
@@ -46,9 +51,11 @@ class ReflectionInsight:
     action_items: List[str]
     timestamp: float
 
+
 @dataclass
 class ReflectionSession:
     """Represents a complete reflection session."""
+
     session_id: str
     trigger_event: str
     focus_areas: List[str]
@@ -57,6 +64,7 @@ class ReflectionSession:
     improvement_plan: Dict[str, Any]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 class AdvancedReflectionEngine:
     """Engine for sophisticated self-reflection and continuous learning."""
 
@@ -64,7 +72,7 @@ class AdvancedReflectionEngine:
         self,
         model: ChatAnthropic,
         db: MemoryDatabase,
-        reflection_frequency: float = 3600.0  # Reflect every hour
+        reflection_frequency: float = 3600.0,  # Reflect every hour
     ):
         """Initialize the reflection engine.
 
@@ -87,8 +95,10 @@ class AdvancedReflectionEngine:
         """Initialize reflection prompts."""
 
         # Performance reflection prompt
-        self.performance_reflection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a self-reflection agent analyzing your own performance. Your task is to deeply examine recent actions, decisions, and outcomes to identify patterns and improvement opportunities.
+        self.performance_reflection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a self-reflection agent analyzing your own performance. Your task is to deeply examine recent actions, decisions, and outcomes to identify patterns and improvement opportunities.
 
 For performance reflection, analyze:
 1. What actions were taken and their outcomes
@@ -112,8 +122,10 @@ Respond with a JSON object containing:
 - "performance_patterns": Identified patterns in performance
 - "improvement_opportunities": Specific areas for improvement
 - "confidence_assessment": How confident you are in these insights (0-100)
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Recent performance data: {performance_data}
 User feedback: {user_feedback}
 Success metrics: {success_metrics}
@@ -121,12 +133,16 @@ Error incidents: {error_incidents}
 Resource usage: {resource_usage}
 
 Conduct a deep performance reflection.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Strategy reflection prompt
-        self.strategy_reflection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a strategic reflection agent analyzing the effectiveness of reasoning and problem-solving strategies.
+        self.strategy_reflection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a strategic reflection agent analyzing the effectiveness of reasoning and problem-solving strategies.
 
 For strategy reflection, examine:
 1. Which strategies were used and when
@@ -143,20 +159,26 @@ Respond with a JSON object containing:
 - "adaptation_insights": How strategies adapted over time
 - "optimization_opportunities": Ways to improve strategy use
 - "context_patterns": Patterns in strategy effectiveness by context
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Strategy usage history: {strategy_history}
 Problem types encountered: {problem_types}
 Strategy outcomes: {strategy_outcomes}
 Context factors: {context_factors}
 
 Reflect on strategy effectiveness and optimization.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Error reflection prompt
-        self.error_reflection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are an error analysis and learning agent. Your task is to deeply examine errors, failures, and suboptimal outcomes to extract maximum learning value.
+        self.error_reflection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are an error analysis and learning agent. Your task is to deeply examine errors, failures, and suboptimal outcomes to extract maximum learning value.
 
 For error reflection, analyze:
 1. Root causes of errors and failures
@@ -174,20 +196,26 @@ Respond with a JSON object containing:
 - "early_warning_signs": Indicators to watch for
 - "recovery_mechanisms": How to recover from errors
 - "learning_extraction": Key lessons learned from failures
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Error incidents: {error_incidents}
 Failure scenarios: {failure_scenarios}
 Context conditions: {context_conditions}
 Recovery attempts: {recovery_attempts}
 
 Conduct deep error reflection and learning extraction.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
         # Learning reflection prompt
-        self.learning_reflection_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a learning reflection agent analyzing knowledge acquisition, skill development, and adaptive capabilities.
+        self.learning_reflection_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a learning reflection agent analyzing knowledge acquisition, skill development, and adaptive capabilities.
 
 For learning reflection, examine:
 1. What new knowledge or skills were acquired
@@ -205,22 +233,26 @@ Respond with a JSON object containing:
 - "transfer_success": How well learning transferred to new situations
 - "learning_gaps": Areas that still need development
 - "learning_optimization": Ways to improve learning processes
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Learning events: {learning_events}
 Knowledge updates: {knowledge_updates}
 Skill improvements: {skill_improvements}
 Transfer instances: {transfer_instances}
 
 Reflect on learning progress and optimization.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def trigger_reflection(
         self,
         trigger_event: str,
         focus_areas: Optional[List[str]] = None,
-        reflection_depth: ReflectionDepth = ReflectionDepth.ANALYTICAL
+        reflection_depth: ReflectionDepth = ReflectionDepth.ANALYTICAL,
     ) -> ReflectionSession:
         """Trigger a reflection session.
 
@@ -247,8 +279,8 @@ Reflect on learning progress and optimization.
             metadata={
                 "start_time": time.time(),
                 "reflection_depth": reflection_depth.value,
-                "trigger_type": "manual"
-            }
+                "trigger_type": "manual",
+            },
         )
 
         # Conduct reflection for each focus area
@@ -272,14 +304,17 @@ Reflect on learning progress and optimization.
 
         # Save session
         self.reflection_sessions.append(session)
-        await self.db.save_reflection_session(session_id, {
-            "trigger_event": trigger_event,
-            "focus_areas": focus_areas,
-            "insights": [insight.__dict__ for insight in session.insights],
-            "conclusions": session.conclusions,
-            "improvement_plan": session.improvement_plan,
-            "metadata": session.metadata
-        })
+        await self.db.save_reflection_session(
+            session_id,
+            {
+                "trigger_event": trigger_event,
+                "focus_areas": focus_areas,
+                "insights": [insight.__dict__ for insight in session.insights],
+                "conclusions": session.conclusions,
+                "improvement_plan": session.improvement_plan,
+                "metadata": session.metadata,
+            },
+        )
 
         self.last_reflection_time = time.time()
 
@@ -306,7 +341,7 @@ Reflect on learning progress and optimization.
             "user_feedback": json.dumps(user_feedback, indent=2),
             "success_metrics": json.dumps(success_metrics, indent=2),
             "error_incidents": json.dumps(error_incidents, indent=2),
-            "resource_usage": json.dumps(resource_usage, indent=2)
+            "resource_usage": json.dumps(resource_usage, indent=2),
         }
 
         messages = self.performance_reflection_prompt.format_messages(**input_values)
@@ -322,7 +357,7 @@ Reflect on learning progress and optimization.
                 "meta_cognitive_insights": [],
                 "performance_patterns": [],
                 "improvement_opportunities": [],
-                "confidence_assessment": 50
+                "confidence_assessment": 50,
             }
 
         # Create insight
@@ -335,11 +370,11 @@ Reflect on learning progress and optimization.
             evidence={
                 "performance_data": performance_data,
                 "user_feedback": user_feedback,
-                "success_metrics": success_metrics
+                "success_metrics": success_metrics,
             },
             implications=reflection_data.get("analytical_insights", []),
             action_items=reflection_data.get("improvement_opportunities", []),
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         return insight
@@ -362,7 +397,7 @@ Reflect on learning progress and optimization.
             "strategy_history": json.dumps(strategy_history, indent=2),
             "problem_types": json.dumps(problem_types, indent=2),
             "strategy_outcomes": json.dumps(strategy_outcomes, indent=2),
-            "context_factors": json.dumps(context_factors, indent=2)
+            "context_factors": json.dumps(context_factors, indent=2),
         }
 
         messages = self.strategy_reflection_prompt.format_messages(**input_values)
@@ -377,7 +412,7 @@ Reflect on learning progress and optimization.
                 "selection_accuracy": 0.7,
                 "adaptation_insights": [],
                 "optimization_opportunities": [],
-                "context_patterns": []
+                "context_patterns": [],
             }
 
         insight = ReflectionInsight(
@@ -386,13 +421,10 @@ Reflect on learning progress and optimization.
             depth=ReflectionDepth.CRITICAL,
             content=json.dumps(reflection_data, indent=2),
             confidence=reflection_data.get("selection_accuracy", 0.7),
-            evidence={
-                "strategy_history": strategy_history,
-                "strategy_outcomes": strategy_outcomes
-            },
+            evidence={"strategy_history": strategy_history, "strategy_outcomes": strategy_outcomes},
             implications=reflection_data.get("adaptation_insights", []),
             action_items=reflection_data.get("optimization_opportunities", []),
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         return insight
@@ -418,7 +450,7 @@ Reflect on learning progress and optimization.
             "error_incidents": json.dumps(error_incidents, indent=2),
             "failure_scenarios": json.dumps(failure_scenarios, indent=2),
             "context_conditions": json.dumps(context_conditions, indent=2),
-            "recovery_attempts": json.dumps(recovery_attempts, indent=2)
+            "recovery_attempts": json.dumps(recovery_attempts, indent=2),
         }
 
         messages = self.error_reflection_prompt.format_messages(**input_values)
@@ -434,7 +466,7 @@ Reflect on learning progress and optimization.
                 "prevention_strategies": [],
                 "early_warning_signs": [],
                 "recovery_mechanisms": [],
-                "learning_extraction": []
+                "learning_extraction": [],
             }
 
         insight = ReflectionInsight(
@@ -443,13 +475,10 @@ Reflect on learning progress and optimization.
             depth=ReflectionDepth.CRITICAL,
             content=json.dumps(reflection_data, indent=2),
             confidence=0.8,  # High confidence in error analysis
-            evidence={
-                "error_incidents": error_incidents,
-                "failure_scenarios": failure_scenarios
-            },
+            evidence={"error_incidents": error_incidents, "failure_scenarios": failure_scenarios},
             implications=reflection_data.get("root_cause_analysis", []),
             action_items=reflection_data.get("prevention_strategies", []),
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         return insight
@@ -472,7 +501,7 @@ Reflect on learning progress and optimization.
             "learning_events": json.dumps(learning_events, indent=2),
             "knowledge_updates": json.dumps(knowledge_updates, indent=2),
             "skill_improvements": json.dumps(skill_improvements, indent=2),
-            "transfer_instances": json.dumps(transfer_instances, indent=2)
+            "transfer_instances": json.dumps(transfer_instances, indent=2),
         }
 
         messages = self.learning_reflection_prompt.format_messages(**input_values)
@@ -488,7 +517,7 @@ Reflect on learning progress and optimization.
                 "knowledge_integration": [],
                 "transfer_success": [],
                 "learning_gaps": [],
-                "learning_optimization": []
+                "learning_optimization": [],
             }
 
         insight = ReflectionInsight(
@@ -497,13 +526,10 @@ Reflect on learning progress and optimization.
             depth=ReflectionDepth.META_COGNITIVE,
             content=json.dumps(reflection_data, indent=2),
             confidence=0.75,
-            evidence={
-                "learning_events": learning_events,
-                "knowledge_updates": knowledge_updates
-            },
+            evidence={"learning_events": learning_events, "knowledge_updates": knowledge_updates},
             implications=reflection_data.get("knowledge_integration", []),
             action_items=reflection_data.get("learning_optimization", []),
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         return insight
@@ -526,7 +552,7 @@ Reflect on learning progress and optimization.
         session.conclusions = [
             "Performance analysis completed with actionable insights",
             "Strategy effectiveness patterns identified",
-            "Learning opportunities extracted from recent experiences"
+            "Learning opportunities extracted from recent experiences",
         ]
 
         # Create improvement plan (simplified)
@@ -534,7 +560,7 @@ Reflect on learning progress and optimization.
             "immediate_actions": all_action_items[:3],  # Top 3 action items
             "medium_term_goals": all_implications[:3],  # Top 3 implications
             "monitoring_metrics": ["accuracy", "efficiency", "user_satisfaction"],
-            "review_schedule": "weekly"
+            "review_schedule": "weekly",
         }
 
     # Helper methods for gathering data (simplified implementations)

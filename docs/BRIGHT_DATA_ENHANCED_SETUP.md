@@ -1,55 +1,56 @@
 # Enhanced Bright Data MCP Integration - Setup Guide
 
-Цей документ містить детальні інструкції по встановленню та налаштуванню покращеної інтеграції з Bright Data MCP.
+This document contains detailed instructions for installing and configuring the enhanced Bright Data MCP integration.
 
-## 📋 Передумови
+## 📋 Prerequisites
 
-### Системні вимоги
-- Python 3.8 або новіший
-- Redis (опціонально, для distributed caching)
-- Bright Data API ключ
-- Мінімум 512MB RAM
-- Інтернет з'єднання
+### System Requirements
+- Python 3.8 or newer
+- Redis (optional, for distributed caching)
+- Bright Data API key
+- Minimum 512MB RAM
+- Internet connection
 
-### Необхідні Python пакети
+### Required Python Packages
 ```bash
-# Основні залежності
+# Core dependencies
 pip install aiohttp>=3.8.0
 pip install asyncio
 pip install dataclasses-json
 
-# Опціональні залежності для повної функціональності
-pip install redis>=4.0.0          # Для Redis кешування
-     # Для REST API
+# Optional dependencies for full functionality
+pip install redis>=4.0.0          # For Redis caching
+pip install fastapi uvicorn        # For REST API
 ```
 
-## 🚀 Швидке встановлення
+## 🚀 Quick Installation
 
-### 1. Клонування та встановлення
+### 1. Clone and Install
 
 ```bash
-# Перейдіть до директорії проекту
+# Navigate to project directory
 cd DataMCPServerAgent
 
-# Встановіть залежності
+# Install dependencies
 pip install -r requirements.txt
-pip install prometheus-client     # Для метрик
-pip install websockets            # Для WebSocket API
-pip install fastapi uvicorn  
-# Або використовуйте uv (рекомендовано)
+pip install prometheus-client     # For metrics
+pip install websockets            # For WebSocket API
+pip install fastapi uvicorn
+
+# Or use uv (recommended)
 uv pip install -r requirements.txt
 ```
 
-### 2. Налаштування змінних середовища
+### 2. Environment Variables Setup
 
-Створіть файл `.env` або встановіть змінні середовища:
+Create a `.env` file or set environment variables:
 
 ```bash
-# Основні налаштування
+# Basic settings
 export BRIGHT_DATA_API_KEY="your_bright_data_api_key_here"
 export BRIGHT_DATA_API_URL="https://api.brightdata.com"
 
-# Кешування
+# Caching
 export REDIS_URL="redis://localhost:6379/0"
 export CACHE_ENABLED="true"
 export CACHE_TTL="3600"
@@ -59,25 +60,25 @@ export RATE_LIMIT_ENABLED="true"
 export RATE_LIMIT_RPM="60"
 export RATE_LIMIT_BURST="10"
 
-# Логування
+# Logging
 export LOG_LEVEL="INFO"
 ```
 
-### 3. Перевірка встановлення
+### 3. Installation Verification
 
 ```bash
-# Запустіть швидкий тест
+# Run quick test
 python scripts/test_bright_data_enhanced.py
 
-# Або запустіть повний приклад
+# Or run full example
 python examples/enhanced_bright_data_example.py
 ```
 
-## ⚙️ Детальне налаштування
+## ⚙️ Detailed Configuration
 
-### Конфігураційний файл
+### Configuration File
 
-Створіть файл `configs/bright_data_config.json`:
+Create file `configs/bright_data_config.json`:
 
 ```json
 {
@@ -124,36 +125,36 @@ python examples/enhanced_bright_data_example.py
 }
 ```
 
-### Redis налаштування (опціонально)
+### Redis Setup (Optional)
 
-Якщо ви хочете використовувати Redis для distributed caching:
+If you want to use Redis for distributed caching:
 
 ```bash
-# Встановлення Redis (Ubuntu/Debian)
+# Install Redis (Ubuntu/Debian)
 sudo apt update
 sudo apt install redis-server
 
-# Запуск Redis
+# Start Redis
 sudo systemctl start redis-server
 sudo systemctl enable redis-server
 
-# Перевірка
+# Test
 redis-cli ping
-# Повинно повернути: PONG
+# Should return: PONG
 ```
 
-Для Docker:
+For Docker:
 ```bash
-# Запуск Redis в Docker
+# Run Redis in Docker
 docker run -d --name redis -p 6379:6379 redis:alpine
 
-# Перевірка
+# Test
 docker exec redis redis-cli ping
 ```
 
-## 🔧 Програмне налаштування
+## 🔧 Programmatic Configuration
 
-### Базове використання
+### Basic Usage
 
 ```python
 import asyncio
@@ -161,14 +162,14 @@ from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
 from src.tools.bright_data.core.config import BrightDataConfig
 
 async def main():
-    # Завантаження конфігурації
+    # Load configuration
     config = BrightDataConfig.from_env()
     
-    # Створення клієнта
+    # Create client
     client = EnhancedBrightDataClient(config=config)
     
     try:
-        # Використання клієнта
+        # Use client
         result = await client.scrape_url("https://example.com")
         print(f"Scraped {len(str(result))} characters")
         
@@ -178,7 +179,7 @@ async def main():
 asyncio.run(main())
 ```
 
-### Повне налаштування з усіма компонентами
+### Full Setup with All Components
 
 ```python
 import asyncio
@@ -189,10 +190,10 @@ from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrateg
 from src.tools.bright_data.core.error_handler import BrightDataErrorHandler
 
 async def setup_enhanced_system():
-    # 1. Конфігурація
+    # 1. Configuration
     config = BrightDataConfig.from_file("configs/bright_data_config.json")
     
-    # 2. Кешування
+    # 2. Caching
     memory_cache = MemoryCache(max_size=1000, default_ttl=3600)
     redis_cache = RedisCache(redis_url=config.cache.redis_url)
     cache_manager = CacheManager(memory_cache, redis_cache)
@@ -221,7 +222,7 @@ async def main():
     client = await setup_enhanced_system()
     
     try:
-        # Ваш код тут
+        # Your code here
         pass
     finally:
         await client.close()
@@ -229,16 +230,16 @@ async def main():
 asyncio.run(main())
 ```
 
-## 🧪 Тестування налаштування
+## 🧪 Setup Testing
 
-### 1. Швидкий тест компонентів
+### 1. Quick Component Test
 
 ```bash
-# Запуск швидкого тесту (не потребує API ключа)
+# Run quick test (doesn't require API key)
 python scripts/test_bright_data_enhanced.py
 ```
 
-Очікуваний вивід:
+Expected output:
 ```
 🚀 Starting Enhanced Bright Data Integration Tests
 ============================================================
@@ -254,7 +255,7 @@ python scripts/test_bright_data_enhanced.py
 📊 Results: 7 passed, 0 failed
 ```
 
-### 2. Тест з реальним API
+### 2. Real API Test
 
 ```python
 # test_real_api.py
@@ -264,7 +265,7 @@ from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
 from src.tools.bright_data.core.config import BrightDataConfig
 
 async def test_real_api():
-    # Переконайтеся, що API ключ встановлений
+    # Make sure API key is set
     if not os.getenv('BRIGHT_DATA_API_KEY'):
         print("❌ BRIGHT_DATA_API_KEY not set")
         return
@@ -273,11 +274,11 @@ async def test_real_api():
     client = EnhancedBrightDataClient(config=config)
     
     try:
-        # Тест health check
+        # Test health check
         health = await client.health_check()
         print(f"Health check: {health['status']}")
         
-        # Тест простого скрапінгу
+        # Test simple scraping
         result = await client.scrape_url("https://httpbin.org/json")
         print(f"✅ Scraping successful: {len(str(result))} characters")
         
@@ -289,10 +290,10 @@ async def test_real_api():
 asyncio.run(test_real_api())
 ```
 
-### 3. Performance тест
+### 3. Performance Test
 
 ```bash
-# Запуск performance тесту
+# Run performance test
 python -c "
 import asyncio
 from scripts.test_bright_data_enhanced import BrightDataTester
@@ -305,24 +306,24 @@ asyncio.run(perf_test())
 "
 ```
 
-## 🔍 Діагностика проблем
+## 🔍 Troubleshooting
 
-### Поширені проблеми та рішення
+### Common Issues and Solutions
 
 #### 1. Redis connection failed
 ```
 Error: ConnectionError: Error 111 connecting to localhost:6379
 ```
 
-**Рішення:**
+**Solution:**
 ```bash
-# Перевірте чи запущений Redis
+# Check if Redis is running
 sudo systemctl status redis-server
 
-# Або запустіть Redis
+# Or start Redis
 sudo systemctl start redis-server
 
-# Або вимкніть Redis кешування
+# Or disable Redis caching
 export REDIS_URL=""
 ```
 
@@ -331,12 +332,12 @@ export REDIS_URL=""
 ImportError: No module named 'src.tools.bright_data'
 ```
 
-**Рішення:**
+**Solution:**
 ```bash
-# Переконайтеся, що ви в правильній директорії
-pwd  # Повинно показати .../DataMCPServerAgent
+# Make sure you're in the correct directory
+pwd  # Should show .../DataMCPServerAgent
 
-# Додайте проект до PYTHONPATH
+# Add project to PYTHONPATH
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ```
 
@@ -345,12 +346,12 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 AuthenticationException: Authentication failed
 ```
 
-**Рішення:**
+**Solution:**
 ```bash
-# Перевірте API ключ
+# Check API key
 echo $BRIGHT_DATA_API_KEY
 
-# Встановіть правильний ключ
+# Set correct key
 export BRIGHT_DATA_API_KEY="your_actual_api_key"
 ```
 
@@ -359,40 +360,40 @@ export BRIGHT_DATA_API_KEY="your_actual_api_key"
 RateLimitException: Rate limit exceeded
 ```
 
-**Рішення:**
+**Solution:**
 ```python
-# Збільшіть ліміти в конфігурації
+# Increase limits in configuration
 config.rate_limit.requests_per_minute = 120
 config.rate_limit.burst_size = 20
 ```
 
-### Логування для діагностики
+### Diagnostic Logging
 
 ```python
 import logging
 
-# Увімкніть детальне логування
+# Enable detailed logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Або тільки для Bright Data компонентів
+# Or only for Bright Data components
 logging.getLogger('src.tools.bright_data').setLevel(logging.DEBUG)
 ```
 
-## 📊 Моніторинг та метрики
+## 📊 Monitoring and Metrics
 
-### Отримання метрик
+### Getting Metrics
 
 ```python
-# Метрики клієнта
+# Client metrics
 metrics = client.get_metrics()
 print(f"Success rate: {metrics['success_rate']:.2f}%")
 print(f"Total requests: {metrics['total_requests']}")
 
-# Метрики кешування
+# Cache metrics
 cache_stats = cache_manager.get_cache_stats()
 print(f"Cache hit rate: {cache_stats['hit_rate_percentage']:.2f}%")
 
-# Метрики rate limiting
+# Rate limiting metrics
 rate_stats = rate_limiter.get_global_stats()
 print(f"Rejected requests: {rate_stats['rejected_requests']}")
 ```
@@ -400,7 +401,7 @@ print(f"Rejected requests: {rate_stats['rejected_requests']}")
 ### Health Check
 
 ```python
-# Перевірка здоров'я системи
+# System health check
 health = await client.health_check()
 if health["status"] == "healthy":
     print("✅ System is healthy")
@@ -408,42 +409,42 @@ else:
     print(f"❌ System issue: {health.get('error', 'Unknown')}")
 ```
 
-## 🔄 Оновлення та підтримка
+## 🔄 Updates and Maintenance
 
-### Оновлення компонентів
+### Component Updates
 
 ```bash
-# Оновлення залежностей
+# Update dependencies
 pip install --upgrade aiohttp redis
 
-# Або з uv
+# Or with uv
 uv pip install --upgrade aiohttp redis
 ```
 
-### Backup конфігурації
+### Configuration Backup
 
 ```bash
-# Створіть backup поточної конфігурації
+# Create backup of current configuration
 cp configs/bright_data_config.json configs/bright_data_config.backup.json
 
-# Або експортуйте змінні середовища
+# Or export environment variables
 env | grep BRIGHT_DATA > bright_data_env.backup
 ```
 
-## 📞 Підтримка
+## 📞 Support
 
-Якщо у вас виникли проблеми:
+If you encounter issues:
 
-1. Перевірте [Troubleshooting Guide](BRIGHT_DATA_TROUBLESHOOTING.md)
-2. Запустіть діагностичний скрипт: `python scripts/test_bright_data_enhanced.py`
-3. Перевірте логи з рівнем DEBUG
-4. Створіть issue в GitHub репозиторії з детальним описом проблеми
+1. Check [Troubleshooting Guide](BRIGHT_DATA_TROUBLESHOOTING.md)
+2. Run diagnostic script: `python scripts/test_bright_data_enhanced.py`
+3. Check logs with DEBUG level
+4. Create issue in GitHub repository with detailed problem description
 
-## 🎯 Наступні кроки
+## 🎯 Next Steps
 
-Після успішного налаштування:
+After successful setup:
 
-1. Ознайомтеся з [Advanced Features Guide](BRIGHT_DATA_ADVANCED.md)
-2. Вивчіть [API Reference](BRIGHT_DATA_API.md)
-3. Спробуйте [Examples](../examples/)
-4. Налаштуйте [Monitoring Dashboard](BRIGHT_DATA_MONITORING.md)
+1. Read [Advanced Features Guide](BRIGHT_DATA_ADVANCED.md)
+2. Study [API Reference](BRIGHT_DATA_API.md)
+3. Try [Examples](../examples/)
+4. Set up [Monitoring Dashboard](BRIGHT_DATA_MONITORING.md)

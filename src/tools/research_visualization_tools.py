@@ -44,6 +44,7 @@ except ImportError:
     WORDCLOUD_AVAILABLE = False
     print("Warning: WordCloud not available. Install with 'pip install wordcloud'")
 
+
 class VisualizationConfig(BaseModel):
     """Configuration for visualizations."""
 
@@ -66,6 +67,7 @@ class VisualizationConfig(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class ChartData(BaseModel):
     """Data for chart visualizations."""
 
@@ -83,6 +85,7 @@ class ChartData(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class NetworkData(BaseModel):
     """Data for network visualizations."""
 
@@ -99,6 +102,7 @@ class NetworkData(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class MapData(BaseModel):
     """Data for map visualizations."""
 
@@ -114,6 +118,7 @@ class MapData(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class WordCloudData(BaseModel):
     """Data for word cloud visualizations."""
 
@@ -125,6 +130,7 @@ class WordCloudData(BaseModel):
         """Pydantic config."""
 
         arbitrary_types_allowed = True
+
 
 class TimelineData(BaseModel):
     """Data for timeline visualizations."""
@@ -139,6 +145,7 @@ class TimelineData(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class VisualizationGenerator:
     """Generator for advanced visualizations."""
 
@@ -151,9 +158,7 @@ class VisualizationGenerator:
         self.output_dir = output_dir or tempfile.mkdtemp()
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def generate_chart(
-        self, data: ChartData, config: VisualizationConfig
-    ) -> Dict[str, Any]:
+    def generate_chart(self, data: ChartData, config: VisualizationConfig) -> Dict[str, Any]:
         """Generate a chart visualization.
 
         Args:
@@ -201,9 +206,7 @@ class VisualizationGenerator:
                         else f"Series {i + 1}"
                     )
                     fig.add_trace(
-                        go.Scatter(
-                            x=data.x_data, y=y_series, mode="lines+markers", name=name
-                        )
+                        go.Scatter(x=data.x_data, y=y_series, mode="lines+markers", name=name)
                     )
             else:
                 # Single series
@@ -245,9 +248,7 @@ class VisualizationGenerator:
                         if data.series_names and i < len(data.series_names)
                         else f"Series {i + 1}"
                     )
-                    fig.add_trace(
-                        go.Scatter(x=data.x_data, y=y_series, mode="markers", name=name)
-                    )
+                    fig.add_trace(go.Scatter(x=data.x_data, y=y_series, mode="markers", name=name))
             else:
                 # Single series
                 fig.add_trace(
@@ -261,11 +262,7 @@ class VisualizationGenerator:
 
         elif data.chart_type == "pie":
             fig = go.Figure(
-                data=[
-                    go.Pie(
-                        labels=data.labels or data.x_data, values=data.y_data, hole=0.3
-                    )
-                ]
+                data=[go.Pie(labels=data.labels or data.x_data, values=data.y_data, hole=0.3)]
             )
 
         elif data.chart_type == "area":
@@ -355,9 +352,7 @@ class VisualizationGenerator:
             Visualization metadata
         """
         # Create figure
-        fig, ax = plt.subplots(
-            figsize=(config.width / 100, config.height / 100), dpi=100
-        )
+        fig, ax = plt.subplots(figsize=(config.width / 100, config.height / 100), dpi=100)
 
         # Set style
         plt.style.use("seaborn-v0_8" if config.theme == "default" else config.theme)
@@ -487,9 +482,7 @@ class VisualizationGenerator:
         # Save the figure
         filename = f"{config.title.lower().replace(' ', '_')}.png"
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(
-            filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color
-        )
+        plt.savefig(filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color)
         plt.close(fig)
 
         return {
@@ -500,9 +493,7 @@ class VisualizationGenerator:
             "url": f"file://{filepath}",
         }
 
-    def generate_network(
-        self, data: NetworkData, config: VisualizationConfig
-    ) -> Dict[str, Any]:
+    def generate_network(self, data: NetworkData, config: VisualizationConfig) -> Dict[str, Any]:
         """Generate a network visualization.
 
         Args:
@@ -513,9 +504,7 @@ class VisualizationGenerator:
             Visualization metadata
         """
         if not NETWORKX_AVAILABLE and not PLOTLY_AVAILABLE:
-            raise ImportError(
-                "NetworkX and Plotly are required for network visualizations"
-            )
+            raise ImportError("NetworkX and Plotly are required for network visualizations")
 
         if config.interactive and PLOTLY_AVAILABLE:
             return self._generate_interactive_network(data, config)
@@ -778,12 +767,8 @@ class VisualizationGenerator:
             node_labels[node] = node_data.get("label", node)
 
         # Draw the network
-        nx.draw_networkx_nodes(
-            G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.8
-        )
-        nx.draw_networkx_edges(
-            G, pos, width=edge_widths, edge_color=edge_colors, alpha=0.5
-        )
+        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.8)
+        nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color=edge_colors, alpha=0.5)
         nx.draw_networkx_labels(
             G, pos, labels=node_labels, font_size=10, font_family=config.font_family
         )
@@ -795,9 +780,7 @@ class VisualizationGenerator:
         # Save the figure
         filename = f"{config.title.lower().replace(' ', '_')}_network.png"
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(
-            filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color
-        )
+        plt.savefig(filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color)
         plt.close()
 
         return {
@@ -849,9 +832,7 @@ class VisualizationGenerator:
         # Save the figure
         filename = f"{config.title.lower().replace(' ', '_')}_wordcloud.png"
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(
-            filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color
-        )
+        plt.savefig(filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color)
         plt.close()
 
         return {
@@ -861,9 +842,7 @@ class VisualizationGenerator:
             "url": f"file://{filepath}",
         }
 
-    def generate_map(
-        self, data: MapData, config: VisualizationConfig
-    ) -> Dict[str, Any]:
+    def generate_map(self, data: MapData, config: VisualizationConfig) -> Dict[str, Any]:
         """Generate a map visualization.
 
         Args:
@@ -931,9 +910,7 @@ class VisualizationGenerator:
             "url": f"file://{filepath}",
         }
 
-    def generate_timeline(
-        self, data: TimelineData, config: VisualizationConfig
-    ) -> Dict[str, Any]:
+    def generate_timeline(self, data: TimelineData, config: VisualizationConfig) -> Dict[str, Any]:
         """Generate a timeline visualization.
 
         Args:
@@ -1116,6 +1093,7 @@ class VisualizationGenerator:
         else:
             raise ValueError(f"Unsupported visualization type: {visualization_type}")
 
+
 def generate_chart_tool(data_str: str) -> str:
     """Generate a chart visualization.
 
@@ -1141,6 +1119,7 @@ def generate_chart_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
+
 
 def generate_network_diagram_tool(data_str: str) -> str:
     """Generate a network diagram visualization.
@@ -1168,6 +1147,7 @@ def generate_network_diagram_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 def generate_wordcloud_tool(data_str: str) -> str:
     """Generate a word cloud visualization.
 
@@ -1193,6 +1173,7 @@ def generate_wordcloud_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
+
 
 def generate_map_tool(data_str: str) -> str:
     """Generate a map visualization.
@@ -1220,6 +1201,7 @@ def generate_map_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 def generate_timeline_tool(data_str: str) -> str:
     """Generate a timeline visualization.
 
@@ -1245,6 +1227,7 @@ def generate_timeline_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
+
 
 if __name__ == "__main__":
     # Example usage

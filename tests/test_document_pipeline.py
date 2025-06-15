@@ -2,24 +2,24 @@
 Tests for document processing pipeline.
 """
 
-import pytest
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch
-
 # Add src to path for imports
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.data_pipeline.document_processing import (
-    DocumentProcessor,
+    ChunkingConfig,
     DocumentProcessingConfig,
-    ParsingConfig,
-    ChunkingConfig
+    DocumentProcessor,
 )
-from src.data_pipeline.document_processing.parsers import TextParser, ParserFactory
-from src.data_pipeline.document_processing.chunking import TextChunker, ChunkerFactory
-from src.data_pipeline.document_processing.metadata import MetadataExtractor, DocumentType
+from src.data_pipeline.document_processing.chunking import ChunkerFactory, TextChunker
+from src.data_pipeline.document_processing.metadata import DocumentType, MetadataExtractor
+from src.data_pipeline.document_processing.parsers import ParserFactory, TextParser
+
 
 class TestDocumentProcessor:
     """Test document processor functionality."""
@@ -141,8 +141,8 @@ class TestTextChunker:
 
     def test_chunk_long_text(self):
         """Test chunking long text."""
-        from src.data_pipeline.document_processing.metadata.extractor import MetadataExtractor
         from src.data_pipeline.document_processing.chunking.base_chunker import ChunkingConfig
+        from src.data_pipeline.document_processing.metadata.extractor import MetadataExtractor
 
         config = ChunkingConfig(chunk_size=100, chunk_overlap=20)
         chunker = TextChunker(config)

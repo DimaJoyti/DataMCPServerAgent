@@ -8,13 +8,15 @@ from typing import Any, Dict, List, Optional
 try:
     import chromadb
     from chromadb.config import Settings
+
     HAS_CHROMA = True
 except ImportError:
     HAS_CHROMA = False
 
-from .base_store import BaseVectorStore, VectorStoreStats
 from ..schemas.base_schema import VectorRecord
-from ..schemas.search_models import SearchQuery, SearchResults, SearchResult, SearchType
+from ..schemas.search_models import SearchQuery, SearchResult, SearchResults, SearchType
+from .base_store import BaseVectorStore, VectorStoreStats
+
 
 class ChromaVectorStore(BaseVectorStore):
     """ChromaDB vector store implementation."""
@@ -22,9 +24,7 @@ class ChromaVectorStore(BaseVectorStore):
     def __init__(self, config):
         """Initialize ChromaDB store."""
         if not HAS_CHROMA:
-            raise ImportError(
-                "ChromaDB not available. Install with: pip install chromadb"
-            )
+            raise ImportError("ChromaDB not available. Install with: pip install chromadb")
 
         super().__init__(config)
         self.client = None
@@ -38,36 +38,21 @@ class ChromaVectorStore(BaseVectorStore):
                 # Persistent client
                 self.client = chromadb.PersistentClient(
                     path=self.config.persist_directory,
-                    settings=Settings(
-                        anonymized_telemetry=False,
-                        allow_reset=True
-                    )
+                    settings=Settings(anonymized_telemetry=False, allow_reset=True),
                 )
             else:
                 # In-memory client
                 self.client = chromadb.Client(
-                    settings=Settings(
-                        anonymized_telemetry=False,
-                        allow_reset=True
-                    )
+                    settings=Settings(anonymized_telemetry=False, allow_reset=True)
                 )
 
             # Get or create collection
-            distance_mapping = {
-                "cosine": "cosine",
-                "euclidean": "l2",
-                "dot_product": "ip"
-            }
+            distance_mapping = {"cosine": "cosine", "euclidean": "l2", "dot_product": "ip"}
 
-            distance_function = distance_mapping.get(
-                self.config.distance_metric.value,
-                "cosine"
-            )
+            distance_function = distance_mapping.get(self.config.distance_metric.value, "cosine")
 
             try:
-                self.collection = self.client.get_collection(
-                    name=self.config.collection_name
-                )
+                self.collection = self.client.get_collection(name=self.config.collection_name)
                 self.logger.info(f"Retrieved existing collection: {self.config.collection_name}")
             except Exception:
                 # Collection doesn't exist, create it
@@ -75,8 +60,8 @@ class ChromaVectorStore(BaseVectorStore):
                     name=self.config.collection_name,
                     metadata={
                         "hnsw:space": distance_function,
-                        "description": "Document embeddings collection"
-                    }
+                        "description": "Document embeddings collection",
+                    },
                 )
                 self.logger.info(f"Created new collection: {self.config.collection_name}")
 
@@ -100,28 +85,20 @@ class ChromaVectorStore(BaseVectorStore):
                 self.logger.warning(f"Collection {self.config.collection_name} already exists")
                 return True
 
-            distance_mapping = {
-                "cosine": "cosine",
-                "euclidean": "l2",
-                "dot_product": "ip"
-            }
+            distance_mapping = {"cosine": "cosine", "euclidean": "l2", "dot_product": "ip"}
 
-            distance_function = distance_mapping.get(
-                self.config.distance_metric.value,
-                "cosine"
-            )
+            distance_function = distance_mapping.get(self.config.distance_metric.value, "cosine")
 
             metadata = {
                 "hnsw:space": distance_function,
-                "description": "Document embeddings collection"
+                "description": "Document embeddings collection",
             }
 
             if schema:
                 metadata.update(schema)
 
             self.collection = self.client.create_collection(
-                name=self.config.collection_name,
-                metadata=metadata
+                name=self.config.collection_name, metadata=metadata
             )
 
             return True
@@ -164,21 +141,20 @@ class ChromaVectorStore(BaseVectorStore):
 
             for record in records:
                 metadata = record.metadata.copy()
-                metadata.update({
-                    "created_at": record.created_at.isoformat(),
-                    "source": record.source or "",
-                    "source_type": record.source_type or ""
-                })
+                metadata.update(
+                    {
+                        "created_at": record.created_at.isoformat(),
+                        "source": record.source or "",
+                        "source_type": record.source_type or "",
+                    }
+                )
                 if record.updated_at:
                     metadata["updated_at"] = record.updated_at.isoformat()
                 metadatas.append(metadata)
 
             # Insert into ChromaDB
             self.collection.add(
-                ids=ids,
-                embeddings=embeddings,
-                documents=documents,
-                metadatas=metadatas
+                ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
             )
 
             self.logger.debug(f"Inserted {len(records)} vectors into ChromaDB")
@@ -204,20 +180,19 @@ class ChromaVectorStore(BaseVectorStore):
 
             for record in records:
                 metadata = record.metadata.copy()
-                metadata.update({
-                    "created_at": record.created_at.isoformat(),
-                    "source": record.source or "",
-                    "source_type": record.source_type or "",
-                    "updated_at": record.updated_at.isoformat() if record.updated_at else ""
-                })
+                metadata.update(
+                    {
+                        "created_at": record.created_at.isoformat(),
+                        "source": record.source or "",
+                        "source_type": record.source_type or "",
+                        "updated_at": record.updated_at.isoformat() if record.updated_at else "",
+                    }
+                )
                 metadatas.append(metadata)
 
             # Update in ChromaDB
             self.collection.update(
-                ids=ids,
-                embeddings=embeddings,
-                documents=documents,
-                metadatas=metadatas
+                ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
             )
 
             self.logger.debug(f"Updated {len(records)} vectors in ChromaDB")
@@ -243,10 +218,7 @@ class ChromaVectorStore(BaseVectorStore):
     async def get_vector(self, id: str) -> Optional[VectorRecord]:
         """Get a vector by ID."""
         try:
-            result = self.collection.get(
-                ids=[id],
-                include=["embeddings", "documents", "metadatas"]
-            )
+            result = self.collection.get(ids=[id], include=["embeddings", "documents", "metadatas"])
 
             if not result["ids"]:
                 return None
@@ -271,7 +243,7 @@ class ChromaVectorStore(BaseVectorStore):
                 created_at=created_at,
                 updated_at=updated_at,
                 source=source if source else None,
-                source_type=source_type if source_type else None
+                source_type=source_type if source_type else None,
             )
 
         except Exception as e:
@@ -301,7 +273,7 @@ class ChromaVectorStore(BaseVectorStore):
                 search_time=search_time,
                 offset=query.offset,
                 limit=query.limit,
-                has_more=len(results) == query.limit
+                has_more=len(results) == query.limit,
             )
 
         except Exception as e:
@@ -318,21 +290,27 @@ class ChromaVectorStore(BaseVectorStore):
             query_embeddings=[query.query_vector],
             n_results=query.limit,
             where=where_clause,
-            include=["embeddings", "documents", "metadatas", "distances"]
+            include=["embeddings", "documents", "metadatas", "distances"],
         )
 
         # Convert to SearchResult objects
         search_results = []
 
         if results["ids"] and results["ids"][0]:
-            for i, (id_, distance, document, metadata) in enumerate(zip(
-                results["ids"][0],
-                results["distances"][0],
-                results["documents"][0],
-                results["metadatas"][0]
-            )):
+            for i, (id_, distance, document, metadata) in enumerate(
+                zip(
+                    results["ids"][0],
+                    results["distances"][0],
+                    results["documents"][0],
+                    results["metadatas"][0],
+                )
+            ):
                 # Convert distance to similarity score
-                score = 1.0 - distance if self.config.distance_metric.value == "cosine" else 1.0 / (1.0 + distance)
+                score = (
+                    1.0 - distance
+                    if self.config.distance_metric.value == "cosine"
+                    else 1.0 / (1.0 + distance)
+                )
 
                 # Apply similarity threshold if specified
                 if query.similarity_threshold and score < query.similarity_threshold:
@@ -344,7 +322,7 @@ class ChromaVectorStore(BaseVectorStore):
                     text=document,
                     metadata=metadata,
                     rank=i + 1,
-                    distance=distance
+                    distance=distance,
                 )
 
                 if query.include_vectors and results.get("embeddings"):
@@ -358,11 +336,7 @@ class ChromaVectorStore(BaseVectorStore):
         """Perform keyword search (using metadata filtering)."""
         # ChromaDB doesn't have built-in full-text search
         # We'll use a simple contains filter on the document text
-        where_clause = {
-            "$and": [
-                {"$contains": query.query_text}
-            ]
-        }
+        where_clause = {"$and": [{"$contains": query.query_text}]}
 
         if query.filters:
             additional_filters = self._build_where_clause(query.filters)
@@ -374,26 +348,20 @@ class ChromaVectorStore(BaseVectorStore):
             where_document=where_clause,
             limit=query.limit,
             offset=query.offset,
-            include=["documents", "metadatas"]
+            include=["documents", "metadatas"],
         )
 
         # Convert to SearchResult objects with simple scoring
         search_results = []
 
-        for i, (id_, document, metadata) in enumerate(zip(
-            results["ids"],
-            results["documents"],
-            results["metadatas"]
-        )):
+        for i, (id_, document, metadata) in enumerate(
+            zip(results["ids"], results["documents"], results["metadatas"])
+        ):
             # Simple keyword scoring based on term frequency
             score = self._calculate_keyword_score(query.query_text, document)
 
             search_result = SearchResult(
-                id=id_,
-                score=score,
-                text=document,
-                metadata=metadata,
-                rank=i + 1
+                id=id_, score=score, text=document, metadata=metadata, rank=i + 1
             )
 
             search_results.append(search_result)
@@ -414,7 +382,7 @@ class ChromaVectorStore(BaseVectorStore):
                 query_vector=query.query_vector,
                 search_type=SearchType.VECTOR,
                 limit=query.limit * 2,  # Get more results for fusion
-                filters=query.filters
+                filters=query.filters,
             )
             vector_results = await self._vector_search(vector_query)
 
@@ -424,17 +392,13 @@ class ChromaVectorStore(BaseVectorStore):
                 query_text=query.query_text,
                 search_type=SearchType.KEYWORD,
                 limit=query.limit * 2,  # Get more results for fusion
-                filters=query.filters
+                filters=query.filters,
             )
             keyword_results = await self._keyword_search(keyword_query)
 
         # Combine and rerank results
         return self._combine_search_results(
-            vector_results,
-            keyword_results,
-            query.vector_weight,
-            query.keyword_weight,
-            query.limit
+            vector_results, keyword_results, query.vector_weight, query.keyword_weight, query.limit
         )
 
     def _build_where_clause(self, filters) -> Optional[Dict[str, Any]]:
@@ -496,7 +460,7 @@ class ChromaVectorStore(BaseVectorStore):
         keyword_results: List[SearchResult],
         vector_weight: float,
         keyword_weight: float,
-        limit: int
+        limit: int,
     ) -> List[SearchResult]:
         """Combine vector and keyword search results."""
         # Create a map of all unique results
@@ -532,11 +496,7 @@ class ChromaVectorStore(BaseVectorStore):
             # Get collection count
             count_result = self.collection.count()
 
-            return VectorStoreStats(
-                total_vectors=count_result,
-                index_type="HNSW",
-                is_trained=True
-            )
+            return VectorStoreStats(total_vectors=count_result, index_type="HNSW", is_trained=True)
 
         except Exception as e:
             self.logger.error(f"Failed to get stats: {e}")

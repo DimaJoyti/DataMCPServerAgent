@@ -2,43 +2,49 @@
 Search models and query definitions for vector stores.
 """
 
-from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
-from .base_schema import VectorRecord, DistanceMetric
+from .base_schema import DistanceMetric
+
 
 class SearchType(str, Enum):
     """Types of search operations."""
+
     VECTOR = "vector"
     KEYWORD = "keyword"
     HYBRID = "hybrid"
     SEMANTIC = "semantic"
 
+
 class SortOrder(str, Enum):
     """Sort order options."""
+
     ASC = "asc"
     DESC = "desc"
 
+
 class FilterOperator(str, Enum):
     """Filter operators."""
-    EQ = "eq"          # Equal
-    NE = "ne"          # Not equal
-    GT = "gt"          # Greater than
-    GTE = "gte"        # Greater than or equal
-    LT = "lt"          # Less than
-    LTE = "lte"        # Less than or equal
-    IN = "in"          # In list
+
+    EQ = "eq"  # Equal
+    NE = "ne"  # Not equal
+    GT = "gt"  # Greater than
+    GTE = "gte"  # Greater than or equal
+    LT = "lt"  # Less than
+    LTE = "lte"  # Less than or equal
+    IN = "in"  # In list
     NOT_IN = "not_in"  # Not in list
-    CONTAINS = "contains"      # Contains substring
+    CONTAINS = "contains"  # Contains substring
     NOT_CONTAINS = "not_contains"  # Does not contain substring
-    STARTS_WITH = "starts_with"    # Starts with
-    ENDS_WITH = "ends_with"        # Ends with
-    REGEX = "regex"    # Regular expression
+    STARTS_WITH = "starts_with"  # Starts with
+    ENDS_WITH = "ends_with"  # Ends with
+    REGEX = "regex"  # Regular expression
     EXISTS = "exists"  # Field exists
     NOT_EXISTS = "not_exists"  # Field does not exist
+
 
 class SearchFilter(BaseModel):
     """Individual search filter."""
@@ -47,10 +53,10 @@ class SearchFilter(BaseModel):
     operator: FilterOperator = Field(..., description="Filter operator")
     value: Union[str, int, float, bool, List[Any]] = Field(..., description="Filter value")
 
-    @validator('value')
+    @validator("value")
     def validate_value(cls, v, values):
         """Validate filter value based on operator."""
-        operator = values.get('operator')
+        operator = values.get("operator")
 
         if operator in [FilterOperator.IN, FilterOperator.NOT_IN]:
             if not isinstance(v, list):
@@ -63,6 +69,7 @@ class SearchFilter(BaseModel):
 
         return v
 
+
 class SearchFilters(BaseModel):
     """Collection of search filters."""
 
@@ -70,10 +77,7 @@ class SearchFilters(BaseModel):
     operator: str = Field(default="AND", description="Logical operator between filters (AND/OR)")
 
     def add_filter(
-        self,
-        field: str,
-        operator: FilterOperator,
-        value: Union[str, int, float, bool, List[Any]]
+        self, field: str, operator: FilterOperator, value: Union[str, int, float, bool, List[Any]]
     ) -> None:
         """Add a filter."""
         filter_obj = SearchFilter(field=field, operator=operator, value=value)
@@ -88,7 +92,7 @@ class SearchFilters(BaseModel):
         self,
         field: str,
         min_value: Optional[Union[int, float]] = None,
-        max_value: Optional[Union[int, float]] = None
+        max_value: Optional[Union[int, float]] = None,
     ) -> None:
         """Add range filter."""
         if min_value is not None:
@@ -104,6 +108,7 @@ class SearchFilters(BaseModel):
     def is_empty(self) -> bool:
         """Check if filters are empty."""
         return len(self.filters) == 0
+
 
 class SortCriteria(BaseModel):
     """Sort criteria for search results."""
@@ -121,12 +126,15 @@ class SortCriteria(BaseModel):
         """Sort by date field."""
         return cls(field=field, order=SortOrder.DESC if descending else SortOrder.ASC)
 
+
 class SearchQuery(BaseModel):
     """Search query for vector stores."""
 
     # Query content
     query_text: Optional[str] = Field(None, description="Text query for semantic search")
-    query_vector: Optional[List[float]] = Field(None, description="Vector query for similarity search")
+    query_vector: Optional[List[float]] = Field(
+        None, description="Vector query for similarity search"
+    )
 
     # Search configuration
     search_type: SearchType = Field(default=SearchType.VECTOR, description="Type of search")
@@ -142,7 +150,9 @@ class SearchQuery(BaseModel):
     sort_by: List[SortCriteria] = Field(default_factory=list, description="Sort criteria")
 
     # Hybrid search configuration
-    keyword_weight: float = Field(default=0.3, description="Weight for keyword search in hybrid mode")
+    keyword_weight: float = Field(
+        default=0.3, description="Weight for keyword search in hybrid mode"
+    )
     vector_weight: float = Field(default=0.7, description="Weight for vector search in hybrid mode")
 
     # Result configuration
@@ -153,7 +163,7 @@ class SearchQuery(BaseModel):
     rerank: bool = Field(default=False, description="Apply reranking to results")
     explain: bool = Field(default=False, description="Include explanation of scoring")
 
-    @validator('limit')
+    @validator("limit")
     def validate_limit(cls, v):
         """Validate limit."""
         if v <= 0:
@@ -162,21 +172,21 @@ class SearchQuery(BaseModel):
             raise ValueError("Limit cannot exceed 1000")
         return v
 
-    @validator('offset')
+    @validator("offset")
     def validate_offset(cls, v):
         """Validate offset."""
         if v < 0:
             raise ValueError("Offset cannot be negative")
         return v
 
-    @validator('similarity_threshold')
+    @validator("similarity_threshold")
     def validate_similarity_threshold(cls, v):
         """Validate similarity threshold."""
         if v is not None and (v < 0 or v > 1):
             raise ValueError("Similarity threshold must be between 0 and 1")
         return v
 
-    @validator('keyword_weight', 'vector_weight')
+    @validator("keyword_weight", "vector_weight")
     def validate_weights(cls, v):
         """Validate search weights."""
         if v < 0 or v > 1:
@@ -203,6 +213,7 @@ class SearchQuery(BaseModel):
             return self.has_text_query()
         return False
 
+
 class SearchResult(BaseModel):
     """Individual search result."""
 
@@ -227,6 +238,7 @@ class SearchResult(BaseModel):
     def get_metadata_field(self, field: str, default: Any = None) -> Any:
         """Get metadata field value."""
         return self.metadata.get(field, default)
+
 
 class SearchResults(BaseModel):
     """Collection of search results."""
@@ -285,5 +297,5 @@ class SearchResults(BaseModel):
             offset=self.offset,
             limit=self.limit,
             has_more=False,  # Filtering may change this
-            aggregations=self.aggregations
+            aggregations=self.aggregations,
         )

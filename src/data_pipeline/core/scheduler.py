@@ -8,17 +8,18 @@ supporting cron-like scheduling and event-driven triggers.
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Callable, Any
-import schedule
-from croniter import croniter
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
+from croniter import croniter
 from pydantic import BaseModel
 
 from .pipeline_models import Pipeline, PipelineStatus
 
+
 class ScheduleEntry(BaseModel):
     """Represents a scheduled pipeline entry."""
+
     pipeline_id: str
     schedule_expression: str
     timezone: str = "UTC"
@@ -28,6 +29,7 @@ class ScheduleEntry(BaseModel):
     max_concurrent_runs: int = 1
     current_runs: int = 0
 
+
 class PipelineScheduler:
     """
     Scheduler for data pipelines.
@@ -36,9 +38,7 @@ class PipelineScheduler:
     """
 
     def __init__(
-        self,
-        logger: Optional[logging.Logger] = None,
-        check_interval: int = 30  # seconds
+        self, logger: Optional[logging.Logger] = None, check_interval: int = 30  # seconds
     ):
         """
         Initialize the pipeline scheduler.
@@ -107,8 +107,7 @@ class PipelineScheduler:
         """
         if not pipeline.config.schedule:
             self.logger.warning(
-                "Pipeline has no schedule expression",
-                pipeline_id=pipeline.pipeline_id
+                "Pipeline has no schedule expression", pipeline_id=pipeline.pipeline_id
             )
             return False
 
@@ -131,7 +130,7 @@ class PipelineScheduler:
                 "Pipeline scheduled",
                 pipeline_id=pipeline.pipeline_id,
                 schedule=pipeline.config.schedule,
-                next_run=next_run
+                next_run=next_run,
             )
 
             return True
@@ -141,7 +140,7 @@ class PipelineScheduler:
                 "Failed to schedule pipeline",
                 pipeline_id=pipeline.pipeline_id,
                 schedule=pipeline.config.schedule,
-                error=str(e)
+                error=str(e),
             )
             return False
 
@@ -182,7 +181,8 @@ class PipelineScheduler:
             List of next scheduled runs, sorted by next run time
         """
         entries = [
-            entry for entry in self.scheduled_pipelines.values()
+            entry
+            for entry in self.scheduled_pipelines.values()
             if entry.is_active and entry.next_run_time
         ]
 
@@ -230,15 +230,13 @@ class PipelineScheduler:
                 self.logger.info(
                     "Pipeline schedule resumed",
                     pipeline_id=pipeline_id,
-                    next_run=entry.next_run_time
+                    next_run=entry.next_run_time,
                 )
                 return True
 
             except Exception as e:
                 self.logger.error(
-                    "Failed to resume pipeline schedule",
-                    pipeline_id=pipeline_id,
-                    error=str(e)
+                    "Failed to resume pipeline schedule", pipeline_id=pipeline_id, error=str(e)
                 )
                 return False
 
@@ -255,10 +253,7 @@ class PipelineScheduler:
             True if successfully triggered
         """
         if pipeline_id not in self.scheduled_pipelines:
-            self.logger.warning(
-                "Pipeline not scheduled",
-                pipeline_id=pipeline_id
-            )
+            self.logger.warning("Pipeline not scheduled", pipeline_id=pipeline_id)
             return False
 
         entry = self.scheduled_pipelines[pipeline_id]
@@ -269,7 +264,7 @@ class PipelineScheduler:
                 "Pipeline already at max concurrent runs",
                 pipeline_id=pipeline_id,
                 current_runs=entry.current_runs,
-                max_concurrent=entry.max_concurrent_runs
+                max_concurrent=entry.max_concurrent_runs,
             )
             return False
 
@@ -279,18 +274,13 @@ class PipelineScheduler:
                 entry.current_runs += 1
                 await self.execution_callback(pipeline_id, "manual_trigger")
 
-                self.logger.info(
-                    "Pipeline manually triggered",
-                    pipeline_id=pipeline_id
-                )
+                self.logger.info("Pipeline manually triggered", pipeline_id=pipeline_id)
                 return True
 
             except Exception as e:
                 entry.current_runs -= 1
                 self.logger.error(
-                    "Failed to trigger pipeline",
-                    pipeline_id=pipeline_id,
-                    error=str(e)
+                    "Failed to trigger pipeline", pipeline_id=pipeline_id, error=str(e)
                 )
                 return False
 
@@ -328,7 +318,7 @@ class PipelineScheduler:
                 "Skipping scheduled run due to concurrent limit",
                 pipeline_id=entry.pipeline_id,
                 current_runs=entry.current_runs,
-                max_concurrent=entry.max_concurrent_runs
+                max_concurrent=entry.max_concurrent_runs,
             )
 
             # Still update next run time
@@ -346,7 +336,7 @@ class PipelineScheduler:
                 self.logger.info(
                     "Scheduled pipeline triggered",
                     pipeline_id=entry.pipeline_id,
-                    last_run=entry.last_run_time
+                    last_run=entry.last_run_time,
                 )
 
             except Exception as e:
@@ -354,7 +344,7 @@ class PipelineScheduler:
                 self.logger.error(
                     "Failed to execute scheduled pipeline",
                     pipeline_id=entry.pipeline_id,
-                    error=str(e)
+                    error=str(e),
                 )
 
         # Update next run time
@@ -367,24 +357,16 @@ class PipelineScheduler:
             entry.next_run_time = cron.get_next(datetime)
 
             self.logger.debug(
-                "Updated next run time",
-                pipeline_id=entry.pipeline_id,
-                next_run=entry.next_run_time
+                "Updated next run time", pipeline_id=entry.pipeline_id, next_run=entry.next_run_time
             )
 
         except Exception as e:
             self.logger.error(
-                "Failed to update next run time",
-                pipeline_id=entry.pipeline_id,
-                error=str(e)
+                "Failed to update next run time", pipeline_id=entry.pipeline_id, error=str(e)
             )
             entry.is_active = False
 
-    async def pipeline_execution_completed(
-        self,
-        pipeline_id: str,
-        status: PipelineStatus
-    ) -> None:
+    async def pipeline_execution_completed(self, pipeline_id: str, status: PipelineStatus) -> None:
         """
         Notify scheduler that a pipeline execution completed.
 
@@ -400,5 +382,5 @@ class PipelineScheduler:
                 "Pipeline execution completed",
                 pipeline_id=pipeline_id,
                 status=status,
-                current_runs=entry.current_runs
+                current_runs=entry.current_runs,
             )

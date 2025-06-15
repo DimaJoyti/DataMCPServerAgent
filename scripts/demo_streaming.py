@@ -11,26 +11,35 @@ This script demonstrates the real-time streaming capabilities:
 """
 
 import asyncio
-import time
+import os
 import random
-
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich.live import Live
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 # Import streaming components
 import sys
-import os
+import time
+
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+from rich.table import Table
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from app.pipelines.multimodal import ModalityType, MultiModalContent
 from app.pipelines.streaming import (
-    StreamingPipeline, StreamingConfig, StreamEvent, StreamEventType,
-    IncrementalProcessor, IncrementalUpdate, UpdateType, IndexManager,
-    LiveMonitor, EventBus, BusEvent, EventPriority
+    BusEvent,
+    EventBus,
+    EventPriority,
+    IncrementalProcessor,
+    IncrementalUpdate,
+    IndexManager,
+    LiveMonitor,
+    StreamEvent,
+    StreamEventType,
+    StreamingConfig,
+    StreamingPipeline,
+    UpdateType,
 )
-from app.pipelines.multimodal import MultiModalContent, ModalityType
 
 console = Console()
 
@@ -328,14 +337,14 @@ def _display_event_bus_stats(stats: dict):
 async def main():
     """Main demo function."""
     welcome_text = """
-⚡ STREAMING PIPELINE ДЕМОНСТРАЦІЯ
+⚡ STREAMING PIPELINE DEMONSTRATION
 
-Цей скрипт демонструє можливості streaming pipeline:
-• Real-time обробка документів
-• Incremental оновлення індексів
-• Live моніторинг та метрики
-• Event-driven архітектура
-• Auto-scaling та backpressure handling
+This script demonstrates streaming pipeline capabilities:
+• Real-time document processing
+• Incremental index updates
+• Live monitoring and metrics
+• Event-driven architecture
+• Auto-scaling and backpressure handling
     """
 
     panel = Panel(

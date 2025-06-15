@@ -14,10 +14,9 @@ from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from src.tools.bright_data_tools import BrightDataToolkit
 from src.agents.enhanced_agent_architecture import create_enhanced_agent_architecture
+from src.tools.bright_data_tools import BrightDataToolkit
 from src.utils.error_handlers import format_error_for_user
-from src.memory.memory_persistence import MemoryDatabase
 
 load_dotenv()
 
@@ -32,6 +31,7 @@ server_params = StdioServerParameters(
     },
     args=["@brightdata/mcp"],
 )
+
 
 async def load_all_tools(session: ClientSession) -> List[BaseTool]:
     """Load both standard MCP tools and custom Bright Data tools.
@@ -57,6 +57,7 @@ async def load_all_tools(session: ClientSession) -> List[BaseTool]:
         tool_dict[tool.name] = tool
 
     return list(tool_dict.values())
+
 
 async def chat_with_enhanced_agent():
     """Run the enhanced agent with memory persistence, tool selection, and learning."""
@@ -116,7 +117,9 @@ async def chat_with_enhanced_agent():
                 elif user_input.strip().lower().startswith("feedback "):
                     if last_request and last_response:
                         feedback = user_input[9:].strip()
-                        await coordinator.collect_user_feedback(last_request, last_response, feedback)
+                        await coordinator.collect_user_feedback(
+                            last_request, last_response, feedback
+                        )
                         print("Thank you for your feedback! It will help me improve.")
                     else:
                         print("No previous interaction to provide feedback on.")
@@ -138,13 +141,16 @@ async def chat_with_enhanced_agent():
                     print(f"Agent: {response}")
 
                     # Perform self-evaluation in the background
-                    asyncio.create_task(coordinator.feedback_collector.perform_self_evaluation(
-                        user_input, response, "coordinator"
-                    ))
+                    asyncio.create_task(
+                        coordinator.feedback_collector.perform_self_evaluation(
+                            user_input, response, "coordinator"
+                        )
+                    )
 
                 except Exception as e:
                     error_message = format_error_for_user(e)
                     print(f"Agent: An error occurred: {error_message}")
+
 
 if __name__ == "__main__":
     asyncio.run(chat_with_enhanced_agent())

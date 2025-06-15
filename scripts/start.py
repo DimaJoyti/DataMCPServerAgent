@@ -4,17 +4,16 @@ Quick start script for DataMCPServerAgent.
 Provides multiple deployment options.
 """
 
-import asyncio
-import sys
-import subprocess
 import argparse
+import asyncio
+import subprocess
+import sys
 from pathlib import Path
 
 # Add app directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from app.core.logging import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -72,6 +71,7 @@ class StartupManager:
 
         try:
             import uvicorn
+
             from app.main import app
         except ImportError:
             logger.error("❌ Dependencies not installed. Run: python deploy.py")

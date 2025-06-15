@@ -11,14 +11,17 @@ from typing import Any, Dict, Optional
 
 from app.core.logging import get_logger
 
+
 class PipelineType(str, Enum):
     """Available pipeline types."""
+
     TEXT_ONLY = "text_only"
     TEXT_IMAGE = "text_image"
     TEXT_AUDIO = "text_audio"
     MULTIMODAL = "multimodal"
     STREAMING = "streaming"
     RAG = "rag"
+
 
 @dataclass
 class RoutingDecision:
@@ -30,6 +33,7 @@ class RoutingDecision:
     estimated_processing_time: float
     resource_requirements: Dict[str, Any]
 
+
 class PipelineRouter:
     """Intelligent pipeline router."""
 
@@ -40,15 +44,15 @@ class PipelineRouter:
 
         # Routing rules and weights
         self.routing_rules = self.config.get("routing_rules", {})
-        self.performance_weights = self.config.get("performance_weights", {
-            "speed": 0.3,
-            "accuracy": 0.4,
-            "resource_efficiency": 0.3
-        })
+        self.performance_weights = self.config.get(
+            "performance_weights", {"speed": 0.3, "accuracy": 0.4, "resource_efficiency": 0.3}
+        )
 
         self.logger.info("PipelineRouter initialized")
 
-    async def route_content(self, content: Any, metadata: Optional[Dict[str, Any]] = None) -> RoutingDecision:
+    async def route_content(
+        self, content: Any, metadata: Optional[Dict[str, Any]] = None
+    ) -> RoutingDecision:
         """Route content to the most appropriate pipeline."""
 
         # Analyze content characteristics
@@ -66,10 +70,12 @@ class PipelineRouter:
             confidence=score_info["total_score"],
             reasoning=score_info["reasoning"],
             estimated_processing_time=score_info["estimated_time"],
-            resource_requirements=score_info["resources"]
+            resource_requirements=score_info["resources"],
         )
 
-    async def _analyze_content(self, content: Any, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def _analyze_content(
+        self, content: Any, metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze content to determine characteristics."""
         analysis = {
             "has_text": False,
@@ -77,21 +83,21 @@ class PipelineRouter:
             "has_audio": False,
             "content_size": 0,
             "complexity": "low",
-            "modalities": []
+            "modalities": [],
         }
 
         # Check for different modalities
-        if hasattr(content, 'text') and content.text:
+        if hasattr(content, "text") and content.text:
             analysis["has_text"] = True
             analysis["modalities"].append("text")
             analysis["content_size"] += len(content.text)
 
-        if hasattr(content, 'image') and content.image:
+        if hasattr(content, "image") and content.image:
             analysis["has_image"] = True
             analysis["modalities"].append("image")
             analysis["content_size"] += len(content.image)
 
-        if hasattr(content, 'audio') and content.audio:
+        if hasattr(content, "audio") and content.audio:
             analysis["has_audio"] = True
             analysis["modalities"].append("audio")
             analysis["content_size"] += len(content.audio)
@@ -158,9 +164,9 @@ class PipelineRouter:
             reasoning = "Content has non-text modalities, not suitable for text-only pipeline"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -170,7 +176,7 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 0.1,  # seconds
-            "resources": {"memory_mb": 50, "cpu_cores": 1}
+            "resources": {"memory_mb": 50, "cpu_cores": 1},
         }
 
     async def _score_text_image_pipeline(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -193,9 +199,9 @@ class PipelineRouter:
             reasoning = "No image content, not optimal for text-image pipeline"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -205,7 +211,7 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 0.5,
-            "resources": {"memory_mb": 200, "cpu_cores": 2}
+            "resources": {"memory_mb": 200, "cpu_cores": 2},
         }
 
     async def _score_text_audio_pipeline(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -228,9 +234,9 @@ class PipelineRouter:
             reasoning = "No audio content, not optimal for text-audio pipeline"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -240,7 +246,7 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 1.0,
-            "resources": {"memory_mb": 300, "cpu_cores": 2}
+            "resources": {"memory_mb": 300, "cpu_cores": 2},
         }
 
     async def _score_multimodal_pipeline(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -265,9 +271,9 @@ class PipelineRouter:
             reasoning = "Single modality content, multimodal pipeline is overkill"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -277,7 +283,7 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 2.0,
-            "resources": {"memory_mb": 500, "cpu_cores": 4}
+            "resources": {"memory_mb": 500, "cpu_cores": 4},
         }
 
     async def _score_streaming_pipeline(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -300,9 +306,9 @@ class PipelineRouter:
             reasoning = "Small content doesn't require streaming"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -312,7 +318,7 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 0.3,
-            "resources": {"memory_mb": 150, "cpu_cores": 3}
+            "resources": {"memory_mb": 150, "cpu_cores": 3},
         }
 
     async def _score_rag_pipeline(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -335,9 +341,9 @@ class PipelineRouter:
             reasoning = "Non-text content not ideal for RAG pipeline"
 
         total_score = (
-            speed_score * self.performance_weights["speed"] +
-            accuracy_score * self.performance_weights["accuracy"] +
-            resource_score * self.performance_weights["resource_efficiency"]
+            speed_score * self.performance_weights["speed"]
+            + accuracy_score * self.performance_weights["accuracy"]
+            + resource_score * self.performance_weights["resource_efficiency"]
         )
 
         return {
@@ -347,5 +353,5 @@ class PipelineRouter:
             "resource_score": resource_score,
             "reasoning": reasoning,
             "estimated_time": 0.8,
-            "resources": {"memory_mb": 400, "cpu_cores": 2}
+            "resources": {"memory_mb": 400, "cpu_cores": 2},
         }

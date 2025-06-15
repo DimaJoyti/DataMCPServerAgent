@@ -20,19 +20,24 @@ from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 
+
 class AlertLevel(str, Enum):
     """Alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
 
+
 class MetricType(str, Enum):
     """Types of metrics."""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
     TIMER = "timer"
+
 
 @dataclass
 class Alert:
@@ -56,6 +61,7 @@ class Alert:
     # Timing
     acknowledged_at: Optional[float] = None
     resolved_at: Optional[float] = None
+
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics snapshot."""
@@ -86,6 +92,7 @@ class PerformanceMetrics(BaseModel):
     p50_latency_ms: float = Field(default=0.0, description="50th percentile latency")
     p95_latency_ms: float = Field(default=0.0, description="95th percentile latency")
     p99_latency_ms: float = Field(default=0.0, description="99th percentile latency")
+
 
 class MetricsCollector:
     """Collects and aggregates performance metrics."""
@@ -159,7 +166,9 @@ class MetricsCollector:
         events_per_second = self.counters.get("events_processed", 0) / max(time_delta, 1.0)
 
         # Calculate success rate
-        total_events = self.counters.get("events_processed", 0) + self.counters.get("events_failed", 0)
+        total_events = self.counters.get("events_processed", 0) + self.counters.get(
+            "events_failed", 0
+        )
         success_rate = self.counters.get("events_processed", 0) / max(total_events, 1)
         error_rate = self.counters.get("events_failed", 0) / max(total_events, 1)
 
@@ -189,10 +198,12 @@ class MetricsCollector:
             cpu_usage_percent=self.gauges.get("cpu_usage_percent", 0.0),
             p50_latency_ms=p50_latency,
             p95_latency_ms=p95_latency,
-            p99_latency_ms=p99_latency
+            p99_latency_ms=p99_latency,
         )
 
-    def get_metrics_history(self, duration_seconds: Optional[int] = None) -> List[PerformanceMetrics]:
+    def get_metrics_history(
+        self, duration_seconds: Optional[int] = None
+    ) -> List[PerformanceMetrics]:
         """Get metrics history for a specified duration."""
         if duration_seconds is None:
             return list(self.metrics_history)
@@ -241,6 +252,7 @@ class MetricsCollector:
         index = min(index, len(data) - 1)
         return data[index]
 
+
 class AlertManager:
     """Manages alerts and notifications."""
 
@@ -261,14 +273,17 @@ class AlertManager:
         self.alert_handlers: Dict[AlertLevel, List[Callable]] = defaultdict(list)
 
         # Thresholds
-        self.thresholds = self.config.get("thresholds", {
-            "error_rate": 0.05,  # 5% error rate
-            "queue_usage": 0.9,  # 90% queue usage
-            "worker_utilization": 0.95,  # 95% worker utilization
-            "memory_usage_mb": 1000,  # 1GB memory usage
-            "cpu_usage_percent": 90,  # 90% CPU usage
-            "p99_latency_ms": 5000  # 5 second p99 latency
-        })
+        self.thresholds = self.config.get(
+            "thresholds",
+            {
+                "error_rate": 0.05,  # 5% error rate
+                "queue_usage": 0.9,  # 90% queue usage
+                "worker_utilization": 0.95,  # 95% worker utilization
+                "memory_usage_mb": 1000,  # 1GB memory usage
+                "cpu_usage_percent": 90,  # 90% CPU usage
+                "p99_latency_ms": 5000,  # 5 second p99 latency
+            },
+        )
 
         self.logger.info("AlertManager initialized")
 
@@ -277,8 +292,14 @@ class AlertManager:
         self.alert_handlers[level].append(handler)
         self.logger.info(f"Added alert handler for level: {level}")
 
-    async def create_alert(self, level: AlertLevel, title: str, message: str,
-                          source: str, metadata: Optional[Dict[str, Any]] = None) -> Alert:
+    async def create_alert(
+        self,
+        level: AlertLevel,
+        title: str,
+        message: str,
+        source: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Alert:
         """Create a new alert."""
         alert = Alert(
             alert_id=f"alert_{int(time.time() * 1000)}",
@@ -287,7 +308,7 @@ class AlertManager:
             title=title,
             message=message,
             source=source,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # Store alert
@@ -336,7 +357,7 @@ class AlertManager:
                 "High Error Rate",
                 f"Error rate is {metrics.error_rate:.2%}, threshold is {self.thresholds['error_rate']:.2%}",
                 "metrics_monitor",
-                {"error_rate": metrics.error_rate}
+                {"error_rate": metrics.error_rate},
             )
 
         # Queue usage check
@@ -346,7 +367,7 @@ class AlertManager:
                 "High Queue Usage",
                 f"Queue usage is {metrics.queue_usage:.2%}, threshold is {self.thresholds['queue_usage']:.2%}",
                 "metrics_monitor",
-                {"queue_usage": metrics.queue_usage}
+                {"queue_usage": metrics.queue_usage},
             )
 
         # Worker utilization check
@@ -356,7 +377,7 @@ class AlertManager:
                 "High Worker Utilization",
                 f"Worker utilization is {metrics.worker_utilization:.2%}",
                 "metrics_monitor",
-                {"worker_utilization": metrics.worker_utilization}
+                {"worker_utilization": metrics.worker_utilization},
             )
 
         # Memory usage check
@@ -366,7 +387,7 @@ class AlertManager:
                 "High Memory Usage",
                 f"Memory usage is {metrics.memory_usage_mb:.1f}MB",
                 "metrics_monitor",
-                {"memory_usage_mb": metrics.memory_usage_mb}
+                {"memory_usage_mb": metrics.memory_usage_mb},
             )
 
         # CPU usage check
@@ -376,7 +397,7 @@ class AlertManager:
                 "High CPU Usage",
                 f"CPU usage is {metrics.cpu_usage_percent:.1f}%",
                 "metrics_monitor",
-                {"cpu_usage_percent": metrics.cpu_usage_percent}
+                {"cpu_usage_percent": metrics.cpu_usage_percent},
             )
 
         # Latency check
@@ -386,7 +407,7 @@ class AlertManager:
                 "High Latency",
                 f"P99 latency is {metrics.p99_latency_ms:.1f}ms",
                 "metrics_monitor",
-                {"p99_latency_ms": metrics.p99_latency_ms}
+                {"p99_latency_ms": metrics.p99_latency_ms},
             )
 
     async def _trigger_handlers(self, alert: Alert) -> None:
@@ -413,6 +434,7 @@ class AlertManager:
 
         cutoff_time = time.time() - duration_seconds
         return [a for a in self.alert_history if a.timestamp >= cutoff_time]
+
 
 class LiveMonitor:
     """Main live monitoring coordinator."""
@@ -496,7 +518,9 @@ class LiveMonitor:
     def get_dashboard_data(self) -> Dict[str, Any]:
         """Get data for monitoring dashboard."""
         current_metrics = self.metrics_collector.get_current_metrics()
-        metrics_history = self.metrics_collector.get_metrics_history(duration_seconds=300)  # Last 5 minutes
+        metrics_history = self.metrics_collector.get_metrics_history(
+            duration_seconds=300
+        )  # Last 5 minutes
         active_alerts = self.alert_manager.get_active_alerts()
 
         return {
@@ -509,11 +533,11 @@ class LiveMonitor:
                     "title": a.title,
                     "message": a.message,
                     "timestamp": a.timestamp,
-                    "acknowledged": a.acknowledged
+                    "acknowledged": a.acknowledged,
                 }
                 for a in active_alerts
             ],
-            "system_health": self._calculate_system_health(current_metrics)
+            "system_health": self._calculate_system_health(current_metrics),
         }
 
     def _calculate_system_health(self, metrics: PerformanceMetrics) -> str:

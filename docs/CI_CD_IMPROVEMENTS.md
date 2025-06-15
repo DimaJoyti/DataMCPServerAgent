@@ -102,40 +102,40 @@ semgrep --config=auto app/ src/
 pytest tests/ -k "benchmark" --benchmark-json=results.json
 ```
 
-## 📊 Моніторинг та звіти
+## 📊 Monitoring and Reports
 
-### 1. Артефакти CI
-- **Coverage Reports**: HTML та XML звіти покриття коду
-- **Security Reports**: JSON звіти від Bandit, Safety, Semgrep
-- **Benchmark Results**: JSON результати performance тестів
-- **Test Summary**: Агрегований звіт всіх тестів
+### 1. CI Artifacts
+- **Coverage Reports**: HTML and XML coverage reports
+- **Security Reports**: JSON reports from Bandit, Safety, Semgrep
+- **Benchmark Results**: JSON results from performance tests
+- **Test Summary**: Aggregated report of all tests
 
-### 2. Метрики якості
-- **Code Coverage**: Відсоток покриття коду тестами
-- **Security Score**: Кількість знайдених проблем безпеки
-- **Performance Metrics**: Час виконання ключових операцій
-- **Test Success Rate**: Відсоток успішних тестів
+### 2. Quality Metrics
+- **Code Coverage**: Percentage of code covered by tests
+- **Security Score**: Number of security issues found
+- **Performance Metrics**: Execution time of key operations
+- **Test Success Rate**: Percentage of successful tests
 
 ## 🔄 Continuous Improvement
 
-### 1. Автоматичні перевірки
-- Всі PR проходять повний цикл тестування
-- Автоматичне виявлення регресій
-- Моніторинг продуктивності
+### 1. Automatic Checks
+- All PRs go through full testing cycle
+- Automatic regression detection
+- Performance monitoring
 
 ### 2. Feedback Loop
-- Детальні звіти про помилки
-- Рекомендації по виправленню
-- Автоматичні retry для нестабільних тестів
+- Detailed error reports
+- Fix recommendations
+- Automatic retry for unstable tests
 
-## 🛠️ Налаштування для розробників
+## 🛠️ Developer Setup
 
-### 1. Pre-commit hooks (рекомендовано)
+### 1. Pre-commit hooks (recommended)
 ```bash
-# Встановлення pre-commit
+# Install pre-commit
 pip install pre-commit
 
-# Створення .pre-commit-config.yaml
+# Create .pre-commit-config.yaml
 cat > .pre-commit-config.yaml << EOF
 repos:
   - repo: https://github.com/psf/black
@@ -152,11 +152,11 @@ repos:
       - id: ruff
 EOF
 
-# Активація
+# Activate
 pre-commit install
 ```
 
-### 2. IDE налаштування
+### 2. IDE Settings
 ```json
 // VS Code settings.json
 {
@@ -167,44 +167,44 @@ pre-commit install
 }
 ```
 
-## 📈 Результати покращень
+## 📈 Improvement Results
 
-### 1. Швидкість CI
-- **До**: ~15 хвилин на повний цикл
-- **Після**: ~12 хвилин завдяки паралелізації
+### 1. CI Speed
+- **Before**: ~15 minutes for full cycle
+- **After**: ~12 minutes thanks to parallelization
 
-### 2. Покриття тестами
-- **Цільове покриття**: >80%
-- **Поточне покриття**: Буде відображено в звітах
+### 2. Test Coverage
+- **Target coverage**: >80%
+- **Current coverage**: Will be shown in reports
 
-### 3. Безпека
-- **Автоматичне виявлення**: Вразливостей у залежностях
-- **Статичний аналіз**: Потенційних проблем безпеки
-- **Регулярне сканування**: Щотижневе автоматичне сканування
+### 3. Security
+- **Automatic detection**: Vulnerabilities in dependencies
+- **Static analysis**: Potential security issues
+- **Regular scanning**: Weekly automatic scanning
 
-## 🔮 Майбутні покращення
+## 🔮 Future Improvements
 
-### 1. Планується додати
-- **Dependency scanning**: Автоматичне оновлення залежностей
-- **Container scanning**: Сканування Docker образів
-- **SAST/DAST**: Додаткові інструменти безпеки
+### 1. Planned additions
+- **Dependency scanning**: Automatic dependency updates
+- **Container scanning**: Docker image scanning
+- **SAST/DAST**: Additional security tools
 
-### 2. Інтеграції
-- **SonarQube**: Для детального аналізу якості коду
-- **Codecov**: Для відстеження покриття коду
-- **Snyk**: Для моніторингу безпеки
+### 2. Integrations
+- **SonarQube**: For detailed code quality analysis
+- **Codecov**: For code coverage tracking
+- **Snyk**: For security monitoring
 
-## 📞 Підтримка
+## 📞 Support
 
-Якщо у вас виникли питання або проблеми з CI/CD:
+If you have questions or issues with CI/CD:
 
-1. Перевірте логи GitHub Actions
-2. Переконайтеся, що всі залежності встановлені
-3. Запустіть тести локально перед push
-4. Створіть issue з детальним описом проблеми
+1. Check GitHub Actions logs
+2. Make sure all dependencies are installed
+3. Run tests locally before push
+4. Create an issue with detailed problem description
 
 ---
 
-**Автор**: DataMCPServerAgent Team  
-**Дата**: 2024  
-**Версія**: 2.0.0
+**Author**: DataMCPServerAgent Team  
+**Date**: 2024  
+**Version**: 2.0.0

@@ -5,23 +5,26 @@ This module provides file system connectivity for various file formats
 including CSV, JSON, Parquet, Excel, and others.
 """
 
-import asyncio
+import json
 import logging
-import os
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Any, Dict, List, Optional, AsyncGenerator, Union
+from typing import Any, Dict, List, Optional, Union
+
+import aiofiles
 import pandas as pd
 import polars as pl
-import aiofiles
-import json
-
 import structlog
 from pydantic import BaseModel, Field
 
+
 class FileConfig(BaseModel):
     """File connection configuration."""
+
     file_path: str = Field(..., description="File path or directory path")
-    file_format: str = Field(default="auto", description="File format (csv, json, parquet, excel, etc.)")
+    file_format: str = Field(
+        default="auto", description="File format (csv, json, parquet, excel, etc.)"
+    )
     encoding: str = Field(default="utf-8", description="File encoding")
     compression: Optional[str] = Field(None, description="Compression type (gzip, bz2, xz, etc.)")
 
@@ -41,6 +44,7 @@ class FileConfig(BaseModel):
     columns: Optional[List[str]] = Field(None, description="Columns to read")
     dtype: Optional[Dict[str, str]] = Field(None, description="Data types for columns")
     parse_dates: Optional[List[str]] = Field(None, description="Columns to parse as dates")
+
 
 class FileConnector:
     """
@@ -102,14 +106,12 @@ class FileConnector:
                 "File connector connected",
                 file_path=self.config.file_path,
                 file_format=self.config.file_format,
-                file_count=len(self.file_list)
+                file_count=len(self.file_list),
             )
 
         except Exception as e:
             self.logger.error(
-                "File connection failed",
-                error=str(e),
-                file_path=self.config.file_path
+                "File connection failed", error=str(e), file_path=self.config.file_path
             )
             raise e
 
@@ -120,9 +122,7 @@ class FileConnector:
         self.logger.info("File connector disconnected")
 
     async def read_batches(
-        self,
-        batch_size: int = 10000,
-        **kwargs
+        self, batch_size: int = 10000, **kwargs
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """
         Read data in batches from files.
@@ -152,7 +152,9 @@ class FileConnector:
                         yield batch
 
                 elif self.config.file_format == "parquet":
-                    async for batch in self._read_parquet_batches(file_path, batch_size, use_polars):
+                    async for batch in self._read_parquet_batches(
+                        file_path, batch_size, use_polars
+                    ):
                         yield batch
 
                 elif self.config.file_format == "excel":
@@ -163,11 +165,7 @@ class FileConnector:
                     raise ValueError(f"Unsupported file format: {self.config.file_format}")
 
         except Exception as e:
-            self.logger.error(
-                "File read error",
-                error=str(e),
-                file_format=self.config.file_format
-            )
+            self.logger.error("File read error", error=str(e), file_format=self.config.file_format)
             raise e
 
     async def write_batch(
@@ -175,7 +173,7 @@ class FileConnector:
         data: Union[pd.DataFrame, pl.DataFrame],
         file_path: Optional[str] = None,
         mode: str = "append",
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Write a batch of data to file.
@@ -215,26 +213,17 @@ class FileConnector:
                 raise ValueError(f"Unsupported file format for writing: {self.config.file_format}")
 
             self.logger.debug(
-                "Batch written to file",
-                file_path=str(target_path),
-                records=len(data),
-                mode=mode
+                "Batch written to file", file_path=str(target_path), records=len(data), mode=mode
             )
 
         except Exception as e:
             self.logger.error(
-                "File write error",
-                error=str(e),
-                file_path=str(target_path),
-                records=len(data)
+                "File write error", error=str(e), file_path=str(target_path), records=len(data)
             )
             raise e
 
     async def _read_csv_batches(
-        self,
-        file_path: Path,
-        batch_size: int,
-        use_polars: bool
+        self, file_path: Path, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read CSV file in batches."""
         if use_polars:
@@ -244,7 +233,7 @@ class FileConnector:
                 separator=self.config.delimiter,
                 encoding=self.config.encoding,
                 skip_rows=self.config.skip_rows,
-                has_header=self.config.header is not None
+                has_header=self.config.header is not None,
             )
 
             # Process in batches
@@ -265,22 +254,19 @@ class FileConnector:
                 dtype=self.config.dtype,
                 parse_dates=self.config.parse_dates,
                 chunksize=batch_size,
-                compression=self.config.compression
+                compression=self.config.compression,
             ):
                 yield chunk
 
     async def _read_json_batches(
-        self,
-        file_path: Path,
-        batch_size: int,
-        use_polars: bool
+        self, file_path: Path, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read JSON file in batches."""
         if self.config.json_lines:
             # Line-delimited JSON
             batch_data = []
 
-            async with aiofiles.open(file_path, 'r', encoding=self.config.encoding) as f:
+            async with aiofiles.open(file_path, encoding=self.config.encoding) as f:
                 async for line in f:
                     try:
                         record = json.loads(line.strip())
@@ -303,14 +289,14 @@ class FileConnector:
                         yield pd.DataFrame(batch_data)
         else:
             # Regular JSON
-            async with aiofiles.open(file_path, 'r', encoding=self.config.encoding) as f:
+            async with aiofiles.open(file_path, encoding=self.config.encoding) as f:
                 content = await f.read()
                 data = json.loads(content)
 
                 if isinstance(data, list):
                     # Process in batches
                     for i in range(0, len(data), batch_size):
-                        batch = data[i:i + batch_size]
+                        batch = data[i : i + batch_size]
                         if use_polars:
                             yield pl.DataFrame(batch)
                         else:
@@ -323,10 +309,7 @@ class FileConnector:
                         yield pd.DataFrame([data])
 
     async def _read_parquet_batches(
-        self,
-        file_path: Path,
-        batch_size: int,
-        use_polars: bool
+        self, file_path: Path, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read Parquet file in batches."""
         if use_polars:
@@ -340,20 +323,15 @@ class FileConnector:
         else:
             # Pandas reading
             df = pd.read_parquet(
-                file_path,
-                engine=self.config.parquet_engine,
-                columns=self.config.columns
+                file_path, engine=self.config.parquet_engine, columns=self.config.columns
             )
 
             # Process in batches
             for i in range(0, len(df), batch_size):
-                yield df.iloc[i:i + batch_size]
+                yield df.iloc[i : i + batch_size]
 
     async def _read_excel_batches(
-        self,
-        file_path: Path,
-        batch_size: int,
-        use_polars: bool
+        self, file_path: Path, batch_size: int, use_polars: bool
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """Read Excel file in batches."""
         # Excel reading (pandas only)
@@ -363,22 +341,19 @@ class FileConnector:
             skiprows=self.config.skip_rows,
             usecols=self.config.columns,
             dtype=self.config.dtype,
-            parse_dates=self.config.parse_dates
+            parse_dates=self.config.parse_dates,
         )
 
         # Process in batches
         for i in range(0, len(df), batch_size):
-            batch = df.iloc[i:i + batch_size]
+            batch = df.iloc[i : i + batch_size]
             if use_polars:
                 yield pl.from_pandas(batch)
             else:
                 yield batch
 
     async def _write_csv(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        file_path: Path,
-        mode: str
+        self, data: Union[pd.DataFrame, pl.DataFrame], file_path: Path, mode: str
     ) -> None:
         """Write data to CSV file."""
         write_header = mode == "overwrite" or not file_path.exists()
@@ -386,9 +361,7 @@ class FileConnector:
 
         if isinstance(data, pl.DataFrame):
             data.write_csv(
-                str(file_path),
-                separator=self.config.delimiter,
-                include_header=write_header
+                str(file_path), separator=self.config.delimiter, include_header=write_header
             )
         else:
             data.to_csv(
@@ -398,14 +371,11 @@ class FileConnector:
                 index=False,
                 sep=self.config.delimiter,
                 encoding=self.config.encoding,
-                compression=self.config.compression
+                compression=self.config.compression,
             )
 
     async def _write_json(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        file_path: Path,
-        mode: str
+        self, data: Union[pd.DataFrame, pl.DataFrame], file_path: Path, mode: str
     ) -> None:
         """Write data to JSON file."""
         if isinstance(data, pl.DataFrame):
@@ -420,32 +390,22 @@ class FileConnector:
         else:
             # Regular JSON
             data.to_json(
-                file_path,
-                orient=self.config.json_orient,
-                compression=self.config.compression
+                file_path, orient=self.config.json_orient, compression=self.config.compression
             )
 
     async def _write_parquet(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        file_path: Path,
-        mode: str
+        self, data: Union[pd.DataFrame, pl.DataFrame], file_path: Path, mode: str
     ) -> None:
         """Write data to Parquet file."""
         if isinstance(data, pl.DataFrame):
             data.write_parquet(str(file_path))
         else:
             data.to_parquet(
-                file_path,
-                engine=self.config.parquet_engine,
-                compression=self.config.compression
+                file_path, engine=self.config.parquet_engine, compression=self.config.compression
             )
 
     async def _write_excel(
-        self,
-        data: Union[pd.DataFrame, pl.DataFrame],
-        file_path: Path,
-        mode: str
+        self, data: Union[pd.DataFrame, pl.DataFrame], file_path: Path, mode: str
     ) -> None:
         """Write data to Excel file."""
         if isinstance(data, pl.DataFrame):
@@ -501,15 +461,17 @@ class FileConnector:
         file_info = []
         for file_path in self.file_list:
             stat = file_path.stat()
-            file_info.append({
-                "path": str(file_path),
-                "size": stat.st_size,
-                "modified": stat.st_mtime,
-                "format": self._detect_file_format(file_path)
-            })
+            file_info.append(
+                {
+                    "path": str(file_path),
+                    "size": stat.st_size,
+                    "modified": stat.st_mtime,
+                    "format": self._detect_file_format(file_path),
+                }
+            )
 
         return {
             "file_count": len(self.file_list),
             "total_size": sum(info["size"] for info in file_info),
-            "files": file_info
+            "files": file_info,
         }

@@ -7,28 +7,23 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import List, Optional
 
 import ccxt
 import pandas as pd
 from dotenv import load_dotenv
 
-from .technical_agent import TechnicalAnalysisAgent
-from .sentiment_agent import SentimentIntelligenceAgent
-from .risk_agent import RiskManagementAgent
-from .trading_system import AdvancedCryptoTradingSystem, TradeRecommendation
+from .trading_system import AdvancedCryptoTradingSystem
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('fetch_ai_test.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("fetch_ai_test.log")],
 )
 logger = logging.getLogger(__name__)
+
 
 class RealDataTester:
     """Class for testing the trading system with real market data."""
@@ -40,7 +35,7 @@ class RealDataTester:
         api_secret: Optional[str] = None,
         symbols: List[str] = ["BTC/USDT", "ETH/USDT"],
         timeframes: List[str] = ["1h", "4h", "1d"],
-        test_duration: int = 3600  # 1 hour in seconds
+        test_duration: int = 3600,  # 1 hour in seconds
     ):
         """Initialize the tester.
 
@@ -61,26 +56,24 @@ class RealDataTester:
 
         # Initialize exchange
         exchange_class = getattr(ccxt, exchange_id)
-        self.exchange = exchange_class({
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': True,
-        })
+        self.exchange = exchange_class(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+            }
+        )
 
         # Initialize trading system
         self.trading_system = AdvancedCryptoTradingSystem(
             name="test_trading_system",
             exchange_id=exchange_id,
             api_key=api_key,
-            api_secret=api_secret
+            api_secret=api_secret,
         )
 
         # Initialize results storage
-        self.results = {
-            "recommendations": [],
-            "market_data": {},
-            "performance": {}
-        }
+        self.results = {"recommendations": [], "market_data": {}, "performance": {}}
 
     async def run_test(self):
         """Run the test."""
@@ -126,8 +119,10 @@ class RealDataTester:
                     ohlcv = await self.exchange.fetch_ohlcv(symbol, timeframe, limit=100)
 
                     # Convert to DataFrame
-                    df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-                    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+                    df = pd.DataFrame(
+                        ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
+                    )
+                    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
 
                     # Store data
                     self.results["market_data"][symbol][timeframe] = df
@@ -176,7 +171,9 @@ class RealDataTester:
 
         # Calculate average confidence
         if self.results["recommendations"]:
-            avg_confidence = sum(rec["confidence"] for rec in self.results["recommendations"]) / len(self.results["recommendations"])
+            avg_confidence = sum(
+                rec["confidence"] for rec in self.results["recommendations"]
+            ) / len(self.results["recommendations"])
         else:
             avg_confidence = 0.0
 
@@ -184,12 +181,14 @@ class RealDataTester:
         self.results["performance"] = {
             "total_recommendations": len(self.results["recommendations"]),
             "signal_counts": signal_counts,
-            "average_confidence": avg_confidence
+            "average_confidence": avg_confidence,
         }
 
         # Log results
-        logger.info(f"Test results:")
-        logger.info(f"Total recommendations: {self.results['performance']['total_recommendations']}")
+        logger.info("Test results:")
+        logger.info(
+            f"Total recommendations: {self.results['performance']['total_recommendations']}"
+        )
         logger.info(f"Signal counts: {self.results['performance']['signal_counts']}")
         logger.info(f"Average confidence: {self.results['performance']['average_confidence']:.2f}")
 
@@ -201,14 +200,15 @@ class RealDataTester:
         with open("fetch_ai_recommendations.json", "w") as f:
             json.dump(self.results["recommendations"], f, indent=2)
 
+
 async def main():
     """Main entry point."""
     # Load environment variables
     load_dotenv()
 
     # Get API credentials from environment variables
-    api_key = os.getenv('EXCHANGE_API_KEY')
-    api_secret = os.getenv('EXCHANGE_API_SECRET')
+    api_key = os.getenv("EXCHANGE_API_KEY")
+    api_secret = os.getenv("EXCHANGE_API_SECRET")
 
     # Create tester
     tester = RealDataTester(
@@ -216,11 +216,12 @@ async def main():
         api_key=api_key,
         api_secret=api_secret,
         symbols=["BTC/USDT", "ETH/USDT", "ADA/USDT", "SOL/USDT"],
-        test_duration=1800  # 30 minutes
+        test_duration=1800,  # 30 minutes
     )
 
     # Run test
     await tester.run_test()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

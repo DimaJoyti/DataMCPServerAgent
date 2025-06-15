@@ -5,14 +5,14 @@ This module provides mechanisms for agents to learn from past interactions.
 
 import json
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List
 
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.tools import BaseTool
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 from src.memory.memory_persistence import MemoryDatabase
+
 
 class FeedbackCollector:
     """Collector for user and self-evaluation feedback."""
@@ -28,8 +28,10 @@ class FeedbackCollector:
         self.db = db
 
         # Create the self-evaluation prompt
-        self.self_eval_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a self-evaluation agent responsible for analyzing your own performance.
+        self.self_eval_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a self-evaluation agent responsible for analyzing your own performance.
 Your job is to critically evaluate your response to a user request and identify areas for improvement.
 
 For each response, you should:
@@ -48,21 +50,21 @@ Respond with a JSON object containing:
 - "strengths": Array of strengths in the response
 - "weaknesses": Array of weaknesses in the response
 - "improvement_suggestions": Array of specific suggestions for improvement
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 User request: {request}
 Agent response: {response}
 
 Evaluate this response.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def collect_user_feedback(
-        self,
-        request: str,
-        response: str,
-        feedback: str,
-        agent_name: str
+        self, request: str, response: str, feedback: str, agent_name: str
     ) -> None:
         """Collect and store user feedback.
 
@@ -76,17 +78,14 @@ Evaluate this response.
             "request": request,
             "response": response,
             "feedback": feedback,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         # Save the feedback to the database
         self.db.save_learning_feedback(agent_name, "user_feedback", feedback_data)
 
     async def perform_self_evaluation(
-        self,
-        request: str,
-        response: str,
-        agent_name: str
+        self, request: str, response: str, agent_name: str
     ) -> Dict[str, Any]:
         """Perform self-evaluation of an agent's response.
 
@@ -99,10 +98,7 @@ Evaluate this response.
             Self-evaluation results
         """
         # Prepare the input for the self-evaluation prompt
-        input_values = {
-            "request": request,
-            "response": response
-        }
+        input_values = {"request": request, "response": response}
 
         # Get the self-evaluation from the model
         messages = self.self_eval_prompt.format_messages(**input_values)
@@ -112,7 +108,9 @@ Evaluate this response.
         try:
             # Try to extract JSON from the response
             content = response_obj.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -128,11 +126,7 @@ Evaluate this response.
             self.db.save_learning_feedback(
                 agent_name,
                 "self_evaluation",
-                {
-                    "request": request,
-                    "response": response,
-                    "evaluation": evaluation
-                }
+                {"request": request, "response": response, "evaluation": evaluation},
             )
 
             return evaluation
@@ -146,7 +140,7 @@ Evaluate this response.
                 "overall_score": 5,
                 "strengths": ["Unable to determine strengths due to evaluation error"],
                 "weaknesses": [f"Error in self-evaluation: {str(e)}"],
-                "improvement_suggestions": ["Improve self-evaluation parsing"]
+                "improvement_suggestions": ["Improve self-evaluation parsing"],
             }
 
             # Save the default evaluation to the database
@@ -157,11 +151,12 @@ Evaluate this response.
                     "request": request,
                     "response": response,
                     "evaluation": default_eval,
-                    "error": str(e)
-                }
+                    "error": str(e),
+                },
             )
 
             return default_eval
+
 
 class LearningAgent:
     """Agent with learning capabilities."""
@@ -171,7 +166,7 @@ class LearningAgent:
         name: str,
         model: ChatAnthropic,
         db: MemoryDatabase,
-        feedback_collector: FeedbackCollector
+        feedback_collector: FeedbackCollector,
     ):
         """Initialize the learning agent.
 
@@ -187,8 +182,10 @@ class LearningAgent:
         self.feedback_collector = feedback_collector
 
         # Create the learning prompt
-        self.learning_prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a learning agent responsible for improving your performance based on feedback.
+        self.learning_prompt = ChatPromptTemplate.from_messages(
+            [
+                SystemMessage(
+                    content="""You are a learning agent responsible for improving your performance based on feedback.
 Your job is to analyze feedback from users and self-evaluations to identify patterns and areas for improvement.
 
 Based on the feedback, you should:
@@ -204,14 +201,18 @@ Respond with a JSON object containing:
 - "common_weaknesses": Array of common weaknesses
 - "improvement_strategies": Array of strategies for improvement
 - "updated_guidelines": Array of updated guidelines for future responses
-"""),
-            HumanMessage(content="""
+"""
+                ),
+                HumanMessage(
+                    content="""
 Recent feedback:
 {feedback}
 
 Generate learning insights and improvements.
-""")
-        ])
+"""
+                ),
+            ]
+        )
 
     async def learn_from_feedback(self) -> Dict[str, Any]:
         """Learn from collected feedback to improve future performance.
@@ -233,13 +234,11 @@ Generate learning insights and improvements.
                 "common_strengths": [],
                 "common_weaknesses": [],
                 "improvement_strategies": [],
-                "updated_guidelines": []
+                "updated_guidelines": [],
             }
 
         # Prepare the input for the learning prompt
-        input_values = {
-            "feedback": formatted_feedback
-        }
+        input_values = {"feedback": formatted_feedback}
 
         # Get the learning insights from the model
         messages = self.learning_prompt.format_messages(**input_values)
@@ -249,7 +248,9 @@ Generate learning insights and improvements.
         try:
             # Try to extract JSON from the response
             content = response.content
-            json_str = content.split("```json")[1].split("```")[0] if "```json" in content else content
+            json_str = (
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
+            )
             json_str = json_str.strip()
 
             # Handle cases where the JSON might be embedded in text
@@ -262,11 +263,7 @@ Generate learning insights and improvements.
             insights = json.loads(json_str)
 
             # Save the insights to the database
-            self.db.save_learning_feedback(
-                self.name,
-                "learning_insights",
-                insights
-            )
+            self.db.save_learning_feedback(self.name, "learning_insights", insights)
 
             return insights
         except Exception as e:
@@ -276,25 +273,18 @@ Generate learning insights and improvements.
                 "common_strengths": [],
                 "common_weaknesses": [f"Error in learning: {str(e)}"],
                 "improvement_strategies": ["Improve learning process"],
-                "updated_guidelines": []
+                "updated_guidelines": [],
             }
 
             # Save the default insights to the database
             self.db.save_learning_feedback(
-                self.name,
-                "learning_insights",
-                {
-                    "insights": default_insights,
-                    "error": str(e)
-                }
+                self.name, "learning_insights", {"insights": default_insights, "error": str(e)}
             )
 
             return default_insights
 
     def _format_feedback(
-        self,
-        user_feedback: List[Dict[str, Any]],
-        self_evaluations: List[Dict[str, Any]]
+        self, user_feedback: List[Dict[str, Any]], self_evaluations: List[Dict[str, Any]]
     ) -> str:
         """Format feedback for the learning prompt.
 
@@ -326,22 +316,22 @@ Generate learning insights and improvements.
                 formatted += f"Request: {eval_data['feedback_data']['request'][:100]}...\n"
                 formatted += f"Response: {eval_data['feedback_data']['response'][:100]}...\n"
 
-                evaluation = eval_data['feedback_data']['evaluation']
+                evaluation = eval_data["feedback_data"]["evaluation"]
                 formatted += f"Overall Score: {evaluation.get('overall_score', 'N/A')}/10\n"
 
-                if 'strengths' in evaluation:
+                if "strengths" in evaluation:
                     formatted += "Strengths:\n"
-                    for strength in evaluation['strengths']:
+                    for strength in evaluation["strengths"]:
                         formatted += f"- {strength}\n"
 
-                if 'weaknesses' in evaluation:
+                if "weaknesses" in evaluation:
                     formatted += "Weaknesses:\n"
-                    for weakness in evaluation['weaknesses']:
+                    for weakness in evaluation["weaknesses"]:
                         formatted += f"- {weakness}\n"
 
-                if 'improvement_suggestions' in evaluation:
+                if "improvement_suggestions" in evaluation:
                     formatted += "Improvement Suggestions:\n"
-                    for suggestion in evaluation['improvement_suggestions']:
+                    for suggestion in evaluation["improvement_suggestions"]:
                         formatted += f"- {suggestion}\n"
 
                 formatted += "\n"
@@ -363,38 +353,38 @@ Generate learning insights and improvements.
             return "No learning insights available yet."
 
         # Get the most recent insights
-        insights = insights_list[0]['feedback_data']
+        insights = insights_list[0]["feedback_data"]
 
         # Format the insights
         formatted = f"# Learning Insights for {self.name}\n\n"
 
-        if 'identified_patterns' in insights:
+        if "identified_patterns" in insights:
             formatted += "## Identified Patterns\n\n"
-            for pattern in insights['identified_patterns']:
+            for pattern in insights["identified_patterns"]:
                 formatted += f"- {pattern}\n"
             formatted += "\n"
 
-        if 'common_strengths' in insights:
+        if "common_strengths" in insights:
             formatted += "## Common Strengths\n\n"
-            for strength in insights['common_strengths']:
+            for strength in insights["common_strengths"]:
                 formatted += f"- {strength}\n"
             formatted += "\n"
 
-        if 'common_weaknesses' in insights:
+        if "common_weaknesses" in insights:
             formatted += "## Common Weaknesses\n\n"
-            for weakness in insights['common_weaknesses']:
+            for weakness in insights["common_weaknesses"]:
                 formatted += f"- {weakness}\n"
             formatted += "\n"
 
-        if 'improvement_strategies' in insights:
+        if "improvement_strategies" in insights:
             formatted += "## Improvement Strategies\n\n"
-            for strategy in insights['improvement_strategies']:
+            for strategy in insights["improvement_strategies"]:
                 formatted += f"- {strategy}\n"
             formatted += "\n"
 
-        if 'updated_guidelines' in insights:
+        if "updated_guidelines" in insights:
             formatted += "## Updated Guidelines\n\n"
-            for guideline in insights['updated_guidelines']:
+            for guideline in insights["updated_guidelines"]:
                 formatted += f"- {guideline}\n"
 
         return formatted

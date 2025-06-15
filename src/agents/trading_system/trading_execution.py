@@ -7,7 +7,6 @@ execution strategies.
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -18,7 +17,7 @@ from typing import Any, Dict, List, Optional
 import ccxt
 import ccxt.async_support as ccxt_async
 from dotenv import load_dotenv
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
 from .risk_agent import RiskManagementAgent
@@ -26,10 +25,10 @@ from .trading_system import AdvancedCryptoTradingSystem, TradeRecommendation, Tr
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class OrderType(str, Enum):
     """Types of orders."""
@@ -41,11 +40,13 @@ class OrderType(str, Enum):
     STOP_LIMIT = "stop_limit"
     TRAILING_STOP = "trailing_stop"
 
+
 class OrderSide(str, Enum):
     """Order sides."""
 
     BUY = "buy"
     SELL = "sell"
+
 
 class OrderStatus(str, Enum):
     """Order statuses."""
@@ -56,6 +57,7 @@ class OrderStatus(str, Enum):
     EXPIRED = "expired"
     REJECTED = "rejected"
     PENDING = "pending"
+
 
 class Order(Model):
     """Model for an order."""
@@ -76,6 +78,7 @@ class Order(Model):
     timestamp: str
     params: Dict[str, Any] = {}
 
+
 class Position(Model):
     """Model for a position."""
 
@@ -91,6 +94,7 @@ class Position(Model):
     timestamp: str
     orders: List[Order] = []
 
+
 class ExecutionStrategy(str, Enum):
     """Execution strategies."""
 
@@ -98,6 +102,7 @@ class ExecutionStrategy(str, Enum):
     TWAP = "twap"  # Time-Weighted Average Price
     ICEBERG = "iceberg"  # Split large orders into smaller ones
     SMART = "smart"  # Adaptive strategy based on market conditions
+
 
 class TradingExecutionState(BaseAgentState):
     """State model for the Trading Execution."""
@@ -108,6 +113,7 @@ class TradingExecutionState(BaseAgentState):
     max_slippage: float = 0.01  # 1% maximum slippage
     dry_run: bool = True  # Default to dry run mode for safety
     auto_execute: bool = False  # Whether to automatically execute recommendations
+
 
 class TradingExecution(BaseAgent):
     """Trading execution for cryptocurrency exchanges."""
@@ -124,7 +130,7 @@ class TradingExecution(BaseAgent):
         api_secret: Optional[str] = None,
         trading_system: Optional[AdvancedCryptoTradingSystem] = None,
         risk_agent: Optional[RiskManagementAgent] = None,
-        dry_run: bool = True
+        dry_run: bool = True,
     ):
         """Initialize the Trading Execution.
 
@@ -154,19 +160,23 @@ class TradingExecution(BaseAgent):
 
         # Initialize synchronous exchange for market data
         exchange_class = getattr(ccxt, exchange_id)
-        self.exchange = exchange_class({
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': True,
-        })
+        self.exchange = exchange_class(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+            }
+        )
 
         # Initialize asynchronous exchange for trading
         exchange_async_class = getattr(ccxt_async, exchange_id)
-        self.exchange_async = exchange_async_class({
-            'apiKey': api_key,
-            'secret': api_secret,
-            'enableRateLimit': True,
-        })
+        self.exchange_async = exchange_async_class(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+            }
+        )
 
         # Store trading system and risk agent
         self.trading_system = trading_system
@@ -218,7 +228,7 @@ class TradingExecution(BaseAgent):
                 try:
                     # Get current price
                     ticker = await self.exchange_async.fetch_ticker(position.symbol)
-                    current_price = ticker['last']
+                    current_price = ticker["last"]
 
                     # Update position
                     self.state.positions[i].current_price = current_price
@@ -232,19 +242,35 @@ class TradingExecution(BaseAgent):
                     self.state.positions[i].unrealized_pnl = unrealized_pnl
 
                     # Check stop loss and take profit
-                    if position.stop_loss and position.side == OrderSide.BUY and current_price <= position.stop_loss:
+                    if (
+                        position.stop_loss
+                        and position.side == OrderSide.BUY
+                        and current_price <= position.stop_loss
+                    ):
                         ctx.logger.info(f"Stop loss triggered for {position.symbol}")
                         await self.close_position(position.symbol)
 
-                    if position.stop_loss and position.side == OrderSide.SELL and current_price >= position.stop_loss:
+                    if (
+                        position.stop_loss
+                        and position.side == OrderSide.SELL
+                        and current_price >= position.stop_loss
+                    ):
                         ctx.logger.info(f"Stop loss triggered for {position.symbol}")
                         await self.close_position(position.symbol)
 
-                    if position.take_profit and position.side == OrderSide.BUY and current_price >= position.take_profit:
+                    if (
+                        position.take_profit
+                        and position.side == OrderSide.BUY
+                        and current_price >= position.take_profit
+                    ):
                         ctx.logger.info(f"Take profit triggered for {position.symbol}")
                         await self.close_position(position.symbol)
 
-                    if position.take_profit and position.side == OrderSide.SELL and current_price <= position.take_profit:
+                    if (
+                        position.take_profit
+                        and position.side == OrderSide.SELL
+                        and current_price <= position.take_profit
+                    ):
                         ctx.logger.info(f"Take profit triggered for {position.symbol}")
                         await self.close_position(position.symbol)
 
@@ -260,7 +286,9 @@ class TradingExecution(BaseAgent):
         Returns:
             Executed order or None if execution failed
         """
-        self.logger.info(f"Executing recommendation for {recommendation.symbol}: {recommendation.signal}")
+        self.logger.info(
+            f"Executing recommendation for {recommendation.symbol}: {recommendation.signal}"
+        )
 
         try:
             # Determine order side
@@ -298,7 +326,7 @@ class TradingExecution(BaseAgent):
                 stop_price=recommendation.stop_loss,
                 take_profit_price=recommendation.take_profit,
                 status=OrderStatus.PENDING,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             # Execute order
@@ -318,7 +346,9 @@ class TradingExecution(BaseAgent):
                 return None
 
         except Exception as e:
-            self.logger.error(f"Error executing recommendation for {recommendation.symbol}: {str(e)}")
+            self.logger.error(
+                f"Error executing recommendation for {recommendation.symbol}: {str(e)}"
+            )
             return None
 
     async def _execute_order(self, order: Order) -> Optional[Order]:
@@ -331,7 +361,9 @@ class TradingExecution(BaseAgent):
             Executed order or None if execution failed
         """
         if self.state.dry_run:
-            self.logger.info(f"DRY RUN: Would execute {order.side} {order.amount} {order.symbol} at {order.price}")
+            self.logger.info(
+                f"DRY RUN: Would execute {order.side} {order.amount} {order.symbol} at {order.price}"
+            )
 
             # Simulate order execution
             order.id = f"dry-run-{int(time.time())}"
@@ -346,29 +378,28 @@ class TradingExecution(BaseAgent):
             # Execute order on exchange
             if order.type == OrderType.MARKET:
                 result = await self.exchange_async.create_order(
-                    symbol=order.symbol,
-                    type='market',
-                    side=order.side,
-                    amount=order.amount
+                    symbol=order.symbol, type="market", side=order.side, amount=order.amount
                 )
             elif order.type == OrderType.LIMIT:
                 result = await self.exchange_async.create_order(
                     symbol=order.symbol,
-                    type='limit',
+                    type="limit",
                     side=order.side,
                     amount=order.amount,
-                    price=order.price
+                    price=order.price,
                 )
             else:
                 self.logger.error(f"Unsupported order type: {order.type}")
                 return None
 
             # Update order with result
-            order.id = result['id']
-            order.status = OrderStatus.CLOSED if result['status'] == 'closed' else OrderStatus.OPEN
-            order.filled = result['filled']
-            order.cost = result['cost'] if 'cost' in result else order.filled * order.price
-            order.fee = result['fee']['cost'] if 'fee' in result and 'cost' in result['fee'] else 0.0
+            order.id = result["id"]
+            order.status = OrderStatus.CLOSED if result["status"] == "closed" else OrderStatus.OPEN
+            order.filled = result["filled"]
+            order.cost = result["cost"] if "cost" in result else order.filled * order.price
+            order.fee = (
+                result["fee"]["cost"] if "fee" in result and "cost" in result["fee"] else 0.0
+            )
 
             # Create stop loss and take profit orders if needed
             if order.stop_price:
@@ -405,7 +436,7 @@ class TradingExecution(BaseAgent):
                 amount=order.amount,
                 price=order.stop_price,
                 status=OrderStatus.OPEN,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             self.state.orders.append(stop_order)
@@ -415,15 +446,15 @@ class TradingExecution(BaseAgent):
             # Create stop loss order on exchange
             result = await self.exchange_async.create_order(
                 symbol=order.symbol,
-                type='stop_loss',
+                type="stop_loss",
                 side=OrderSide.SELL if order.side == OrderSide.BUY else OrderSide.BUY,
                 amount=order.amount,
-                price=order.stop_price
+                price=order.stop_price,
             )
 
             # Create order object
             stop_order = Order(
-                id=result['id'],
+                id=result["id"],
                 exchange=self.exchange_id,
                 symbol=order.symbol,
                 type=OrderType.STOP_LOSS,
@@ -431,7 +462,7 @@ class TradingExecution(BaseAgent):
                 amount=order.amount,
                 price=order.stop_price,
                 status=OrderStatus.OPEN,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             self.state.orders.append(stop_order)
@@ -463,7 +494,7 @@ class TradingExecution(BaseAgent):
                 amount=order.amount,
                 price=order.take_profit_price,
                 status=OrderStatus.OPEN,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             self.state.orders.append(tp_order)
@@ -473,15 +504,15 @@ class TradingExecution(BaseAgent):
             # Create take profit order on exchange
             result = await self.exchange_async.create_order(
                 symbol=order.symbol,
-                type='take_profit',
+                type="take_profit",
                 side=OrderSide.SELL if order.side == OrderSide.BUY else OrderSide.BUY,
                 amount=order.amount,
-                price=order.take_profit_price
+                price=order.take_profit_price,
             )
 
             # Create order object
             tp_order = Order(
-                id=result['id'],
+                id=result["id"],
                 exchange=self.exchange_id,
                 symbol=order.symbol,
                 type=OrderType.TAKE_PROFIT,
@@ -489,7 +520,7 @@ class TradingExecution(BaseAgent):
                 amount=order.amount,
                 price=order.take_profit_price,
                 status=OrderStatus.OPEN,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             self.state.orders.append(tp_order)
@@ -513,7 +544,9 @@ class TradingExecution(BaseAgent):
             if order.side == position.side:
                 # Increase position
                 new_amount = position.amount + order.filled
-                new_entry_price = (position.entry_price * position.amount + order.price * order.filled) / new_amount
+                new_entry_price = (
+                    position.entry_price * position.amount + order.price * order.filled
+                ) / new_amount
 
                 position.amount = new_amount
                 position.entry_price = new_entry_price
@@ -533,7 +566,9 @@ class TradingExecution(BaseAgent):
                     position.amount = 0
 
                     # Remove position
-                    self.state.positions = [p for p in self.state.positions if p.symbol != order.symbol]
+                    self.state.positions = [
+                        p for p in self.state.positions if p.symbol != order.symbol
+                    ]
 
                 else:
                     # Partially close position
@@ -559,7 +594,7 @@ class TradingExecution(BaseAgent):
                 stop_loss=order.stop_price,
                 take_profit=order.take_profit_price,
                 timestamp=datetime.now().isoformat(),
-                orders=[order]
+                orders=[order],
             )
 
             self.state.positions.append(position)
@@ -588,7 +623,7 @@ class TradingExecution(BaseAgent):
             side=OrderSide.SELL if position.side == OrderSide.BUY else OrderSide.BUY,
             amount=position.amount,
             status=OrderStatus.PENDING,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
         # Execute order
@@ -618,8 +653,8 @@ class TradingExecution(BaseAgent):
             balance = await self.exchange_async.fetch_balance()
 
             # Get USD balance
-            usd_balance = balance['total']['USD'] if 'USD' in balance['total'] else 0.0
-            usdt_balance = balance['total']['USDT'] if 'USDT' in balance['total'] else 0.0
+            usd_balance = balance["total"]["USD"] if "USD" in balance["total"] else 0.0
+            usdt_balance = balance["total"]["USDT"] if "USDT" in balance["total"] else 0.0
 
             return usd_balance + usdt_balance
 
@@ -645,15 +680,13 @@ class TradingExecution(BaseAgent):
             balance = await self.get_balance()
 
             # Get risk assessment
-            assessment = await self.risk_agent._assess_risk(
-                symbol, entry_price, balance
-            )
+            assessment = await self.risk_agent._assess_risk(symbol, entry_price, balance)
 
             return {
                 "position_size": assessment.position_sizing.recommended_position_size,
                 "stop_loss": assessment.stop_loss.stop_loss_price,
                 "take_profit": assessment.stop_loss.take_profit_price,
-                "risk_level": assessment.overall_risk_level
+                "risk_level": assessment.overall_risk_level,
             }
 
         except Exception as e:
@@ -715,21 +748,22 @@ class TradingExecution(BaseAgent):
         else:
             return self.state.positions
 
+
 async def main():
     """Main entry point."""
     # Load environment variables
     load_dotenv()
 
     # Get API credentials from environment variables
-    api_key = os.getenv('EXCHANGE_API_KEY')
-    api_secret = os.getenv('EXCHANGE_API_SECRET')
+    api_key = os.getenv("EXCHANGE_API_KEY")
+    api_secret = os.getenv("EXCHANGE_API_SECRET")
 
     # Create trading system
     trading_system = AdvancedCryptoTradingSystem(
         name="execution_trading_system",
         exchange_id="binance",
         api_key=api_key,
-        api_secret=api_secret
+        api_secret=api_secret,
     )
 
     # Create risk agent
@@ -743,7 +777,7 @@ async def main():
         api_secret=api_secret,
         trading_system=trading_system,
         risk_agent=risk_agent,
-        dry_run=True  # Start in dry run mode for safety
+        dry_run=True,  # Start in dry run mode for safety
     )
 
     # Set auto-execute to true
@@ -751,10 +785,9 @@ async def main():
 
     # Start agents
     await asyncio.gather(
-        trading_system.start_all_agents(),
-        risk_agent.run_async(),
-        execution.run_async()
+        trading_system.start_all_agents(), risk_agent.run_async(), execution.run_async()
     )
+
 
 if __name__ == "__main__":
     asyncio.run(main())

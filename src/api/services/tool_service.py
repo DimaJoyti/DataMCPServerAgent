@@ -4,10 +4,11 @@ Tool service for the API.
 
 import asyncio
 import time
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 from ..config import config
 from ..models.response_models import ToolResponse
+
 
 class ToolService:
     """Service for tool operations."""
@@ -69,7 +70,10 @@ class ToolService:
                 {"name": "code_generation", "description": "Generate code"},
                 {"name": "sentiment_analysis", "description": "Analyze sentiment"},
                 {"name": "translation", "description": "Translate text"},
-                {"name": "collaborative_search", "description": "Collaborative search with multiple agents"},
+                {
+                    "name": "collaborative_search",
+                    "description": "Collaborative search with multiple agents",
+                },
                 {"name": "knowledge_sharing", "description": "Share knowledge between agents"},
             ],
             "reinforcement_learning": [
@@ -255,10 +259,10 @@ class ToolService:
         # Try to import tools from the project
         try:
             # Import tools from different modules
-            from src.tools.web_tools import web_search, web_browse
             from src.tools.calculator import calculate
-            from src.tools.data_analysis import analyze_data
             from src.tools.code_generation import generate_code
+            from src.tools.data_analysis import analyze_data
+            from src.tools.web_tools import web_browse, web_search
 
             # Map tool names to functions
             tool_functions = {
@@ -325,6 +329,7 @@ class ToolService:
         try:
             # Get session service
             from .session_service import SessionService
+
             session_service = SessionService()
 
             # Log tool usage

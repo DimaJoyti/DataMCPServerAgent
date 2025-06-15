@@ -4,10 +4,11 @@ Metadata enrichment utilities for documents.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 try:
-    from textstat import flesch_kincaid_grade, automated_readability_index
+    from textstat import automated_readability_index, flesch_kincaid_grade
+
     HAS_TEXTSTAT = True
 except ImportError:
     HAS_TEXTSTAT = False
@@ -15,6 +16,7 @@ except ImportError:
 from .models import DocumentMetadata
 
 logger = logging.getLogger(__name__)
+
 
 class MetadataEnricher:
     """Enrich document metadata with additional analysis."""
@@ -63,18 +65,18 @@ class MetadataEnricher:
 
     def _extract_title(self, content: str) -> Optional[str]:
         """Extract document title from content."""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Look for markdown-style headers
         for line in lines[:10]:  # Check first 10 lines
             line = line.strip()
-            if line.startswith('# '):
+            if line.startswith("# "):
                 return line[2:].strip()
-            elif line.startswith('## '):
+            elif line.startswith("## "):
                 return line[3:].strip()
 
         # Look for HTML title tags
-        title_match = re.search(r'<title[^>]*>(.*?)</title>', content, re.IGNORECASE | re.DOTALL)
+        title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.IGNORECASE | re.DOTALL)
         if title_match:
             return title_match.group(1).strip()
 
@@ -91,14 +93,48 @@ class MetadataEnricher:
         # Simple keyword extraction based on word frequency
         # Remove common stop words
         stop_words = {
-            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-            'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have',
-            'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
-            'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those'
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "can",
+            "this",
+            "that",
+            "these",
+            "those",
         }
 
         # Extract words
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', content.lower())
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", content.lower())
 
         # Filter stop words and count frequency
         word_freq = {}
@@ -117,7 +153,7 @@ class MetadataEnricher:
 
         # Simple complexity metrics
         words = content.split()
-        sentences = re.split(r'[.!?]+', content)
+        sentences = re.split(r"[.!?]+", content)
         sentences = [s for s in sentences if s.strip()]
 
         if not words or not sentences:
@@ -135,9 +171,9 @@ class MetadataEnricher:
 
         # Combine metrics into complexity score (0-100)
         complexity = (
-            (avg_word_length - 4) * 10 +
-            (avg_sentence_length - 15) * 2 +
-            (avg_syllables_per_word - 1.5) * 20
+            (avg_word_length - 4) * 10
+            + (avg_sentence_length - 15) * 2
+            + (avg_syllables_per_word - 1.5) * 20
         )
 
         return max(0, min(100, complexity))
@@ -145,7 +181,7 @@ class MetadataEnricher:
     def _count_syllables(self, word: str) -> int:
         """Approximate syllable count for a word."""
         word = word.lower()
-        vowels = 'aeiouy'
+        vowels = "aeiouy"
         syllable_count = 0
         prev_was_vowel = False
 
@@ -156,7 +192,7 @@ class MetadataEnricher:
             prev_was_vowel = is_vowel
 
         # Handle silent 'e'
-        if word.endswith('e') and syllable_count > 1:
+        if word.endswith("e") and syllable_count > 1:
             syllable_count -= 1
 
         return max(1, syllable_count)
@@ -169,11 +205,11 @@ class MetadataEnricher:
         try:
             # Add grade level
             grade_level = flesch_kincaid_grade(content)
-            metadata.add_custom_field('grade_level', grade_level)
+            metadata.add_custom_field("grade_level", grade_level)
 
             # Add automated readability index
             ari = automated_readability_index(content)
-            metadata.add_custom_field('automated_readability_index', ari)
+            metadata.add_custom_field("automated_readability_index", ari)
 
         except Exception as e:
             self.logger.debug(f"Failed to calculate additional readability metrics: {e}")
@@ -183,71 +219,68 @@ class MetadataEnricher:
         # Count different types of elements
 
         # Headers (markdown style)
-        h1_count = len(re.findall(r'^# ', content, re.MULTILINE))
-        h2_count = len(re.findall(r'^## ', content, re.MULTILINE))
-        h3_count = len(re.findall(r'^### ', content, re.MULTILINE))
+        h1_count = len(re.findall(r"^# ", content, re.MULTILINE))
+        h2_count = len(re.findall(r"^## ", content, re.MULTILINE))
+        h3_count = len(re.findall(r"^### ", content, re.MULTILINE))
 
-        metadata.add_custom_field('h1_count', h1_count)
-        metadata.add_custom_field('h2_count', h2_count)
-        metadata.add_custom_field('h3_count', h3_count)
-        metadata.add_custom_field('total_headers', h1_count + h2_count + h3_count)
+        metadata.add_custom_field("h1_count", h1_count)
+        metadata.add_custom_field("h2_count", h2_count)
+        metadata.add_custom_field("h3_count", h3_count)
+        metadata.add_custom_field("total_headers", h1_count + h2_count + h3_count)
 
         # Lists
-        bullet_lists = len(re.findall(r'^\s*[-*+]\s', content, re.MULTILINE))
-        numbered_lists = len(re.findall(r'^\s*\d+\.\s', content, re.MULTILINE))
+        bullet_lists = len(re.findall(r"^\s*[-*+]\s", content, re.MULTILINE))
+        numbered_lists = len(re.findall(r"^\s*\d+\.\s", content, re.MULTILINE))
 
-        metadata.add_custom_field('bullet_lists', bullet_lists)
-        metadata.add_custom_field('numbered_lists', numbered_lists)
+        metadata.add_custom_field("bullet_lists", bullet_lists)
+        metadata.add_custom_field("numbered_lists", numbered_lists)
 
         # Links (markdown and HTML)
-        markdown_links = len(re.findall(r'\[([^\]]+)\]\([^)]+\)', content))
-        html_links = len(re.findall(r'<a[^>]+href', content, re.IGNORECASE))
+        markdown_links = len(re.findall(r"\[([^\]]+)\]\([^)]+\)", content))
+        html_links = len(re.findall(r"<a[^>]+href", content, re.IGNORECASE))
 
-        metadata.add_custom_field('markdown_links', markdown_links)
-        metadata.add_custom_field('html_links', html_links)
-        metadata.add_custom_field('total_links', markdown_links + html_links)
+        metadata.add_custom_field("markdown_links", markdown_links)
+        metadata.add_custom_field("html_links", html_links)
+        metadata.add_custom_field("total_links", markdown_links + html_links)
 
         # Code blocks
-        code_blocks = len(re.findall(r'```[\s\S]*?```', content))
-        inline_code = len(re.findall(r'`[^`]+`', content))
+        code_blocks = len(re.findall(r"```[\s\S]*?```", content))
+        inline_code = len(re.findall(r"`[^`]+`", content))
 
-        metadata.add_custom_field('code_blocks', code_blocks)
-        metadata.add_custom_field('inline_code', inline_code)
+        metadata.add_custom_field("code_blocks", code_blocks)
+        metadata.add_custom_field("inline_code", inline_code)
 
     def _extract_entities(self, content: str, metadata: DocumentMetadata) -> None:
         """Extract entities and topics from content."""
         # Simple entity extraction using regex patterns
 
         # Email addresses
-        emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', content)
+        emails = re.findall(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", content)
         if emails:
-            metadata.add_custom_field('email_addresses', list(set(emails)))
+            metadata.add_custom_field("email_addresses", list(set(emails)))
 
         # URLs
         urls = re.findall(r'https?://[^\s<>"{}|\\^`\[\]]+', content)
         if urls:
-            metadata.add_custom_field('urls', list(set(urls)))
+            metadata.add_custom_field("urls", list(set(urls)))
 
         # Phone numbers (simple pattern)
-        phones = re.findall(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', content)
+        phones = re.findall(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", content)
         if phones:
-            metadata.add_custom_field('phone_numbers', list(set(phones)))
+            metadata.add_custom_field("phone_numbers", list(set(phones)))
 
         # Dates (simple patterns)
-        dates = re.findall(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', content)
+        dates = re.findall(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b", content)
         if dates:
-            metadata.add_custom_field('dates', list(set(dates)))
+            metadata.add_custom_field("dates", list(set(dates)))
 
         # Numbers
-        numbers = re.findall(r'\b\d+(?:\.\d+)?\b', content)
+        numbers = re.findall(r"\b\d+(?:\.\d+)?\b", content)
         if len(numbers) > 5:  # Only store if there are significant numbers
-            metadata.add_custom_field('number_count', len(numbers))
+            metadata.add_custom_field("number_count", len(numbers))
 
     def add_custom_analysis(
-        self,
-        metadata: DocumentMetadata,
-        analysis_name: str,
-        analysis_result: Any
+        self, metadata: DocumentMetadata, analysis_name: str, analysis_result: Any
     ) -> None:
         """Add custom analysis result to metadata."""
         metadata.add_custom_field(f"analysis_{analysis_name}", analysis_result)

@@ -5,8 +5,6 @@ Example script demonstrating knowledge graph integration for better context unde
 import asyncio
 import os
 import sys
-import time
-from typing import Dict, Any
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

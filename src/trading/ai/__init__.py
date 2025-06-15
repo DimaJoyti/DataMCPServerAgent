@@ -10,14 +10,9 @@ Advanced AI/ML capabilities for next-generation trading systems:
 - AI-powered strategies
 """
 
-from .ml_engine import MLEngine
-from .feature_engineering import FeatureEngineer
-from .model_manager import ModelManager
 from .data_pipeline import MLDataPipeline
+from .feature_engineering import FeatureEngineer
+from .ml_engine import MLEngine
+from .model_manager import ModelManager
 
-__all__ = [
-    'MLEngine',
-    'FeatureEngineer', 
-    'ModelManager',
-    'MLDataPipeline'
-]
+__all__ = ["MLEngine", "FeatureEngineer", "ModelManager", "MLDataPipeline"]

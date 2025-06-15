@@ -60,16 +60,16 @@ for symbol, position in portfolio.items():
         quantity = position["quantity"]
         avg_price = position["avg_price"]
         current_price = market_data[symbol]["price"]
-        
+
         invested = quantity * avg_price
         current_value = quantity * current_price
         pnl = current_value - invested
         pnl_percent = (pnl / invested) * 100 if invested > 0 else 0
-        
+
         total_invested += invested
         total_current_value += current_value
         total_pnl += pnl
-        
+
         position_analysis.append({
             "symbol": symbol,
             "invested": invested,

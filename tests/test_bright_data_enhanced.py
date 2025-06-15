@@ -8,11 +8,10 @@ performance benchmarks.
 """
 
 import asyncio
-import time
 import logging
-import sys
 import os
-from typing import Dict, Any
+import sys
+import time
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -26,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 # Import components
 try:
+    from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache
     from src.tools.bright_data.core.config import BrightDataConfig
     from src.tools.bright_data.core.enhanced_client import EnhancedBrightDataClient
-    from src.tools.bright_data.core.cache_manager import CacheManager, MemoryCache
-    from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
     from src.tools.bright_data.core.error_handler import BrightDataErrorHandler
+    from src.tools.bright_data.core.rate_limiter import RateLimiter, ThrottleStrategy
 except ImportError as e:
     logger.error(f"Failed to import components: {e}")
     logger.error("Make sure you're running from the project root directory")
@@ -267,7 +266,7 @@ class BrightDataTester:
             await cache.get(f"key_{i}")
         read_time = time.time() - start_time
 
-        logger.info(f"📈 Cache Performance:")
+        logger.info("📈 Cache Performance:")
         logger.info(f"   Writes: {1000/write_time:.0f} ops/sec")
         logger.info(f"   Reads: {1000/read_time:.0f} ops/sec")
 
@@ -281,7 +280,7 @@ class BrightDataTester:
                 successful_requests += 1
         rate_limit_time = time.time() - start_time
 
-        logger.info(f"📈 Rate Limiter Performance:")
+        logger.info("📈 Rate Limiter Performance:")
         logger.info(f"   Processed: {100/rate_limit_time:.0f} requests/sec")
         logger.info(f"   Success rate: {successful_requests}%")
 

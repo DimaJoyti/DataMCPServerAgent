@@ -10,7 +10,7 @@ import logging
 import random
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TupleVar
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Type variable for generic function return type
 T = TypeVar("T")
 
+
 class RetryStrategy(Enum):
     """Enum for different retry strategies."""
 
@@ -40,12 +41,14 @@ class RetryStrategy(Enum):
     CONSTANT = "constant"  # Constant delay
     ADAPTIVE = "adaptive"  # Adaptive based on error type
 
+
 class CircuitBreakerState(Enum):
     """Enum for circuit breaker states."""
 
     CLOSED = "closed"  # Normal operation, requests allowed
     OPEN = "open"  # Failing, requests blocked
     HALF_OPEN = "half_open"  # Testing if service is back
+
 
 class CircuitBreaker:
     """Circuit breaker pattern implementation to prevent cascading failures."""
@@ -89,9 +92,7 @@ class CircuitBreaker:
             self.failure_count += 1
             if self.failure_count >= self.failure_threshold:
                 self.state = CircuitBreakerState.OPEN
-                logger.warning(
-                    f"Circuit breaker opened after {self.failure_count} failures"
-                )
+                logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
         elif self.state == CircuitBreakerState.HALF_OPEN:
             # If we're testing the service and it fails, go back to open
             self.state = CircuitBreakerState.OPEN
@@ -128,6 +129,7 @@ class CircuitBreaker:
                 return False
 
         return False
+
 
 class ErrorRecoverySystem:
     """Advanced error recovery system with retry strategies, fallbacks, and learning."""
@@ -415,9 +417,7 @@ Analyze these patterns and suggest improvements.
         if error_message:
             execution_data["error_message"] = error_message
 
-        self.db.save_entity(
-            "error_recovery", f"execution_{int(time.time())}", execution_data
-        )
+        self.db.save_entity("error_recovery", f"execution_{int(time.time())}", execution_data)
 
     async def analyze_error(
         self, error: Exception, context: Dict[str, Any], tool_name: Optional[str] = None
@@ -470,9 +470,7 @@ Analyze these patterns and suggest improvements.
             # Try to extract JSON from the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 
@@ -497,9 +495,7 @@ Analyze these patterns and suggest improvements.
         except Exception as e:
             # If parsing fails, return a default analysis
             default_analysis = {
-                "error_type": error.error_type
-                if hasattr(error, "error_type")
-                else "unknown",
+                "error_type": error.error_type if hasattr(error, "error_type") else "unknown",
                 "severity": "medium",
                 "retry_strategy": "exponential",
                 "max_retries": 3,
@@ -526,9 +522,7 @@ Analyze these patterns and suggest improvements.
 
             return default_analysis
 
-    async def get_alternative_tools(
-        self, failed_tool: str, context: Dict[str, Any]
-    ) -> List[str]:
+    async def get_alternative_tools(self, failed_tool: str, context: Dict[str, Any]) -> List[str]:
         """Get alternative tools when a specific tool fails.
 
         Args:
@@ -543,15 +537,11 @@ Analyze these patterns and suggest improvements.
         analysis = self.db.get_entity("error_recovery", analysis_key)
 
         # Log context information for debugging
-        logger.debug(
-            f"Getting alternative tools for {failed_tool} with context: {context}"
-        )
+        logger.debug(f"Getting alternative tools for {failed_tool} with context: {context}")
 
         if analysis and "alternative_tools" in analysis:
             # Filter to ensure all tools exist
-            alternatives = [
-                t for t in analysis["alternative_tools"] if t in self.tool_map
-            ]
+            alternatives = [t for t in analysis["alternative_tools"] if t in self.tool_map]
             if alternatives:
                 return alternatives
 
@@ -609,9 +599,7 @@ Analyze these patterns and suggest improvements.
 
         # Filter to ensure all tools exist
         alternatives = [
-            t
-            for t in predefined_alternatives.get(failed_tool, [])
-            if t in self.tool_map
+            t for t in predefined_alternatives.get(failed_tool, []) if t in self.tool_map
         ]
 
         # If no alternatives found, return the most reliable tools
@@ -627,9 +615,7 @@ Analyze these patterns and suggest improvements.
                     success_rates[tool_name] = successes / len(executions)
 
             # Sort by success rate and return top 2
-            sorted_tools = sorted(
-                success_rates.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_tools = sorted(success_rates.items(), key=lambda x: x[1], reverse=True)
             alternatives = [t[0] for t in sorted_tools[:2] if t[0] != failed_tool]
 
         return alternatives
@@ -676,9 +662,7 @@ Analyze these patterns and suggest improvements.
                             )
                             return result, alt_tool, True
                         except Exception as alt_e:
-                            logger.warning(
-                                f"Fallback tool {alt_tool} failed: {str(alt_e)}"
-                            )
+                            logger.warning(f"Fallback tool {alt_tool} failed: {str(alt_e)}")
 
                 # All fallbacks failed
                 raise Exception(
@@ -730,14 +714,13 @@ Analyze these patterns and suggest improvements.
             related_executions = [
                 e
                 for e in executions
-                if e.get("tool_name") == tool_name
-                and e.get("timestamp", 0) > analysis_time
+                if e.get("tool_name") == tool_name and e.get("timestamp", 0) > analysis_time
             ]
 
             if related_executions:
-                success_rate = sum(
-                    1 for e in related_executions if e.get("success", False)
-                ) / len(related_executions)
+                success_rate = sum(1 for e in related_executions if e.get("success", False)) / len(
+                    related_executions
+                )
 
                 if success_rate > 0.5:
                     recovery_successes.append(
@@ -774,9 +757,7 @@ Analyze these patterns and suggest improvements.
             # Try to extract JSON from the response
             content = response.content
             json_str = (
-                content.split("```json")[1].split("```")[0]
-                if "```json" in content
-                else content
+                content.split("```json")[1].split("```")[0] if "```json" in content else content
             )
             json_str = json_str.strip()
 
@@ -790,9 +771,7 @@ Analyze these patterns and suggest improvements.
             learning = json.loads(json_str)
 
             # Save the learning to the database
-            self.db.save_entity(
-                "error_recovery", f"learning_{int(time.time())}", learning
-            )
+            self.db.save_entity("error_recovery", f"learning_{int(time.time())}", learning)
 
             return learning
         except Exception as e:

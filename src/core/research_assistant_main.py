@@ -28,6 +28,7 @@ research_assistant = EnhancedResearchAssistant(
     db_path=os.getenv("RESEARCH_DB_PATH", "research_memory.db"),
 )
 
+
 async def run_research_assistant():
     """
     Run the enhanced research assistant with user input and handle the response.
@@ -43,19 +44,13 @@ async def run_research_assistant():
     print("=== Enhanced Research Assistant ===")
     print("Type 'exit' or 'quit' to end the session.")
     print("Type 'save' to save the last research results to a file.")
-    print(
-        "Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx)."
-    )
+    print("Type 'export <format>' to export results (formats: md, html, pdf, docx, pptx).")
     print("Type 'projects' to list all research projects.")
     print("Type 'project create <n>' to create a new project.")
     print("Type 'project select <id>' to select a project.")
     print("Type 'project info' to view current project details.")
-    print(
-        "Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee)."
-    )
-    print(
-        "Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network)."
-    )
+    print("Type 'citation <format>' to set citation format (apa, mla, chicago, harvard, ieee).")
+    print("Type 'visualize <type>' to create a visualization (chart, mind_map, timeline, network).")
     print("Type 'search projects <term>' to search for projects.")
     print("Type 'search queries <term>' to search for queries.")
     print("Type 'search results <term>' to search for results.")
@@ -73,9 +68,7 @@ async def run_research_assistant():
                 description="Default project for research queries",
                 tags=["general", "research"],
             )
-            print(
-                f"Created default project: {current_project.name} (ID: {current_project.id})"
-            )
+            print(f"Created default project: {current_project.name} (ID: {current_project.id})")
 
         while True:
             command = input("\nWhat can I help you research? ")
@@ -94,16 +87,12 @@ async def run_research_assistant():
                 print("\n=== Available Commands ===")
                 print("exit, quit - End the session")
                 print("save - Save the last research results to a file")
-                print(
-                    "export <format> - Export results (formats: md, html, pdf, docx, pptx)"
-                )
+                print("export <format> - Export results (formats: md, html, pdf, docx, pptx)")
                 print("projects - List all research projects")
                 print("project create <n> - Create a new project")
                 print("project select <id> - Select a project")
                 print("project info - View current project details")
-                print(
-                    "citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)"
-                )
+                print("citation <format> - Set citation format (apa, mla, chicago, harvard, ieee)")
                 print(
                     "visualize <type> - Create a visualization (chart, mind_map, timeline, network)"
                 )
@@ -137,11 +126,7 @@ async def run_research_assistant():
 
                 description = input("Enter project description (optional): ")
                 tags_input = input("Enter project tags (comma-separated, optional): ")
-                tags = (
-                    [tag.strip() for tag in tags_input.split(",")]
-                    if tags_input.strip()
-                    else []
-                )
+                tags = [tag.strip() for tag in tags_input.split(",")] if tags_input.strip() else []
 
                 project = research_assistant.create_project(
                     name=name, description=description, tags=tags
@@ -231,9 +216,7 @@ async def run_research_assistant():
                     print(f"\n=== Queries matching '{search_term}' ===")
                     for i, query in enumerate(queries, 1):
                         print(f"{i}. {query['query']} (ID: {query['query_id']})")
-                        print(
-                            f"   Project: {query['project_name']} (ID: {query['project_id']})"
-                        )
+                        print(f"   Project: {query['project_name']} (ID: {query['project_id']})")
                         print(f"   Created: {query['created_at']}")
                         print()
                 continue
@@ -253,9 +236,7 @@ async def run_research_assistant():
                     for i, result in enumerate(results, 1):
                         print(f"{i}. {result['topic']} (ID: {result['result_id']})")
                         print(f"   Query: {result['query']} (ID: {result['query_id']})")
-                        print(
-                            f"   Project: {result['project_name']} (ID: {result['project_id']})"
-                        )
+                        print(f"   Project: {result['project_name']} (ID: {result['project_id']})")
                         print(f"   Summary: {result['summary'][:100]}...")
                         print(f"   Tags: {', '.join(result['tags'])}")
                         print(f"   Created: {result['created_at']}")
@@ -263,9 +244,7 @@ async def run_research_assistant():
                 continue
 
             elif command.lower() == "save" and last_response:
-                filename = input(
-                    "Enter filename to save results (default: research_output.txt): "
-                )
+                filename = input("Enter filename to save results (default: research_output.txt): ")
                 if not filename.strip():
                     filename = "research_output.txt"
 
@@ -281,10 +260,7 @@ async def run_research_assistant():
                         content += f"{i}. {source}\n"
 
                 # Add bibliography if available
-                if (
-                    hasattr(last_response, "bibliography")
-                    and last_response.bibliography
-                ):
+                if hasattr(last_response, "bibliography") and last_response.bibliography:
                     content += f"\nBibliography ({last_response.citation_format}):\n{last_response.bibliography}\n"
 
                 # Save the content
@@ -296,9 +272,7 @@ async def run_research_assistant():
             elif command.lower().startswith("export ") and last_response:
                 parts = command.split()
                 if len(parts) < 2:
-                    print(
-                        "Please specify an export format (md, html, pdf, docx, pptx)."
-                    )
+                    print("Please specify an export format (md, html, pdf, docx, pptx).")
                     continue
 
                 export_format = parts[1].lower()
@@ -317,24 +291,16 @@ async def run_research_assistant():
                 }
 
                 # Add bibliography if available
-                if (
-                    hasattr(last_response, "bibliography")
-                    and last_response.bibliography
-                ):
+                if hasattr(last_response, "bibliography") and last_response.bibliography:
                     research_data["bibliography"] = last_response.bibliography
                     research_data["citation_format"] = last_response.citation_format
 
                 # Add visualizations if available
-                if (
-                    hasattr(last_response, "visualizations")
-                    and last_response.visualizations
-                ):
+                if hasattr(last_response, "visualizations") and last_response.visualizations:
                     research_data["visualizations"] = last_response.visualizations
 
                 # Export the research data
-                export_input = json.dumps(
-                    {"research_data": research_data, "filename": filename}
-                )
+                export_input = json.dumps({"research_data": research_data, "filename": filename})
 
                 try:
                     from src.tools.research_assistant_tools import (
@@ -390,9 +356,7 @@ async def run_research_assistant():
                             else:
                                 source_type = "unknown"
 
-                            source_types[source_type] = (
-                                source_types.get(source_type, 0) + 1
-                            )
+                            source_types[source_type] = source_types.get(source_type, 0) + 1
 
                         chart_data = {
                             "labels": list(source_types.keys()),
@@ -418,9 +382,11 @@ async def run_research_assistant():
                                 {
                                     "name": "Sources",
                                     "sub_branches": [
-                                        source.get("title", source)
-                                        if isinstance(source, dict)
-                                        else source
+                                        (
+                                            source.get("title", source)
+                                            if isinstance(source, dict)
+                                            else source
+                                        )
                                         for source in last_response.sources[:3]
                                     ],
                                 },
@@ -495,13 +461,9 @@ async def run_research_assistant():
                         # Add source nodes
                         for i, source in enumerate(last_response.sources[:3], 3):
                             source_label = (
-                                source.get("title", source)
-                                if isinstance(source, dict)
-                                else source
+                                source.get("title", source) if isinstance(source, dict) else source
                             )
-                            network_data["nodes"].append(
-                                {"id": i, "label": source_label}
-                            )
+                            network_data["nodes"].append({"id": i, "label": source_label})
                             network_data["edges"].append(
                                 {"source": 1, "target": i, "label": "includes"}
                             )
@@ -605,13 +567,9 @@ async def run_research_assistant():
 
                 # Print project and query information
                 if enhanced_response.project_id:
-                    project = research_assistant.get_project(
-                        enhanced_response.project_id
-                    )
+                    project = research_assistant.get_project(enhanced_response.project_id)
                     if project:
-                        print(
-                            f"\nProject: {project.name} (ID: {enhanced_response.project_id})"
-                        )
+                        print(f"\nProject: {project.name} (ID: {enhanced_response.project_id})")
 
                 # Print tags if available
                 if enhanced_response.tags:
@@ -632,6 +590,7 @@ async def run_research_assistant():
         traceback.print_exc()
 
     print("\nThank you for using the Enhanced Research Assistant!")
+
 
 if __name__ == "__main__":
     asyncio.run(run_research_assistant())

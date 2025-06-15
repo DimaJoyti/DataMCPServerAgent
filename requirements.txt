@@ -285,3 +285,30 @@ aiohttp>=3.8.0
 python-binance>=1.0.19
 alpha-vantage>=2.3.1
 polygon-api-client>=1.12.0
+
+# Enhanced Reinforcement Learning Dependencies
+gymnasium>=0.28.0
+stable-baselines3>=2.0.0
+tensorboard>=2.8.0
+wandb>=0.15.0
+optuna>=3.0.0
+ray[rllib]>=2.5.0
+torch-geometric>=2.3.0
+torchvision>=0.15.0
+torchtext>=0.15.0
+higher>=0.2.1
+
+# Cloud Integration
+boto3>=1.34.0
+azure-identity>=1.15.0
+azure-mgmt-compute>=30.0.0
+google-cloud-aiplatform>=1.38.0
+google-cloud-storage>=2.10.0
+
+# Federated Learning & Privacy
+pycryptodome>=3.19.0
+cryptography>=41.0.8
+
+# Auto-Scaling & Monitoring
+websockets>=11.0.3
+aiohttp>=3.9.0

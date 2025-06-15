@@ -5,13 +5,14 @@ This module provides tools for SEO analysis, keyword research, content optimizat
 metadata generation, and backlink analysis.
 """
 
-import re
 import json
-from typing import Dict, List, Any
-from bs4 import BeautifulSoup
-import requests
+import re
+from typing import Any, Dict, List
 
+import requests
+from bs4 import BeautifulSoup
 from langchain.tools import Tool
+
 
 class SEOAnalyzerTool:
     """Tool for analyzing a webpage for SEO factors."""
@@ -31,33 +32,44 @@ class SEOAnalyzerTool:
 
         try:
             # Fetch the webpage
-            response = requests.get(url, headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            })
+            response = requests.get(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                },
+            )
             response.raise_for_status()
 
             # Parse the HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
 
             # Basic analysis
             title = soup.title.string if soup.title else None
-            meta_description = soup.find('meta', attrs={'name': 'description'})
-            meta_description = meta_description['content'] if meta_description else None
+            meta_description = soup.find("meta", attrs={"name": "description"})
+            meta_description = meta_description["content"] if meta_description else None
 
-            h1_tags = soup.find_all('h1')
-            h2_tags = soup.find_all('h2')
-            h3_tags = soup.find_all('h3')
+            h1_tags = soup.find_all("h1")
+            h2_tags = soup.find_all("h2")
+            h3_tags = soup.find_all("h3")
 
-            images = soup.find_all('img')
-            images_with_alt = [img for img in images if img.get('alt')]
+            images = soup.find_all("img")
+            images_with_alt = [img for img in images if img.get("alt")]
 
-            links = soup.find_all('a')
-            internal_links = [link for link in links if link.get('href') and not link['href'].startswith(('http', 'https', '//'))]
-            external_links = [link for link in links if link.get('href') and link['href'].startswith(('http', 'https', '//'))]
+            links = soup.find_all("a")
+            internal_links = [
+                link
+                for link in links
+                if link.get("href") and not link["href"].startswith(("http", "https", "//"))
+            ]
+            external_links = [
+                link
+                for link in links
+                if link.get("href") and link["href"].startswith(("http", "https", "//"))
+            ]
 
             # Calculate word count
             text = soup.get_text()
-            words = re.findall(r'\w+', text)
+            words = re.findall(r"\w+", text)
             word_count = len(words)
 
             # Basic SEO score calculation
@@ -141,7 +153,7 @@ class SEOAnalyzerTool:
                 "external_links": len(external_links),
                 "word_count": word_count,
                 "seo_score": percentage_score,
-                "recommendations": recommendations
+                "recommendations": recommendations,
             }
 
             # Add detailed analysis if requested
@@ -154,15 +166,19 @@ class SEOAnalyzerTool:
                 heading_structure = {
                     "h1": [h.get_text() for h in h1_tags],
                     "h2": [h.get_text() for h in h2_tags],
-                    "h3": [h.get_text() for h in h3_tags]
+                    "h3": [h.get_text() for h in h3_tags],
                 }
                 result["heading_structure"] = heading_structure
 
                 # Add more detailed recommendations
                 if keyword_density:
-                    top_keywords = sorted(keyword_density.items(), key=lambda x: x[1], reverse=True)[:5]
+                    top_keywords = sorted(
+                        keyword_density.items(), key=lambda x: x[1], reverse=True
+                    )[:5]
                     if top_keywords and top_keywords[0][1] > 5:
-                        recommendations.append(f"Keyword '{top_keywords[0][0]}' may be overused ({top_keywords[0][1]}%)")
+                        recommendations.append(
+                            f"Keyword '{top_keywords[0][0]}' may be overused ({top_keywords[0][1]}%)"
+                        )
 
             # Add comprehensive analysis if requested
             if depth == "comprehensive":
@@ -170,7 +186,7 @@ class SEOAnalyzerTool:
                 result["page_speed"] = {
                     "mobile_score": 75,
                     "desktop_score": 85,
-                    "load_time": "2.5s"
+                    "load_time": "2.5s",
                 }
 
                 # Add mobile-friendliness check (mock data for now)
@@ -183,10 +199,7 @@ class SEOAnalyzerTool:
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "url": url
-            }
+            return {"error": str(e), "url": url}
 
     def _analyze_keyword_density(self, text: str) -> Dict[str, float]:
         """
@@ -199,11 +212,31 @@ class SEOAnalyzerTool:
             Dictionary with keywords and their density percentages
         """
         # Remove common stop words
-        stop_words = {'a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'was', 'were',
-                     'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of'}
+        stop_words = {
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "but",
+            "is",
+            "are",
+            "was",
+            "were",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "with",
+            "by",
+            "about",
+            "as",
+            "of",
+        }
 
         # Extract words
-        words = re.findall(r'\b\w+\b', text.lower())
+        words = re.findall(r"\b\w+\b", text.lower())
 
         # Filter out stop words and short words
         filtered_words = [word for word in words if word not in stop_words and len(word) > 3]
@@ -241,25 +274,19 @@ class SEOAnalyzerTool:
         structured_data = []
 
         # Look for JSON-LD
-        ld_scripts = soup.find_all('script', type='application/ld+json')
+        ld_scripts = soup.find_all("script", type="application/ld+json")
         for script in ld_scripts:
             try:
                 data = json.loads(script.string)
-                structured_data.append({
-                    "type": "JSON-LD",
-                    "data": data
-                })
+                structured_data.append({"type": "JSON-LD", "data": data})
             except:
                 pass
 
         # Look for microdata
         itemscope_elements = soup.find_all(itemscope=True)
         for element in itemscope_elements:
-            item_type = element.get('itemtype', '')
-            structured_data.append({
-                "type": "Microdata",
-                "itemType": item_type
-            })
+            item_type = element.get("itemtype", "")
+            structured_data.append({"type": "Microdata", "itemType": item_type})
 
         return structured_data
 
@@ -292,7 +319,9 @@ class SEOAnalyzerTool:
         output += f"- H1 Tags: {result['h1_count']}\n"
         output += f"- H2 Tags: {result['h2_count']}\n"
         output += f"- H3 Tags: {result['h3_count']}\n"
-        output += f"- Images: {result['image_count']} (with alt text: {result['images_with_alt']})\n"
+        output += (
+            f"- Images: {result['image_count']} (with alt text: {result['images_with_alt']})\n"
+        )
         output += f"- Internal Links: {result['internal_links']}\n"
         output += f"- External Links: {result['external_links']}\n\n"
 
@@ -308,6 +337,7 @@ class SEOAnalyzerTool:
 
         return output
 
+
 # Create tool instances
 seo_analyzer = SEOAnalyzerTool()
 
@@ -318,12 +348,14 @@ seo_analyzer_tool = Tool(
     description="Analyze a webpage for SEO factors. Provides SEO score, content analysis, and recommendations for improvement.",
 )
 
+
 class KeywordResearchTool:
     """Tool for researching keywords related to a topic."""
 
     def __init__(self):
         """Initialize the keyword research tool."""
         from src.tools.seo_api_clients import SEMrushClient
+
         self.api_client = SEMrushClient()
 
     def research(self, topic: str, limit: int = 10, database: str = "us") -> Dict[str, Any]:
@@ -351,10 +383,7 @@ class KeywordResearchTool:
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "topic": topic
-            }
+            return {"error": str(e), "topic": topic}
 
     def run(self, topic: str, limit: int = 10) -> str:
         """
@@ -391,6 +420,7 @@ class KeywordResearchTool:
 
         return output
 
+
 class ContentOptimizerTool:
     """Tool for optimizing content for SEO."""
 
@@ -409,7 +439,7 @@ class ContentOptimizerTool:
 
         try:
             # Calculate word count
-            words = re.findall(r'\w+', content)
+            words = re.findall(r"\w+", content)
             word_count = len(words)
 
             # Calculate keyword density
@@ -422,7 +452,7 @@ class ContentOptimizerTool:
                     keyword_density[keyword] = round(density, 2)
 
             # Check readability (Flesch Reading Ease)
-            sentences = re.split(r'[.!?]+', content)
+            sentences = re.split(r"[.!?]+", content)
             sentence_count = len([s for s in sentences if s.strip()])
 
             syllable_count = 0
@@ -430,16 +460,20 @@ class ContentOptimizerTool:
                 syllable_count += self._count_syllables(word)
 
             if sentence_count > 0 and word_count > 0:
-                flesch_score = 206.835 - 1.015 * (word_count / sentence_count) - 84.6 * (syllable_count / word_count)
+                flesch_score = (
+                    206.835
+                    - 1.015 * (word_count / sentence_count)
+                    - 84.6 * (syllable_count / word_count)
+                )
                 flesch_score = min(100, max(0, round(flesch_score, 2)))
             else:
                 flesch_score = 0
 
             # Analyze heading structure
             headings = {
-                "h1": re.findall(r'# (.*?)(?:\n|$)', content),
-                "h2": re.findall(r'## (.*?)(?:\n|$)', content),
-                "h3": re.findall(r'### (.*?)(?:\n|$)', content)
+                "h1": re.findall(r"# (.*?)(?:\n|$)", content),
+                "h2": re.findall(r"## (.*?)(?:\n|$)", content),
+                "h3": re.findall(r"### (.*?)(?:\n|$)", content),
             }
 
             # Check for keyword in headings
@@ -454,7 +488,7 @@ class ContentOptimizerTool:
                     "h1": h1_matches,
                     "h2": h2_matches,
                     "h3": h3_matches,
-                    "total": h1_matches + h2_matches + h3_matches
+                    "total": h1_matches + h2_matches + h3_matches,
                 }
 
             # Generate recommendations
@@ -462,14 +496,20 @@ class ContentOptimizerTool:
 
             # Word count recommendations
             if word_count < 300:
-                recommendations.append("Increase content length to at least 300 words for better SEO")
+                recommendations.append(
+                    "Increase content length to at least 300 words for better SEO"
+                )
 
             # Keyword density recommendations
             for keyword, density in keyword_density.items():
                 if density < 0.5:
-                    recommendations.append(f"Increase density of keyword '{keyword}' (currently {density}%)")
+                    recommendations.append(
+                        f"Increase density of keyword '{keyword}' (currently {density}%)"
+                    )
                 elif density > 3:
-                    recommendations.append(f"Reduce density of keyword '{keyword}' (currently {density}%, aim for 1-2%)")
+                    recommendations.append(
+                        f"Reduce density of keyword '{keyword}' (currently {density}%, aim for 1-2%)"
+                    )
 
             # Heading recommendations
             if not headings["h1"]:
@@ -481,7 +521,9 @@ class ContentOptimizerTool:
 
             # Readability recommendations
             if flesch_score < 60:
-                recommendations.append(f"Improve readability (current score: {flesch_score}/100, aim for 60+)")
+                recommendations.append(
+                    f"Improve readability (current score: {flesch_score}/100, aim for 60+)"
+                )
 
             # Prepare result
             result = {
@@ -490,15 +532,13 @@ class ContentOptimizerTool:
                 "readability_score": flesch_score,
                 "headings": headings,
                 "keywords_in_headings": keywords_in_headings,
-                "recommendations": recommendations
+                "recommendations": recommendations,
             }
 
             return result
 
         except Exception as e:
-            return {
-                "error": str(e)
-            }
+            return {"error": str(e)}
 
     def _count_syllables(self, word: str) -> int:
         """
@@ -513,16 +553,16 @@ class ContentOptimizerTool:
         word = word.lower()
 
         # Remove non-alphabetic characters
-        word = re.sub(r'[^a-z]', '', word)
+        word = re.sub(r"[^a-z]", "", word)
 
         if not word:
             return 0
 
         # Count vowel groups
-        count = len(re.findall(r'[aeiouy]+', word))
+        count = len(re.findall(r"[aeiouy]+", word))
 
         # Adjust for silent e at the end
-        if word.endswith('e'):
+        if word.endswith("e"):
             count -= 1
 
         # Ensure at least one syllable
@@ -540,7 +580,7 @@ class ContentOptimizerTool:
             Formatted string with optimization results
         """
         # Parse keywords
-        keywords = [k.strip() for k in target_keywords.split(',')]
+        keywords = [k.strip() for k in target_keywords.split(",")]
 
         result = self.optimize(content, keywords)
 
@@ -555,7 +595,7 @@ class ContentOptimizerTool:
         output += f"- Readability Score: {result['readability_score']}/100\n\n"
 
         output += "## Keyword Density\n"
-        for keyword, density in result['keyword_density'].items():
+        for keyword, density in result["keyword_density"].items():
             status = "✅" if 0.5 <= density <= 3 else "⚠️"
             output += f"- {keyword}: {density}% {status}\n"
         output += "\n"
@@ -566,7 +606,7 @@ class ContentOptimizerTool:
         output += f"- H3 Headings: {len(result['headings']['h3'])}\n\n"
 
         output += "## Keywords in Headings\n"
-        for keyword, counts in result['keywords_in_headings'].items():
+        for keyword, counts in result["keywords_in_headings"].items():
             output += f"- '{keyword}': {counts['total']} occurrences (H1: {counts['h1']}, H2: {counts['h2']}, H3: {counts['h3']})\n"
         output += "\n"
 
@@ -575,6 +615,7 @@ class ContentOptimizerTool:
             output += f"- {recommendation}\n"
 
         return output
+
 
 # Create additional tool instances
 keyword_research = KeywordResearchTool()
@@ -593,10 +634,13 @@ content_optimizer_tool = Tool(
     description="Optimize content for SEO. Analyzes keyword density, readability, and heading structure.",
 )
 
+
 class MetadataGeneratorTool:
     """Tool for generating optimized metadata for SEO."""
 
-    def generate(self, title: str, content: str, keywords: List[str], url: str = None) -> Dict[str, Any]:
+    def generate(
+        self, title: str, content: str, keywords: List[str], url: str = None
+    ) -> Dict[str, Any]:
         """
         Generate optimized metadata for SEO.
 
@@ -613,22 +657,22 @@ class MetadataGeneratorTool:
 
         try:
             # Extract first paragraph as a base for description
-            paragraphs = re.split(r'\n\s*\n', content)
+            paragraphs = re.split(r"\n\s*\n", content)
             first_paragraph = paragraphs[0] if paragraphs else ""
 
             # Clean up the paragraph (remove markdown, etc.)
-            clean_paragraph = re.sub(r'[#*_`]', '', first_paragraph)
+            clean_paragraph = re.sub(r"[#*_`]", "", first_paragraph)
 
             # Generate meta description
             description = clean_paragraph[:160]
             if len(clean_paragraph) > 160:
                 # Try to cut at a sentence boundary
-                last_period = description.rfind('.')
+                last_period = description.rfind(".")
                 if last_period > 100:  # Only truncate if we have a decent length
-                    description = description[:last_period + 1]
+                    description = description[: last_period + 1]
                 else:
                     # Cut at a word boundary
-                    description = description[:description.rfind(' ')] + '...'
+                    description = description[: description.rfind(" ")] + "..."
 
             # Optimize title
             optimized_title = title
@@ -644,14 +688,14 @@ class MetadataGeneratorTool:
 
             # Truncate title if too long
             if len(optimized_title) > 60:
-                optimized_title = optimized_title[:57] + '...'
+                optimized_title = optimized_title[:57] + "..."
 
             # Generate JSON-LD structured data
             structured_data = {
                 "@context": "https://schema.org",
                 "@type": "WebPage",
                 "name": optimized_title,
-                "description": description
+                "description": description,
             }
 
             if url:
@@ -661,7 +705,7 @@ class MetadataGeneratorTool:
             og_metadata = {
                 "og:title": optimized_title,
                 "og:description": description,
-                "og:type": "website"
+                "og:type": "website",
             }
 
             if url:
@@ -671,7 +715,7 @@ class MetadataGeneratorTool:
             twitter_metadata = {
                 "twitter:card": "summary",
                 "twitter:title": optimized_title,
-                "twitter:description": description
+                "twitter:description": description,
             }
 
             # Prepare result
@@ -680,15 +724,13 @@ class MetadataGeneratorTool:
                 "meta_description": description,
                 "structured_data": structured_data,
                 "open_graph": og_metadata,
-                "twitter_card": twitter_metadata
+                "twitter_card": twitter_metadata,
             }
 
             return result
 
         except Exception as e:
-            return {
-                "error": str(e)
-            }
+            return {"error": str(e)}
 
     def run(self, title: str, content: str, keywords: str, url: str = None) -> str:
         """
@@ -704,7 +746,7 @@ class MetadataGeneratorTool:
             Formatted string with generated metadata
         """
         # Parse keywords
-        keyword_list = [k.strip() for k in keywords.split(',')]
+        keyword_list = [k.strip() for k in keywords.split(",")]
 
         result = self.generate(title, content, keyword_list, url)
 
@@ -739,15 +781,24 @@ class MetadataGeneratorTool:
         output += "```html\n"
         output += '<script type="application/ld+json">\n'
         output += json.dumps(result["structured_data"], indent=2)
-        output += '\n</script>\n'
+        output += "\n</script>\n"
         output += "```\n\n"
 
         output += "## Recommendations\n"
         output += "- Add these metadata tags to the `<head>` section of your HTML\n"
-        output += "- Ensure your meta title is under 60 characters (current: " + str(len(result["meta_title"])) + ")\n"
-        output += "- Ensure your meta description is under 160 characters (current: " + str(len(result["meta_description"])) + ")\n"
+        output += (
+            "- Ensure your meta title is under 60 characters (current: "
+            + str(len(result["meta_title"]))
+            + ")\n"
+        )
+        output += (
+            "- Ensure your meta description is under 160 characters (current: "
+            + str(len(result["meta_description"]))
+            + ")\n"
+        )
 
         return output
+
 
 class BacklinkAnalyzerTool:
     """Tool for analyzing backlinks to a website."""
@@ -755,6 +806,7 @@ class BacklinkAnalyzerTool:
     def __init__(self):
         """Initialize the backlink analyzer tool."""
         from src.tools.seo_api_clients import MozClient
+
         self.api_client = MozClient()
 
     def analyze(self, domain: str, limit: int = 10) -> Dict[str, Any]:
@@ -781,10 +833,7 @@ class BacklinkAnalyzerTool:
             return result
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "domain": domain
-            }
+            return {"error": str(e), "domain": domain}
 
     def run(self, domain: str, limit: int = 10) -> str:
         """
@@ -830,6 +879,7 @@ class BacklinkAnalyzerTool:
         output += "- Target relevant websites in your industry for the most effective backlinks\n"
 
         return output
+
 
 # Create additional tool instances
 metadata_generator = MetadataGeneratorTool()

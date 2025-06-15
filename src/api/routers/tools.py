@@ -2,17 +2,18 @@
 Tools router for the API.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST
 
-from ..models.request_models import ToolRequest
-from ..models.response_models import ToolResponse, ErrorResponse
-from ..services.tool_service import ToolService
 from ..middleware.auth import get_api_key
+from ..models.request_models import ToolRequest
+from ..models.response_models import ToolResponse
+from ..services.tool_service import ToolService
 
 router = APIRouter(prefix="/tools", tags=["tools"])
+
 
 @router.get("/", response_model=List[Dict[str, Any]])
 async def list_tools(
@@ -37,6 +38,7 @@ async def list_tools(
             status_code=HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
 
 @router.post("/execute", response_model=ToolResponse)
 async def execute_tool(

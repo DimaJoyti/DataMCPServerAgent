@@ -19,9 +19,7 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-    print(
-        "Увага: Plotly не доступний. Встановіть його за допомогою 'pip install plotly'"
-    )
+    print("Увага: Plotly не доступний. Встановіть його за допомогою 'pip install plotly'")
 
 try:
     import matplotlib
@@ -34,6 +32,7 @@ try:
 except ImportError:
     MATPLOTLIB_3D_AVAILABLE = False
     print("Увага: Matplotlib 3D не доступний.")
+
 
 class Visualization3DConfig(BaseModel):
     """Конфігурація для 3D-візуалізацій."""
@@ -58,6 +57,7 @@ class Visualization3DConfig(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class Surface3DData(BaseModel):
     """Дані для 3D-поверхневих візуалізацій."""
 
@@ -73,6 +73,7 @@ class Surface3DData(BaseModel):
         """Pydantic конфігурація."""
 
         arbitrary_types_allowed = True
+
 
 class Scatter3DData(BaseModel):
     """Дані для 3D-точкових візуалізацій."""
@@ -92,6 +93,7 @@ class Scatter3DData(BaseModel):
 
         arbitrary_types_allowed = True
 
+
 class Volume3DData(BaseModel):
     """Дані для 3D-об'ємних візуалізацій."""
 
@@ -109,6 +111,7 @@ class Volume3DData(BaseModel):
         """Pydantic конфігурація."""
 
         arbitrary_types_allowed = True
+
 
 class Visualization3DGenerator:
     """Генератор для 3D-візуалізацій."""
@@ -223,9 +226,7 @@ class Visualization3DGenerator:
             Метадані візуалізації
         """
         if not MATPLOTLIB_3D_AVAILABLE:
-            raise ImportError(
-                "Matplotlib 3D необхідний для статичних 3D-поверхневих візуалізацій"
-            )
+            raise ImportError("Matplotlib 3D необхідний для статичних 3D-поверхневих візуалізацій")
 
         # Створюємо фігуру
         fig = plt.figure(figsize=(config.width / 100, config.height / 100), dpi=100)
@@ -265,9 +266,7 @@ class Visualization3DGenerator:
         # Зберігаємо фігуру
         filename = f"{config.title.lower().replace(' ', '_')}_surface_3d.png"
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(
-            filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color
-        )
+        plt.savefig(filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color)
         plt.close(fig)
 
         return {
@@ -392,9 +391,7 @@ class Visualization3DGenerator:
             Метадані візуалізації
         """
         if not MATPLOTLIB_3D_AVAILABLE:
-            raise ImportError(
-                "Matplotlib 3D необхідний для статичних 3D-точкових візуалізацій"
-            )
+            raise ImportError("Matplotlib 3D необхідний для статичних 3D-точкових візуалізацій")
 
         # Створюємо фігуру
         fig = plt.figure(figsize=(config.width / 100, config.height / 100), dpi=100)
@@ -429,9 +426,7 @@ class Visualization3DGenerator:
         # Зберігаємо фігуру
         filename = f"{config.title.lower().replace(' ', '_')}_scatter_3d.png"
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(
-            filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color
-        )
+        plt.savefig(filepath, dpi=100, bbox_inches="tight", facecolor=config.background_color)
         plt.close(fig)
 
         return {
@@ -596,9 +591,8 @@ class Visualization3DGenerator:
             return self.generate_volume_3d(volume_data, visualization_config)
 
         else:
-            raise ValueError(
-                f"Непідтримуваний тип 3D-візуалізації: {visualization_type}"
-            )
+            raise ValueError(f"Непідтримуваний тип 3D-візуалізації: {visualization_type}")
+
 
 def generate_surface_3d_tool(data_str: str) -> str:
     """Генерація 3D-поверхневої візуалізації.
@@ -626,6 +620,7 @@ def generate_surface_3d_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 def generate_scatter_3d_tool(data_str: str) -> str:
     """Генерація 3D-точкової візуалізації.
 
@@ -652,6 +647,7 @@ def generate_scatter_3d_tool(data_str: str) -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 def generate_volume_3d_tool(data_str: str) -> str:
     """Генерація 3D-об'ємної візуалізації.
 
@@ -677,6 +673,7 @@ def generate_volume_3d_tool(data_str: str) -> str:
         return json.dumps(result)
     except Exception as e:
         return json.dumps({"error": str(e)})
+
 
 if __name__ == "__main__":
     # Приклад використання

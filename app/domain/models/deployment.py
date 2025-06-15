@@ -10,6 +10,7 @@ from pydantic import Field, field_validator
 
 from .base import BaseEntity, BaseValueObject, ValidationError
 
+
 class Environment(str, Enum):
     """Deployment environment enumeration."""
 
@@ -17,6 +18,7 @@ class Environment(str, Enum):
     STAGING = "staging"
     PRODUCTION = "production"
     TESTING = "testing"
+
 
 class DeploymentType(str, Enum):
     """Deployment type enumeration."""
@@ -26,6 +28,7 @@ class DeploymentType(str, Enum):
     KUBERNETES = "kubernetes"
     DOCKER_COMPOSE = "docker_compose"
     SERVERLESS = "serverless"
+
 
 class ServiceConfig(BaseValueObject):
     """Service configuration value object."""
@@ -62,6 +65,7 @@ class ServiceConfig(BaseValueObject):
             raise ValidationError("Replicas cannot be negative")
         return v
 
+
 class DatabaseConfig(BaseValueObject):
     """Database configuration value object."""
 
@@ -96,6 +100,7 @@ class DatabaseConfig(BaseValueObject):
             raise ValidationError("Connection pool size must be positive")
         return v
 
+
 class IngressConfig(BaseValueObject):
     """Ingress configuration value object."""
 
@@ -112,6 +117,7 @@ class IngressConfig(BaseValueObject):
             raise ValidationError("Ingress host cannot be empty")
         return v.strip().lower()
 
+
 class MonitoringConfig(BaseValueObject):
     """Monitoring configuration value object."""
 
@@ -121,6 +127,7 @@ class MonitoringConfig(BaseValueObject):
     tracing: bool = Field(default=False, description="Enable distributed tracing")
     logging: bool = Field(default=True, description="Enable centralized logging")
     health_checks: bool = Field(default=True, description="Enable health checks")
+
 
 class DeploymentConfig(BaseEntity):
     """Deployment configuration entity."""

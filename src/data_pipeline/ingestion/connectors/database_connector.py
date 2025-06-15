@@ -5,21 +5,21 @@ This module provides database connectivity for various database systems
 including PostgreSQL, MySQL, SQLite, and others.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional, AsyncGenerator, Union
+from collections.abc import AsyncGenerator
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import polars as pl
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-import asyncpg
-
 import structlog
 from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
 
 class DatabaseConfig(BaseModel):
     """Database connection configuration."""
+
     database_type: str = Field(..., description="Database type (postgresql, mysql, sqlite, etc.)")
     host: Optional[str] = Field(None, description="Database host")
     port: Optional[int] = Field(None, description="Database port")
@@ -38,6 +38,7 @@ class DatabaseConfig(BaseModel):
     ssl_cert: Optional[str] = Field(None, description="SSL certificate path")
     ssl_key: Optional[str] = Field(None, description="SSL key path")
     ssl_ca: Optional[str] = Field(None, description="SSL CA path")
+
 
 class DatabaseConnector:
     """
@@ -86,7 +87,7 @@ class DatabaseConnector:
                 pool_size=self.config.pool_size,
                 max_overflow=self.config.max_overflow,
                 pool_timeout=self.config.pool_timeout,
-                echo=False
+                echo=False,
             )
 
             # Test connection
@@ -99,7 +100,7 @@ class DatabaseConnector:
                 "Database connected",
                 database_type=self.config.database_type,
                 database=self.config.database,
-                host=self.config.host
+                host=self.config.host,
             )
 
         except Exception as e:
@@ -107,7 +108,7 @@ class DatabaseConnector:
                 "Database connection failed",
                 error=str(e),
                 database_type=self.config.database_type,
-                database=self.config.database
+                database=self.config.database,
             )
             raise e
 
@@ -135,7 +136,7 @@ class DatabaseConnector:
         columns: Optional[List[str]] = None,
         where_clause: Optional[str] = None,
         order_by: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncGenerator[Union[pd.DataFrame, pl.DataFrame], None]:
         """
         Read data in batches from the database.
@@ -183,18 +184,12 @@ class DatabaseConnector:
                 # Read with pandas
                 connection_string = self._build_sync_connection_string()
 
-                for chunk in pd.read_sql(
-                    query,
-                    connection_string,
-                    chunksize=batch_size
-                ):
+                for chunk in pd.read_sql(query, connection_string, chunksize=batch_size):
                     yield chunk
 
         except Exception as e:
             self.logger.error(
-                "Database read error",
-                error=str(e),
-                query=query[:100] if query else None
+                "Database read error", error=str(e), query=query[:100] if query else None
             )
             raise e
 
@@ -204,7 +199,7 @@ class DatabaseConnector:
         table: str,
         if_exists: str = "append",
         index: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         Write a batch of data to the database.
@@ -233,23 +228,15 @@ class DatabaseConnector:
                 if_exists=if_exists,
                 index=index,
                 method="multi",  # Use multi-row insert for better performance
-                chunksize=kwargs.get("chunksize", 10000)
+                chunksize=kwargs.get("chunksize", 10000),
             )
 
             self.logger.debug(
-                "Batch written to database",
-                table=table,
-                records=len(data),
-                if_exists=if_exists
+                "Batch written to database", table=table, records=len(data), if_exists=if_exists
             )
 
         except Exception as e:
-            self.logger.error(
-                "Database write error",
-                error=str(e),
-                table=table,
-                records=len(data)
-            )
+            self.logger.error("Database write error", error=str(e), table=table, records=len(data))
             raise e
 
     async def execute_query(self, query: str, parameters: Optional[Dict] = None) -> Any:
@@ -276,11 +263,7 @@ class DatabaseConnector:
                     return result.rowcount
 
         except Exception as e:
-            self.logger.error(
-                "Query execution error",
-                error=str(e),
-                query=query[:100]
-            )
+            self.logger.error("Query execution error", error=str(e), query=query[:100])
             raise e
 
     async def get_table_info(self, table: str) -> Dict[str, Any]:
@@ -329,15 +312,11 @@ class DatabaseConnector:
             return {
                 "table_name": table,
                 "columns": [dict(row._mapping) for row in columns],
-                "row_count": row_count
+                "row_count": row_count,
             }
 
         except Exception as e:
-            self.logger.error(
-                "Table info error",
-                error=str(e),
-                table=table
-            )
+            self.logger.error("Table info error", error=str(e), table=table)
             raise e
 
     def _build_connection_string(self) -> str:
@@ -391,7 +370,7 @@ class DatabaseConnector:
         table: str,
         columns: Optional[List[str]] = None,
         where_clause: Optional[str] = None,
-        order_by: Optional[str] = None
+        order_by: Optional[str] = None,
     ) -> str:
         """Build SELECT query."""
         # Select columns

@@ -16,18 +16,23 @@ logging.basicConfig(
 
 # Add src to path for imports
 import sys
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.data_pipeline.document_processing import DocumentProcessor, DocumentProcessingConfig
-from src.data_pipeline.vectorization import HuggingFaceEmbedder, EmbeddingConfig, BatchVectorProcessor
-from src.data_pipeline.vector_stores.vector_store_manager import VectorStoreManager
-from src.data_pipeline.vector_stores.schemas import VectorStoreConfig, VectorStoreType, DistanceMetric
-from src.data_pipeline.async_processing import (
-    AsyncDocumentProcessor,
-    AsyncBatchProcessor,
-    TaskManager,
-    TaskPriority
+from src.data_pipeline.async_processing import AsyncDocumentProcessor, TaskManager, TaskPriority
+from src.data_pipeline.document_processing import DocumentProcessor
+from src.data_pipeline.vector_stores.schemas import (
+    DistanceMetric,
+    VectorStoreConfig,
+    VectorStoreType,
 )
+from src.data_pipeline.vector_stores.vector_store_manager import VectorStoreManager
+from src.data_pipeline.vectorization import (
+    BatchVectorProcessor,
+    EmbeddingConfig,
+    HuggingFaceEmbedder,
+)
+
 
 class AdvancedFeaturesDemo:
     """Demonstration of advanced pipeline features."""
@@ -149,8 +154,9 @@ class AdvancedFeaturesDemo:
                 print(f"\n3. Testing {store_name}")
 
                 # Create vector records
-                from src.data_pipeline.vector_stores.schemas.base_schema import VectorRecord
                 from datetime import datetime
+
+                from src.data_pipeline.vector_stores.schemas.base_schema import VectorRecord
 
                 records = []
                 for i, (text, embedding_result) in enumerate(zip(sample_texts, embedding_result.results)):
@@ -170,7 +176,10 @@ class AdvancedFeaturesDemo:
                 print(f"   - Inserted {len(inserted_ids)} vectors")
 
                 # Search vectors
-                from src.data_pipeline.vector_stores.schemas.search_models import SearchQuery, SearchType
+                from src.data_pipeline.vector_stores.schemas.search_models import (
+                    SearchQuery,
+                    SearchType,
+                )
 
                 query_embedding = embedding_result.results[0].embedding
                 search_query = SearchQuery(
@@ -222,7 +231,7 @@ class AdvancedFeaturesDemo:
 
         async_time = time.time() - start_time
 
-        print(f"\n2. Async processing completed:")
+        print("\n2. Async processing completed:")
         print(f"   - Processed {len(results)} files")
         print(f"   - Total time: {async_time:.2f}s")
         print(f"   - Average time per file: {async_time/len(sample_files):.2f}s")
@@ -241,7 +250,7 @@ class AdvancedFeaturesDemo:
 
         sync_time = time.time() - start_time
 
-        print(f"\n3. Sync processing comparison:")
+        print("\n3. Sync processing comparison:")
         print(f"   - Processed {len(sync_results)} files")
         print(f"   - Total time: {sync_time:.2f}s")
         print(f"   - Average time per file: {sync_time/len(sample_files):.2f}s")
@@ -325,7 +334,7 @@ class AdvancedFeaturesDemo:
             print(f"   Running: {stats['running_tasks']}")
 
         # Show final results
-        print(f"\n3. All tasks completed:")
+        print("\n3. All tasks completed:")
         stats = task_manager.get_stats()
         print(f"   - Processed: {stats['tasks_processed']}")
         print(f"   - Failed: {stats['tasks_failed']}")

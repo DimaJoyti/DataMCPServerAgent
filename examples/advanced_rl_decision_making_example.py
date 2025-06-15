@@ -5,8 +5,7 @@ Example script demonstrating the advanced reinforcement learning decision-making
 import asyncio
 import os
 import sys
-import time
-from typing import Dict, List, Any
+from typing import List
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,30 +15,17 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import BaseTool
 
 from src.agents.advanced_rl_decision_making import (
-    AdvancedRLCoordinatorAgent,
-    DeepRLAgent,
-    create_advanced_rl_agent_architecture
+    create_advanced_rl_agent_architecture,
 )
-from src.agents.agent_architecture import (
-    SpecializedSubAgent,
-    create_specialized_sub_agents
-)
+from src.agents.agent_architecture import create_specialized_sub_agents
 from src.agents.multi_objective_rl import (
-    MultiObjectiveRLCoordinatorAgent,
-    create_multi_objective_rl_agent_architecture
+    create_multi_objective_rl_agent_architecture,
 )
 from src.agents.reinforcement_learning import (
-    RewardSystem,
-    RLCoordinatorAgent,
-    create_rl_agent_architecture
+    create_rl_agent_architecture,
 )
 from src.memory.memory_persistence import MemoryDatabase
-from src.utils.decision_explanation import (
-    DecisionExplainer,
-    PolicyExplainer,
-    QValueVisualizer
-)
-from src.utils.error_handlers import format_error_for_user
+from src.utils.decision_explanation import DecisionExplainer, PolicyExplainer, QValueVisualizer
 from src.utils.rl_ab_testing import RLABTestingFramework
 
 load_dotenv()

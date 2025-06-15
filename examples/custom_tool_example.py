@@ -5,18 +5,17 @@ Example of creating and using a custom tool with DataMCPServerAgent.
 import asyncio
 import os
 import sys
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from langchain_core.tools import BaseTool
-from langchain_anthropic import ChatAnthropic
-from mcp import ClientSession
 
 from src.core.advanced_enhanced_main import chat_with_advanced_enhanced_agent
 from src.memory.memory_persistence import MemoryDatabase
 from src.tools.enhanced_tool_selection import ToolPerformanceTracker
+
 
 class WeatherTool(BaseTool):
     """Tool for getting weather information."""
@@ -157,7 +156,7 @@ class CurrencyConverterTool(BaseTool):
         converted_amount = usd_amount * exchange_rates[to_currency_lower]
 
         # Format the response
-        response = f"## Currency Conversion\n\n"
+        response = "## Currency Conversion\n\n"
         response += f"{amount} {from_currency.upper()} = {converted_amount:.2f} {to_currency.upper()}\n\n"
         response += f"Exchange rate: 1 {from_currency.upper()} = {exchange_rates[to_currency_lower] / exchange_rates[from_currency_lower]:.4f} {to_currency.upper()}"
 

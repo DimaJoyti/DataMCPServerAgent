@@ -8,11 +8,12 @@ import pickle
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
 from .embeddings.base_embedder import EmbeddingResult
+
 
 class CacheConfig(BaseModel):
     """Configuration for vector caching."""
@@ -40,6 +41,7 @@ class CacheConfig(BaseModel):
     # Performance
     enable_stats: bool = Field(default=True, description="Enable cache statistics")
 
+
 class CacheStats(BaseModel):
     """Cache statistics."""
 
@@ -62,6 +64,7 @@ class CacheStats(BaseModel):
         self.sets = 0
         self.deletes = 0
         self.evictions = 0
+
 
 class BaseCacheBackend(ABC):
     """Abstract base class for cache backends."""
@@ -100,6 +103,7 @@ class BaseCacheBackend(ABC):
     def get_stats(self) -> Optional[CacheStats]:
         """Get cache statistics."""
         return self.stats
+
 
 class MemoryCacheBackend(BaseCacheBackend):
     """In-memory cache backend."""
@@ -169,6 +173,7 @@ class MemoryCacheBackend(BaseCacheBackend):
         if self.stats:
             self.stats.evictions += 1
 
+
 class FileCacheBackend(BaseCacheBackend):
     """File-based cache backend."""
 
@@ -186,7 +191,7 @@ class FileCacheBackend(BaseCacheBackend):
         """Load cache index."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, 'r') as f:
+                with open(self.index_file) as f:
                     self._index = json.load(f)
             except Exception as e:
                 self.logger.warning(f"Failed to load cache index: {e}")
@@ -197,7 +202,7 @@ class FileCacheBackend(BaseCacheBackend):
     def _save_index(self) -> None:
         """Save cache index."""
         try:
-            with open(self.index_file, 'w') as f:
+            with open(self.index_file, "w") as f:
                 json.dump(self._index, f)
         except Exception as e:
             self.logger.error(f"Failed to save cache index: {e}")
@@ -237,7 +242,7 @@ class FileCacheBackend(BaseCacheBackend):
             return None
 
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 value = pickle.load(f)
 
             if self.stats:
@@ -259,7 +264,7 @@ class FileCacheBackend(BaseCacheBackend):
         # Save to file
         cache_path = self._get_cache_path(key)
         try:
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(value, f)
 
             # Update index
@@ -317,6 +322,7 @@ class FileCacheBackend(BaseCacheBackend):
         if self.stats:
             self.stats.evictions += 1
 
+
 class VectorCache:
     """Vector cache for embedding results."""
 
@@ -342,6 +348,7 @@ class VectorCache:
         elif self.config.backend == "redis":
             try:
                 from .redis_cache_backend import RedisCacheBackend
+
                 return RedisCacheBackend(self.config)
             except ImportError:
                 self.logger.warning("Redis not available, falling back to memory cache")
@@ -428,7 +435,7 @@ class VectorCache:
                 embedding_dimension=3,
                 model_name="test",
                 model_provider="test",
-                processing_time=0.0
+                processing_time=0.0,
             )
 
             self.set(test_key, test_result)

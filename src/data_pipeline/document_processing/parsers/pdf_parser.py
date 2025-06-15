@@ -2,25 +2,27 @@
 PDF file parser implementation.
 """
 
-import logging
 from pathlib import Path
-from typing import List, Union, Dict, Any
+from typing import Any, Dict, List, Union
 
 try:
     import PyPDF2
+
     HAS_PYPDF2 = True
 except ImportError:
     HAS_PYPDF2 = False
 
 try:
     import pdfplumber
+
     HAS_PDFPLUMBER = True
 except ImportError:
     HAS_PDFPLUMBER = False
 
-from .base_parser import BaseParser, ParsedDocument
-from ..metadata.models import DocumentMetadata, DocumentType
 from ..metadata.extractor import MetadataExtractor
+from ..metadata.models import DocumentMetadata, DocumentType
+from .base_parser import BaseParser, ParsedDocument
+
 
 class PDFParser(BaseParser):
     """Parser for PDF files."""
@@ -43,7 +45,7 @@ class PDFParser(BaseParser):
     @property
     def supported_extensions(self) -> List[str]:
         """Return list of supported file extensions."""
-        return ['pdf']
+        return ["pdf"]
 
     def _parse_file_impl(self, file_path: Path) -> ParsedDocument:
         """
@@ -73,7 +75,7 @@ class PDFParser(BaseParser):
         content: Union[str, bytes],
         document_id: str,
         document_type: DocumentType,
-        **metadata_kwargs
+        **metadata_kwargs,
     ) -> ParsedDocument:
         """
         Parse PDF content directly.
@@ -92,7 +94,8 @@ class PDFParser(BaseParser):
 
         # Create temporary file for parsing
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
             tmp_file.write(content)
             tmp_path = Path(tmp_file.name)
 
@@ -147,27 +150,31 @@ class PDFParser(BaseParser):
                         if self.config.extract_tables:
                             page_tables = page.extract_tables()
                             for table_idx, table in enumerate(page_tables):
-                                tables.append({
-                                    'page': page_num,
-                                    'table_index': table_idx,
-                                    'data': table,
-                                    'rows': len(table),
-                                    'columns': len(table[0]) if table else 0
-                                })
+                                tables.append(
+                                    {
+                                        "page": page_num,
+                                        "table_index": table_idx,
+                                        "data": table,
+                                        "rows": len(table),
+                                        "columns": len(table[0]) if table else 0,
+                                    }
+                                )
 
                         # Extract images if configured
                         if self.config.extract_images:
                             # pdfplumber doesn't directly extract images,
                             # but we can get image information
-                            if hasattr(page, 'images'):
+                            if hasattr(page, "images"):
                                 for img_idx, img in enumerate(page.images):
-                                    images.append({
-                                        'page': page_num,
-                                        'image_index': img_idx,
-                                        'bbox': img.get('bbox'),
-                                        'width': img.get('width'),
-                                        'height': img.get('height')
-                                    })
+                                    images.append(
+                                        {
+                                            "page": page_num,
+                                            "image_index": img_idx,
+                                            "bbox": img.get("bbox"),
+                                            "width": img.get("width"),
+                                            "height": img.get("height"),
+                                        }
+                                    )
 
                     except Exception as e:
                         error_msg = f"Error processing page {page_num}: {str(e)}"
@@ -181,7 +188,7 @@ class PDFParser(BaseParser):
                 raise
 
         # Combine all text
-        full_text = '\n\n'.join(text_content)
+        full_text = "\n\n".join(text_content)
 
         # Normalize text if configured
         if self.config.normalize_whitespace:
@@ -206,7 +213,7 @@ class PDFParser(BaseParser):
             errors=errors,
             parsing_time=0.0,
             parser_name=self._parser_name,
-            parser_version=self._parser_version
+            parser_version=self._parser_version,
         )
 
         return result
@@ -220,7 +227,7 @@ class PDFParser(BaseParser):
         errors = []
 
         try:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 pdf_reader = PyPDF2.PdfReader(file)
 
                 # Update page count
@@ -248,7 +255,7 @@ class PDFParser(BaseParser):
                 raise
 
         # Combine all text
-        full_text = '\n\n'.join(text_content)
+        full_text = "\n\n".join(text_content)
 
         # Normalize text if configured
         if self.config.normalize_whitespace:
@@ -271,23 +278,25 @@ class PDFParser(BaseParser):
             errors=errors,
             parsing_time=0.0,
             parser_name=self._parser_name,
-            parser_version=self._parser_version
+            parser_version=self._parser_version,
         )
 
         return result
 
-    def _extract_pdf_metadata(self, pdf_metadata: Dict[str, Any], metadata: DocumentMetadata) -> None:
+    def _extract_pdf_metadata(
+        self, pdf_metadata: Dict[str, Any], metadata: DocumentMetadata
+    ) -> None:
         """Extract metadata from PDF metadata dictionary."""
         # Map PDF metadata fields to our metadata model
         field_mapping = {
-            '/Title': 'title',
-            '/Author': 'author',
-            '/Subject': 'subject',
-            '/Creator': 'creator',
-            '/Producer': 'producer',
-            '/CreationDate': 'creation_date',
-            '/ModDate': 'modification_date',
-            '/Keywords': 'keywords'
+            "/Title": "title",
+            "/Author": "author",
+            "/Subject": "subject",
+            "/Creator": "creator",
+            "/Producer": "producer",
+            "/CreationDate": "creation_date",
+            "/ModDate": "modification_date",
+            "/Keywords": "keywords",
         }
 
         for pdf_field, our_field in field_mapping.items():
@@ -295,13 +304,13 @@ class PDFParser(BaseParser):
                 value = pdf_metadata[pdf_field]
 
                 # Handle special cases
-                if our_field == 'keywords' and isinstance(value, str):
+                if our_field == "keywords" and isinstance(value, str):
                     # Split keywords by common separators
-                    keywords = [k.strip() for k in value.replace(',', ';').split(';') if k.strip()]
+                    keywords = [k.strip() for k in value.replace(",", ";").split(";") if k.strip()]
                     metadata.keywords = keywords
-                elif our_field in ['title', 'author', 'subject']:
+                elif our_field in ["title", "author", "subject"]:
                     setattr(metadata, our_field, str(value))
-                elif our_field in ['creation_date', 'modification_date']:
+                elif our_field in ["creation_date", "modification_date"]:
                     # PDF dates are in a special format, store as custom field for now
                     metadata.add_custom_field(our_field, str(value))
                 else:

@@ -4,19 +4,17 @@ Learning Optimization Agent for the Fetch.ai Advanced Crypto Trading System.
 This agent continuously improves system performance through machine learning.
 """
 
-import asyncio
-import json
 import logging
-import pickle
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from uagents import Agent, Context, Model, Protocol
+from uagents import Context, Model
 
 from .base_agent import BaseAgent, BaseAgentState
+
 
 class ModelType(str, Enum):
     """Types of machine learning models."""
@@ -26,6 +24,7 @@ class ModelType(str, Enum):
     NEURAL_NETWORK = "neural_network"
     SUPPORT_VECTOR_MACHINE = "support_vector_machine"
 
+
 class PredictionTarget(str, Enum):
     """Prediction targets."""
 
@@ -33,6 +32,7 @@ class PredictionTarget(str, Enum):
     VOLATILITY = "volatility"
     TRADING_VOLUME = "trading_volume"
     SENTIMENT_IMPACT = "sentiment_impact"
+
 
 class TrainingResult(Model):
     """Model for training results."""
@@ -47,6 +47,7 @@ class TrainingResult(Model):
     sample_size: int
     timestamp: str
 
+
 class Prediction(Model):
     """Model for a prediction."""
 
@@ -58,12 +59,14 @@ class Prediction(Model):
     features_used: List[str]
     timestamp: str
 
+
 class PerformanceMetric(Model):
     """Model for a performance metric."""
 
     name: str
     value: float
     timestamp: str
+
 
 class SystemImprovement(Model):
     """Model for a system improvement."""
@@ -73,6 +76,7 @@ class SystemImprovement(Model):
     expected_impact: str
     confidence: float
     timestamp: str
+
 
 class LearningAgentState(BaseAgentState):
     """State model for the Learning Optimization Agent."""
@@ -86,6 +90,7 @@ class LearningAgentState(BaseAgentState):
     training_interval: int = 86400  # 24 hours in seconds
     prediction_interval: int = 3600  # 1 hour in seconds
 
+
 class LearningOptimizationAgent(BaseAgent):
     """Agent for continuously improving system performance through machine learning."""
 
@@ -95,7 +100,7 @@ class LearningOptimizationAgent(BaseAgent):
         seed: Optional[str] = None,
         port: Optional[int] = None,
         endpoint: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the Learning Optimization Agent.
 
@@ -199,7 +204,7 @@ class LearningOptimizationAgent(BaseAgent):
                 f1_score=f1_score,
                 training_time=training_time,
                 sample_size=len(X_train),
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             self.state.training_results.append(result)
@@ -212,11 +217,13 @@ class LearningOptimizationAgent(BaseAgent):
             )
 
             # Save performance metric
-            self.state.performance_metrics.append(PerformanceMetric(
-                name=f"{symbol}_{target.value}_accuracy",
-                value=accuracy,
-                timestamp=datetime.now().isoformat()
-            ))
+            self.state.performance_metrics.append(
+                PerformanceMetric(
+                    name=f"{symbol}_{target.value}_accuracy",
+                    value=accuracy,
+                    timestamp=datetime.now().isoformat(),
+                )
+            )
 
         except Exception as e:
             ctx.logger.error(f"Error training model for {symbol} - {target}: {str(e)}")
@@ -267,7 +274,7 @@ class LearningOptimizationAgent(BaseAgent):
                 confidence=confidence,
                 model_type=ModelType.RANDOM_FOREST,
                 features_used=["feature1", "feature2", "feature3"],  # Placeholder
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             # Update state
@@ -301,8 +308,7 @@ class LearningOptimizationAgent(BaseAgent):
         if self.state.training_results:
             # Find models with low accuracy
             low_accuracy_models = [
-                result for result in self.state.training_results
-                if result.accuracy < 0.6
+                result for result in self.state.training_results if result.accuracy < 0.6
             ]
 
             for result in low_accuracy_models:
@@ -312,27 +318,31 @@ class LearningOptimizationAgent(BaseAgent):
                     improvement="Increase training data size or try different model architecture",
                     expected_impact="Improved prediction accuracy",
                     confidence=0.7,
-                    timestamp=datetime.now().isoformat()
+                    timestamp=datetime.now().isoformat(),
                 )
 
                 improvements.append(improvement)
 
         # Suggest general improvements
-        improvements.append(SystemImprovement(
-            component="Data Collection",
-            improvement="Add more data sources for sentiment analysis",
-            expected_impact="More accurate sentiment predictions",
-            confidence=0.8,
-            timestamp=datetime.now().isoformat()
-        ))
+        improvements.append(
+            SystemImprovement(
+                component="Data Collection",
+                improvement="Add more data sources for sentiment analysis",
+                expected_impact="More accurate sentiment predictions",
+                confidence=0.8,
+                timestamp=datetime.now().isoformat(),
+            )
+        )
 
-        improvements.append(SystemImprovement(
-            component="Technical Analysis",
-            improvement="Add more advanced indicators like Ichimoku Cloud",
-            expected_impact="Better trend identification",
-            confidence=0.6,
-            timestamp=datetime.now().isoformat()
-        ))
+        improvements.append(
+            SystemImprovement(
+                component="Technical Analysis",
+                improvement="Add more advanced indicators like Ichimoku Cloud",
+                expected_impact="Better trend identification",
+                confidence=0.6,
+                timestamp=datetime.now().isoformat(),
+            )
+        )
 
         return improvements
 
@@ -352,7 +362,6 @@ class LearningOptimizationAgent(BaseAgent):
             Tuple of (features, labels)
         """
         # Mock data for demonstration
-        import random
 
         # Generate random features and labels
         sample_size = 100

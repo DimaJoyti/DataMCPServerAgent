@@ -3,7 +3,8 @@ Health service for the API.
 """
 
 import platform
-from typing import Dict, Any
+from typing import Dict
+
 
 class HealthService:
     """Service for health checks."""
